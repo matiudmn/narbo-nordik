@@ -31,6 +31,10 @@ export default function BottomNav() {
             <ClipboardList size={22} />
             <span>Planning</span>
           </NavLink>
+          <NavLink to="/directory" className={linkClass}>
+            <Users size={22} />
+            <span>Annuaire</span>
+          </NavLink>
           <NavLink to="/profile" className={linkClass}>
             <User size={22} />
             <span>Profil</span>
