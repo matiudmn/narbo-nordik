@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="95" fill="none" stroke="#000" stroke-width="6"/>
+  <circle cx="100" cy="100" r="82" fill="none" stroke="#000" stroke-width="3"/>
+  <text x="100" y="52" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="22" fill="#000" letter-spacing="2">NARBO NORDIK</text>
+  <text x="100" y="130" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="52" fill="#000">2NC</text>
+  <text x="100" y="170" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="22" fill="#000" letter-spacing="4">CLUB</text>
+</svg>

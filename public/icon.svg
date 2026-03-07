@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#1e3a5f"/>
+  <text x="256" y="200" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="120" fill="#ffffff">NN</text>
+  <path d="M160 300 L256 380 L352 300" stroke="#e8491d" stroke-width="24" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M190 340 L256 400 L322 340" stroke="#e8491d" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+</svg>
