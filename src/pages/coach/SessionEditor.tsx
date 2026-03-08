@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, ChevronUp, ChevronDown, Zap } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, ChevronUp, ChevronDown, Zap, Clock, Ruler } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import {
@@ -133,8 +133,9 @@ function BlockCard({
                   onUpdate({ ...block, distance_meters: 400, duration_seconds: 0 });
                 }
               }}
-              className="text-[10px] text-primary font-medium hover:underline"
+              className="flex items-center gap-1 text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full hover:bg-primary/20 transition-colors"
             >
+              {isDistance ? <Clock size={12} /> : <Ruler size={12} />}
               {isDistance ? 'Duree' : 'Metres'}
             </button>
           </div>
