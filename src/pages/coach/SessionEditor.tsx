@@ -6,15 +6,26 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
-  calculateBlockPace, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary,
+  calculateBlockPace, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, estimateBlockEffortSeconds,
 } from '../../lib/calculations';
-import type { SessionBlock, AllureZone, BlockType } from '../../types';
+import type { SessionBlock, AllureZone, BlockType, SessionType, TerrainOption } from '../../types';
 
 let blockIdCounter = Date.now();
 const genBlockId = () => `blk_${blockIdCounter++}`;
 
-function makeBlock(type: BlockType, allure: AllureZone, durationSec: number, reps = 1, restSec = 0): SessionBlock {
-  return { id: genBlockId(), type, allure, duration_seconds: durationSec, repetitions: reps, rest_seconds: restSec };
+const SESSION_TYPES: Record<SessionType, string> = {
+  entrainement: 'Entrainement',
+  sortie_longue: 'Sortie Longue',
+  recuperation: 'Recuperation',
+};
+
+const TERRAIN_OPTIONS: Record<TerrainOption, string> = {
+  cotes: 'Cotes',
+  piste: 'Piste',
+};
+
+function makeBlock(type: BlockType, allure: AllureZone, durationSec: number, reps = 1, restSec = 0, distanceMeters: number | null = null): SessionBlock {
+  return { id: genBlockId(), type, allure, duration_seconds: durationSec, distance_meters: distanceMeters, repetitions: reps, rest_seconds: restSec };
 }
 
 function DurationInput({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
@@ -63,6 +74,8 @@ function BlockCard({
 }) {
   const zone = ALLURE_ZONES[block.allure];
   const pace = previewVma ? calculateBlockPace(previewVma, block.allure) : null;
+  const isDistance = block.distance_meters !== null && block.distance_meters !== undefined;
+  const estimatedTime = isDistance && previewVma ? formatSeconds(estimateBlockEffortSeconds(block, previewVma)) : null;
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 space-y-2">
@@ -108,7 +121,35 @@ function BlockCard({
             ))}
           </select>
         </div>
-        <DurationInput value={block.duration_seconds} onChange={v => onUpdate({ ...block, duration_seconds: v })} label="Duree" />
+        <div>
+          <div className="flex items-center justify-between mb-0.5">
+            <label className="text-xs text-gray-500">{isDistance ? 'Distance' : 'Duree'}</label>
+            <button
+              type="button"
+              onClick={() => {
+                if (isDistance) {
+                  onUpdate({ ...block, distance_meters: null, duration_seconds: block.duration_seconds || 120 });
+                } else {
+                  onUpdate({ ...block, distance_meters: 400, duration_seconds: 0 });
+                }
+              }}
+              className="text-[10px] text-primary font-medium hover:underline"
+            >
+              {isDistance ? 'Duree' : 'Metres'}
+            </button>
+          </div>
+          {isDistance ? (
+            <input
+              type="number" inputMode="numeric" min={50} step={50}
+              value={block.distance_meters || 400}
+              onChange={e => onUpdate({ ...block, distance_meters: Math.max(50, parseInt(e.target.value) || 400) })}
+              className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+              placeholder="metres"
+            />
+          ) : (
+            <DurationInput value={block.duration_seconds} onChange={v => onUpdate({ ...block, duration_seconds: v })} label="" />
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -127,7 +168,10 @@ function BlockCard({
 
       {/* Summary + preview */}
       <div className="flex items-center justify-between pt-1 border-t border-gray-50">
-        <span className="text-xs text-gray-500">{formatBlockSummary(block)}</span>
+        <span className="text-xs text-gray-500">
+          {formatBlockSummary(block)}
+          {estimatedTime && <span className="text-gray-400 ml-1">(~{estimatedTime}/rep)</span>}
+        </span>
         {pace && (
           <span className="text-xs font-medium" style={{ color: zone.color }}>
             {pace.paceMin} - {pace.paceMax} min/km
@@ -149,6 +193,8 @@ export default function SessionEditor() {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [groupId, setGroupId] = useState<string>('');
+  const [sessionType, setSessionType] = useState<SessionType>('entrainement');
+  const [terrainOptions, setTerrainOptions] = useState<TerrainOption[]>([]);
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [blocks, setBlocks] = useState<SessionBlock[]>([]);
@@ -166,11 +212,12 @@ export default function SessionEditor() {
     [sessions, weekStart, weekEnd]
   );
 
-  const athletes = users.filter(u => u.role === 'athlete');
-  const previewUser = previewUserId ? athletes.find(u => u.id === previewUserId) : null;
+  const allMembers = users.filter(u => u.vma);
+  const previewUser = previewUserId ? allMembers.find(u => u.id === previewUserId) : null;
 
   const resetForm = () => {
     setTitle(''); setDate(''); setGroupId(''); setLocation('');
+    setSessionType('entrainement'); setTerrainOptions([]);
     setDescription(''); setBlocks([]); setPreviewUserId(null);
   };
 
@@ -179,6 +226,8 @@ export default function SessionEditor() {
     addSession({
       title,
       date: new Date(date).toISOString(),
+      session_type: sessionType,
+      terrain_options: terrainOptions,
       group_id: groupId || null,
       location: location || null,
       location_url: null,
@@ -220,7 +269,8 @@ export default function SessionEditor() {
     });
   };
 
-  const totalSeconds = calculateSessionTotalSeconds(blocks);
+  const hasDistanceBlocks = blocks.some(b => b.distance_meters);
+  const totalSeconds = calculateSessionTotalSeconds(blocks, previewUser?.vma || undefined);
 
   return (
     <div className="py-4">
@@ -261,6 +311,31 @@ export default function SessionEditor() {
             </select>
           </div>
 
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              value={sessionType} onChange={e => setSessionType(e.target.value as SessionType)}
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              {Object.entries(SESSION_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <div className="flex items-center gap-3 px-3 py-2">
+              {Object.entries(TERRAIN_OPTIONS).map(([k, v]) => (
+                <label key={k} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={terrainOptions.includes(k as TerrainOption)}
+                    onChange={e => {
+                      if (e.target.checked) setTerrainOptions([...terrainOptions, k as TerrainOption]);
+                      else setTerrainOptions(terrainOptions.filter(t => t !== k));
+                    }}
+                    className="rounded border-gray-300 text-primary focus:ring-primary/20"
+                  />
+                  {v}
+                </label>
+              ))}
+            </div>
+          </div>
+
           <input
             type="text" placeholder="Lieu (optionnel)"
             value={location} onChange={e => setLocation(e.target.value)}
@@ -276,7 +351,7 @@ export default function SessionEditor() {
               </p>
               {blocks.length > 0 && (
                 <span className="text-xs text-gray-400">
-                  {blocks.length} bloc{blocks.length > 1 ? 's' : ''} | {formatSeconds(totalSeconds)}
+                  {blocks.length} bloc{blocks.length > 1 ? 's' : ''} | {hasDistanceBlocks && !previewUser ? '?' : (hasDistanceBlocks ? '~' : '')}{hasDistanceBlocks && !previewUser ? '' : formatSeconds(totalSeconds)}
                 </span>
               )}
             </div>
@@ -331,8 +406,8 @@ export default function SessionEditor() {
                   onChange={e => setPreviewUserId(e.target.value || null)}
                   className="text-xs px-2 py-1 border border-gray-200 rounded flex-1"
                 >
-                  <option value="">Choisir un athlete...</option>
-                  {athletes.map(a => (
+                  <option value="">Choisir un membre...</option>
+                  {allMembers.map(a => (
                     <option key={a.id} value={a.id}>
                       {a.firstname} {a.lastname} (VMA {a.vma})
                     </option>

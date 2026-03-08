@@ -91,7 +91,7 @@ export default function SessionDetail() {
                 Programme
               </h2>
               <span className="text-xs text-gray-400">
-                {formatSeconds(calculateSessionTotalSeconds(session.blocks))} au total
+                {session.blocks.some(b => b.distance_meters) ? '~' : ''}{formatSeconds(calculateSessionTotalSeconds(session.blocks, user?.vma || undefined))} au total
               </span>
             </div>
             <div className="space-y-2">
@@ -99,7 +99,7 @@ export default function SessionDetail() {
                 const zone = ALLURE_ZONES[block.allure];
                 const blockType = BLOCK_TYPES[block.type];
                 const pace = user?.vma ? calculateBlockPace(user.vma, block.allure) : null;
-                const blockDur = formatSeconds(calculateBlockTotalSeconds(block));
+                const blockDur = formatSeconds(calculateBlockTotalSeconds(block, user?.vma || undefined));
 
                 return (
                   <div key={block.id} className="flex items-center gap-3 bg-white rounded-lg p-3">

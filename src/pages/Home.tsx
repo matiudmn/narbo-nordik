@@ -144,18 +144,17 @@ export default function Home() {
             <Gauge size={18} className="text-accent" />
             Mes Allures
           </h2>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {Object.entries(RACE_PACES).map(([key, zone]) => {
-              const { speed, pace } = calculateRacePace(user.vma!, zone.pct);
+              const { pace } = calculateRacePace(user.vma!, zone.pct);
               return (
-                <div key={key} className="rounded-lg p-3 border border-gray-100" style={{ backgroundColor: `${zone.color}08` }}>
-                  <div className="flex items-center gap-2 mb-1">
+                <div key={key} className="rounded-lg p-2.5 border border-gray-100" style={{ backgroundColor: `${zone.color}08` }}>
+                  <div className="flex items-center gap-1.5 mb-1">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
                     <span className="text-xs font-bold text-gray-600">{zone.label}</span>
-                    <span className="text-[10px] text-gray-400">{zone.description}</span>
                   </div>
-                  <p className="text-lg font-bold text-gray-900">{pace} <span className="text-xs font-normal text-gray-400">min/km</span></p>
-                  <p className="text-xs text-gray-400">{speed.toFixed(1)} km/h ({zone.pct}% VMA)</p>
+                  <p className="text-sm font-bold text-gray-900">{pace}</p>
+                  <p className="text-[10px] text-gray-400">{zone.description}</p>
                 </div>
               );
             })}

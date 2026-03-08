@@ -28,8 +28,9 @@ interface DataContextType {
   updateUserPhone: (userId: string, phone: string | null) => Promise<void>;
   updateUserStrava: (userId: string, stravaId: string | null) => Promise<void>;
   updateUserLicense: (userId: string, licenseNumber: string | null) => Promise<void>;
+  updateUserBirthDate: (userId: string, birthDate: string | null) => Promise<void>;
   updateUserPhoto: (userId: string, photoUrl: string | null) => Promise<void>;
-  addUser: (user: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number'>) => Promise<AddUserResult | null>;
+  addUser: (user: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date'>) => Promise<AddUserResult | null>;
   deleteUser: (id: string) => Promise<void>;
   addGroup: (name: string) => Promise<void>;
   updateGroup: (id: string, name: string) => Promise<void>;
@@ -203,13 +204,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!error) await fetchUsers();
   }, [fetchUsers]);
 
+  const updateUserBirthDate = useCallback(async (userId: string, birthDate: string | null) => {
+    const { error } = await supabase.from('users').update({ birth_date: birthDate }).eq('id', userId);
+    if (!error) await fetchUsers();
+  }, [fetchUsers]);
+
   const updateUserPhoto = useCallback(async (userId: string, photoUrl: string | null) => {
     const { error } = await supabase.from('users').update({ photo_url: photoUrl }).eq('id', userId);
     if (!error) await fetchUsers();
   }, [fetchUsers]);
 
   const addUser = useCallback(async (
-    userData: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number'>
+    userData: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date'>
   ): Promise<AddUserResult | null> => {
     const tempPassword = generateTempPassword();
     const ephemeral = createEphemeralClient();
@@ -283,7 +289,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     <DataContext.Provider value={{
       sessions, validations, raceResults, raceNordiks, groups, users, loading,
       addSession, updateSession, deleteSession, validateSession,
-      addRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserPhoto,
+      addRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto,
       addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, refreshAll,
     }}>
       {children}

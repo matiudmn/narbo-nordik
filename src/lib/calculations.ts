@@ -26,14 +26,25 @@ export function calculateBlockPace(vma: number, zone: AllureZone) {
   };
 }
 
-export function calculateBlockTotalSeconds(block: SessionBlock): number {
-  const effort = block.duration_seconds * block.repetitions;
+export function estimateBlockEffortSeconds(block: SessionBlock, vma?: number): number {
+  if (block.distance_meters && vma) {
+    const zone = ALLURE_ZONES[block.allure];
+    const avgPct = (zone.pctMin + zone.pctMax) / 2 / 100;
+    const speedMs = (vma * avgPct) / 3.6;
+    return Math.round(block.distance_meters / speedMs);
+  }
+  return block.duration_seconds;
+}
+
+export function calculateBlockTotalSeconds(block: SessionBlock, vma?: number): number {
+  const effortPerRep = block.distance_meters ? estimateBlockEffortSeconds(block, vma) : block.duration_seconds;
+  const effort = effortPerRep * block.repetitions;
   const rest = block.rest_seconds * Math.max(0, block.repetitions - 1);
   return effort + rest;
 }
 
-export function calculateSessionTotalSeconds(blocks: SessionBlock[]): number {
-  return blocks.reduce((sum, b) => sum + calculateBlockTotalSeconds(b), 0);
+export function calculateSessionTotalSeconds(blocks: SessionBlock[], vma?: number): number {
+  return blocks.reduce((sum, b) => sum + calculateBlockTotalSeconds(b, vma), 0);
 }
 
 export function formatSeconds(totalSeconds: number): string {
@@ -45,18 +56,25 @@ export function formatSeconds(totalSeconds: number): string {
   return s > 0 ? `${m}'${String(s).padStart(2, '0')}` : `${m}'`;
 }
 
+export function formatDistance(meters: number): string {
+  if (meters >= 1000 && meters % 1000 === 0) return `${meters / 1000}km`;
+  return `${meters}m`;
+}
+
 export function formatBlockSummary(block: SessionBlock): string {
   const zone = ALLURE_ZONES[block.allure];
-  const dur = formatSeconds(block.duration_seconds);
-  if (block.repetitions <= 1) return `${dur} ${zone.label}`;
+  const effort = block.distance_meters ? formatDistance(block.distance_meters) : formatSeconds(block.duration_seconds);
+  if (block.repetitions <= 1) return `${effort} ${zone.label}`;
   const rest = block.rest_seconds > 0 ? ` R=${formatSeconds(block.rest_seconds)}` : '';
-  return `${block.repetitions}x${dur} ${zone.label}${rest}`;
+  return `${block.repetitions}x${effort} ${zone.label}${rest}`;
 }
 
 export const RACE_PACES = {
+  sv1:  { label: 'SV1',  pct: 72, color: '#10b981', description: 'Seuil aerobie' },
+  sv2:  { label: 'SV2',  pct: 87, color: '#8b5cf6', description: 'Seuil anaerobie' },
   as42: { label: 'AS42', pct: 80, color: '#eab308', description: 'Marathon' },
   as21: { label: 'AS21', pct: 88, color: '#f97316', description: 'Semi' },
-  as10: { label: 'AS10', pct: 92, color: '#ef4444', description: '10 km' },
+  as10: { label: 'AS10', pct: 90, color: '#ef4444', description: '10 km' },
   as5:  { label: 'AS5',  pct: 97, color: '#dc2626', description: '5 km' },
 } as const;
 

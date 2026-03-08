@@ -3,12 +3,15 @@ export type SessionStatus = 'pending' | 'done' | 'missed';
 export type RaceType = 'route' | 'trail' | 'piste';
 export type AllureZone = 'ef' | 'endurance' | 'as42' | 'as21' | 'vma';
 export type BlockType = 'echauffement' | 'travail' | 'retour_au_calme';
+export type SessionType = 'entrainement' | 'sortie_longue' | 'recuperation';
+export type TerrainOption = 'cotes' | 'piste';
 
 export interface SessionBlock {
   id: string;
   type: BlockType;
   allure: AllureZone;
   duration_seconds: number;
+  distance_meters: number | null;
   repetitions: number;
   rest_seconds: number;
 }
@@ -29,6 +32,7 @@ export interface User {
   group_id: string | null;
   phone: string | null;
   strava_id: string | null;
+  birth_date: string | null;
   license_number: string | null;
   photo_url: string | null;
   is_public: boolean;
@@ -44,6 +48,8 @@ export interface Session {
   id: string;
   date: string;
   title: string;
+  session_type: SessionType;
+  terrain_options: TerrainOption[];
   location: string | null;
   location_url: string | null;
   description: string | null;

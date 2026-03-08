@@ -20,6 +20,7 @@ CREATE TABLE users (
   group_id UUID REFERENCES groups(id) ON DELETE SET NULL,
   phone TEXT,
   strava_id TEXT,
+  birth_date DATE,
   license_number TEXT,
   photo_url TEXT,
   is_public BOOLEAN DEFAULT false,
@@ -31,6 +32,8 @@ CREATE TABLE sessions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   date TIMESTAMPTZ NOT NULL,
   title TEXT NOT NULL,
+  session_type TEXT NOT NULL DEFAULT 'entrainement' CHECK (session_type IN ('entrainement', 'sortie_longue', 'recuperation')),
+  terrain_options JSONB DEFAULT '[]'::jsonb,
   location TEXT,
   location_url TEXT,
   description TEXT,
@@ -75,6 +78,14 @@ CREATE TABLE race_nordiks (
   UNIQUE(race_id, user_id)
 );
 
+-- Exit feedbacks (anonymous, for account deletion survey)
+CREATE TABLE exit_feedbacks (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  reason TEXT NOT NULL,
+  comment TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- Indexes
 CREATE INDEX idx_sessions_date ON sessions(date);
 CREATE INDEX idx_sessions_group ON sessions(group_id);
@@ -91,6 +102,7 @@ ALTER TABLE session_validations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE race_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE race_nordiks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exit_feedbacks ENABLE ROW LEVEL SECURITY;
 
 -- Policies: Groups
 CREATE POLICY "Groups are readable by authenticated users" ON groups
@@ -181,6 +193,15 @@ CREATE POLICY "Users can insert their own nordiks" ON race_nordiks
 
 CREATE POLICY "Users can delete their own nordiks" ON race_nordiks
   FOR DELETE TO authenticated USING (user_id = auth.uid());
+
+-- Policies: Exit feedbacks (anonymous insert only)
+CREATE POLICY "Authenticated users can insert exit feedbacks" ON exit_feedbacks
+  FOR INSERT TO authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Coaches can read exit feedbacks" ON exit_feedbacks
+  FOR SELECT TO authenticated
+  USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'coach'));
 
 -- Trigger: delete auth user when profile is deleted
 CREATE OR REPLACE FUNCTION delete_auth_user()
