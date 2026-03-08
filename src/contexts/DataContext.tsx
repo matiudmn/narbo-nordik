@@ -25,6 +25,8 @@ interface DataContextType {
   toggleNordik: (raceId: string, userId: string) => Promise<void>;
   updateUserVma: (userId: string, vma: number) => Promise<void>;
   updateUserPublic: (userId: string, isPublic: boolean) => Promise<void>;
+  updateUserPhone: (userId: string, phone: string | null) => Promise<void>;
+  updateUserStrava: (userId: string, stravaId: string | null) => Promise<void>;
   updateUserPhoto: (userId: string, photoUrl: string | null) => Promise<void>;
   addUser: (user: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url'>) => Promise<AddUserResult | null>;
   deleteUser: (id: string) => Promise<void>;
@@ -185,6 +187,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!error) await fetchUsers();
   }, [fetchUsers]);
 
+  const updateUserPhone = useCallback(async (userId: string, phone: string | null) => {
+    const { error } = await supabase.from('users').update({ phone }).eq('id', userId);
+    if (!error) await fetchUsers();
+  }, [fetchUsers]);
+
+  const updateUserStrava = useCallback(async (userId: string, stravaId: string | null) => {
+    const { error } = await supabase.from('users').update({ strava_id: stravaId }).eq('id', userId);
+    if (!error) await fetchUsers();
+  }, [fetchUsers]);
+
   const updateUserPhoto = useCallback(async (userId: string, photoUrl: string | null) => {
     const { error } = await supabase.from('users').update({ photo_url: photoUrl }).eq('id', userId);
     if (!error) await fetchUsers();
@@ -265,7 +277,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     <DataContext.Provider value={{
       sessions, validations, raceResults, raceNordiks, groups, users, loading,
       addSession, updateSession, deleteSession, validateSession,
-      addRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhoto,
+      addRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserPhoto,
       addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, refreshAll,
     }}>
       {children}

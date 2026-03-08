@@ -444,90 +444,73 @@ function AthletesTab() {
       </div>
 
       {/* Athletes list */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Athlete</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Groupe</th>
-                <th className="text-center px-4 py-3 font-semibold text-gray-600">VMA</th>
-                <th className="text-center px-4 py-3 font-semibold text-gray-600">Assiduite</th>
-                <th className="w-10"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {athletes.map(athlete => {
-                const group = groups.find(g => g.id === athlete.group_id);
-                const rate = getAttendanceRate(athlete.id);
-                return (
-                  <tr key={athlete.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Avatar user={athlete} size="sm" />
-                        <div>
-                          <p className="font-medium text-gray-900">{athlete.firstname} {athlete.lastname}</p>
-                          <p className="text-xs text-gray-400">{athlete.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{group?.name || '-'}</td>
-                    <td className="px-4 py-3 text-center">
-                      {editingVma === athlete.id ? (
-                        <input
-                          type="number" step="0.5"
-                          value={vmaValue}
-                          onChange={e => setVmaValue(e.target.value)}
-                          onBlur={() => handleVmaEdit(athlete.id)}
-                          onKeyDown={e => e.key === 'Enter' && handleVmaEdit(athlete.id)}
-                          className="w-16 px-2 py-1 border border-primary rounded text-center text-sm focus:outline-none"
-                          autoFocus
-                        />
-                      ) : (
-                        <button
-                          onClick={() => { setEditingVma(athlete.id); setVmaValue(String(athlete.vma || '')); }}
-                          className="font-bold text-primary hover:bg-primary/10 px-2 py-1 rounded transition-colors"
-                        >
-                          {athlete.vma || '-'}
-                        </button>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-red-400'}`}
-                            style={{ width: `${rate}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-medium text-gray-500">{rate}%</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      {confirmDeleteId === athlete.id ? (
-                        <div className="flex gap-1">
-                          <button onClick={() => handleDelete(athlete.id)} className="p-1 text-red-500 hover:bg-red-50 rounded">
-                            <Check size={14} />
-                          </button>
-                          <button onClick={() => setConfirmDeleteId(null)} className="p-1 text-gray-400 hover:bg-gray-100 rounded">
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmDeleteId(athlete.id)}
-                          className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      <div className="space-y-2">
+        {athletes.map(athlete => {
+          const group = groups.find(g => g.id === athlete.group_id);
+          const rate = getAttendanceRate(athlete.id);
+          return (
+            <div key={athlete.id} className="bg-white rounded-xl border border-gray-100 p-4">
+              <div className="flex items-center gap-3">
+                <Avatar user={athlete} size="md" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900">{athlete.firstname} {athlete.lastname}</p>
+                  <p className="text-xs text-gray-400 truncate">{athlete.email}</p>
+                  {group && <p className="text-xs text-gray-500">{group.name}</p>}
+                </div>
+                {confirmDeleteId === athlete.id ? (
+                  <div className="flex gap-1">
+                    <button onClick={() => handleDelete(athlete.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                      <Check size={16} />
+                    </button>
+                    <button onClick={() => setConfirmDeleteId(null)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg">
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDeleteId(athlete.id)}
+                    className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">VMA</span>
+                  {editingVma === athlete.id ? (
+                    <input
+                      type="number" step="0.5" inputMode="decimal"
+                      value={vmaValue}
+                      onChange={e => setVmaValue(e.target.value)}
+                      onBlur={() => handleVmaEdit(athlete.id)}
+                      onKeyDown={e => e.key === 'Enter' && handleVmaEdit(athlete.id)}
+                      className="w-16 px-2 py-1 border border-primary rounded-lg text-center text-sm focus:outline-none"
+                      autoFocus
+                    />
+                  ) : (
+                    <button
+                      onClick={() => { setEditingVma(athlete.id); setVmaValue(String(athlete.vma || '')); }}
+                      className="font-bold text-primary hover:bg-primary/10 px-3 py-1 rounded-lg transition-colors text-sm min-w-[3rem]"
+                    >
+                      {athlete.vma || '-'}
+                    </button>
+                  )}
+                </div>
+                <div className="flex-1 flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Assiduite</span>
+                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-[80px]">
+                    <div
+                      className={`h-full rounded-full ${rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-red-400'}`}
+                      style={{ width: `${rate}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium text-gray-500">{rate}%</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
