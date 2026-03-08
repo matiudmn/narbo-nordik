@@ -48,7 +48,7 @@ function GroupsTab() {
   const [editingName, setEditingName] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const athletes = users.filter(u => u.role === 'athlete');
+  const allMembers = users;
 
   const handleAdd = () => {
     const name = newName.trim();
@@ -69,9 +69,9 @@ function GroupsTab() {
     setConfirmDeleteId(null);
   };
 
-  const getGroupAthletes = (groupId: string) => athletes.filter(a => a.group_id === groupId);
+  const getGroupMembers = (groupId: string) => allMembers.filter(a => a.group_id === groupId);
   const getGroupSessionCount = (groupId: string) => sessions.filter(s => s.group_id === groupId).length;
-  const unassigned = athletes.filter(a => !a.group_id);
+  const unassigned = allMembers.filter(a => !a.group_id);
 
   return (
     <div className="space-y-3">
@@ -99,7 +99,7 @@ function GroupsTab() {
 
       {/* Groups list */}
       {groups.map(group => {
-        const groupAthletes = getGroupAthletes(group.id);
+        const groupMembers = getGroupMembers(group.id);
         const sessionCount = getGroupSessionCount(group.id);
         const isEditing = editingId === group.id;
         const isConfirmingDelete = confirmDeleteId === group.id;
@@ -132,7 +132,7 @@ function GroupsTab() {
                   <div className="flex-1">
                     <p className="font-bold text-gray-900">{group.name}</p>
                     <p className="text-xs text-gray-400">
-                      {groupAthletes.length} athlete{groupAthletes.length !== 1 ? 's' : ''} · {sessionCount} seance{sessionCount !== 1 ? 's' : ''}
+                      {groupMembers.length} membre{groupMembers.length !== 1 ? 's' : ''} · {sessionCount} seance{sessionCount !== 1 ? 's' : ''}
                     </p>
                   </div>
                   <button
@@ -155,7 +155,7 @@ function GroupsTab() {
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
                 <p className="text-sm text-red-700 mb-2">
                   Supprimer le groupe "{group.name}" ?
-                  {groupAthletes.length > 0 && ` Les ${groupAthletes.length} athlete(s) seront sans groupe.`}
+                  {groupMembers.length > 0 && ` Les ${groupMembers.length} membre(s) seront sans groupe.`}
                   {sessionCount > 0 && ` Les ${sessionCount} seance(s) deviendront "Tous groupes".`}
                 </p>
                 <div className="flex gap-2">
@@ -165,16 +165,21 @@ function GroupsTab() {
               </div>
             )}
 
-            {groupAthletes.length > 0 ? (
+            {groupMembers.length > 0 ? (
               <div className="space-y-1.5">
-                {groupAthletes.map(athlete => (
-                  <div key={athlete.id} className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
-                    <Avatar user={athlete} size="sm" />
-                    <span className="flex-1 text-sm font-medium text-gray-900 truncate">
-                      {athlete.firstname} {athlete.lastname}
+                {groupMembers.map(member => (
+                  <div key={member.id} className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+                    <Avatar user={member} size="sm" />
+                    <span className="flex-1 text-sm font-medium text-gray-900 truncate flex items-center gap-1.5">
+                      {member.firstname} {member.lastname}
+                      {member.role === 'coach' && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                          Coach
+                        </span>
+                      )}
                     </span>
                     <button
-                      onClick={() => updateUserGroup(athlete.id, null)}
+                      onClick={() => updateUserGroup(member.id, null)}
                       className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
                       title="Retirer du groupe"
                     >
@@ -184,7 +189,7 @@ function GroupsTab() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-400 text-center py-2">Aucun athlete dans ce groupe</p>
+              <p className="text-sm text-gray-400 text-center py-2">Aucun membre dans ce groupe</p>
             )}
 
             {unassigned.length > 0 && (
@@ -194,7 +199,7 @@ function GroupsTab() {
                   onChange={e => { if (e.target.value) updateUserGroup(e.target.value, group.id); }}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
-                  <option value="">+ Ajouter un athlete...</option>
+                  <option value="">+ Ajouter un membre...</option>
                   {unassigned.map(a => (
                     <option key={a.id} value={a.id}>{a.firstname} {a.lastname}</option>
                   ))}

@@ -9,21 +9,21 @@ import Avatar from '../../components/Avatar';
 export default function Dashboard() {
   const { sessions, validations, users } = useData();
 
-  const athletes = users.filter(u => u.role === 'athlete');
+  const members = users;
 
   const stats = useMemo(() => {
     const weekSessions = sessions.filter(s => isThisWeek(new Date(s.date), { weekStartsOn: 1 }));
     const weekSessionIds = weekSessions.map(s => s.id);
     const weekValidations = validations.filter(v => weekSessionIds.includes(v.session_id));
     const doneCount = weekValidations.filter(v => v.status === 'done').length;
-    const totalExpected = weekSessions.length * athletes.length;
+    const totalExpected = weekSessions.length * members.length;
 
     return {
       completionRate: totalExpected > 0 ? Math.round((doneCount / totalExpected) * 100) : 0,
       sessionsThisWeek: weekSessions.length,
-      athleteCount: athletes.length,
+      memberCount: members.length,
     };
-  }, [sessions, validations, athletes]);
+  }, [sessions, validations, members]);
 
   const inactivityAlerts = useMemo(() => {
     const now = new Date();
@@ -33,7 +33,7 @@ export default function Dashboard() {
       { days: 7, label: 'Plus de 7 jours', color: 'bg-yellow-500', bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', borderColor: 'border-yellow-200' },
     ];
 
-    const athletesWithLastDone = athletes.map(athlete => {
+    const athletesWithLastDone = members.map(athlete => {
       const doneValidations = validations.filter(v => v.user_id === athlete.id && v.status === 'done');
       if (doneValidations.length === 0) {
         return { athlete, daysSince: Infinity };
@@ -54,7 +54,7 @@ export default function Dashboard() {
         .sort((a, b) => b.daysSince - a.daysSince);
       return { ...threshold, athletes: matched };
     }).filter(t => t.athletes.length > 0);
-  }, [athletes, validations, sessions]);
+  }, [members, validations, sessions]);
 
   const recentFeedback = useMemo(() => {
     return validations
@@ -100,8 +100,8 @@ export default function Dashboard() {
               <Users size={20} className="text-green-600" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-green-600">{stats.athleteCount}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Athletes</p>
+          <p className="text-2xl font-bold text-green-600">{stats.memberCount}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Membres</p>
         </div>
       </div>
 
