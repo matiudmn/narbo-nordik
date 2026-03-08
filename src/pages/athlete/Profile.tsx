@@ -13,7 +13,7 @@ import type { RaceType } from '../../types';
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
-  const { raceResults, addRaceResult, deleteRaceResult, groups, validations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserPhoto } = useData();
+  const { raceResults, addRaceResult, deleteRaceResult, groups, validations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserPhoto, updateUserGroup } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
   const [showAddRace, setShowAddRace] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -150,7 +150,23 @@ export default function Profile() {
           </div>
           <div>
             <p className="text-xs text-gray-400">Groupe</p>
-            <p className="font-medium text-gray-900">{group?.name || '-'}</p>
+            {user.role === 'coach' ? (
+              <select
+                value={user.group_id || ''}
+                onChange={async (e) => {
+                  await updateUserGroup(user.id, e.target.value || null);
+                  await refreshUser();
+                }}
+                className="font-medium text-gray-900 text-sm bg-transparent border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">Aucun groupe</option>
+                {groups.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            ) : (
+              <p className="font-medium text-gray-900">{group?.name || '-'}</p>
+            )}
           </div>
         </div>
 
