@@ -597,9 +597,16 @@ export default function Profile() {
               />
               <input
                 type="text"
-                placeholder="Temps (hh:mm:ss)"
+                inputMode="numeric"
+                placeholder="hh:mm:ss"
                 value={raceTime}
-                onChange={e => setRaceTime(e.target.value)}
+                onChange={e => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  let formatted = digits;
+                  if (digits.length > 4) formatted = `${digits.slice(0, 2)}:${digits.slice(2, 4)}:${digits.slice(4)}`;
+                  else if (digits.length > 2) formatted = `${digits.slice(0, 2)}:${digits.slice(2)}`;
+                  setRaceTime(formatted);
+                }}
                 className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
               />
             </div>

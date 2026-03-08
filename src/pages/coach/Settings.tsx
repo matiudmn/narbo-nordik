@@ -5,6 +5,7 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import Avatar from '../../components/Avatar';
 import type { Role } from '../../types';
+import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 
 type Tab = 'groups' | 'athletes';
 
@@ -273,13 +274,16 @@ function AthletesTab() {
 
   const athletes = useMemo(() => {
     return users
-      .filter(u => u.role === 'athlete')
+      .filter(u => {
+        if (isSuperAdmin) return u.email !== SUPER_ADMIN_EMAIL;
+        return u.role === 'athlete';
+      })
       .filter(u => {
         if (!search) return true;
         const q = search.toLowerCase();
         return u.firstname.toLowerCase().includes(q) || u.lastname.toLowerCase().includes(q);
       });
-  }, [users, search]);
+  }, [users, search, isSuperAdmin]);
 
   const getAttendanceRate = (userId: string) => {
     const totalSessions = sessions.length;
@@ -505,7 +509,12 @@ function AthletesTab() {
               <div className="flex items-center gap-3">
                 <Avatar user={athlete} size="md" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900">{athlete.firstname} {athlete.lastname}</p>
+                  <p className="font-semibold text-gray-900 flex items-center gap-1.5">
+                    {athlete.firstname} {athlete.lastname}
+                    {athlete.role === 'coach' && (
+                      <span className="inline-flex items-center text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">Coach</span>
+                    )}
+                  </p>
                   <p className="text-xs text-gray-400 truncate">{athlete.email}</p>
                   {group && <p className="text-xs text-gray-500">{group.name}</p>}
                 </div>
