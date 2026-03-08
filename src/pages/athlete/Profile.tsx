@@ -12,7 +12,7 @@ import { supabase } from '../../lib/supabase';
 import type { RaceType } from '../../types';
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { raceResults, addRaceResult, deleteRaceResult, groups, validations, updateUserPublic, updateUserPhoto } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
   const [showAddRace, setShowAddRace] = useState(false);
@@ -156,7 +156,7 @@ export default function Profile() {
             <p className="text-xs text-gray-400">VMA, telephone et Strava visibles dans l'annuaire</p>
           </div>
           <button
-            onClick={() => updateUserPublic(user.id, !user.is_public)}
+            onClick={async () => { await updateUserPublic(user.id, !user.is_public); await refreshUser(); }}
             className={`w-11 h-6 rounded-full relative transition-colors ${user.is_public ? 'bg-primary' : 'bg-gray-300'}`}
           >
             <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow ${user.is_public ? 'left-5.5' : 'left-0.5'}`} />

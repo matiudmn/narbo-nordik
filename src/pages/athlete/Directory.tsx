@@ -10,7 +10,6 @@ export default function Directory() {
 
   const athletes = useMemo(() => {
     return users
-      .filter(u => u.role === 'athlete')
       .filter(u => {
         if (search) {
           const q = search.toLowerCase();

@@ -20,27 +20,32 @@ function makeBlock(type: BlockType, allure: AllureZone, durationSec: number, rep
 function DurationInput({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   const mm = Math.floor(value / 60);
   const ss = value % 60;
-  const display = `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
-
-  const handleChange = (raw: string) => {
-    const digits = raw.replace(/\D/g, '').slice(0, 4);
-    if (digits.length <= 2) {
-      onChange(parseInt(digits || '0') * 60);
-    } else {
-      const m = parseInt(digits.slice(0, digits.length - 2));
-      const s = parseInt(digits.slice(-2));
-      onChange(m * 60 + Math.min(s, 59));
-    }
-  };
 
   return (
     <div>
       <label className="text-xs text-gray-500">{label}</label>
-      <input
-        type="text" inputMode="numeric" value={display}
-        onChange={e => handleChange(e.target.value)}
-        className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
-      />
+      <div className="flex items-center gap-1">
+        <input
+          type="number" inputMode="numeric" min={0} max={99}
+          value={mm}
+          onChange={e => {
+            const m = Math.max(0, Math.min(99, parseInt(e.target.value) || 0));
+            onChange(m * 60 + ss);
+          }}
+          className="w-12 px-1 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+        <span className="text-xs text-gray-400">m</span>
+        <input
+          type="number" inputMode="numeric" min={0} max={59}
+          value={ss}
+          onChange={e => {
+            const s = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+            onChange(mm * 60 + s);
+          }}
+          className="w-12 px-1 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+        <span className="text-xs text-gray-400">s</span>
+      </div>
     </div>
   );
 }
