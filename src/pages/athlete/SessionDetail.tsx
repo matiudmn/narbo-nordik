@@ -29,6 +29,15 @@ export default function SessionDetail() {
     );
   }
 
+  if (user?.role === 'athlete' && session.group_id && session.group_id !== user.group_id) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-gray-500">Cette seance ne vous est pas attribuee</p>
+        <button onClick={() => navigate('/')} className="mt-4 text-primary font-medium">Retour</button>
+      </div>
+    );
+  }
+
   const hasBlocks = session.blocks.length > 0;
 
   // Legacy pace calc (old sessions without blocks)

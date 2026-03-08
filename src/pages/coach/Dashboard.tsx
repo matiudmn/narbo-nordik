@@ -4,12 +4,13 @@ import { format, isThisWeek, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { TrendingUp, Users, MessageSquare, CheckCircle, AlertTriangle, Phone, ChevronRight, Settings } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
+import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import Avatar from '../../components/Avatar';
 
 export default function Dashboard() {
   const { sessions, validations, users } = useData();
 
-  const members = users;
+  const members = useMemo(() => users.filter(u => u.email !== SUPER_ADMIN_EMAIL), [users]);
 
   const stats = useMemo(() => {
     const weekSessions = sessions.filter(s => isThisWeek(new Date(s.date), { weekStartsOn: 1 }));

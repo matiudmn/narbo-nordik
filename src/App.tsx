@@ -6,6 +6,7 @@ import InstallPrompt from './components/InstallPrompt';
 import OfflineIndicator from './components/OfflineIndicator';
 import ConsentBanner from './components/ConsentBanner';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { InAppNotificationProvider } from './contexts/InAppNotificationContext';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import SessionDetail from './pages/athlete/SessionDetail';
@@ -15,6 +16,7 @@ import ClubProfile from './pages/ClubProfile';
 import Dashboard from './pages/coach/Dashboard';
 import SessionEditor from './pages/coach/SessionEditor';
 import Settings from './pages/coach/Settings';
+import Notifications from './pages/Notifications';
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -34,6 +36,7 @@ function AppRoutes() {
         <Route path="/directory" element={<Directory />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/club" element={<ClubProfile />} />
+        <Route path="/notifications" element={<Notifications />} />
 
         {/* Coach routes */}
         <Route path="/coach" element={isCoach ? <Dashboard /> : <Navigate to="/" />} />
@@ -52,12 +55,14 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <DataProvider>
-          <NotificationProvider>
-            <OfflineIndicator />
-            <AppRoutes />
-            <InstallPrompt />
-            <ConsentBanner />
-          </NotificationProvider>
+          <InAppNotificationProvider>
+            <NotificationProvider>
+              <OfflineIndicator />
+              <AppRoutes />
+              <InstallPrompt />
+              <ConsentBanner />
+            </NotificationProvider>
+          </InAppNotificationProvider>
         </DataProvider>
       </AuthProvider>
     </BrowserRouter>

@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { useData } from '../contexts/DataContext';
+import { SUPER_ADMIN_EMAIL } from '../lib/constants';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
@@ -47,7 +48,7 @@ export default function ClubProfile() {
   const { users, groups, sessions, validations, raceResults } = useData();
 
   const athletes = useMemo(() =>
-    users.filter(u => u.vma !== null)
+    users.filter(u => u.vma !== null && u.email !== SUPER_ADMIN_EMAIL)
       .sort((a, b) => (b.vma || 0) - (a.vma || 0)),
     [users]
   );

@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Check, X, Users, UserMinus, UsersRound, Search, Share2, Copy, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Pencil, Trash2, Check, X, Users, UserMinus, UsersRound, Search, Share2, Copy, Loader2, Eye, UserPlus } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
+import { useAuth } from '../../contexts/AuthContext';
 import Avatar from '../../components/Avatar';
 import type { Role } from '../../types';
 
@@ -244,7 +246,9 @@ function GroupsTab() {
 
 /* ─── Athletes Tab ─── */
 function AthletesTab() {
-  const { users, groups, validations, sessions, updateUserVma, updateUserLicense, addUser, deleteUser } = useData();
+  const { users, groups, validations, sessions, updateUserVma, updateUserLicense, updateUserGroup, addUser, deleteUser } = useData();
+  const { isSuperAdmin, impersonate } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editingVma, setEditingVma] = useState<string | null>(null);
@@ -262,6 +266,10 @@ function AthletesTab() {
   const [newEmail, setNewEmail] = useState('');
   const [newGroup, setNewGroup] = useState('');
   const [newVma, setNewVma] = useState('');
+
+  const newMembers = useMemo(() => {
+    return users.filter(u => u.role === 'athlete' && !u.group_id && !u.vma);
+  }, [users]);
 
   const athletes = useMemo(() => {
     return users
@@ -444,6 +452,37 @@ function AthletesTab() {
         </div>
       )}
 
+      {/* New members */}
+      {newMembers.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <UserPlus size={16} className="text-amber-600" />
+            <span className="text-sm font-bold text-amber-800">
+              {newMembers.length} nouveau{newMembers.length > 1 ? 'x' : ''} membre{newMembers.length > 1 ? 's' : ''}
+            </span>
+          </div>
+          {newMembers.map(m => (
+            <div key={m.id} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-amber-100">
+              <Avatar user={m} size="sm" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900">{m.firstname} {m.lastname}</p>
+                <p className="text-xs text-gray-400 truncate">{m.email}</p>
+              </div>
+              <select
+                defaultValue=""
+                onChange={e => { if (e.target.value) updateUserGroup(m.id, e.target.value); }}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white"
+              >
+                <option value="" disabled>Groupe...</option>
+                {groups.map(g => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Search */}
       <div className="relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -470,23 +509,34 @@ function AthletesTab() {
                   <p className="text-xs text-gray-400 truncate">{athlete.email}</p>
                   {group && <p className="text-xs text-gray-500">{group.name}</p>}
                 </div>
-                {confirmDeleteId === athlete.id ? (
-                  <div className="flex gap-1">
-                    <button onClick={() => handleDelete(athlete.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                      <Check size={16} />
+                <div className="flex items-center gap-1">
+                  {isSuperAdmin && (
+                    <button
+                      onClick={async () => { await impersonate(athlete.id); navigate('/'); }}
+                      className="p-2 text-gray-300 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                      title="Voir en tant que"
+                    >
+                      <Eye size={16} />
                     </button>
-                    <button onClick={() => setConfirmDeleteId(null)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg">
-                      <X size={16} />
+                  )}
+                  {confirmDeleteId === athlete.id ? (
+                    <div className="flex gap-1">
+                      <button onClick={() => handleDelete(athlete.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                        <Check size={16} />
+                      </button>
+                      <button onClick={() => setConfirmDeleteId(null)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteId(athlete.id)}
+                      className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={16} />
                     </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setConfirmDeleteId(athlete.id)}
-                    className="p-2 text-gray-300 hover:text-red-500 transition-colors"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
                 <div className="flex items-center gap-2">

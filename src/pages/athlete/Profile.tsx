@@ -10,7 +10,7 @@ import { formatDuration } from '../../lib/calculations';
 import { getFFACategory } from '../../lib/ffa';
 import Avatar from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
-import type { RaceType } from '../../types';
+import type { RaceType, NotificationPreferences } from '../../types';
 
 function Accordion({ title, icon, children, defaultOpen = false, badge, action }: {
   title: string;
@@ -44,7 +44,7 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
-  const { raceResults, addRaceResult, deleteRaceResult, groups, users, validations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup } = useData();
+  const { raceResults, addRaceResult, deleteRaceResult, groups, users, validations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateNotificationPreferences } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
   const [showAddRace, setShowAddRace] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -607,30 +607,94 @@ export default function Profile() {
         title="Notifications"
         icon={<Bell size={18} className="text-primary" />}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-900">Rappels de seances</p>
-            <p className="text-xs text-gray-400">
-              {permission === 'granted' ? 'Actives' : permission === 'denied' ? 'Bloquees par le navigateur' : 'Non activees'}
-            </p>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Notifications push</p>
+              <p className="text-xs text-gray-400">
+                {permission === 'granted' ? 'Actives' : permission === 'denied' ? 'Bloquees par le navigateur' : 'Non activees'}
+              </p>
+            </div>
+            {permission === 'granted' ? (
+              <button
+                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                className={`w-11 h-6 rounded-full relative transition-colors ${notificationsEnabled ? 'bg-primary' : 'bg-gray-300'}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow ${notificationsEnabled ? 'left-5.5' : 'left-0.5'}`} />
+              </button>
+            ) : permission === 'denied' ? (
+              <BellOff size={20} className="text-gray-400" />
+            ) : (
+              <button
+                onClick={requestPermission}
+                className="text-sm bg-primary text-white px-3 py-1.5 rounded-lg font-medium hover:bg-primary-light transition-colors"
+              >
+                Activer
+              </button>
+            )}
           </div>
-          {permission === 'granted' ? (
-            <button
-              onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-              className={`w-11 h-6 rounded-full relative transition-colors ${notificationsEnabled ? 'bg-primary' : 'bg-gray-300'}`}
-            >
-              <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow ${notificationsEnabled ? 'left-5.5' : 'left-0.5'}`} />
-            </button>
-          ) : permission === 'denied' ? (
-            <BellOff size={20} className="text-gray-400" />
-          ) : (
-            <button
-              onClick={requestPermission}
-              className="text-sm bg-primary text-white px-3 py-1.5 rounded-lg font-medium hover:bg-primary-light transition-colors"
-            >
-              Activer
-            </button>
-          )}
+
+          <div className="border-t border-gray-100 pt-3">
+            <p className="text-sm font-medium text-gray-900 mb-3">Preferences par type</p>
+            <div className="space-y-3">
+              {([
+                { key: 'new_session', label: 'Nouvelle seance', hasInApp: true, hasEmail: true },
+                { key: 'palmares', label: 'Palmares', hasInApp: true, hasEmail: true },
+                { key: 'vma_update', label: 'Mise a jour VMA', hasInApp: true, hasEmail: true },
+                { key: 'weekly_digest', label: 'Digest hebdo', hasInApp: false, hasEmail: true },
+              ] as const).map(({ key, label, hasInApp, hasEmail }) => (
+                <div key={key} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700">{label}</span>
+                  <div className="flex items-center gap-3">
+                    {hasInApp && (
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <span className="text-xs text-gray-400">In-app</span>
+                        <button
+                          onClick={async () => {
+                            if (!user) return;
+                            const prefs = { ...user.notification_preferences };
+                            const current = prefs[key] as { in_app: boolean; email: boolean };
+                            (prefs as Record<string, unknown>)[key] = { ...current, in_app: !current.in_app };
+                            await updateNotificationPreferences(user.id, prefs as NotificationPreferences);
+                            refreshUser();
+                          }}
+                          className={`w-9 h-5 rounded-full relative transition-colors ${
+                            (user?.notification_preferences[key] as { in_app?: boolean })?.in_app ? 'bg-primary' : 'bg-gray-300'
+                          }`}
+                        >
+                          <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform shadow ${
+                            (user?.notification_preferences[key] as { in_app?: boolean })?.in_app ? 'left-4.5' : 'left-0.5'
+                          }`} />
+                        </button>
+                      </label>
+                    )}
+                    {hasEmail && (
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <span className="text-xs text-gray-400">Email</span>
+                        <button
+                          onClick={async () => {
+                            if (!user) return;
+                            const prefs = { ...user.notification_preferences };
+                            const current = prefs[key] as { email: boolean };
+                            (prefs as Record<string, unknown>)[key] = { ...current, email: !current.email };
+                            await updateNotificationPreferences(user.id, prefs as NotificationPreferences);
+                            refreshUser();
+                          }}
+                          className={`w-9 h-5 rounded-full relative transition-colors ${
+                            (user?.notification_preferences[key] as { email?: boolean })?.email ? 'bg-primary' : 'bg-gray-300'
+                          }`}
+                        >
+                          <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform shadow ${
+                            (user?.notification_preferences[key] as { email?: boolean })?.email ? 'left-4.5' : 'left-0.5'
+                          }`} />
+                        </button>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </Accordion>
 

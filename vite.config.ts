@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo-club.svg', 'apple-touch-icon-180x180.png'],
+      includeAssets: ['logo-club.png', 'apple-touch-icon-180x180.png'],
       manifest: {
         name: 'Narbo Nordik Club',
         short_name: 'Narbo Nordik',

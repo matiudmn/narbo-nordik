@@ -36,6 +36,7 @@ export interface User {
   license_number: string | null;
   photo_url: string | null;
   is_public: boolean;
+  notification_preferences: NotificationPreferences;
   created_at: string;
 }
 
@@ -92,6 +93,26 @@ export interface RaceNordik {
 export interface SessionWithValidation extends Session {
   validation?: SessionValidation;
   group?: Group;
+}
+
+export type NotificationType = 'new_session' | 'palmares' | 'vma_update' | 'weekly_digest' | 'system';
+
+export interface NotificationPreferences {
+  new_session: { in_app: boolean; email: boolean };
+  palmares: { in_app: boolean; email: boolean };
+  vma_update: { in_app: boolean; email: boolean };
+  weekly_digest: { email: boolean };
+}
+
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  link: string | null;
+  read: boolean;
+  created_at: string;
 }
 
 export interface PaceCalculation {

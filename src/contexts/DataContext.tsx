@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import type { Session, SessionValidation, RaceResult, RaceNordik, Group, User } from '../types';
+import type { Session, SessionValidation, RaceResult, RaceNordik, Group, User, NotificationPreferences } from '../types';
 import { supabase, createEphemeralClient } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -30,12 +30,13 @@ interface DataContextType {
   updateUserLicense: (userId: string, licenseNumber: string | null) => Promise<void>;
   updateUserBirthDate: (userId: string, birthDate: string | null) => Promise<void>;
   updateUserPhoto: (userId: string, photoUrl: string | null) => Promise<void>;
-  addUser: (user: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date'>) => Promise<AddUserResult | null>;
+  addUser: (user: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date' | 'notification_preferences'>) => Promise<AddUserResult | null>;
   deleteUser: (id: string) => Promise<void>;
   addGroup: (name: string) => Promise<void>;
   updateGroup: (id: string, name: string) => Promise<void>;
   deleteGroup: (id: string) => Promise<void>;
   updateUserGroup: (userId: string, groupId: string | null) => Promise<void>;
+  updateNotificationPreferences: (userId: string, prefs: NotificationPreferences) => Promise<void>;
   refreshAll: () => Promise<void>;
 }
 
@@ -91,6 +92,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       ...u,
       vma_history: u.vma_history || [],
       photo_url: u.photo_url || null,
+      notification_preferences: u.notification_preferences || {
+        new_session: { in_app: true, email: true },
+        palmares: { in_app: true, email: true },
+        vma_update: { in_app: true, email: false },
+        weekly_digest: { email: true },
+      },
     })));
   }, []);
 
@@ -215,7 +222,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [fetchUsers]);
 
   const addUser = useCallback(async (
-    userData: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date'>
+    userData: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date' | 'notification_preferences'>
   ): Promise<AddUserResult | null> => {
     const tempPassword = generateTempPassword();
     const ephemeral = createEphemeralClient();
@@ -285,12 +292,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!error) await fetchUsers();
   }, [fetchUsers]);
 
+  const updateNotificationPreferences = useCallback(async (userId: string, prefs: NotificationPreferences) => {
+    const { error } = await supabase.from('users').update({ notification_preferences: prefs }).eq('id', userId);
+    if (!error) await fetchUsers();
+  }, [fetchUsers]);
+
   return (
     <DataContext.Provider value={{
       sessions, validations, raceResults, raceNordiks, groups, users, loading,
       addSession, updateSession, deleteSession, validateSession,
       addRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto,
-      addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, refreshAll,
+      addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences, refreshAll,
     }}>
       {children}
     </DataContext.Provider>
