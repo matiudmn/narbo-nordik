@@ -44,7 +44,7 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
-  const { raceResults, addRaceResult, deleteRaceResult, groups, users, validations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateNotificationPreferences } = useData();
+  const { raceResults, addRaceResult, deleteRaceResult, groups, users, validations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
   const [showAddRace, setShowAddRace] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,6 +63,8 @@ export default function Profile() {
   const [licenseValue, setLicenseValue] = useState('');
   const [editingBirthDate, setEditingBirthDate] = useState(false);
   const [birthDateValue, setBirthDateValue] = useState('');
+  const [editingVma, setEditingVma] = useState(false);
+  const [vmaValue, setVmaValue] = useState('');
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -259,15 +261,54 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* VMA (read-only for athletes) */}
+          {/* VMA */}
           <div className="mt-3 flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-400">VMA</p>
-              <p className="font-medium text-gray-900">{user.vma ? `${user.vma} km/h` : 'Non renseignee'}</p>
+              {editingVma && user.role === 'coach' ? (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="5"
+                    max="30"
+                    value={vmaValue}
+                    onChange={e => setVmaValue(e.target.value)}
+                    className="w-20 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    autoFocus
+                  />
+                  <span className="text-xs text-gray-400">km/h</span>
+                  <button
+                    onClick={async () => {
+                      const v = parseFloat(vmaValue);
+                      if (v >= 5 && v <= 30) {
+                        await updateUserVma(user.id, v);
+                        await refreshUser();
+                        setEditingVma(false);
+                      }
+                    }}
+                    className="p-1 text-green-600 hover:text-green-700"
+                  >
+                    <Check size={16} />
+                  </button>
+                  <button onClick={() => setEditingVma(false)} className="p-1 text-gray-400 hover:text-gray-600">
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <p className="font-medium text-gray-900">{user.vma ? `${user.vma} km/h` : 'Non renseignee'}</p>
+              )}
             </div>
-            <span className="text-xs text-gray-400 italic">
-              {user.role === 'coach' ? 'Modifiable depuis les reglages' : 'Modifiable par le coach'}
-            </span>
+            {user.role === 'coach' && !editingVma ? (
+              <button
+                onClick={() => { setVmaValue(user.vma?.toString() || ''); setEditingVma(true); }}
+                className="text-xs text-primary font-medium hover:underline"
+              >
+                Modifier
+              </button>
+            ) : user.role !== 'coach' ? (
+              <span className="text-xs text-gray-400 italic">Modifiable par le coach</span>
+            ) : null}
           </div>
 
           {/* Phone */}
