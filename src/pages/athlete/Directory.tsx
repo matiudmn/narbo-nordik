@@ -97,7 +97,7 @@ export default function Directory() {
                 )}
                 {athlete.strava_id && (
                   <a
-                    href={`https://www.strava.com/athletes/${athlete.strava_id}`}
+                    href={athlete.strava_id}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg transition-colors"

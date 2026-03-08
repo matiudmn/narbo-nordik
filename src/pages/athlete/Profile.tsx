@@ -212,12 +212,12 @@ export default function Profile() {
           <div className="flex items-center gap-2">
             <ExternalLink size={16} className="text-orange-500" />
             <div>
-              <p className="text-xs text-gray-400">Profil Strava (ID ou username)</p>
+              <p className="text-xs text-gray-400">Profil Strava (lien URL)</p>
               {editingStrava ? (
                 <div className="flex items-center gap-1 mt-0.5">
                   <input
-                    type="text"
-                    placeholder="12345678"
+                    type="url"
+                    placeholder="https://www.strava.com/athletes/..."
                     value={stravaValue}
                     onChange={e => setStravaValue(e.target.value)}
                     onKeyDown={e => {
@@ -227,7 +227,7 @@ export default function Profile() {
                         setEditingStrava(false);
                       }
                     }}
-                    className="w-36 px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-52 px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                     autoFocus
                   />
                   <button
