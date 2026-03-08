@@ -29,6 +29,7 @@ export interface User {
   group_id: string | null;
   phone: string | null;
   strava_id: string | null;
+  license_number: string | null;
   photo_url: string | null;
   is_public: boolean;
   created_at: string;

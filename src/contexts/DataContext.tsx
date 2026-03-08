@@ -27,8 +27,9 @@ interface DataContextType {
   updateUserPublic: (userId: string, isPublic: boolean) => Promise<void>;
   updateUserPhone: (userId: string, phone: string | null) => Promise<void>;
   updateUserStrava: (userId: string, stravaId: string | null) => Promise<void>;
+  updateUserLicense: (userId: string, licenseNumber: string | null) => Promise<void>;
   updateUserPhoto: (userId: string, photoUrl: string | null) => Promise<void>;
-  addUser: (user: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url'>) => Promise<AddUserResult | null>;
+  addUser: (user: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number'>) => Promise<AddUserResult | null>;
   deleteUser: (id: string) => Promise<void>;
   addGroup: (name: string) => Promise<void>;
   updateGroup: (id: string, name: string) => Promise<void>;
@@ -197,13 +198,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!error) await fetchUsers();
   }, [fetchUsers]);
 
+  const updateUserLicense = useCallback(async (userId: string, licenseNumber: string | null) => {
+    const { error } = await supabase.from('users').update({ license_number: licenseNumber }).eq('id', userId);
+    if (!error) await fetchUsers();
+  }, [fetchUsers]);
+
   const updateUserPhoto = useCallback(async (userId: string, photoUrl: string | null) => {
     const { error } = await supabase.from('users').update({ photo_url: photoUrl }).eq('id', userId);
     if (!error) await fetchUsers();
   }, [fetchUsers]);
 
   const addUser = useCallback(async (
-    userData: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url'>
+    userData: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number'>
   ): Promise<AddUserResult | null> => {
     const tempPassword = generateTempPassword();
     const ephemeral = createEphemeralClient();
@@ -277,7 +283,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     <DataContext.Provider value={{
       sessions, validations, raceResults, raceNordiks, groups, users, loading,
       addSession, updateSession, deleteSession, validateSession,
-      addRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserPhoto,
+      addRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserPhoto,
       addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, refreshAll,
     }}>
       {children}

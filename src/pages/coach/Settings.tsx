@@ -239,11 +239,13 @@ function GroupsTab() {
 
 /* ─── Athletes Tab ─── */
 function AthletesTab() {
-  const { users, groups, validations, sessions, updateUserVma, addUser, deleteUser } = useData();
+  const { users, groups, validations, sessions, updateUserVma, updateUserLicense, addUser, deleteUser } = useData();
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editingVma, setEditingVma] = useState<string | null>(null);
   const [vmaValue, setVmaValue] = useState('');
+  const [editingLicense, setEditingLicense] = useState<string | null>(null);
+  const [licenseValue, setLicenseValue] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [shareInfo, setShareInfo] = useState<{ name: string; email: string; tempPassword: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -279,6 +281,12 @@ function AthletesTab() {
     }
     setEditingVma(null);
     setVmaValue('');
+  };
+
+  const handleLicenseEdit = (userId: string) => {
+    updateUserLicense(userId, licenseValue.trim() || null);
+    setEditingLicense(null);
+    setLicenseValue('');
   };
 
   const getShareMessage = (name: string, email: string, tempPassword: string) =>
@@ -494,6 +502,27 @@ function AthletesTab() {
                       className="font-bold text-primary hover:bg-primary/10 px-3 py-1 rounded-lg transition-colors text-sm min-w-[3rem]"
                     >
                       {athlete.vma || '-'}
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Licence</span>
+                  {editingLicense === athlete.id ? (
+                    <input
+                      type="text"
+                      value={licenseValue}
+                      onChange={e => setLicenseValue(e.target.value)}
+                      onBlur={() => handleLicenseEdit(athlete.id)}
+                      onKeyDown={e => e.key === 'Enter' && handleLicenseEdit(athlete.id)}
+                      className="w-20 px-2 py-1 border border-primary rounded-lg text-center text-sm focus:outline-none"
+                      autoFocus
+                    />
+                  ) : (
+                    <button
+                      onClick={() => { setEditingLicense(athlete.id); setLicenseValue(athlete.license_number || ''); }}
+                      className="font-bold text-primary hover:bg-primary/10 px-3 py-1 rounded-lg transition-colors text-sm min-w-[3rem]"
+                    >
+                      {athlete.license_number || '-'}
                     </button>
                   )}
                 </div>

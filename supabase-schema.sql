@@ -20,6 +20,7 @@ CREATE TABLE users (
   group_id UUID REFERENCES groups(id) ON DELETE SET NULL,
   phone TEXT,
   strava_id TEXT,
+  license_number TEXT,
   photo_url TEXT,
   is_public BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now()

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, ExternalLink, Pencil, Check } from 'lucide-react';
+import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, ExternalLink, Pencil, Check, IdCard } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import NordikButton from '../../components/NordikButton';
@@ -13,7 +13,7 @@ import type { RaceType } from '../../types';
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
-  const { raceResults, addRaceResult, deleteRaceResult, groups, validations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserPhoto, updateUserGroup } = useData();
+  const { raceResults, addRaceResult, deleteRaceResult, groups, validations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserPhoto, updateUserGroup } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
   const [showAddRace, setShowAddRace] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +28,8 @@ export default function Profile() {
   const [phoneValue, setPhoneValue] = useState('');
   const [editingStrava, setEditingStrava] = useState(false);
   const [stravaValue, setStravaValue] = useState('');
+  const [editingLicense, setEditingLicense] = useState(false);
+  const [licenseValue, setLicenseValue] = useState('');
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -268,6 +270,58 @@ export default function Profile() {
           {!editingStrava && (
             <button
               onClick={() => { setStravaValue(user.strava_id || ''); setEditingStrava(true); setEditingPhone(false); }}
+              className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+            >
+              <Pencil size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* License number */}
+        <div className="mt-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <IdCard size={16} className="text-primary" />
+            <div>
+              <p className="text-xs text-gray-400">Numero de licence</p>
+              {editingLicense ? (
+                <div className="flex items-center gap-1 mt-0.5">
+                  <input
+                    type="text"
+                    placeholder="Ex: 1234567"
+                    value={licenseValue}
+                    onChange={e => setLicenseValue(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        const v = licenseValue.trim() || null;
+                        updateUserLicense(user.id, v).then(() => refreshUser());
+                        setEditingLicense(false);
+                      }
+                    }}
+                    className="w-36 px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => {
+                      const v = licenseValue.trim() || null;
+                      updateUserLicense(user.id, v).then(() => refreshUser());
+                      setEditingLicense(false);
+                    }}
+                    className="p-1 text-primary hover:bg-primary/10 rounded"
+                  >
+                    <Check size={14} />
+                  </button>
+                  <button onClick={() => setEditingLicense(false)} className="p-1 text-gray-400 hover:bg-gray-100 rounded">
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <p className="font-medium text-gray-900 text-sm">{user.license_number || 'Non renseigne'}</p>
+              )}
+            </div>
+          </div>
+          {!editingLicense && (
+            <button
+              onClick={() => { setLicenseValue(user.license_number || ''); setEditingLicense(true); setEditingPhone(false); setEditingStrava(false); }}
               className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
             >
               <Pencil size={14} />
