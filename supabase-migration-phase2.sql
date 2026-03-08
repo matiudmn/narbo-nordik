@@ -81,17 +81,15 @@ CREATE TRIGGER on_new_session
 CREATE OR REPLACE FUNCTION notify_new_palmares()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
-  race RECORD;
   runner RECORD;
   target_user RECORD;
 BEGIN
-  SELECT * INTO race FROM race_results WHERE id = NEW.race_id;
-  SELECT * INTO runner FROM users WHERE id = race.user_id;
+  SELECT * INTO runner FROM users WHERE id = NEW.user_id;
 
   FOR target_user IN
     SELECT id, notification_preferences
     FROM users
-    WHERE id != race.user_id
+    WHERE id != NEW.user_id
   LOOP
     IF (target_user.notification_preferences->'palmares'->>'in_app')::boolean IS NOT FALSE THEN
       INSERT INTO notifications (user_id, type, title, body, link)
@@ -99,7 +97,7 @@ BEGIN
         target_user.id,
         'palmares',
         'Nouveau palmares',
-        runner.firstname || ' ' || runner.lastname || ' - ' || race.race_name,
+        runner.firstname || ' ' || runner.lastname || ' - ' || NEW.race_name,
         '/club'
       );
     END IF;
