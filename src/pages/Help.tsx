@@ -138,7 +138,21 @@ const athleteSections: Section[] = [
         <p className="font-semibold text-gray-900">Ajouter un resultat</p>
         <p>
           Apres une competition, vous pouvez ajouter votre resultat : nom de la course,
-          date, distance, temps realise. Ce resultat sera visible par tous les membres du club.
+          date, distance, temps realise et type de course. Ce resultat sera visible par tous
+          les membres du club. Vous pouvez ajouter un resultat depuis votre profil ou depuis
+          la page Palmares.
+        </p>
+        <p className="font-semibold text-gray-900">Modifier un resultat</p>
+        <p>
+          Si vous avez fait une erreur de saisie, vous pouvez modifier vos resultats a tout moment
+          en cliquant sur l'icone crayon a cote du resultat. Le coach peut egalement modifier
+          vos resultats si necessaire.
+        </p>
+        <p className="font-semibold text-gray-900">Course a label</p>
+        <p>
+          Lors de l'ajout ou la modification d'un resultat, vous pouvez cocher la case "Course a label"
+          si la course dispose d'un label officiel (FFA, World Athletics, etc.). Ces courses sont
+          identifiees par une etoile dans le palmares.
         </p>
         <p className="font-semibold text-gray-900">Consulter les resultats</p>
         <p>
@@ -169,6 +183,12 @@ const athleteSections: Section[] = [
           (icone bulle de conversation). Il permet d'echanger facilement avec les autres membres
           en dehors de l'application.
         </p>
+        <p className="font-semibold text-gray-900">Navigation dans le header</p>
+        <p>
+          Le header en haut de l'ecran contient plusieurs raccourcis : cliquez sur le logo du club
+          pour revenir a l'accueil, sur votre photo de profil pour acceder a votre profil,
+          sur l'icone cloche pour les notifications, et sur l'icone "?" pour cette page d'aide.
+        </p>
       </>
     ),
   },
@@ -194,7 +214,7 @@ const athleteSections: Section[] = [
     content: (
       <>
         <p>
-          Votre profil personnel est accessible via votre avatar en haut a droite.
+          Votre profil personnel est accessible en cliquant sur votre photo de profil dans le header.
         </p>
         <p className="font-semibold text-gray-900">Informations personnelles</p>
         <p>
@@ -296,8 +316,8 @@ const coachSections: Section[] = [
         <p>
           Chaque bloc definit une phase de la seance : echauffement, travail specifique,
           recuperation, retour au calme. Pour chaque bloc, vous definissez le type,
-          la distance ou duree, et le pourcentage de VMA. L'application calculera
-          automatiquement l'allure personnalisee pour chaque athlete.
+          la distance ou duree (heures, minutes, secondes), et le pourcentage de VMA.
+          L'application calculera automatiquement l'allure personnalisee pour chaque athlete.
         </p>
         <p className="font-semibold text-gray-900">Affecter a un groupe ou une preparation</p>
         <p>
@@ -367,6 +387,30 @@ const coachSections: Section[] = [
         <p>
           Lors de la creation d'une seance, vous pouvez l'affecter a une preparation specifique
           plutot qu'a un groupe. Seuls les athletes inscrits a cette preparation verront la seance.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'coach-palmares',
+    title: 'Palmares des athletes',
+    coachOnly: true,
+    content: (
+      <>
+        <p>
+          En tant que coach, vous avez des droits etendus sur le palmares.
+        </p>
+        <p className="font-semibold text-gray-900">Ajouter un resultat pour un athlete</p>
+        <p>
+          Depuis la page Palmares, cliquez sur "Ajouter un resultat". Selectionnez l'athlete
+          concerne dans la liste deroulante, puis renseignez les informations de la course.
+          Utile si un athlete n'a pas encore saisi son resultat.
+        </p>
+        <p className="font-semibold text-gray-900">Modifier un resultat</p>
+        <p>
+          Vous pouvez modifier le resultat de n'importe quel athlete en cliquant sur l'icone
+          crayon a cote du resultat. Cela permet de corriger des erreurs de saisie ou d'ajouter
+          le statut "course a label".
         </p>
       </>
     ),
