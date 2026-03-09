@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Search, Phone, ExternalLink, Shield, Cake, ChevronDown, Gauge, Target, Trophy } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, Phone, ExternalLink, Shield, Cake, ChevronDown, Gauge, Target, Trophy, History } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useData } from '../../contexts/DataContext';
@@ -105,6 +106,12 @@ function MemberStats({ member }: { member: User }) {
               );
             })}
           </div>
+          {member.vma_history.length > 1 && (
+            <Link to={`/vma-history?user=${member.id}`} className="flex items-center gap-1 text-xs text-primary hover:underline mt-2">
+              <History size={12} />
+              Historique VMA
+            </Link>
+          )}
         </div>
       ) : (
         <div className="bg-gray-50 rounded-lg p-3 text-center">

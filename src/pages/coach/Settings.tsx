@@ -430,6 +430,7 @@ function AthletesTab() {
   const [showAdd, setShowAdd] = useState(false);
   const [editingVma, setEditingVma] = useState<string | null>(null);
   const [vmaValue, setVmaValue] = useState('');
+  const [vmaReason, setVmaReason] = useState('');
   const [editingLicense, setEditingLicense] = useState<string | null>(null);
   const [licenseValue, setLicenseValue] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -470,10 +471,11 @@ function AthletesTab() {
 
   const handleVmaEdit = (userId: string) => {
     if (vmaValue && !isNaN(parseFloat(vmaValue))) {
-      updateUserVma(userId, parseFloat(vmaValue));
+      updateUserVma(userId, parseFloat(vmaValue), vmaReason.trim() || undefined);
     }
     setEditingVma(null);
     setVmaValue('');
+    setVmaReason('');
   };
 
   const handleLicenseEdit = (userId: string) => {
@@ -732,18 +734,20 @@ function AthletesTab() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500">VMA</span>
                   {editingVma === athlete.id ? (
-                    <input
-                      type="number" step="0.5" inputMode="decimal"
-                      value={vmaValue}
-                      onChange={e => setVmaValue(e.target.value)}
-                      onBlur={() => handleVmaEdit(athlete.id)}
-                      onKeyDown={e => e.key === 'Enter' && handleVmaEdit(athlete.id)}
-                      className="w-16 px-2 py-1 border border-primary rounded-lg text-center text-sm focus:outline-none"
-                      autoFocus
-                    />
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number" step="0.5" inputMode="decimal"
+                        value={vmaValue}
+                        onChange={e => setVmaValue(e.target.value)}
+                        className="w-16 px-2 py-1 border border-primary rounded-lg text-center text-sm focus:outline-none"
+                        autoFocus
+                      />
+                      <button onClick={() => handleVmaEdit(athlete.id)} className="p-1 text-green-600 hover:text-green-700"><Check size={14} /></button>
+                      <button onClick={() => { setEditingVma(null); setVmaValue(''); setVmaReason(''); }} className="p-1 text-gray-400 hover:text-gray-600"><X size={14} /></button>
+                    </div>
                   ) : (
                     <button
-                      onClick={() => { setEditingVma(athlete.id); setVmaValue(String(athlete.vma || '')); }}
+                      onClick={() => { setEditingVma(athlete.id); setVmaValue(String(athlete.vma || '')); setVmaReason(''); }}
                       className="font-bold text-primary hover:bg-primary/10 px-3 py-1 rounded-lg transition-colors text-sm min-w-[3rem]"
                     >
                       {athlete.vma || '-'}
@@ -782,6 +786,18 @@ function AthletesTab() {
                   <span className="text-xs font-medium text-gray-500">{rate}%</span>
                 </div>
               </div>
+              {editingVma === athlete.id && (
+                <div className="mt-2 pt-2 border-t border-gray-50">
+                  <input
+                    type="text"
+                    value={vmaReason}
+                    onChange={e => setVmaReason(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleVmaEdit(athlete.id)}
+                    placeholder="Raison (test piste, estimation...)"
+                    className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  />
+                </div>
+              )}
             </div>
           );
         })}

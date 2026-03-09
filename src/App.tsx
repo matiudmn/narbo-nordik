@@ -18,6 +18,7 @@ import SessionEditor from './pages/coach/SessionEditor';
 import Settings from './pages/coach/Settings';
 import Notifications from './pages/Notifications';
 import Palmares from './pages/Palmares';
+import VmaHistory from './pages/VmaHistory';
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -39,6 +40,7 @@ function AppRoutes() {
         <Route path="/club" element={<ClubProfile />} />
         <Route path="/palmares" element={<Palmares />} />
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/vma-history" element={<VmaHistory />} />
 
         {/* Coach routes */}
         <Route path="/coach" element={isCoach ? <Dashboard /> : <Navigate to="/" />} />

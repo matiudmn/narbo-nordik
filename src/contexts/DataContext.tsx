@@ -21,11 +21,11 @@ interface DataContextType {
   addSession: (session: Omit<Session, 'id' | 'created_at'>) => Promise<void>;
   updateSession: (id: string, updates: Partial<Session>) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
-  validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string) => Promise<void>;
+  validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File) => Promise<void>;
   addRaceResult: (result: Omit<RaceResult, 'id' | 'created_at'>) => Promise<void>;
   deleteRaceResult: (id: string) => Promise<void>;
   toggleNordik: (raceId: string, userId: string) => Promise<void>;
-  updateUserVma: (userId: string, vma: number) => Promise<void>;
+  updateUserVma: (userId: string, vma: number, reason?: string) => Promise<void>;
   updateUserPublic: (userId: string, isPublic: boolean) => Promise<void>;
   updateUserPhone: (userId: string, phone: string | null) => Promise<void>;
   updateUserStrava: (userId: string, stravaId: string | null) => Promise<void>;
@@ -169,13 +169,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [fetchSessions, fetchValidations]);
 
-  const validateSession = useCallback(async (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string) => {
+  const validateSession = useCallback(async (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File) => {
+    let attachmentPath: string | null = null;
+    let attachmentType: string | null = null;
+
+    if (file) {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
+      const filePath = `${userId}/${sessionId}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('session-attachments')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+      if (uploadError) {
+        console.error('Upload error:', uploadError.message);
+        return;
+      }
+      attachmentPath = filePath;
+      attachmentType = file.type;
+    }
+
     const { error } = await supabase.from('session_validations').upsert(
       {
         session_id: sessionId,
         user_id: userId,
         status,
         feedback: feedback || null,
+        attachment_path: attachmentPath,
+        attachment_type: attachmentType,
         created_at: new Date().toISOString(),
       },
       { onConflict: 'session_id,user_id' }
@@ -206,10 +225,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await fetchRaceNordiks();
   }, [raceNordiks, fetchRaceNordiks]);
 
-  const updateUserVma = useCallback(async (userId: string, vma: number) => {
+  const updateUserVma = useCallback(async (userId: string, vma: number, reason?: string) => {
     const targetUser = users.find(u => u.id === userId);
     if (!targetUser) return;
-    const history = [...targetUser.vma_history, { vma, date: new Date().toISOString().split('T')[0] }];
+    const entry: { vma: number; date: string; reason?: string } = { vma, date: new Date().toISOString().split('T')[0] };
+    if (reason) entry.reason = reason;
+    const history = [...targetUser.vma_history, entry];
     const { error } = await supabase.from('users').update({ vma, vma_history: history }).eq('id', userId);
     if (!error) await fetchUsers();
   }, [users, fetchUsers]);

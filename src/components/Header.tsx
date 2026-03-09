@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Shield, X, Bell } from 'lucide-react';
+import { LogOut, Shield, X, Bell, MessageCircle } from 'lucide-react';
 import Avatar from './Avatar';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
 
@@ -44,6 +44,15 @@ export default function Header() {
                 <Shield size={14} />
               </div>
             )}
+            <a
+              href="https://chat.whatsapp.com/JwBh6hcJ7o00aBqonTAtD8?mode=hqctcli"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              title="Groupe WhatsApp"
+            >
+              <MessageCircle size={18} />
+            </a>
             <button
               onClick={() => navigate('/notifications')}
               className="relative p-2 hover:bg-white/10 rounded-lg transition-colors"

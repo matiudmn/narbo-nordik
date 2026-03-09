@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check } from 'lucide-react';
+import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary } from '../../lib/calculations';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { getAttachmentUrl } from '../../lib/storage';
 
 export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +20,38 @@ export default function SessionDetail() {
 
   const [showValidation, setShowValidation] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+  const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'];
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      alert('Format non supporte. Utilise JPG, PNG, WebP, HEIC ou PDF.');
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      alert('Fichier trop volumineux (max 5 Mo).');
+      return;
+    }
+    setAttachedFile(file);
+    if (file.type.startsWith('image/')) {
+      setFilePreview(URL.createObjectURL(file));
+    } else {
+      setFilePreview(null);
+    }
+    e.target.value = '';
+  };
+
+  const removeFile = () => {
+    if (filePreview) URL.revokeObjectURL(filePreview);
+    setAttachedFile(null);
+    setFilePreview(null);
+  };
 
   if (!session) {
     return (
@@ -57,9 +90,10 @@ export default function SessionDetail() {
 
   const handleValidate = () => {
     if (user) {
-      validateSession(session.id, user.id, 'done', feedback || undefined);
+      validateSession(session.id, user.id, 'done', feedback || undefined, attachedFile || undefined);
       setShowValidation(false);
       setFeedback('');
+      removeFile();
     }
   };
 
@@ -232,6 +266,17 @@ export default function SessionDetail() {
               {validation.feedback && (
                 <p className="text-sm text-gray-600 mt-2 italic">"{validation.feedback}"</p>
               )}
+              {validation.attachment_path && (
+                <a
+                  href={getAttachmentUrl(validation.attachment_path)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
+                >
+                  <Paperclip size={14} />
+                  Voir la piece jointe
+                </a>
+              )}
             </div>
           ) : (
             <>
@@ -250,9 +295,42 @@ export default function SessionDetail() {
                     placeholder="Comment t'es-tu senti ? (optionnel)"
                     className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
                   />
+                  <div>
+                    {!attachedFile ? (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-accent transition-colors"
+                      >
+                        <Paperclip size={16} />
+                        Ajouter un fichier (photo, PDF)
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-2">
+                        {filePreview ? (
+                          <img src={filePreview} alt="Preview" className="w-12 h-12 rounded object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-12 h-12 rounded bg-red-50 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-red-500">PDF</span>
+                          </div>
+                        )}
+                        <span className="text-sm text-gray-700 truncate flex-1 min-w-0">{attachedFile.name}</span>
+                        <button type="button" onClick={removeFile} className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/heic,application/pdf"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                  </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setShowValidation(false)}
+                      onClick={() => { setShowValidation(false); removeFile(); }}
                       className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium"
                     >
                       Annuler

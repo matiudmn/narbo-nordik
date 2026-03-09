@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, ExternalLink, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon } from 'lucide-react';
+import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, ExternalLink, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import NordikButton from '../../components/NordikButton';
@@ -65,6 +66,7 @@ export default function Profile() {
   const [birthDateValue, setBirthDateValue] = useState('');
   const [editingVma, setEditingVma] = useState(false);
   const [vmaValue, setVmaValue] = useState('');
+  const [vmaReason, setVmaReason] = useState('');
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -271,34 +273,44 @@ export default function Profile() {
             <div>
               <p className="text-xs text-gray-400">VMA</p>
               {editingVma && user.role === 'coach' ? (
-                <div className="flex items-center gap-1 mt-0.5">
+                <div className="space-y-1.5 mt-0.5">
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="5"
+                      max="30"
+                      value={vmaValue}
+                      onChange={e => setVmaValue(e.target.value)}
+                      className="w-20 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      autoFocus
+                    />
+                    <span className="text-xs text-gray-400">km/h</span>
+                    <button
+                      onClick={async () => {
+                        const v = parseFloat(vmaValue);
+                        if (v >= 5 && v <= 30) {
+                          await updateUserVma(user.id, v, vmaReason.trim() || undefined);
+                          await refreshUser();
+                          setEditingVma(false);
+                          setVmaReason('');
+                        }
+                      }}
+                      className="p-1 text-green-600 hover:text-green-700"
+                    >
+                      <Check size={16} />
+                    </button>
+                    <button onClick={() => { setEditingVma(false); setVmaReason(''); }} className="p-1 text-gray-400 hover:text-gray-600">
+                      <X size={16} />
+                    </button>
+                  </div>
                   <input
-                    type="number"
-                    step="0.1"
-                    min="5"
-                    max="30"
-                    value={vmaValue}
-                    onChange={e => setVmaValue(e.target.value)}
-                    className="w-20 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    autoFocus
+                    type="text"
+                    value={vmaReason}
+                    onChange={e => setVmaReason(e.target.value)}
+                    placeholder="Raison (test piste, estimation...)"
+                    className="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
-                  <span className="text-xs text-gray-400">km/h</span>
-                  <button
-                    onClick={async () => {
-                      const v = parseFloat(vmaValue);
-                      if (v >= 5 && v <= 30) {
-                        await updateUserVma(user.id, v);
-                        await refreshUser();
-                        setEditingVma(false);
-                      }
-                    }}
-                    className="p-1 text-green-600 hover:text-green-700"
-                  >
-                    <Check size={16} />
-                  </button>
-                  <button onClick={() => setEditingVma(false)} className="p-1 text-gray-400 hover:text-gray-600">
-                    <X size={16} />
-                  </button>
                 </div>
               ) : (
                 <p className="font-medium text-gray-900">{user.vma ? `${user.vma} km/h` : 'Non renseignee'}</p>
@@ -306,7 +318,7 @@ export default function Profile() {
             </div>
             {user.role === 'coach' && !editingVma ? (
               <button
-                onClick={() => { setVmaValue(user.vma?.toString() || ''); setEditingVma(true); }}
+                onClick={() => { setVmaValue(user.vma?.toString() || ''); setEditingVma(true); setVmaReason(''); }}
                 className="text-xs text-primary font-medium hover:underline"
               >
                 Modifier
@@ -315,6 +327,12 @@ export default function Profile() {
               <span className="text-xs text-gray-400 italic">Modifiable par le coach</span>
             ) : null}
           </div>
+          {user.vma_history.length > 0 && (
+            <Link to="/vma-history" className="flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+              <History size={12} />
+              Voir l'historique VMA
+            </Link>
+          )}
 
           {/* Phone */}
           <div className="mt-3 flex items-center justify-between">

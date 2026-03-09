@@ -19,6 +19,7 @@ export interface SessionBlock {
 export interface VmaEntry {
   vma: number;
   date: string;
+  reason?: string;
 }
 
 export interface User {
@@ -85,6 +86,8 @@ export interface SessionValidation {
   user_id: string;
   status: SessionStatus;
   feedback: string | null;
+  attachment_path: string | null;
+  attachment_type: string | null;
   created_at: string;
 }
 

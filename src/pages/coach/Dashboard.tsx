@@ -2,9 +2,10 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { format, isThisWeek, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { TrendingUp, Users, MessageSquare, CheckCircle, AlertTriangle, Phone, ChevronRight, Settings } from 'lucide-react';
+import { TrendingUp, Users, MessageSquare, CheckCircle, AlertTriangle, Phone, ChevronRight, Settings, Paperclip, FileText } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
+import { getAttachmentUrl } from '../../lib/storage';
 import Avatar from '../../components/Avatar';
 
 export default function Dashboard() {
@@ -59,7 +60,7 @@ export default function Dashboard() {
 
   const recentFeedback = useMemo(() => {
     return validations
-      .filter(v => v.feedback)
+      .filter(v => v.feedback || v.attachment_path)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 10)
       .map(v => {
@@ -183,7 +184,18 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mb-0.5">{item.session?.title}</p>
-                <p className="text-sm text-gray-700 italic">"{item.feedback}"</p>
+                {item.feedback && <p className="text-sm text-gray-700 italic">"{item.feedback}"</p>}
+                {item.attachment_path && (
+                  <a
+                    href={getAttachmentUrl(item.attachment_path)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                  >
+                    {item.attachment_type?.startsWith('image/') ? <Paperclip size={12} /> : <FileText size={12} />}
+                    {item.attachment_type?.startsWith('image/') ? 'Photo jointe' : 'PDF joint'}
+                  </a>
+                )}
               </div>
             ))}
           </div>
