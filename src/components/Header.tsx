@@ -73,7 +73,7 @@ export default function Header() {
               <HelpCircle size={18} />
             </button>
             <button
-              onClick={() => navigate(user?.role === 'coach' ? '/coach/dashboard' : '/athlete/profile')}
+              onClick={() => navigate('/profile')}
               className="p-1 hover:bg-white/10 rounded-full transition-colors"
             >
               {user && <Avatar user={user} size="sm" />}
