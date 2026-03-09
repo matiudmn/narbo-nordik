@@ -29,19 +29,32 @@ function makeBlock(type: BlockType, allure: AllureZone, durationSec: number, rep
 }
 
 function DurationInput({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
-  const mm = Math.floor(value / 60);
+  const hh = Math.floor(value / 3600);
+  const mm = Math.floor((value % 3600) / 60);
   const ss = value % 60;
+
+  const rebuild = (h: number, m: number, s: number) => onChange(h * 3600 + m * 60 + s);
 
   return (
     <div>
       <label className="text-xs text-gray-500">{label}</label>
       <div className="flex items-center gap-1">
         <input
-          type="number" inputMode="numeric" min={0} max={99}
+          type="number" inputMode="numeric" min={0} max={23}
+          value={hh}
+          onChange={e => {
+            const h = Math.max(0, Math.min(23, parseInt(e.target.value) || 0));
+            rebuild(h, mm, ss);
+          }}
+          className="w-12 px-1 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+        <span className="text-xs text-gray-400">h</span>
+        <input
+          type="number" inputMode="numeric" min={0} max={59}
           value={mm}
           onChange={e => {
-            const m = Math.max(0, Math.min(99, parseInt(e.target.value) || 0));
-            onChange(m * 60 + ss);
+            const m = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+            rebuild(hh, m, ss);
           }}
           className="w-12 px-1 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
@@ -51,7 +64,7 @@ function DurationInput({ value, onChange, label }: { value: number; onChange: (v
           value={ss}
           onChange={e => {
             const s = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
-            onChange(mm * 60 + s);
+            rebuild(hh, mm, s);
           }}
           className="w-12 px-1 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
