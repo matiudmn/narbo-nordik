@@ -537,7 +537,7 @@ export default function Profile() {
           <div className="mt-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-900">Profil public</p>
-              <p className="text-xs text-gray-400">VMA, telephone et Strava visibles dans l'annuaire</p>
+              <p className="text-xs text-gray-400">VMA, telephone et Strava visibles par les athletes</p>
             </div>
             <button
               onClick={async () => { await updateUserPublic(user.id, !user.is_public); await refreshUser(); }}

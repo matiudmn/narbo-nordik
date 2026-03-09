@@ -286,7 +286,7 @@ export default function Directory() {
   return (
     <div className="py-4">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-lg font-bold text-gray-900">Annuaire</h1>
+        <h1 className="text-lg font-bold text-gray-900">Athletes</h1>
         <span className="text-xs text-gray-400 font-medium">{sorted.length} membre{sorted.length > 1 ? 's' : ''}</span>
       </div>
 

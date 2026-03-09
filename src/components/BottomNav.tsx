@@ -33,7 +33,7 @@ export default function BottomNav() {
           </NavLink>
           <NavLink to="/directory" className={linkClass}>
             <Users size={22} />
-            <span>Annuaire</span>
+            <span>Athletes</span>
           </NavLink>
           <NavLink to="/profile" className={linkClass}>
             <User size={22} />
@@ -57,7 +57,7 @@ export default function BottomNav() {
         </NavLink>
         <NavLink to="/directory" className={linkClass}>
           <Users size={22} />
-          <span>Annuaire</span>
+          <span>Athletes</span>
         </NavLink>
         <NavLink to="/profile" className={linkClass}>
           <User size={22} />
