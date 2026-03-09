@@ -23,6 +23,7 @@ interface DataContextType {
   deleteSession: (id: string) => Promise<void>;
   validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File) => Promise<void>;
   addRaceResult: (result: Omit<RaceResult, 'id' | 'created_at'>) => Promise<void>;
+  updateRaceResult: (id: string, updates: Partial<Omit<RaceResult, 'id' | 'created_at'>>) => Promise<void>;
   deleteRaceResult: (id: string) => Promise<void>;
   toggleNordik: (raceId: string, userId: string) => Promise<void>;
   updateUserVma: (userId: string, vma: number, reason?: string) => Promise<void>;
@@ -206,6 +207,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addRaceResult = useCallback(async (result: Omit<RaceResult, 'id' | 'created_at'>) => {
     const { data, error } = await supabase.from('race_results').insert(result).select().single();
     if (!error && data) setRaceResults(prev => [...prev, data]);
+  }, []);
+
+  const updateRaceResult = useCallback(async (id: string, updates: Partial<Omit<RaceResult, 'id' | 'created_at'>>) => {
+    setRaceResults(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+    const { error } = await supabase.from('race_results').update(updates).eq('id', id);
+    if (error) {
+      const { data } = await supabase.from('race_results').select('*');
+      if (data) setRaceResults(data);
+    }
   }, []);
 
   const deleteRaceResult = useCallback(async (id: string) => {
@@ -392,7 +402,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     <DataContext.Provider value={{
       sessions, validations, raceResults, raceNordiks, groups, users, preparations, userPreparations, loading,
       addSession, updateSession, deleteSession, validateSession,
-      addRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto,
+      addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto,
       addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
       addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, refreshAll,
     }}>

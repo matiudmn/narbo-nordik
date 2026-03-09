@@ -45,7 +45,7 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
-  const { raceResults, addRaceResult, deleteRaceResult, groups, users, validations, preparations, userPreparations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
+  const { raceResults, addRaceResult, updateRaceResult, deleteRaceResult, groups, users, validations, preparations, userPreparations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
   const [showAddRace, setShowAddRace] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,6 +55,8 @@ export default function Profile() {
   const [raceDistance, setRaceDistance] = useState('');
   const [raceDate, setRaceDate] = useState('');
   const [raceTime, setRaceTime] = useState('');
+  const [raceLabel, setRaceLabel] = useState(false);
+  const [editingRaceId, setEditingRaceId] = useState<string | null>(null);
 
   const [editingPhone, setEditingPhone] = useState(false);
   const [phoneValue, setPhoneValue] = useState('');
@@ -165,18 +167,46 @@ export default function Profile() {
     e.target.value = '';
   };
 
+  const resetRaceForm = () => {
+    setShowAddRace(false);
+    setEditingRaceId(null);
+    setRaceName(''); setRaceDistance(''); setRaceDate(''); setRaceTime(''); setRaceLabel(false);
+  };
+
   const handleAddRace = () => {
     if (!raceName || !raceDistance || !raceDate || !raceTime) return;
-    addRaceResult({
-      user_id: user.id,
-      race_name: raceName,
-      race_type: raceType,
-      distance_km: parseFloat(raceDistance),
-      date: raceDate,
-      time_duration: raceTime,
-    });
-    setShowAddRace(false);
-    setRaceName(''); setRaceDistance(''); setRaceDate(''); setRaceTime('');
+    if (editingRaceId) {
+      updateRaceResult(editingRaceId, {
+        race_name: raceName,
+        race_type: raceType,
+        distance_km: parseFloat(raceDistance),
+        date: raceDate,
+        time_duration: raceTime,
+        is_label: raceLabel,
+      });
+    } else {
+      addRaceResult({
+        user_id: user.id,
+        race_name: raceName,
+        race_type: raceType,
+        distance_km: parseFloat(raceDistance),
+        date: raceDate,
+        time_duration: raceTime,
+        is_label: raceLabel,
+      });
+    }
+    resetRaceForm();
+  };
+
+  const startEditRace = (race: typeof raceResults[0]) => {
+    setEditingRaceId(race.id);
+    setRaceName(race.race_name);
+    setRaceType(race.race_type);
+    setRaceDistance(String(race.distance_km));
+    setRaceDate(race.date);
+    setRaceTime(race.time_duration);
+    setRaceLabel(race.is_label);
+    setShowAddRace(true);
   };
 
   const raceTypeLabel: Record<RaceType, string> = { route: 'Route', trail: 'Trail', piste: 'Piste' };
@@ -635,9 +665,13 @@ export default function Profile() {
                 className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
               />
             </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={raceLabel} onChange={e => setRaceLabel(e.target.checked)} className="rounded border-gray-300 text-accent focus:ring-accent/30" />
+              <span className="text-sm text-gray-700">Course a label</span>
+            </label>
             <div className="flex gap-2">
-              <button onClick={() => setShowAddRace(false)} className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600">Annuler</button>
-              <button onClick={handleAddRace} className="flex-1 py-2 bg-accent text-white rounded-lg text-sm font-medium">Ajouter</button>
+              <button onClick={resetRaceForm} className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600">Annuler</button>
+              <button onClick={handleAddRace} className="flex-1 py-2 bg-accent text-white rounded-lg text-sm font-medium">{editingRaceId ? 'Modifier' : 'Ajouter'}</button>
             </div>
           </div>
         )}
@@ -650,7 +684,10 @@ export default function Profile() {
             {userRaces.map(race => (
               <div key={race.id} className="flex items-center gap-3 border border-gray-100 rounded-lg p-3">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 text-sm truncate">{race.race_name}</p>
+                  <p className="font-medium text-gray-900 text-sm truncate">
+                    {race.race_name}
+                    {race.is_label && <span className="ml-1 text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">Label</span>}
+                  </p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={`text-xs px-1.5 py-0.5 rounded ${raceTypeColor[race.race_type]}`}>
                       {raceTypeLabel[race.race_type]}
@@ -663,6 +700,12 @@ export default function Profile() {
                 </div>
                 <span className="text-sm font-bold text-primary tabular-nums">{formatDuration(race.time_duration)}</span>
                 <NordikButton raceId={race.id} />
+                <button
+                  onClick={() => startEditRace(race)}
+                  className="p-1.5 text-gray-300 hover:text-accent transition-colors"
+                >
+                  <Pencil size={16} />
+                </button>
                 <button
                   onClick={() => deleteRaceResult(race.id)}
                   className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"

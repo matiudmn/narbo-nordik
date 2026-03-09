@@ -99,6 +99,7 @@ export interface RaceResult {
   distance_km: number;
   date: string;
   time_duration: string;
+  is_label: boolean;
   created_at: string;
 }
 
