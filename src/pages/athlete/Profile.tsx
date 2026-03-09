@@ -345,12 +345,13 @@ export default function Profile() {
                     <input
                       type="tel"
                       inputMode="tel"
-                      placeholder="+33612345678"
+                      placeholder="0612345678 ou +33612345678"
                       value={phoneValue}
                       onChange={e => setPhoneValue(e.target.value)}
                       onKeyDown={e => {
                         if (e.key === 'Enter') {
-                          const v = phoneValue.trim() || null;
+                          const raw = phoneValue.replace(/[^0-9]/g, '').replace(/^0/, '33');
+                          const v = raw || null;
                           updateUserPhone(user.id, v).then(() => refreshUser());
                           setEditingPhone(false);
                         }
@@ -360,7 +361,8 @@ export default function Profile() {
                     />
                     <button
                       onClick={() => {
-                        const v = phoneValue.trim() || null;
+                        const raw = phoneValue.replace(/[^0-9]/g, '').replace(/^0/, '33');
+                        const v = raw || null;
                         updateUserPhone(user.id, v).then(() => refreshUser());
                         setEditingPhone(false);
                       }}
@@ -373,7 +375,7 @@ export default function Profile() {
                     </button>
                   </div>
                 ) : (
-                  <p className="font-medium text-gray-900 text-sm">{user.phone || 'Non renseigne'}</p>
+                  <p className="font-medium text-gray-900 text-sm">{user.phone ? `+${user.phone}` : 'Non renseigne'}</p>
                 )}
               </div>
             </div>

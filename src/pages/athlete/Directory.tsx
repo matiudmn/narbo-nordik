@@ -223,7 +223,7 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
           <div className="flex items-center gap-1">
             {member.phone && (
               <a
-                href={`https://wa.me/${member.phone.replace(/\+/g, '')}`}
+                href={`https://wa.me/${member.phone.replace(/[^0-9]/g, '').replace(/^0/, '33')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
