@@ -44,7 +44,7 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
-  const { raceResults, addRaceResult, deleteRaceResult, groups, users, validations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
+  const { raceResults, addRaceResult, deleteRaceResult, groups, users, validations, preparations, userPreparations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
   const [showAddRace, setShowAddRace] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -137,6 +137,8 @@ export default function Profile() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const group = groups.find(g => g.id === user.group_id);
+  const userPrepId = userPreparations.find(up => up.user_id === user.id)?.preparation_id;
+  const currentPrep = userPrepId ? preparations.find(p => p.id === userPrepId) : null;
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -202,7 +204,10 @@ export default function Profile() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-gray-900 text-lg">{user.firstname} {user.lastname}</p>
-            <p className="text-sm text-gray-400">{group?.name || 'Aucun groupe'}</p>
+            <p className="text-sm text-gray-400">
+              {group?.name || 'Aucun groupe'}
+              {currentPrep && <span className="text-amber-600 ml-2">| {currentPrep.name}</span>}
+            </p>
             <div className="flex items-center gap-2 mt-1">
               {user.vma && (
                 <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">

@@ -55,12 +55,28 @@ export interface Session {
   location_url: string | null;
   description: string | null;
   group_id: string | null;
+  preparation_id: string | null;
   target_distance: number | null;
   vma_percent_min: number | null;
   vma_percent_max: number | null;
   blocks: SessionBlock[];
   created_by: string;
   created_at: string;
+}
+
+export interface SpecificPreparation {
+  id: string;
+  name: string;
+  event_date: string;
+  description: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface UserPreparation {
+  id: string;
+  user_id: string;
+  preparation_id: string;
 }
 
 export interface SessionValidation {

@@ -11,7 +11,7 @@ export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { sessions, validations, validateSession, groups } = useData();
+  const { sessions, validations, validateSession, groups, userPreparations } = useData();
 
   const session = sessions.find(s => s.id === id);
   const validation = validations.find(v => v.session_id === id && v.user_id === user?.id);
@@ -29,7 +29,17 @@ export default function SessionDetail() {
     );
   }
 
-  if (user?.role === 'athlete' && session.group_id && session.group_id !== user.group_id) {
+  const userPrepIds = userPreparations.filter(up => up.user_id === user?.id).map(up => up.preparation_id);
+  const hasAccessViaPrep = session.preparation_id ? userPrepIds.includes(session.preparation_id) : false;
+
+  const isGroupRestricted = session.group_id && session.group_id !== user?.group_id;
+  const isPrepRestricted = session.preparation_id && !hasAccessViaPrep;
+  const isRestricted = user?.role === 'athlete' && (
+    (session.group_id && isGroupRestricted && !hasAccessViaPrep) ||
+    (session.preparation_id && !session.group_id && isPrepRestricted)
+  );
+
+  if (isRestricted) {
     return (
       <div className="py-8 text-center">
         <p className="text-gray-500">Cette seance ne vous est pas attribuee</p>

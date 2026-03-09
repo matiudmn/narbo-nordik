@@ -19,10 +19,15 @@ function getSeasonRange(): { start: Date; end: Date } {
 
 export default function Home() {
   const { user } = useAuth();
-  const { sessions, validations, groups } = useData();
+  const { sessions, validations, groups, preparations, userPreparations } = useData();
   const [weekOffset, setWeekOffset] = useState(0);
 
   const isCoach = user?.role === 'coach';
+
+  const userPrepIds = useMemo(() => {
+    if (!user) return [];
+    return userPreparations.filter(up => up.user_id === user.id).map(up => up.preparation_id);
+  }, [user, userPreparations]);
 
   // --- Attendance stats ---
   const attendanceStats = useMemo(() => {
@@ -37,6 +42,7 @@ export default function Home() {
 
     const userSessions = sessions.filter(s => {
       if (isCoach) return true;
+      if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
       if (!s.group_id) return true;
       return s.group_id === user.group_id;
     });
@@ -57,7 +63,7 @@ export default function Home() {
       month: calc(mStart, mEnd),
       season: calc(sStart, sEnd),
     };
-  }, [user, sessions, validations, isCoach]);
+  }, [user, sessions, validations, isCoach, userPrepIds]);
 
   // --- Weekly sessions ---
   const weekStart = startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 });
@@ -69,17 +75,23 @@ export default function Home() {
         const sessionDate = new Date(s.date);
         if (sessionDate < weekStart || sessionDate > weekEnd) return false;
         if (isCoach) return true;
+        if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
         if (!s.group_id) return true;
         return s.group_id === user?.group_id;
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [sessions, user?.group_id, isCoach, weekStart, weekEnd]);
+  }, [sessions, user?.group_id, isCoach, weekStart, weekEnd, userPrepIds]);
 
   const getValidation = (sessionId: string) =>
     validations.find(v => v.session_id === sessionId && v.user_id === user?.id);
 
-  const getGroupName = (groupId: string | null) =>
-    groupId ? groups.find(g => g.id === groupId)?.name : 'Tous';
+  const getGroupName = (session: typeof sessions[0]) => {
+    if (session.preparation_id) {
+      const prep = preparations.find(p => p.id === session.preparation_id);
+      return prep?.name || 'Preparation';
+    }
+    return session.group_id ? groups.find(g => g.id === session.group_id)?.name : 'Tous';
+  };
 
   const getStatusBadge = (session: typeof sessions[0]) => {
     const validation = getValidation(session.id);
@@ -235,7 +247,9 @@ export default function Home() {
                 <Link
                   key={session.id}
                   to={`/session/${session.id}`}
-                  className={`block bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden ${
+                  className={`block rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden ${
+                    session.preparation_id ? 'bg-amber-50' : session.group_id ? 'bg-blue-50' : 'bg-white'
+                  } ${
                     sessionPast && !validation ? 'border-l-4 border-l-warning' : ''
                   } ${validation?.status === 'done' ? 'border-l-4 border-l-success' : ''} ${
                     !sessionPast && !validation ? 'opacity-90' : ''
@@ -245,9 +259,9 @@ export default function Home() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`w-2 h-2 rounded-full ${getGroupColor(session.group_id)}`} />
+                          <span className={`w-2 h-2 rounded-full ${session.preparation_id ? 'bg-amber-500' : getGroupColor(session.group_id)}`} />
                           <span className="text-xs text-gray-500 font-medium">
-                            {getGroupName(session.group_id)}
+                            {getGroupName(session)}
                           </span>
                         </div>
                         <h3 className="font-semibold text-gray-900 truncate">{session.title}</h3>

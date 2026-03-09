@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import type { Session, SessionValidation, RaceResult, RaceNordik, Group, User, NotificationPreferences } from '../types';
+import type { Session, SessionValidation, RaceResult, RaceNordik, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation } from '../types';
 import { supabase, createEphemeralClient } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -15,6 +15,8 @@ interface DataContextType {
   raceNordiks: RaceNordik[];
   groups: Group[];
   users: User[];
+  preparations: SpecificPreparation[];
+  userPreparations: UserPreparation[];
   loading: boolean;
   addSession: (session: Omit<Session, 'id' | 'created_at'>) => Promise<void>;
   updateSession: (id: string, updates: Partial<Session>) => Promise<void>;
@@ -37,6 +39,11 @@ interface DataContextType {
   deleteGroup: (id: string) => Promise<void>;
   updateUserGroup: (userId: string, groupId: string | null) => Promise<void>;
   updateNotificationPreferences: (userId: string, prefs: NotificationPreferences) => Promise<void>;
+  addPreparation: (name: string, eventDate: string, description: string | null) => Promise<void>;
+  updatePreparation: (id: string, updates: Partial<SpecificPreparation>) => Promise<void>;
+  deletePreparation: (id: string) => Promise<void>;
+  addUserToPreparation: (userId: string, preparationId: string) => Promise<void>;
+  removeUserFromPreparation: (userId: string, preparationId: string) => Promise<void>;
   refreshAll: () => Promise<void>;
 }
 
@@ -59,6 +66,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [raceNordiks, setRaceNordiks] = useState<RaceNordik[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [preparations, setPreparations] = useState<SpecificPreparation[]>([]);
+  const [userPreparations, setUserPreparations] = useState<UserPreparation[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchSessions = useCallback(async () => {
@@ -86,6 +95,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (data) setGroups(data);
   }, []);
 
+  const fetchPreparations = useCallback(async () => {
+    const { data } = await supabase.from('specific_preparations').select('*').order('event_date');
+    if (data) setPreparations(data);
+  }, []);
+
+  const fetchUserPreparations = useCallback(async () => {
+    const { data } = await supabase.from('user_preparations').select('*');
+    if (data) setUserPreparations(data);
+  }, []);
+
   const fetchUsers = useCallback(async () => {
     const { data } = await supabase.from('users').select('*');
     if (data) setUsers(data.map(u => ({
@@ -110,9 +129,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       fetchRaceNordiks(),
       fetchGroups(),
       fetchUsers(),
+      fetchPreparations(),
+      fetchUserPreparations(),
     ]);
     setLoading(false);
-  }, [fetchSessions, fetchValidations, fetchRaceResults, fetchRaceNordiks, fetchGroups, fetchUsers]);
+  }, [fetchSessions, fetchValidations, fetchRaceResults, fetchRaceNordiks, fetchGroups, fetchUsers, fetchPreparations, fetchUserPreparations]);
 
   useEffect(() => {
     if (authUser) {
@@ -124,6 +145,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setRaceNordiks([]);
       setGroups([]);
       setUsers([]);
+      setPreparations([]);
+      setUserPreparations([]);
       setLoading(false);
     }
   }, [authUser, refreshAll]);
@@ -297,12 +320,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!error) await fetchUsers();
   }, [fetchUsers]);
 
+  const addPreparation = useCallback(async (name: string, eventDate: string, description: string | null) => {
+    const { error } = await supabase.from('specific_preparations').insert({
+      name, event_date: eventDate, description, created_by: authUser?.id,
+    });
+    if (!error) await fetchPreparations();
+  }, [authUser?.id, fetchPreparations]);
+
+  const updatePreparation = useCallback(async (id: string, updates: Partial<SpecificPreparation>) => {
+    const { error } = await supabase.from('specific_preparations').update(updates).eq('id', id);
+    if (!error) await fetchPreparations();
+  }, [fetchPreparations]);
+
+  const deletePreparation = useCallback(async (id: string) => {
+    const { error } = await supabase.from('specific_preparations').delete().eq('id', id);
+    if (!error) await Promise.all([fetchPreparations(), fetchUserPreparations(), fetchSessions()]);
+  }, [fetchPreparations, fetchUserPreparations, fetchSessions]);
+
+  const addUserToPreparation = useCallback(async (userId: string, preparationId: string) => {
+    const { error } = await supabase.from('user_preparations').insert({ user_id: userId, preparation_id: preparationId });
+    if (!error) await fetchUserPreparations();
+  }, [fetchUserPreparations]);
+
+  const removeUserFromPreparation = useCallback(async (userId: string, preparationId: string) => {
+    const { error } = await supabase.from('user_preparations').delete()
+      .eq('user_id', userId).eq('preparation_id', preparationId);
+    if (!error) await fetchUserPreparations();
+  }, [fetchUserPreparations]);
+
   return (
     <DataContext.Provider value={{
-      sessions, validations, raceResults, raceNordiks, groups, users, loading,
+      sessions, validations, raceResults, raceNordiks, groups, users, preparations, userPreparations, loading,
       addSession, updateSession, deleteSession, validateSession,
       addRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto,
-      addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences, refreshAll,
+      addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
+      addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, refreshAll,
     }}>
       {children}
     </DataContext.Provider>

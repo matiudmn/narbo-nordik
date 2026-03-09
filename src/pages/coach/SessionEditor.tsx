@@ -185,7 +185,7 @@ function BlockCard({
 
 export default function SessionEditor() {
   const { user } = useAuth();
-  const { sessions, groups, users, addSession, deleteSession } = useData();
+  const { sessions, groups, users, preparations, addSession, deleteSession } = useData();
   const [weekOffset, setWeekOffset] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
@@ -194,6 +194,7 @@ export default function SessionEditor() {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [groupId, setGroupId] = useState<string>('');
+  const [preparationId, setPreparationId] = useState<string>('');
   const [sessionType, setSessionType] = useState<SessionType>('entrainement');
   const [terrainOptions, setTerrainOptions] = useState<TerrainOption[]>([]);
   const [location, setLocation] = useState('');
@@ -229,7 +230,8 @@ export default function SessionEditor() {
       date: new Date(date).toISOString(),
       session_type: sessionType,
       terrain_options: terrainOptions,
-      group_id: groupId || null,
+      group_id: preparationId ? null : (groupId || null),
+      preparation_id: preparationId || null,
       location: location || null,
       location_url: null,
       description: description || null,
@@ -304,11 +306,23 @@ export default function SessionEditor() {
               className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <select
-              value={groupId} onChange={e => setGroupId(e.target.value)}
+              value={preparationId ? `prep:${preparationId}` : groupId}
+              onChange={e => {
+                const v = e.target.value;
+                if (v.startsWith('prep:')) {
+                  setPreparationId(v.replace('prep:', ''));
+                  setGroupId('');
+                } else {
+                  setGroupId(v);
+                  setPreparationId('');
+                }
+              }}
               className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Tous les groupes</option>
               {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              {preparations.length > 0 && <option disabled>───── Prep. specifiques ─────</option>}
+              {preparations.map(p => <option key={p.id} value={`prep:${p.id}`}>{p.name}</option>)}
             </select>
           </div>
 
@@ -455,13 +469,14 @@ export default function SessionEditor() {
         <div className="space-y-2">
           {weekSessions.map(session => {
             const group = groups.find(g => g.id === session.group_id);
+            const prep = preparations.find(p => p.id === session.preparation_id);
             return (
-              <div key={session.id} className="bg-white rounded-xl border border-gray-100 p-4">
+              <div key={session.id} className={`rounded-xl border border-gray-100 p-4 ${prep ? 'bg-amber-50' : session.group_id ? 'bg-blue-50' : 'bg-white'}`}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium text-gray-500">
-                        {group?.name || 'Tous'}
+                      <span className={`text-xs font-medium ${prep ? 'text-amber-600' : 'text-gray-500'}`}>
+                        {prep?.name || group?.name || 'Tous'}
                       </span>
                     </div>
                     <h3 className="font-semibold text-gray-900">{session.title}</h3>
