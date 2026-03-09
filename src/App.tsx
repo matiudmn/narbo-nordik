@@ -17,6 +17,7 @@ import Dashboard from './pages/coach/Dashboard';
 import SessionEditor from './pages/coach/SessionEditor';
 import Settings from './pages/coach/Settings';
 import Notifications from './pages/Notifications';
+import Palmares from './pages/Palmares';
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -36,6 +37,7 @@ function AppRoutes() {
         <Route path="/directory" element={<Directory />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/club" element={<ClubProfile />} />
+        <Route path="/palmares" element={<Palmares />} />
         <Route path="/notifications" element={<Notifications />} />
 
         {/* Coach routes */}

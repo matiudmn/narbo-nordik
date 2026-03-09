@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Trophy, Medal } from 'lucide-react';
+import { Trophy, Medal, ChevronRight } from 'lucide-react';
 import NordikButton from '../components/NordikButton';
 import {
   Chart as ChartJS,
@@ -286,7 +287,7 @@ export default function ClubProfile() {
             Palmares Collectif
           </h2>
           <div className="space-y-2">
-            {palmares.map((race, idx) => (
+            {palmares.slice(0, 5).map((race, idx) => (
               <div
                 key={race.id}
                 className={`bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex items-center gap-3 ${
@@ -328,6 +329,15 @@ export default function ClubProfile() {
               </div>
             ))}
           </div>
+          {palmares.length > 5 && (
+            <Link
+              to="/palmares"
+              className="flex items-center justify-center gap-1 mt-3 py-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              Voir tout ({palmares.length})
+              <ChevronRight size={16} />
+            </Link>
+          )}
         </section>
       )}
 
