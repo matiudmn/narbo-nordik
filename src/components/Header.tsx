@@ -31,8 +31,9 @@ export default function Header() {
       <header className={`fixed left-0 right-0 bg-primary text-white z-50 ${isImpersonating ? 'top-8' : 'top-0'}`}>
         <div className="flex items-center justify-between h-14 px-4 max-w-5xl mx-auto">
           <div className="flex items-center gap-2">
-            <img src="/logo-club.png" alt="Narbo Nordik Club" className="h-8 w-8 rounded-full" />
-            <span className="text-lg font-bold tracking-tight">NARBO NORDIK</span>
+            <button onClick={() => navigate('/')} className="flex-shrink-0">
+              <img src="/logo-club.png" alt="Narbo Nordik Club" className="h-10 w-10 rounded-full" />
+            </button>
             <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
               {user?.role === 'coach' ? 'Coach' : 'Athlete'}
             </span>
@@ -71,10 +72,12 @@ export default function Header() {
             >
               <HelpCircle size={18} />
             </button>
-            <div className="flex items-center gap-1.5 text-sm px-2 py-1">
+            <button
+              onClick={() => navigate(user?.role === 'coach' ? '/coach/dashboard' : '/athlete/profile')}
+              className="p-1 hover:bg-white/10 rounded-full transition-colors"
+            >
               {user && <Avatar user={user} size="sm" />}
-              {user?.firstname}
-            </div>
+            </button>
             <button onClick={logout} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
               <LogOut size={18} />
             </button>
