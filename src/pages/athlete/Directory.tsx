@@ -4,6 +4,7 @@ import { Search, Phone, ExternalLink, Shield, Cake, ChevronDown, Gauge, Target, 
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useData } from '../../contexts/DataContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
 import { RACE_PACES, calculateRacePace } from '../../lib/calculations';
@@ -13,6 +14,7 @@ import { getSeasonRange } from '../../lib/date-utils';
 import type { User } from '../../types';
 
 const MemberStats = memo(function MemberStats({ member }: { member: User }) {
+  const { user: currentUser } = useAuth();
   const { sessions, validations, raceResults, userPreparations } = useData();
 
   const lastVmaDate = member.vma_history.length > 0
@@ -109,6 +111,12 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
             <Link to={`/vma-history?user=${member.id}`} className="flex items-center gap-1 text-xs text-primary hover:underline mt-2">
               <History size={12} />
               Historique VMA
+            </Link>
+          )}
+          {currentUser?.role === 'coach' && (
+            <Link to={`/training-history?user=${member.id}`} className="flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+              <History size={12} />
+              Historique entrainement
             </Link>
           )}
         </div>

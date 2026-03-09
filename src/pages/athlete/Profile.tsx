@@ -363,6 +363,10 @@ export default function Profile() {
               Voir l'historique VMA
             </Link>
           )}
+          <Link to="/training-history" className="flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+            <History size={12} />
+            Historique des seances
+          </Link>
 
           {/* Phone */}
           <div className="mt-3 flex items-center justify-between">
