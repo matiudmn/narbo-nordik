@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Trophy, Medal, ChevronRight } from 'lucide-react';
+import { Trophy, Medal, ChevronRight, Users } from 'lucide-react';
 import NordikButton from '../components/NordikButton';
 import {
   Chart as ChartJS,
@@ -47,12 +47,18 @@ function formatDuration(duration: string): string {
 
 export default function ClubProfile() {
   const { users, groups, sessions, validations, raceResults } = useData();
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
-  const athletes = useMemo(() =>
+  const allAthletes = useMemo(() =>
     users.filter(u => u.vma !== null && u.email !== SUPER_ADMIN_EMAIL)
       .sort((a, b) => (b.vma || 0) - (a.vma || 0)),
     [users]
   );
+
+  const athletes = useMemo(() => {
+    if (!selectedGroupId) return allAthletes;
+    return allAthletes.filter(a => a.group_id === selectedGroupId);
+  }, [allAthletes, selectedGroupId]);
 
   const vmaValues = useMemo(() =>
     athletes.map(a => a.vma!).sort((a, b) => a - b),
@@ -112,13 +118,13 @@ export default function ClubProfile() {
 
   const groupDistribution = useMemo(() => {
     const counts: Record<string, number> = {};
-    athletes.forEach(a => {
+    allAthletes.forEach(a => {
       const g = groups.find(g => g.id === a.group_id);
       const name = g?.name || 'Coach / Mixte';
       counts[name] = (counts[name] || 0) + 1;
     });
     return counts;
-  }, [athletes, groups]);
+  }, [allAthletes, groups]);
 
   // VMA distribution by bins
   const vmaHistogram = useMemo(() => {
@@ -277,6 +283,43 @@ export default function ClubProfile() {
             {stats.max}<span className="text-sm text-violet-300 font-medium ml-1">km/h</span>
           </p>
         </div>
+      </div>
+
+      {/* Group filter cards */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <button
+          onClick={() => setSelectedGroupId(null)}
+          className={`flex-shrink-0 rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
+            !selectedGroupId
+              ? 'bg-accent text-white shadow-sm'
+              : 'bg-white text-gray-600 border border-gray-200'
+          }`}
+        >
+          <div className="flex items-center gap-1.5">
+            <Users size={14} />
+            <span>Tous</span>
+          </div>
+          <p className="text-xs font-medium mt-0.5 opacity-80">{allAthletes.length} coureurs</p>
+        </button>
+        {groups.map(g => {
+          const count = allAthletes.filter(a => a.group_id === g.id).length;
+          if (count === 0) return null;
+          const isSelected = selectedGroupId === g.id;
+          return (
+            <button
+              key={g.id}
+              onClick={() => setSelectedGroupId(isSelected ? null : g.id)}
+              className={`flex-shrink-0 rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
+                isSelected
+                  ? 'bg-accent text-white shadow-sm'
+                  : 'bg-white text-gray-600 border border-gray-200'
+              }`}
+            >
+              <span>{g.name}</span>
+              <p className="text-xs font-medium mt-0.5 opacity-80">{count} coureurs</p>
+            </button>
+          );
+        })}
       </div>
 
       {/* Palmares collectif */}
