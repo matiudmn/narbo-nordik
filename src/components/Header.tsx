@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Shield, X, Bell, MessageCircle } from 'lucide-react';
+import { LogOut, Shield, X, Bell, MessageCircle, HelpCircle } from 'lucide-react';
 import Avatar from './Avatar';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
 
@@ -63,6 +63,13 @@ export default function Header() {
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => navigate('/aide')}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              title="Aide"
+            >
+              <HelpCircle size={18} />
             </button>
             <div className="flex items-center gap-1.5 text-sm px-2 py-1">
               {user && <Avatar user={user} size="sm" />}
