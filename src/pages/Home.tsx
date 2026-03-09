@@ -32,7 +32,6 @@ export default function Home() {
     const { start: sStart, end: sEnd } = getSeasonRange();
 
     const userSessions = sessions.filter(s => {
-      if (isCoach) return true;
       if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
       if (!s.group_id) return true;
       return s.group_id === user.group_id;
@@ -54,7 +53,7 @@ export default function Home() {
       month: calc(mStart, mEnd),
       season: calc(sStart, sEnd),
     };
-  }, [user, sessions, validations, isCoach, userPrepIds]);
+  }, [user, sessions, validations, userPrepIds]);
 
   // --- Weekly sessions ---
   const weekStart = startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 });
@@ -65,13 +64,12 @@ export default function Home() {
       .filter(s => {
         const sessionDate = new Date(s.date);
         if (sessionDate < weekStart || sessionDate > weekEnd) return false;
-        if (isCoach) return true;
         if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
         if (!s.group_id) return true;
         return s.group_id === user?.group_id;
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [sessions, user?.group_id, isCoach, weekStart, weekEnd, userPrepIds]);
+  }, [sessions, user?.group_id, weekStart, weekEnd, userPrepIds]);
 
   const getValidation = (sessionId: string) =>
     validations.find(v => v.session_id === sessionId && v.user_id === user?.id);
