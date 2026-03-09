@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
@@ -12,13 +13,14 @@ import Home from './pages/Home';
 import SessionDetail from './pages/athlete/SessionDetail';
 import Directory from './pages/athlete/Directory';
 import Profile from './pages/athlete/Profile';
-import ClubProfile from './pages/ClubProfile';
-import Dashboard from './pages/coach/Dashboard';
-import SessionEditor from './pages/coach/SessionEditor';
-import Settings from './pages/coach/Settings';
-import Notifications from './pages/Notifications';
-import Palmares from './pages/Palmares';
-import VmaHistory from './pages/VmaHistory';
+
+const ClubProfile = lazy(() => import('./pages/ClubProfile'));
+const Dashboard = lazy(() => import('./pages/coach/Dashboard'));
+const SessionEditor = lazy(() => import('./pages/coach/SessionEditor'));
+const Settings = lazy(() => import('./pages/coach/Settings'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Palmares = lazy(() => import('./pages/Palmares'));
+const VmaHistory = lazy(() => import('./pages/VmaHistory'));
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -30,27 +32,29 @@ function AppRoutes() {
   const isCoach = user.role === 'coach';
 
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        {/* Shared routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/session/:id" element={<SessionDetail />} />
-        <Route path="/directory" element={<Directory />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/club" element={<ClubProfile />} />
-        <Route path="/palmares" element={<Palmares />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/vma-history" element={<VmaHistory />} />
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+      <Routes>
+        <Route element={<Layout />}>
+          {/* Shared routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/session/:id" element={<SessionDetail />} />
+          <Route path="/directory" element={<Directory />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/club" element={<ClubProfile />} />
+          <Route path="/palmares" element={<Palmares />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/vma-history" element={<VmaHistory />} />
 
-        {/* Coach routes */}
-        <Route path="/coach" element={isCoach ? <Dashboard /> : <Navigate to="/" />} />
-        <Route path="/coach/sessions" element={isCoach ? <SessionEditor /> : <Navigate to="/" />} />
-        <Route path="/coach/settings" element={isCoach ? <Settings /> : <Navigate to="/" />} />
+          {/* Coach routes */}
+          <Route path="/coach" element={isCoach ? <Dashboard /> : <Navigate to="/" />} />
+          <Route path="/coach/sessions" element={isCoach ? <SessionEditor /> : <Navigate to="/" />} />
+          <Route path="/coach/settings" element={isCoach ? <Settings /> : <Navigate to="/" />} />
 
-        {/* Default redirect */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Route>
-    </Routes>
+          {/* Default redirect */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 

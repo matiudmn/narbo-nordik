@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, ChevronUp, ChevronDown, Zap, Clock, Ruler } from 'lucide-react';
@@ -61,7 +61,7 @@ function DurationInput({ value, onChange, label }: { value: number; onChange: (v
   );
 }
 
-function BlockCard({
+const BlockCard = memo(function BlockCard({
   block, index, total, onUpdate, onDelete, onMove, previewVma,
 }: {
   block: SessionBlock;
@@ -181,7 +181,7 @@ function BlockCard({
       </div>
     </div>
   );
-}
+});
 
 export default function SessionEditor() {
   const { user } = useAuth();

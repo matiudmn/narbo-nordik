@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Phone, ExternalLink, Shield, Cake, ChevronDown, Gauge, Target, Trophy, History } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
@@ -7,27 +7,22 @@ import { useData } from '../../contexts/DataContext';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
 import { RACE_PACES, calculateRacePace } from '../../lib/calculations';
+import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
+import { getSeasonRange } from '../../lib/date-utils';
 import type { User } from '../../types';
 
-function getSeasonRange(): { start: Date; end: Date } {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  if (month >= 8) {
-    return { start: new Date(year, 8, 1), end: new Date(year + 1, 7, 31, 23, 59, 59) };
-  }
-  return { start: new Date(year - 1, 8, 1), end: new Date(year, 7, 31, 23, 59, 59) };
-}
-
-function MemberStats({ member }: { member: User }) {
+const MemberStats = memo(function MemberStats({ member }: { member: User }) {
   const { sessions, validations, raceResults, userPreparations } = useData();
 
   const lastVmaDate = member.vma_history.length > 0
     ? member.vma_history[member.vma_history.length - 1].date
     : null;
 
-  const userPrepIds = userPreparations.filter(up => up.user_id === member.id).map(up => up.preparation_id);
+  const userPrepIds = useMemo(() =>
+    userPreparations.filter(up => up.user_id === member.id).map(up => up.preparation_id),
+    [userPreparations, member.id]
+  );
 
   const attendance = useMemo(() => {
     const now = new Date();
@@ -43,14 +38,18 @@ function MemberStats({ member }: { member: User }) {
       return s.group_id === member.group_id;
     });
 
+    const doneSessionIds = new Set(
+      validations
+        .filter(v => v.user_id === member.id && v.status === 'done')
+        .map(v => v.session_id)
+    );
+
     const calc = (start: Date, end: Date) => {
       const periodSessions = memberSessions.filter(s =>
         isWithinInterval(new Date(s.date), { start, end })
       );
       if (periodSessions.length === 0) return 0;
-      const done = periodSessions.filter(s =>
-        validations.some(v => v.session_id === s.id && v.user_id === member.id && v.status === 'done')
-      ).length;
+      const done = periodSessions.filter(s => doneSessionIds.has(s.id)).length;
       return Math.round((done / periodSessions.length) * 100);
     };
 
@@ -59,7 +58,7 @@ function MemberStats({ member }: { member: User }) {
       month: calc(mStart, mEnd),
       season: calc(sStart, sEnd),
     };
-  }, [member, sessions, validations, userPrepIds]);
+  }, [member.id, member.group_id, sessions, validations, userPrepIds]);
 
   const lastRaces = useMemo(() => {
     return raceResults
@@ -172,7 +171,7 @@ function MemberStats({ member }: { member: User }) {
       )}
     </div>
   );
-}
+});
 
 function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
   member: User;
@@ -260,6 +259,7 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
 export default function Directory() {
   const { users, groups, preparations, userPreparations } = useData();
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 250);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const visibleUsers = useMemo(() => users.filter(u => u.email !== SUPER_ADMIN_EMAIL), [users]);
@@ -281,14 +281,14 @@ export default function Directory() {
 
   const sorted = useMemo(() => {
     let list = visibleUsers;
-    if (search) {
-      const q = search.toLowerCase();
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
       list = list.filter(u =>
         u.firstname.toLowerCase().includes(q) || u.lastname.toLowerCase().includes(q)
       );
     }
     return [...list].sort((a, b) => a.firstname.localeCompare(b.firstname, 'fr'));
-  }, [visibleUsers, search]);
+  }, [visibleUsers, debouncedSearch]);
 
   return (
     <div className="py-4">

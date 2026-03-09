@@ -35,18 +35,19 @@ export default function Dashboard() {
       { days: 7, label: 'Plus de 7 jours', color: 'bg-yellow-500', bgColor: 'bg-yellow-50', textColor: 'text-yellow-700', borderColor: 'border-yellow-200' },
     ];
 
+    const sessionDateMap = new Map(sessions.map(s => [s.id, new Date(s.date)]));
+    const lastDoneByUser = new Map<string, Date>();
+    for (const v of validations) {
+      if (v.status !== 'done') continue;
+      const d = sessionDateMap.get(v.session_id);
+      if (!d) continue;
+      const prev = lastDoneByUser.get(v.user_id);
+      if (!prev || d > prev) lastDoneByUser.set(v.user_id, d);
+    }
+
     const athletesWithLastDone = members.map(athlete => {
-      const doneValidations = validations.filter(v => v.user_id === athlete.id && v.status === 'done');
-      if (doneValidations.length === 0) {
-        return { athlete, daysSince: Infinity };
-      }
-      const lastDoneDate = doneValidations.reduce((latest, v) => {
-        const session = sessions.find(s => s.id === v.session_id);
-        if (!session) return latest;
-        const d = new Date(session.date);
-        return d > latest ? d : latest;
-      }, new Date(0));
-      return { athlete, daysSince: differenceInDays(now, lastDoneDate) };
+      const lastDate = lastDoneByUser.get(athlete.id);
+      return { athlete, daysSince: lastDate ? differenceInDays(now, lastDate) : Infinity };
     });
 
     return thresholds.map(threshold => {

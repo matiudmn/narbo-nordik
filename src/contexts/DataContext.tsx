@@ -58,6 +58,22 @@ function generateTempPassword(): string {
   return result;
 }
 
+const DEFAULT_NOTIF_PREFS: NotificationPreferences = {
+  new_session: { in_app: true, email: true },
+  palmares: { in_app: true, email: true },
+  vma_update: { in_app: true, email: false },
+  weekly_digest: { email: true },
+};
+
+function normalizeUser(u: Record<string, unknown>): User {
+  return {
+    ...u,
+    vma_history: (u.vma_history as User['vma_history']) || [],
+    photo_url: (u.photo_url as string) || null,
+    notification_preferences: (u.notification_preferences as NotificationPreferences) || DEFAULT_NOTIF_PREFS,
+  } as User;
+}
+
 export function DataProvider({ children }: { children: ReactNode }) {
   const { user: authUser } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -70,70 +86,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [userPreparations, setUserPreparations] = useState<UserPreparation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchSessions = useCallback(async () => {
-    const { data } = await supabase.from('sessions').select('*').order('date');
-    if (data) setSessions(data.map(s => ({ ...s, blocks: s.blocks || [] })));
-  }, []);
-
-  const fetchValidations = useCallback(async () => {
-    const { data } = await supabase.from('session_validations').select('*');
-    if (data) setValidations(data);
-  }, []);
-
-  const fetchRaceResults = useCallback(async () => {
-    const { data } = await supabase.from('race_results').select('*');
-    if (data) setRaceResults(data);
-  }, []);
-
-  const fetchRaceNordiks = useCallback(async () => {
-    const { data } = await supabase.from('race_nordiks').select('*');
-    if (data) setRaceNordiks(data);
-  }, []);
-
-  const fetchGroups = useCallback(async () => {
-    const { data } = await supabase.from('groups').select('*');
-    if (data) setGroups(data);
-  }, []);
-
-  const fetchPreparations = useCallback(async () => {
-    const { data } = await supabase.from('specific_preparations').select('*').order('event_date');
-    if (data) setPreparations(data);
-  }, []);
-
-  const fetchUserPreparations = useCallback(async () => {
-    const { data } = await supabase.from('user_preparations').select('*');
-    if (data) setUserPreparations(data);
-  }, []);
-
-  const fetchUsers = useCallback(async () => {
-    const { data } = await supabase.from('users').select('*');
-    if (data) setUsers(data.map(u => ({
-      ...u,
-      vma_history: u.vma_history || [],
-      photo_url: u.photo_url || null,
-      notification_preferences: u.notification_preferences || {
-        new_session: { in_app: true, email: true },
-        palmares: { in_app: true, email: true },
-        vma_update: { in_app: true, email: false },
-        weekly_digest: { email: true },
-      },
-    })));
+  const fetchAll = useCallback(async () => {
+    const [s, v, rr, rn, g, u, p, up] = await Promise.all([
+      supabase.from('sessions').select('*').order('date'),
+      supabase.from('session_validations').select('*'),
+      supabase.from('race_results').select('*'),
+      supabase.from('race_nordiks').select('*'),
+      supabase.from('groups').select('*'),
+      supabase.from('users').select('*'),
+      supabase.from('specific_preparations').select('*').order('event_date'),
+      supabase.from('user_preparations').select('*'),
+    ]);
+    if (s.data) setSessions(s.data.map(d => ({ ...d, blocks: d.blocks || [] })));
+    if (v.data) setValidations(v.data);
+    if (rr.data) setRaceResults(rr.data);
+    if (rn.data) setRaceNordiks(rn.data);
+    if (g.data) setGroups(g.data);
+    if (u.data) setUsers(u.data.map(normalizeUser));
+    if (p.data) setPreparations(p.data);
+    if (up.data) setUserPreparations(up.data);
   }, []);
 
   const refreshAll = useCallback(async () => {
     setLoading(true);
-    await Promise.all([
-      fetchSessions(),
-      fetchValidations(),
-      fetchRaceResults(),
-      fetchRaceNordiks(),
-      fetchGroups(),
-      fetchUsers(),
-      fetchPreparations(),
-      fetchUserPreparations(),
-    ]);
+    await fetchAll();
     setLoading(false);
-  }, [fetchSessions, fetchValidations, fetchRaceResults, fetchRaceNordiks, fetchGroups, fetchUsers, fetchPreparations, fetchUserPreparations]);
+  }, [fetchAll]);
 
   useEffect(() => {
     if (authUser) {
@@ -151,23 +129,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [authUser, refreshAll]);
 
+  // --- Sessions ---
+
   const addSession = useCallback(async (session: Omit<Session, 'id' | 'created_at'>) => {
-    const { error } = await supabase.from('sessions').insert(session);
-    if (!error) await fetchSessions();
-  }, [fetchSessions]);
+    const { data, error } = await supabase.from('sessions').insert(session).select().single();
+    if (!error && data) {
+      setSessions(prev => [...prev, { ...data, blocks: data.blocks || [] }].sort((a, b) => a.date.localeCompare(b.date)));
+    }
+  }, []);
 
   const updateSession = useCallback(async (id: string, updates: Partial<Session>) => {
     const { error } = await supabase.from('sessions').update(updates).eq('id', id);
-    if (!error) await fetchSessions();
-  }, [fetchSessions]);
+    if (!error) {
+      setSessions(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    }
+  }, []);
 
   const deleteSession = useCallback(async (id: string) => {
     const { error } = await supabase.from('sessions').delete().eq('id', id);
     if (!error) {
-      await fetchSessions();
-      await fetchValidations();
+      setSessions(prev => prev.filter(s => s.id !== id));
+      setValidations(prev => prev.filter(v => v.session_id !== id));
     }
-  }, [fetchSessions, fetchValidations]);
+  }, []);
+
+  // --- Validations ---
 
   const validateSession = useCallback(async (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File) => {
     let attachmentPath: string | null = null;
@@ -187,43 +173,70 @@ export function DataProvider({ children }: { children: ReactNode }) {
       attachmentType = file.type;
     }
 
-    const { error } = await supabase.from('session_validations').upsert(
-      {
-        session_id: sessionId,
-        user_id: userId,
-        status,
-        feedback: feedback || null,
-        attachment_path: attachmentPath,
-        attachment_type: attachmentType,
-        created_at: new Date().toISOString(),
-      },
+    const row = {
+      session_id: sessionId,
+      user_id: userId,
+      status,
+      feedback: feedback || null,
+      attachment_path: attachmentPath,
+      attachment_type: attachmentType,
+      created_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase.from('session_validations').upsert(
+      row,
       { onConflict: 'session_id,user_id' }
-    );
-    if (!error) await fetchValidations();
-  }, [fetchValidations]);
+    ).select().single();
+
+    if (!error && data) {
+      setValidations(prev => {
+        const idx = prev.findIndex(v => v.session_id === sessionId && v.user_id === userId);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = data;
+          return next;
+        }
+        return [...prev, data];
+      });
+    }
+  }, []);
+
+  // --- Race Results ---
 
   const addRaceResult = useCallback(async (result: Omit<RaceResult, 'id' | 'created_at'>) => {
-    const { error } = await supabase.from('race_results').insert(result);
-    if (!error) await fetchRaceResults();
-  }, [fetchRaceResults]);
+    const { data, error } = await supabase.from('race_results').insert(result).select().single();
+    if (!error && data) setRaceResults(prev => [...prev, data]);
+  }, []);
 
   const deleteRaceResult = useCallback(async (id: string) => {
     const { error } = await supabase.from('race_results').delete().eq('id', id);
     if (!error) {
-      await fetchRaceResults();
-      await fetchRaceNordiks();
+      setRaceResults(prev => prev.filter(r => r.id !== id));
+      setRaceNordiks(prev => prev.filter(n => n.race_id !== id));
     }
-  }, [fetchRaceResults, fetchRaceNordiks]);
+  }, []);
+
+  // --- Nordiks ---
 
   const toggleNordik = useCallback(async (raceId: string, userId: string) => {
     const existing = raceNordiks.find(n => n.race_id === raceId && n.user_id === userId);
     if (existing) {
-      await supabase.from('race_nordiks').delete().eq('id', existing.id);
+      const { error } = await supabase.from('race_nordiks').delete().eq('id', existing.id);
+      if (!error) setRaceNordiks(prev => prev.filter(n => n.id !== existing.id));
     } else {
-      await supabase.from('race_nordiks').insert({ race_id: raceId, user_id: userId });
+      const { data, error } = await supabase.from('race_nordiks').insert({ race_id: raceId, user_id: userId }).select().single();
+      if (!error && data) setRaceNordiks(prev => [...prev, data]);
     }
-    await fetchRaceNordiks();
-  }, [raceNordiks, fetchRaceNordiks]);
+  }, [raceNordiks]);
+
+  // --- Users ---
+
+  const patchUser = useCallback(async (userId: string, updates: Partial<User>) => {
+    const { error } = await supabase.from('users').update(updates).eq('id', userId);
+    if (!error) {
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
+    }
+  }, []);
 
   const updateUserVma = useCallback(async (userId: string, vma: number, reason?: string) => {
     const targetUser = users.find(u => u.id === userId);
@@ -231,39 +244,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const entry: { vma: number; date: string; reason?: string } = { vma, date: new Date().toISOString().split('T')[0] };
     if (reason) entry.reason = reason;
     const history = [...targetUser.vma_history, entry];
-    const { error } = await supabase.from('users').update({ vma, vma_history: history }).eq('id', userId);
-    if (!error) await fetchUsers();
-  }, [users, fetchUsers]);
+    await patchUser(userId, { vma, vma_history: history } as Partial<User>);
+  }, [users, patchUser]);
 
   const updateUserPublic = useCallback(async (userId: string, isPublic: boolean) => {
-    const { error } = await supabase.from('users').update({ is_public: isPublic }).eq('id', userId);
-    if (!error) await fetchUsers();
-  }, [fetchUsers]);
+    await patchUser(userId, { is_public: isPublic });
+  }, [patchUser]);
 
   const updateUserPhone = useCallback(async (userId: string, phone: string | null) => {
-    const { error } = await supabase.from('users').update({ phone }).eq('id', userId);
-    if (!error) await fetchUsers();
-  }, [fetchUsers]);
+    await patchUser(userId, { phone });
+  }, [patchUser]);
 
   const updateUserStrava = useCallback(async (userId: string, stravaId: string | null) => {
-    const { error } = await supabase.from('users').update({ strava_id: stravaId }).eq('id', userId);
-    if (!error) await fetchUsers();
-  }, [fetchUsers]);
+    await patchUser(userId, { strava_id: stravaId });
+  }, [patchUser]);
 
   const updateUserLicense = useCallback(async (userId: string, licenseNumber: string | null) => {
-    const { error } = await supabase.from('users').update({ license_number: licenseNumber }).eq('id', userId);
-    if (!error) await fetchUsers();
-  }, [fetchUsers]);
+    await patchUser(userId, { license_number: licenseNumber });
+  }, [patchUser]);
 
   const updateUserBirthDate = useCallback(async (userId: string, birthDate: string | null) => {
-    const { error } = await supabase.from('users').update({ birth_date: birthDate }).eq('id', userId);
-    if (!error) await fetchUsers();
-  }, [fetchUsers]);
+    await patchUser(userId, { birth_date: birthDate });
+  }, [patchUser]);
 
   const updateUserPhoto = useCallback(async (userId: string, photoUrl: string | null) => {
-    const { error } = await supabase.from('users').update({ photo_url: photoUrl }).eq('id', userId);
-    if (!error) await fetchUsers();
-  }, [fetchUsers]);
+    await patchUser(userId, { photo_url: photoUrl });
+  }, [patchUser]);
 
   const addUser = useCallback(async (
     userData: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date' | 'notification_preferences'>
@@ -284,7 +290,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const newUserId = signUpData.user.id;
     const vmaHistory = userData.vma ? [{ vma: userData.vma, date: new Date().toISOString().split('T')[0] }] : [];
 
-    const { error: insertError } = await supabase.from('users').insert({
+    const { data, error: insertError } = await supabase.from('users').insert({
       id: newUserId,
       role: userData.role,
       firstname: userData.firstname,
@@ -296,78 +302,91 @@ export function DataProvider({ children }: { children: ReactNode }) {
       phone: userData.phone,
       strava_id: userData.strava_id,
       is_public: userData.is_public,
-    });
+    }).select().single();
 
-    if (insertError) {
-      console.error('Insert profile error:', insertError.message);
+    if (insertError || !data) {
+      console.error('Insert profile error:', insertError?.message);
       return null;
     }
 
-    await fetchUsers();
+    setUsers(prev => [...prev, normalizeUser(data)]);
     return { userId: newUserId, tempPassword };
-  }, [fetchUsers]);
+  }, []);
 
   const deleteUser = useCallback(async (id: string) => {
     const { error } = await supabase.from('users').delete().eq('id', id);
     if (!error) {
-      await Promise.all([fetchUsers(), fetchValidations(), fetchRaceResults(), fetchRaceNordiks()]);
+      setUsers(prev => prev.filter(u => u.id !== id));
+      setValidations(prev => prev.filter(v => v.user_id !== id));
+      setRaceResults(prev => prev.filter(r => r.user_id !== id));
+      setRaceNordiks(prev => prev.filter(n => n.user_id !== id));
     }
-  }, [fetchUsers, fetchValidations, fetchRaceResults, fetchRaceNordiks]);
+  }, []);
+
+  // --- Groups ---
 
   const addGroup = useCallback(async (name: string) => {
-    const { error } = await supabase.from('groups').insert({ name });
-    if (!error) await fetchGroups();
-  }, [fetchGroups]);
+    const { data, error } = await supabase.from('groups').insert({ name }).select().single();
+    if (!error && data) setGroups(prev => [...prev, data]);
+  }, []);
 
   const updateGroup = useCallback(async (id: string, name: string) => {
     const { error } = await supabase.from('groups').update({ name }).eq('id', id);
-    if (!error) await fetchGroups();
-  }, [fetchGroups]);
+    if (!error) setGroups(prev => prev.map(g => g.id === id ? { ...g, name } : g));
+  }, []);
 
   const deleteGroup = useCallback(async (id: string) => {
     const { error } = await supabase.from('groups').delete().eq('id', id);
     if (!error) {
-      await Promise.all([fetchGroups(), fetchUsers(), fetchSessions()]);
+      setGroups(prev => prev.filter(g => g.id !== id));
+      setUsers(prev => prev.map(u => u.group_id === id ? { ...u, group_id: null } : u));
+      setSessions(prev => prev.map(s => s.group_id === id ? { ...s, group_id: null } : s));
     }
-  }, [fetchGroups, fetchUsers, fetchSessions]);
+  }, []);
 
   const updateUserGroup = useCallback(async (userId: string, groupId: string | null) => {
-    const { error } = await supabase.from('users').update({ group_id: groupId }).eq('id', userId);
-    if (!error) await fetchUsers();
-  }, [fetchUsers]);
+    await patchUser(userId, { group_id: groupId });
+  }, [patchUser]);
 
   const updateNotificationPreferences = useCallback(async (userId: string, prefs: NotificationPreferences) => {
-    const { error } = await supabase.from('users').update({ notification_preferences: prefs }).eq('id', userId);
-    if (!error) await fetchUsers();
-  }, [fetchUsers]);
+    await patchUser(userId, { notification_preferences: prefs });
+  }, [patchUser]);
+
+  // --- Preparations ---
 
   const addPreparation = useCallback(async (name: string, eventDate: string, description: string | null) => {
-    const { error } = await supabase.from('specific_preparations').insert({
+    const { data, error } = await supabase.from('specific_preparations').insert({
       name, event_date: eventDate, description, created_by: authUser?.id,
-    });
-    if (!error) await fetchPreparations();
-  }, [authUser?.id, fetchPreparations]);
+    }).select().single();
+    if (!error && data) setPreparations(prev => [...prev, data].sort((a, b) => a.event_date.localeCompare(b.event_date)));
+  }, [authUser?.id]);
 
   const updatePreparation = useCallback(async (id: string, updates: Partial<SpecificPreparation>) => {
     const { error } = await supabase.from('specific_preparations').update(updates).eq('id', id);
-    if (!error) await fetchPreparations();
-  }, [fetchPreparations]);
+    if (!error) setPreparations(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+  }, []);
 
   const deletePreparation = useCallback(async (id: string) => {
     const { error } = await supabase.from('specific_preparations').delete().eq('id', id);
-    if (!error) await Promise.all([fetchPreparations(), fetchUserPreparations(), fetchSessions()]);
-  }, [fetchPreparations, fetchUserPreparations, fetchSessions]);
+    if (!error) {
+      setPreparations(prev => prev.filter(p => p.id !== id));
+      setUserPreparations(prev => prev.filter(up => up.preparation_id !== id));
+      setSessions(prev => prev.map(s => s.preparation_id === id ? { ...s, preparation_id: null } : s));
+    }
+  }, []);
 
   const addUserToPreparation = useCallback(async (userId: string, preparationId: string) => {
-    const { error } = await supabase.from('user_preparations').insert({ user_id: userId, preparation_id: preparationId });
-    if (!error) await fetchUserPreparations();
-  }, [fetchUserPreparations]);
+    const { data, error } = await supabase.from('user_preparations').insert({ user_id: userId, preparation_id: preparationId }).select().single();
+    if (!error && data) setUserPreparations(prev => [...prev, data]);
+  }, []);
 
   const removeUserFromPreparation = useCallback(async (userId: string, preparationId: string) => {
     const { error } = await supabase.from('user_preparations').delete()
       .eq('user_id', userId).eq('preparation_id', preparationId);
-    if (!error) await fetchUserPreparations();
-  }, [fetchUserPreparations]);
+    if (!error) {
+      setUserPreparations(prev => prev.filter(up => !(up.user_id === userId && up.preparation_id === preparationId)));
+    }
+  }, []);
 
   return (
     <DataContext.Provider value={{
