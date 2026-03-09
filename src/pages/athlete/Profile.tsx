@@ -710,7 +710,7 @@ export default function Profile() {
             <div className="space-y-3">
               {([
                 { key: 'new_session', label: 'Nouvelle seance', hasInApp: true, hasEmail: true },
-                { key: 'palmares', label: 'Palmares', hasInApp: true, hasEmail: true },
+                { key: 'palmares', label: 'Palmares', hasInApp: true, hasEmail: false },
                 { key: 'vma_update', label: 'Mise a jour VMA', hasInApp: true, hasEmail: true },
                 { key: 'weekly_digest', label: 'Digest hebdo', hasInApp: false, hasEmail: true },
               ] as const).map(({ key, label, hasInApp, hasEmail }) => (

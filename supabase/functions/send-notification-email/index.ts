@@ -81,7 +81,7 @@ serve(async (req) => {
 
 function buildHtml(firstname: string, title: string, body: string, link: string | null): string {
   const cta = link
-    ? `<a href="https://narbonordik.2nc.fr${link}" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#6CCBE6;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">Voir dans l'appli</a>`
+    ? `<a href="https://narbo-nordik.vercel.app${link}" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#6CCBE6;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">Voir dans l'appli</a>`
     : '';
 
   return `
