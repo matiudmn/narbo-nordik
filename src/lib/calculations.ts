@@ -12,6 +12,7 @@ export const BLOCK_TYPES: Record<string, { label: string }> = {
   echauffement:    { label: 'Echauffement' },
   travail:         { label: 'Travail' },
   retour_au_calme: { label: 'Retour au calme' },
+  recuperation:    { label: 'Recuperation' },
 };
 
 export function calculateBlockPace(vma: number, zone: AllureZone) {

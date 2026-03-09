@@ -250,8 +250,18 @@ export default function SessionEditor() {
       echauffement: makeBlock('echauffement', 'ef', 1200),
       travail: makeBlock('travail', 'vma', 120, 6, 90),
       retour_au_calme: makeBlock('retour_au_calme', 'ef', 600),
+      recuperation: makeBlock('recuperation', 'ef', 120),
     };
     setBlocks(prev => [...prev, defaults[type]]);
+  };
+
+  const insertRecovery = (afterIdx: number) => {
+    const recovery = makeBlock('recuperation', 'ef', 120);
+    setBlocks(prev => {
+      const arr = [...prev];
+      arr.splice(afterIdx + 1, 0, recovery);
+      return arr;
+    });
   };
 
   const updateBlock = (idx: number, updated: SessionBlock) => {
@@ -385,22 +395,38 @@ export default function SessionEditor() {
                 className="flex-1 text-xs py-2 rounded-lg border border-dashed border-green-300 text-green-600 hover:bg-green-50 font-medium transition-colors">
                 + Retour
               </button>
+              <button onClick={() => addBlock('recuperation')}
+                className="flex-1 text-xs py-2 rounded-lg border border-dashed border-orange-300 text-orange-500 hover:bg-orange-50 font-medium transition-colors">
+                + Recup
+              </button>
             </div>
 
             {/* Blocks list */}
             {blocks.length > 0 && (
               <div className="space-y-2">
                 {blocks.map((block, idx) => (
-                  <BlockCard
-                    key={block.id}
-                    block={block}
-                    index={idx}
-                    total={blocks.length}
-                    onUpdate={b => updateBlock(idx, b)}
-                    onDelete={() => deleteBlock(idx)}
-                    onMove={dir => moveBlock(idx, dir)}
-                    previewVma={previewUser?.vma || null}
-                  />
+                  <div key={block.id}>
+                    <BlockCard
+                      block={block}
+                      index={idx}
+                      total={blocks.length}
+                      onUpdate={b => updateBlock(idx, b)}
+                      onDelete={() => deleteBlock(idx)}
+                      onMove={dir => moveBlock(idx, dir)}
+                      previewVma={previewUser?.vma || null}
+                    />
+                    {idx < blocks.length - 1 && (
+                      <button
+                        type="button"
+                        onClick={() => insertRecovery(idx)}
+                        className="w-full flex items-center justify-center gap-1 py-1 my-1 text-[10px] text-orange-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors group"
+                      >
+                        <span className="flex-1 border-t border-dashed border-orange-200 group-hover:border-orange-400" />
+                        <span className="px-2 font-medium">+ Recup</span>
+                        <span className="flex-1 border-t border-dashed border-orange-200 group-hover:border-orange-400" />
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
