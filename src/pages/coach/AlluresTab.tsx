@@ -13,9 +13,10 @@ export default function AlluresTab() {
 
   useEffect(() => {
     if (clubSettings) {
-      setRacePaces(clubSettings.race_paces && Object.keys(clubSettings.race_paces).length > 0
-        ? clubSettings.race_paces
-        : DEFAULT_RACE_PACES);
+      const rp = clubSettings.race_paces;
+      const hasValidFormat = rp && Object.keys(rp).length > 0
+        && Object.values(rp).every(z => Array.isArray(z.pctByLevel));
+      setRacePaces(hasValidFormat ? rp : DEFAULT_RACE_PACES);
       setAllureZones(clubSettings.allure_zones && Object.keys(clubSettings.allure_zones).length > 0
         ? clubSettings.allure_zones
         : DEFAULT_ALLURE_ZONES);

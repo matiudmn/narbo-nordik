@@ -127,8 +127,9 @@ export const DEFAULT_RACE_PACES: Record<string, RacePaceConfig> = {
 export const RACE_PACES = DEFAULT_RACE_PACES;
 
 export function getRacePaces(overrides?: Record<string, RacePaceConfig>): Record<string, RacePaceConfig> {
-  if (!overrides) return DEFAULT_RACE_PACES;
-  return overrides;
+  if (!overrides || Object.keys(overrides).length === 0) return DEFAULT_RACE_PACES;
+  const valid = Object.values(overrides).every(z => Array.isArray(z.pctByLevel));
+  return valid ? overrides : DEFAULT_RACE_PACES;
 }
 
 export function calculateRacePace(vma: number, pct: number): { speed: number; pace: string } {
