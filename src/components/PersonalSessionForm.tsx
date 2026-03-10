@@ -1,13 +1,13 @@
 import { useState, memo } from 'react';
 import { format } from 'date-fns';
-import { Footprints, Bike, Dumbbell, Plus, Trash2, ChevronUp, ChevronDown, Clock, Ruler } from 'lucide-react';
+import { Footprints, Bike, Dumbbell, Plus, Trash2, ChevronUp, ChevronDown, Clock, Ruler, Target, Smile } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
   calculateBlockPace, formatBlockSummary, estimateBlockEffortSeconds, formatSeconds,
 } from '../lib/calculations';
-import type { SessionBlock, AllureZone, BlockType, Session } from '../types';
+import type { SessionBlock, AllureZone, BlockType, Session, ObjectiveReached, Sensations } from '../types';
 
 type ActivityType = 'run' | 'velo' | 'marche' | 'renfo';
 
@@ -197,6 +197,9 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
     return '';
   });
   const [description, setDescription] = useState(editSession?.description || '');
+  const [objectiveReached, setObjectiveReached] = useState<ObjectiveReached | ''>('');
+  const [sensations, setSensations] = useState<Sensations | ''>('');
+  const [feedback, setFeedback] = useState('');
   const [saving, setSaving] = useState(false);
 
   if (!user) return null;
@@ -290,7 +293,13 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
       });
 
       if (newId) {
-        await validateSession(newId, user.id, 'done');
+        await validateSession(
+          newId, user.id, 'done',
+          feedback.trim() || undefined,
+          undefined,
+          objectiveReached || undefined,
+          sensations || undefined,
+        );
       }
     }
 
@@ -371,6 +380,42 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
           <div>
             <label className="text-xs text-gray-500">Description (facultatif)</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Details de la seance..."
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+          </div>
+        </div>
+      )}
+
+      {!editSession && (
+        <div className="space-y-3 border-t border-gray-200 pt-3">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Ressenti</p>
+
+          <div>
+            <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Target size={12} /> Objectif atteint ?</p>
+            <div className="flex gap-2">
+              {([['oui', 'Oui', 'bg-green-100 text-green-700 border-green-300'], ['partiel', 'Partiel', 'bg-yellow-100 text-yellow-700 border-yellow-300'], ['non', 'Non', 'bg-red-100 text-red-700 border-red-300']] as const).map(([val, label, colors]) => (
+                <button key={val} type="button" onClick={() => setObjectiveReached(objectiveReached === val ? '' : val)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${objectiveReached === val ? colors : 'bg-white border-gray-200 text-gray-500'}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Smile size={12} /> Sensations</p>
+            <div className="flex gap-2">
+              {([['excellentes', 'Excellentes', 'bg-green-100 text-green-700 border-green-300'], ['bonnes', 'Bonnes', 'bg-blue-100 text-blue-700 border-blue-300'], ['mauvaises', 'Mauvaises', 'bg-red-100 text-red-700 border-red-300']] as const).map(([val, label, colors]) => (
+                <button key={val} type="button" onClick={() => setSensations(sensations === val ? '' : val)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${sensations === val ? colors : 'bg-white border-gray-200 text-gray-500'}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-gray-500">Commentaire (facultatif)</label>
+            <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={2} placeholder="Comment s'est passee la seance ?"
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
           </div>
         </div>
