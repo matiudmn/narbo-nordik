@@ -1,0 +1,3 @@
+ALTER TABLE session_validations
+  ADD COLUMN IF NOT EXISTS objective_reached TEXT DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS sensations TEXT DEFAULT NULL;

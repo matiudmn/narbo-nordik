@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import type { Session, SessionValidation, RaceResult, RaceNordik, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation } from '../types';
+import type { Session, SessionValidation, RaceResult, RaceNordik, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation, ObjectiveReached, Sensations } from '../types';
 import { supabase, createEphemeralClient } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -21,7 +21,8 @@ interface DataContextType {
   addSession: (session: Omit<Session, 'id' | 'created_at'>) => Promise<void>;
   updateSession: (id: string, updates: Partial<Session>) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
-  validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File) => Promise<void>;
+  validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File, objectiveReached?: ObjectiveReached, sensations?: Sensations) => Promise<void>;
+  updateValidation: (validationId: string, updates: { feedback?: string; objective_reached?: ObjectiveReached | null; sensations?: Sensations | null }, file?: File) => Promise<void>;
   addRaceResult: (result: Omit<RaceResult, 'id' | 'created_at'>) => Promise<void>;
   updateRaceResult: (id: string, updates: Partial<Omit<RaceResult, 'id' | 'created_at'>>) => Promise<void>;
   deleteRaceResult: (id: string) => Promise<void>;
@@ -156,7 +157,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // --- Validations ---
 
-  const validateSession = useCallback(async (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File) => {
+  const validateSession = useCallback(async (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File, objectiveReached?: ObjectiveReached, sensations?: Sensations) => {
     let attachmentPath: string | null = null;
     let attachmentType: string | null = null;
 
@@ -181,6 +182,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       feedback: feedback || null,
       attachment_path: attachmentPath,
       attachment_type: attachmentType,
+      objective_reached: objectiveReached || null,
+      sensations: sensations || null,
       created_at: new Date().toISOString(),
     };
 
@@ -201,6 +204,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
     }
   }, []);
+
+  const updateValidation = useCallback(async (validationId: string, updates: { feedback?: string; objective_reached?: ObjectiveReached | null; sensations?: Sensations | null }, file?: File) => {
+    const existing = validations.find(v => v.id === validationId);
+    if (!existing) return;
+
+    let attachmentPath = existing.attachment_path;
+    let attachmentType = existing.attachment_type;
+
+    if (file) {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
+      const filePath = `${existing.user_id}/${existing.session_id}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('session-attachments')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+      if (uploadError) {
+        console.error('Upload error:', uploadError.message);
+        return;
+      }
+      attachmentPath = filePath;
+      attachmentType = file.type;
+    }
+
+    const row = {
+      feedback: updates.feedback ?? existing.feedback,
+      objective_reached: updates.objective_reached !== undefined ? updates.objective_reached : existing.objective_reached,
+      sensations: updates.sensations !== undefined ? updates.sensations : existing.sensations,
+      attachment_path: attachmentPath,
+      attachment_type: attachmentType,
+    };
+
+    const { data, error } = await supabase.from('session_validations').update(row).eq('id', validationId).select().single();
+    if (!error && data) {
+      setValidations(prev => prev.map(v => v.id === validationId ? data : v));
+    }
+  }, [validations]);
 
   // --- Race Results ---
 
@@ -401,7 +439,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   return (
     <DataContext.Provider value={{
       sessions, validations, raceResults, raceNordiks, groups, users, preparations, userPreparations, loading,
-      addSession, updateSession, deleteSession, validateSession,
+      addSession, updateSession, deleteSession, validateSession, updateValidation,
       addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto,
       addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
       addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, refreshAll,

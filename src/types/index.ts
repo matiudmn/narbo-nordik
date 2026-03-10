@@ -6,6 +6,9 @@ export type BlockType = 'echauffement' | 'travail' | 'retour_au_calme' | 'recupe
 export type SessionType = 'entrainement' | 'sortie_longue' | 'recuperation';
 export type TerrainOption = 'cotes' | 'piste';
 
+export type ObjectiveReached = 'oui' | 'non' | 'partiel';
+export type Sensations = 'excellentes' | 'bonnes' | 'mauvaises';
+
 export interface SessionBlock {
   id: string;
   type: BlockType;
@@ -14,6 +17,7 @@ export interface SessionBlock {
   distance_meters: number | null;
   repetitions: number;
   rest_seconds: number;
+  rest_distance_meters: number | null;
 }
 
 export interface VmaEntry {
@@ -88,6 +92,8 @@ export interface SessionValidation {
   feedback: string | null;
   attachment_path: string | null;
   attachment_type: string | null;
+  objective_reached: ObjectiveReached | null;
+  sensations: Sensations | null;
   created_at: string;
 }
 

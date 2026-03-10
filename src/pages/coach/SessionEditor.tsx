@@ -1,7 +1,7 @@
 import { useState, useMemo, memo } from 'react';
 import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, ChevronUp, ChevronDown, Zap, Clock, Ruler } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, ChevronUp, ChevronDown, Zap, Clock, Ruler, Pencil, Copy } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import {
@@ -24,8 +24,8 @@ const TERRAIN_OPTIONS: Record<TerrainOption, string> = {
   piste: 'Piste',
 };
 
-function makeBlock(type: BlockType, allure: AllureZone, durationSec: number, reps = 1, restSec = 0, distanceMeters: number | null = null): SessionBlock {
-  return { id: genBlockId(), type, allure, duration_seconds: durationSec, distance_meters: distanceMeters, repetitions: reps, rest_seconds: restSec };
+function makeBlock(type: BlockType, allure: AllureZone, durationSec: number, reps = 1, restSec = 0, distanceMeters: number | null = null, restDistanceMeters: number | null = null): SessionBlock {
+  return { id: genBlockId(), type, allure, duration_seconds: durationSec, distance_meters: distanceMeters, repetitions: reps, rest_seconds: restSec, rest_distance_meters: restDistanceMeters };
 }
 
 function DurationInput({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
@@ -88,6 +88,7 @@ const BlockCard = memo(function BlockCard({
   const zone = ALLURE_ZONES[block.allure];
   const pace = previewVma ? calculateBlockPace(previewVma, block.allure) : null;
   const isDistance = block.distance_meters !== null && block.distance_meters !== undefined;
+  const isRestDistance = block.rest_distance_meters !== null && block.rest_distance_meters !== undefined && block.rest_distance_meters > 0;
   const estimatedTime = isDistance && previewVma ? formatSeconds(estimateBlockEffortSeconds(block, previewVma)) : null;
 
   return (
@@ -176,7 +177,36 @@ const BlockCard = memo(function BlockCard({
           />
         </div>
         {block.repetitions > 1 && (
-          <DurationInput value={block.rest_seconds} onChange={v => onUpdate({ ...block, rest_seconds: v })} label="Repos" />
+          <div>
+            <div className="flex items-center justify-between mb-0.5">
+              <label className="text-xs text-gray-500">{isRestDistance ? 'Repos (m)' : 'Repos'}</label>
+              <button
+                type="button"
+                onClick={() => {
+                  if (isRestDistance) {
+                    onUpdate({ ...block, rest_distance_meters: null, rest_seconds: block.rest_seconds || 90 });
+                  } else {
+                    onUpdate({ ...block, rest_distance_meters: 200, rest_seconds: 0 });
+                  }
+                }}
+                className="flex items-center gap-1 text-xs text-orange-500 font-medium bg-orange-50 px-2 py-0.5 rounded-full hover:bg-orange-100 transition-colors"
+              >
+                {isRestDistance ? <Clock size={10} /> : <Ruler size={10} />}
+                {isRestDistance ? 'Temps' : 'Metres'}
+              </button>
+            </div>
+            {isRestDistance ? (
+              <input
+                type="number" inputMode="numeric" min={10} step={10}
+                value={block.rest_distance_meters || 200}
+                onChange={e => onUpdate({ ...block, rest_distance_meters: Math.max(10, parseInt(e.target.value) || 200) })}
+                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="metres"
+              />
+            ) : (
+              <DurationInput value={block.rest_seconds} onChange={v => onUpdate({ ...block, rest_seconds: v })} label="" />
+            )}
+          </div>
         )}
       </div>
 
@@ -198,10 +228,11 @@ const BlockCard = memo(function BlockCard({
 
 export default function SessionEditor() {
   const { user } = useAuth();
-  const { sessions, groups, users, preparations, addSession, deleteSession } = useData();
+  const { sessions, groups, users, preparations, addSession, updateSession, deleteSession } = useData();
   const [weekOffset, setWeekOffset] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -234,28 +265,64 @@ export default function SessionEditor() {
     setTitle(''); setDate(''); setGroupId(''); setLocation('');
     setSessionType('entrainement'); setTerrainOptions([]);
     setDescription(''); setBlocks([]); setPreviewUserId(null);
+    setEditingSessionId(null);
   };
 
   const handleSubmit = () => {
     if (!title || !date || !user) return;
-    addSession({
-      title,
-      date: new Date(date).toISOString(),
-      session_type: sessionType,
-      terrain_options: terrainOptions,
-      group_id: preparationId ? null : (groupId || null),
-      preparation_id: preparationId || null,
-      location: location || null,
-      location_url: null,
-      description: description || null,
-      target_distance: null,
-      vma_percent_min: null,
-      vma_percent_max: null,
-      created_by: user.id,
-      blocks,
-    });
+    if (editingSessionId) {
+      updateSession(editingSessionId, {
+        title,
+        date: new Date(date).toISOString(),
+        session_type: sessionType,
+        terrain_options: terrainOptions,
+        group_id: preparationId ? null : (groupId || null),
+        preparation_id: preparationId || null,
+        location: location || null,
+        description: description || null,
+        blocks,
+      });
+    } else {
+      addSession({
+        title,
+        date: new Date(date).toISOString(),
+        session_type: sessionType,
+        terrain_options: terrainOptions,
+        group_id: preparationId ? null : (groupId || null),
+        preparation_id: preparationId || null,
+        location: location || null,
+        location_url: null,
+        description: description || null,
+        target_distance: null,
+        vma_percent_min: null,
+        vma_percent_max: null,
+        created_by: user.id,
+        blocks,
+      });
+    }
     resetForm();
     setShowForm(false);
+  };
+
+  const loadSessionIntoForm = (s: typeof sessions[0], isEdit: boolean) => {
+    setTitle(s.title);
+    const d = new Date(s.date);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    setDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    setGroupId(s.group_id || '');
+    setPreparationId(s.preparation_id || '');
+    setSessionType(s.session_type);
+    setTerrainOptions(s.terrain_options || []);
+    setLocation(s.location || '');
+    setDescription(s.description || '');
+    setBlocks(s.blocks.map(b => ({ ...b, id: genBlockId() })));
+    setPreviewUserId(null);
+    if (isEdit) {
+      setEditingSessionId(s.id);
+    } else {
+      setEditingSessionId(null);
+    }
+    setShowForm(true);
   };
 
   const addBlock = (type: BlockType) => {
@@ -315,7 +382,7 @@ export default function SessionEditor() {
       {/* Creation form */}
       {showForm && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4 space-y-3">
-          <h2 className="font-bold text-gray-900">Creer une seance</h2>
+          <h2 className="font-bold text-gray-900">{editingSessionId ? 'Modifier la seance' : 'Creer une seance'}</h2>
 
           <input
             type="text" placeholder="Titre (ex: Fractionne court)"
@@ -482,7 +549,7 @@ export default function SessionEditor() {
             disabled={!title || !date}
             className="w-full bg-primary text-white font-semibold py-2.5 rounded-lg disabled:opacity-40 hover:bg-primary-light transition-colors"
           >
-            Publier la seance
+            {editingSessionId ? 'Enregistrer les modifications' : 'Publier la seance'}
           </button>
         </div>
       )}
@@ -539,12 +606,29 @@ export default function SessionEditor() {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => deleteSession(session.id)}
-                    className="p-2 text-gray-300 hover:text-red-500 transition-colors flex-shrink-0"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => loadSessionIntoForm(session, true)}
+                      className="p-1.5 text-gray-300 hover:text-primary transition-colors"
+                      title="Modifier"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => loadSessionIntoForm(session, false)}
+                      className="p-1.5 text-gray-300 hover:text-accent transition-colors"
+                      title="Dupliquer"
+                    >
+                      <Copy size={16} />
+                    </button>
+                    <button
+                      onClick={() => deleteSession(session.id)}
+                      className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                      title="Supprimer"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
             );

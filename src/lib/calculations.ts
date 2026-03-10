@@ -37,10 +37,23 @@ export function estimateBlockEffortSeconds(block: SessionBlock, vma?: number): n
   return block.duration_seconds;
 }
 
+export function estimateRestSeconds(block: SessionBlock, vma?: number): number {
+  if (block.rest_distance_meters && vma) {
+    const efPct = (ALLURE_ZONES.ef.pctMin + ALLURE_ZONES.ef.pctMax) / 2 / 100;
+    const speedMs = (vma * efPct) / 3.6;
+    return Math.round(block.rest_distance_meters / speedMs);
+  }
+  if (block.rest_distance_meters) {
+    return Math.round(block.rest_distance_meters / 2.5);
+  }
+  return block.rest_seconds;
+}
+
 export function calculateBlockTotalSeconds(block: SessionBlock, vma?: number): number {
   const effortPerRep = block.distance_meters ? estimateBlockEffortSeconds(block, vma) : block.duration_seconds;
   const effort = effortPerRep * block.repetitions;
-  const rest = block.rest_seconds * Math.max(0, block.repetitions - 1);
+  const restPerRep = estimateRestSeconds(block, vma);
+  const rest = restPerRep * Math.max(0, block.repetitions - 1);
   return effort + rest;
 }
 
@@ -66,7 +79,12 @@ export function formatBlockSummary(block: SessionBlock): string {
   const zone = ALLURE_ZONES[block.allure];
   const effort = block.distance_meters ? formatDistance(block.distance_meters) : formatSeconds(block.duration_seconds);
   if (block.repetitions <= 1) return `${effort} ${zone.label}`;
-  const rest = block.rest_seconds > 0 ? ` R=${formatSeconds(block.rest_seconds)}` : '';
+  let rest = '';
+  if (block.rest_distance_meters) {
+    rest = ` R=${formatDistance(block.rest_distance_meters)}`;
+  } else if (block.rest_seconds > 0) {
+    rest = ` R=${formatSeconds(block.rest_seconds)}`;
+  }
   return `${block.repetitions}x${effort} ${zone.label}${rest}`;
 }
 

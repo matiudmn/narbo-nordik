@@ -1,25 +1,29 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X } from 'lucide-react';
+import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary } from '../../lib/calculations';
 import { useState, useRef } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
+import type { ObjectiveReached, Sensations } from '../../types';
 
 export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { sessions, validations, validateSession, groups, userPreparations } = useData();
+  const { sessions, validations, validateSession, updateValidation, groups, userPreparations } = useData();
 
   const session = sessions.find(s => s.id === id);
   const validation = validations.find(v => v.session_id === id && v.user_id === user?.id);
   const group = session?.group_id ? groups.find(g => g.id === session.group_id) : null;
 
   const [showValidation, setShowValidation] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [objectiveReached, setObjectiveReached] = useState<ObjectiveReached | null>(null);
+  const [sensations, setSensations] = useState<Sensations | null>(null);
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -90,10 +94,36 @@ export default function SessionDetail() {
 
   const handleValidate = () => {
     if (user) {
-      validateSession(session.id, user.id, 'done', feedback || undefined, attachedFile || undefined);
+      validateSession(session.id, user.id, 'done', feedback || undefined, attachedFile || undefined, objectiveReached || undefined, sensations || undefined);
       setShowValidation(false);
       setFeedback('');
+      setObjectiveReached(null);
+      setSensations(null);
       removeFile();
+    }
+  };
+
+  const handleEditSave = () => {
+    if (validation) {
+      updateValidation(validation.id, {
+        feedback: feedback || undefined,
+        objective_reached: objectiveReached,
+        sensations: sensations,
+      }, attachedFile || undefined);
+      setIsEditing(false);
+      setFeedback('');
+      setObjectiveReached(null);
+      setSensations(null);
+      removeFile();
+    }
+  };
+
+  const startEditing = () => {
+    if (validation) {
+      setFeedback(validation.feedback || '');
+      setObjectiveReached(validation.objective_reached || null);
+      setSensations(validation.sensations || null);
+      setIsEditing(true);
     }
   };
 
@@ -259,28 +289,70 @@ export default function SessionDetail() {
 
         {/* Validation */}
         <div className="p-4 border-t border-gray-100">
-          {validation?.status === 'done' ? (
-            <div className="bg-success/10 text-success rounded-xl p-4 text-center">
-              <Check size={24} className="mx-auto mb-1" />
-              <p className="font-semibold">Seance validee !</p>
+          {validation?.status === 'done' && !isEditing ? (
+            <div className="bg-success/10 rounded-xl p-4">
+              <div className="text-center">
+                <Check size={24} className="mx-auto mb-1 text-success" />
+                <p className="font-semibold text-success">Seance validee !</p>
+              </div>
+              {(validation.objective_reached || validation.sensations) && (
+                <div className="flex justify-center gap-4 mt-3">
+                  {validation.objective_reached && (
+                    <div className="text-center">
+                      <p className="text-[10px] text-gray-400 uppercase">Objectif</p>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        validation.objective_reached === 'oui' ? 'bg-green-100 text-green-700' :
+                        validation.objective_reached === 'partiel' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {validation.objective_reached === 'oui' ? 'Atteint' :
+                         validation.objective_reached === 'partiel' ? 'Partiel' : 'Non atteint'}
+                      </span>
+                    </div>
+                  )}
+                  {validation.sensations && (
+                    <div className="text-center">
+                      <p className="text-[10px] text-gray-400 uppercase">Sensations</p>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        validation.sensations === 'excellentes' ? 'bg-green-100 text-green-700' :
+                        validation.sensations === 'bonnes' ? 'bg-blue-100 text-blue-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {validation.sensations.charAt(0).toUpperCase() + validation.sensations.slice(1)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
               {validation.feedback && (
-                <p className="text-sm text-gray-600 mt-2 italic">"{validation.feedback}"</p>
+                <p className="text-sm text-gray-600 mt-3 italic text-center">"{validation.feedback}"</p>
               )}
               {validation.attachment_path && (
-                <a
-                  href={getAttachmentUrl(validation.attachment_path)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
-                >
-                  <Paperclip size={14} />
-                  Voir la piece jointe
-                </a>
+                <div className="text-center mt-2">
+                  <a
+                    href={getAttachmentUrl(validation.attachment_path)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    <Paperclip size={14} />
+                    Voir la piece jointe
+                  </a>
+                </div>
               )}
+              <div className="text-center mt-3">
+                <button
+                  onClick={startEditing}
+                  className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-primary transition-colors"
+                >
+                  <Pencil size={12} />
+                  Modifier
+                </button>
+              </div>
             </div>
           ) : (
             <>
-              {!showValidation ? (
+              {!showValidation && !isEditing ? (
                 <button
                   onClick={() => setShowValidation(true)}
                   className="w-full bg-accent hover:bg-accent-light text-white font-semibold py-3.5 rounded-xl transition-colors text-lg"
@@ -289,6 +361,53 @@ export default function SessionDetail() {
                 </button>
               ) : (
                 <div className="space-y-3">
+                  {isEditing && (
+                    <p className="text-sm font-medium text-gray-500">Modifier votre validation</p>
+                  )}
+                  {/* Mini-survey */}
+                  <div className="bg-gray-50 rounded-xl p-3 space-y-3">
+                    <div>
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase mb-2">
+                        <Target size={14} className="text-primary" />
+                        Objectif atteint ?
+                      </label>
+                      <div className="flex gap-2">
+                        {([['oui', 'Oui', 'bg-green-100 text-green-700 border-green-300'], ['partiel', 'Partiel', 'bg-yellow-100 text-yellow-700 border-yellow-300'], ['non', 'Non', 'bg-red-100 text-red-700 border-red-300']] as const).map(([val, label, colors]) => (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => setObjectiveReached(objectiveReached === val ? null : val)}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                              objectiveReached === val ? colors : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase mb-2">
+                        <Smile size={14} className="text-accent" />
+                        Sensations ?
+                      </label>
+                      <div className="flex gap-2">
+                        {([['excellentes', 'Excellentes', 'bg-green-100 text-green-700 border-green-300'], ['bonnes', 'Bonnes', 'bg-blue-100 text-blue-700 border-blue-300'], ['mauvaises', 'Mauvaises', 'bg-red-100 text-red-700 border-red-300']] as const).map(([val, label, colors]) => (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => setSensations(sensations === val ? null : val)}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                              sensations === val ? colors : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                   <textarea
                     value={feedback}
                     onChange={e => setFeedback(e.target.value)}
@@ -303,7 +422,7 @@ export default function SessionDetail() {
                         className="flex items-center gap-2 text-sm text-gray-500 hover:text-accent transition-colors"
                       >
                         <Paperclip size={16} />
-                        Ajouter un fichier (photo, PDF)
+                        {isEditing && validation?.attachment_path ? 'Remplacer la piece jointe' : 'Ajouter un fichier (photo, PDF)'}
                       </button>
                     ) : (
                       <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-2">
@@ -330,13 +449,20 @@ export default function SessionDetail() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => { setShowValidation(false); removeFile(); }}
+                      onClick={() => {
+                        setShowValidation(false);
+                        setIsEditing(false);
+                        setObjectiveReached(null);
+                        setSensations(null);
+                        setFeedback('');
+                        removeFile();
+                      }}
                       className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium"
                     >
                       Annuler
                     </button>
                     <button
-                      onClick={handleValidate}
+                      onClick={isEditing ? handleEditSave : handleValidate}
                       className="flex-1 bg-accent hover:bg-accent-light text-white font-semibold py-2.5 rounded-xl transition-colors"
                     >
                       Enregistrer
