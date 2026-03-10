@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isWithinInterval, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MapPin, ChevronLeft, ChevronRight, Check, Clock, AlertCircle, TrendingUp, Gauge, Info, Target } from 'lucide-react';
+import { MapPin, ChevronLeft, ChevronRight, Check, Clock, AlertCircle, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { ALLURE_ZONES, formatBlockSummary, RACE_PACES, calculateRacePace, getSessionCode } from '../lib/calculations';
@@ -106,9 +106,43 @@ export default function Home() {
     return colors[groupId] || 'bg-gray-400';
   };
 
+  const [showPrepRequest, setShowPrepRequest] = useState(false);
+  const [prepRaceName, setPrepRaceName] = useState('');
+  const [prepRaceDate, setPrepRaceDate] = useState('');
+  const [prepRaceDistance, setPrepRaceDistance] = useState('');
+  const [prepFitness, setPrepFitness] = useState<'Excellent' | 'Bon' | 'Mauvais' | ''>('');
+  const [prepComments, setPrepComments] = useState('');
+  const [prepCopied, setPrepCopied] = useState(false);
+
   if (!user) return null;
 
   const rateColor = (rate: number) => rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-red-400';
+
+  const prepMessage = prepRaceName && prepRaceDate && prepRaceDistance && prepFitness
+    ? `Hello coach !\nJe m'inscris sur ${prepRaceName} qui aura lieu le ${format(new Date(prepRaceDate), 'd MMMM yyyy', { locale: fr })} sur ${prepRaceDistance}.\nMon etat de forme est ${prepFitness.toLowerCase()}.\n${prepComments ? prepComments + '\n' : ''}Pourrais-tu me faire un plan specifique ?\nSi cela est opportun bien sur.\nMerci pour ton retour,\nBises,\n${user.firstname}`
+    : '';
+
+  const handleCopyPrep = async () => {
+    if (!prepMessage) return;
+    await navigator.clipboard.writeText(prepMessage);
+    setPrepCopied(true);
+    setTimeout(() => setPrepCopied(false), 2000);
+  };
+
+  const handleWhatsApp = () => {
+    const encoded = encodeURIComponent(prepMessage);
+    window.open(`https://wa.me/33611812018?text=${encoded}`, '_blank');
+  };
+
+  const resetPrepForm = () => {
+    setPrepRaceName('');
+    setPrepRaceDate('');
+    setPrepRaceDistance('');
+    setPrepFitness('');
+    setPrepComments('');
+    setPrepCopied(false);
+    setShowPrepRequest(false);
+  };
 
   return (
     <div className="py-4 space-y-4">
@@ -194,6 +228,96 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      {/* Demande preparation specifique */}
+      {!isCoach && (
+        <button
+          onClick={() => setShowPrepRequest(true)}
+          className="w-full flex items-center justify-center gap-2 bg-white rounded-xl border border-gray-100 p-4 text-primary font-semibold hover:border-primary/30 transition-colors"
+        >
+          <CalendarPlus size={18} />
+          Demander une preparation specifique
+        </button>
+      )}
+
+      {showPrepRequest && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={resetPrepForm}>
+          <div
+            className="bg-white w-full max-w-lg rounded-t-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-gray-900">Demande de preparation</h2>
+              <button onClick={resetPrepForm} className="p-1 text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-500">Nom de la course *</label>
+                <input type="text" value={prepRaceName} onChange={e => setPrepRaceName(e.target.value)}
+                  placeholder="Ex: Trail des Music'Halle"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Date de la course *</label>
+                <input type="date" value={prepRaceDate} onChange={e => setPrepRaceDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Distance *</label>
+                <input type="text" value={prepRaceDistance} onChange={e => setPrepRaceDistance(e.target.value)}
+                  placeholder="Ex: 10 km, Semi-marathon, 21 km..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Etat de forme actuel *</label>
+                <div className="flex gap-2 mt-1">
+                  {(['Excellent', 'Bon', 'Mauvais'] as const).map(val => (
+                    <button key={val} type="button" onClick={() => setPrepFitness(prepFitness === val ? '' : val)}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                        prepFitness === val
+                          ? val === 'Excellent' ? 'bg-green-100 text-green-700 border-green-300'
+                            : val === 'Bon' ? 'bg-blue-100 text-blue-700 border-blue-300'
+                            : 'bg-red-100 text-red-700 border-red-300'
+                          : 'bg-white border-gray-200 text-gray-500'
+                      }`}>
+                      {val}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Commentaires (facultatif)</label>
+                <textarea value={prepComments} onChange={e => setPrepComments(e.target.value)} rows={2}
+                  placeholder="Informations supplementaires..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+              </div>
+            </div>
+
+            {prepMessage && (
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500 mb-2 font-medium">Apercu du message :</p>
+                <p className="text-sm text-gray-700 whitespace-pre-line">{prepMessage}</p>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button onClick={handleCopyPrep} disabled={!prepMessage}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors">
+                <Copy size={14} />
+                {prepCopied ? 'Copie !' : 'Copier'}
+              </button>
+              <button onClick={handleWhatsApp} disabled={!prepMessage}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#25D366] text-white rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-[#20bd5a] transition-colors">
+                <MessageCircle size={14} />
+                WhatsApp
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Seances de la semaine */}
       <div>
