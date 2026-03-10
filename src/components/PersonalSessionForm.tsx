@@ -201,6 +201,7 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
   const [sensations, setSensations] = useState<Sensations | ''>('');
   const [feedback, setFeedback] = useState('');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!user) return null;
 
@@ -241,6 +242,7 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
   const handleSave = async () => {
     if (!canSave() || !activity) return;
     setSaving(true);
+    setError(null);
 
     const sessionDate = new Date(date).toISOString();
 
@@ -265,34 +267,40 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
       sessionDescription = description.trim() || null;
     }
 
-    if (editSession) {
-      await updateSession(editSession.id, {
-        title: title.trim(),
-        date: sessionDate,
-        session_type: sessionType,
-        blocks: sessionBlocks,
-        description: sessionDescription,
-      });
-    } else {
-      const newId = await addSession({
-        title: title.trim(),
-        date: sessionDate,
-        session_type: sessionType,
-        terrain_options: [],
-        location: null,
-        location_url: null,
-        description: sessionDescription,
-        group_id: null,
-        preparation_id: null,
-        target_distance: null,
-        vma_percent_min: null,
-        vma_percent_max: null,
-        blocks: sessionBlocks,
-        is_personal: true,
-        created_by: user.id,
-      });
+    try {
+      if (editSession) {
+        await updateSession(editSession.id, {
+          title: title.trim(),
+          date: sessionDate,
+          session_type: sessionType,
+          blocks: sessionBlocks,
+          description: sessionDescription,
+        });
+      } else {
+        const newId = await addSession({
+          title: title.trim(),
+          date: sessionDate,
+          session_type: sessionType,
+          terrain_options: [],
+          location: null,
+          location_url: null,
+          description: sessionDescription,
+          group_id: null,
+          preparation_id: null,
+          target_distance: null,
+          vma_percent_min: null,
+          vma_percent_max: null,
+          blocks: sessionBlocks,
+          is_personal: true,
+          created_by: user.id,
+        });
 
-      if (newId) {
+        if (!newId) {
+          setError('Erreur lors de la creation. Verifiez que la migration SQL a ete appliquee (colonne is_personal).');
+          setSaving(false);
+          return;
+        }
+
         await validateSession(
           newId, user.id, 'done',
           feedback.trim() || undefined,
@@ -301,10 +309,14 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
           sensations || undefined,
         );
       }
-    }
 
-    setSaving(false);
-    onClose();
+      setSaving(false);
+      onClose();
+    } catch (e) {
+      console.error('PersonalSessionForm save error:', e);
+      setError('Erreur inattendue lors de la sauvegarde.');
+      setSaving(false);
+    }
   };
 
   if (!activity) {
@@ -419,6 +431,10 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
           </div>
         </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-xs text-red-700">{error}</div>
       )}
 
       <div className="flex gap-2">

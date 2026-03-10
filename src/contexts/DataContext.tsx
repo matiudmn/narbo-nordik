@@ -135,7 +135,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addSession = useCallback(async (session: Omit<Session, 'id' | 'created_at'>): Promise<string | null> => {
     const { data, error } = await supabase.from('sessions').insert(session).select().single();
-    if (!error && data) {
+    if (error) {
+      console.error('addSession error:', error.message, error.details);
+      return null;
+    }
+    if (data) {
       setSessions(prev => [...prev, { ...data, blocks: data.blocks || [] }].sort((a, b) => a.date.localeCompare(b.date)));
       return data.id;
     }
