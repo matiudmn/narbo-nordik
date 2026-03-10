@@ -92,7 +92,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
-    const [s, v, rr, rn, g, u, p, up, cs] = await Promise.all([
+    const [s, v, rr, rn, g, u, p, up] = await Promise.all([
       supabase.from('sessions').select('*').order('date'),
       supabase.from('session_validations').select('*'),
       supabase.from('race_results').select('*'),
@@ -101,7 +101,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       supabase.from('users').select('*'),
       supabase.from('specific_preparations').select('*').order('event_date'),
       supabase.from('user_preparations').select('*'),
-      supabase.from('club_settings').select('*').limit(1).single(),
     ]);
     if (s.data) setSessions(s.data.map(d => ({ ...d, blocks: d.blocks || [] })));
     if (v.data) setValidations(v.data);
@@ -111,7 +110,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (u.data) setUsers(u.data.map(normalizeUser));
     if (p.data) setPreparations(p.data);
     if (up.data) setUserPreparations(up.data);
-    if (cs.data) setClubSettings(cs.data as ClubSettings);
+    try {
+      const cs = await supabase.from('club_settings').select('*').limit(1).single();
+      if (cs.data) setClubSettings(cs.data as ClubSettings);
+    } catch { /* table may not exist yet */ }
   }, []);
 
   const refreshAll = useCallback(async () => {
@@ -451,15 +453,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // --- Club Settings ---
 
   const updateClubSettings = useCallback(async (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>) => {
-    if (!clubSettings) return;
-    const { error } = await supabase.from('club_settings').update({
+    const payload = {
       race_paces: racePaces,
       allure_zones: allureZones,
       updated_at: new Date().toISOString(),
       updated_by: authUser?.id,
-    }).eq('id', clubSettings.id);
-    if (!error) {
-      setClubSettings(prev => prev ? { ...prev, race_paces: racePaces, allure_zones: allureZones } : prev);
+    };
+    if (clubSettings) {
+      const { error } = await supabase.from('club_settings').update(payload).eq('id', clubSettings.id);
+      if (!error) {
+        setClubSettings(prev => prev ? { ...prev, race_paces: racePaces, allure_zones: allureZones } : prev);
+      }
+    } else {
+      const { data, error } = await supabase.from('club_settings').insert(payload).select().single();
+      if (!error && data) setClubSettings(data as ClubSettings);
     }
   }, [clubSettings, authUser?.id]);
 
