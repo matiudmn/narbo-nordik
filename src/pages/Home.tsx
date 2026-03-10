@@ -5,7 +5,7 @@ import { fr } from 'date-fns/locale';
 import { MapPin, ChevronLeft, ChevronRight, Check, Clock, AlertCircle, TrendingUp, Gauge, Info, Target } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { ALLURE_ZONES, formatBlockSummary, RACE_PACES, calculateRacePace } from '../lib/calculations';
+import { ALLURE_ZONES, formatBlockSummary, RACE_PACES, calculateRacePace, getSessionCode } from '../lib/calculations';
 import { getSeasonRange } from '../lib/date-utils';
 
 export default function Home() {
@@ -253,7 +253,10 @@ export default function Home() {
                             {getGroupName(session)}
                           </span>
                         </div>
-                        <h3 className="font-semibold text-gray-900 truncate">{session.title}</h3>
+                        <h3 className="font-semibold text-gray-900 truncate">
+                          {session.title}
+                          <span className="text-xs font-normal text-gray-400 ml-1.5">{getSessionCode(session, sessions)}</span>
+                        </h3>
                         <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                           <span className="font-medium">
                             {format(sessionDate, 'EEEE d MMM', { locale: fr })}

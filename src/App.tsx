@@ -23,6 +23,7 @@ const Palmares = lazy(() => import('./pages/Palmares'));
 const VmaHistory = lazy(() => import('./pages/VmaHistory'));
 const TrainingHistory = lazy(() => import('./pages/TrainingHistory'));
 const Help = lazy(() => import('./pages/Help'));
+const Suivi = lazy(() => import('./pages/athlete/Suivi'));
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -48,6 +49,7 @@ function AppRoutes() {
           <Route path="/vma-history" element={<VmaHistory />} />
           <Route path="/training-history" element={<TrainingHistory />} />
           <Route path="/aide" element={<Help />} />
+          <Route path="/suivi" element={<Suivi />} />
 
           {/* Coach routes */}
           <Route path="/coach" element={isCoach ? <Dashboard /> : <Navigate to="/" />} />

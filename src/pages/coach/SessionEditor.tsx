@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
-  calculateBlockPace, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, estimateBlockEffortSeconds,
+  calculateBlockPace, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, estimateBlockEffortSeconds, getSessionCode,
 } from '../../lib/calculations';
 import type { SessionBlock, AllureZone, BlockType, SessionType, TerrainOption } from '../../types';
 
@@ -585,7 +585,10 @@ export default function SessionEditor() {
                         {prep?.name || group?.name || 'Tous'}
                       </span>
                     </div>
-                    <h3 className="font-semibold text-gray-900">{session.title}</h3>
+                    <h3 className="font-semibold text-gray-900">
+                      {session.title}
+                      <span className="text-xs font-normal text-gray-400 ml-1.5">{getSessionCode(session, sessions)}</span>
+                    </h3>
                     <p className="text-sm text-gray-500">
                       {format(new Date(session.date), 'EEEE d MMM - HH:mm', { locale: fr })}
                     </p>

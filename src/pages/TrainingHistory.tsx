@@ -5,6 +5,7 @@ import { fr } from 'date-fns/locale';
 import { ArrowLeft, Check, X, Clock, Paperclip, Dumbbell, Mountain, Battery } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
+import { getSessionCode } from '../lib/calculations';
 import type { SessionType } from '../types';
 
 const SESSION_TYPE_INFO: Record<SessionType, { label: string; icon: typeof Dumbbell }> = {
@@ -104,7 +105,10 @@ export default function TrainingHistory() {
                   <div className="flex items-start gap-2 min-w-0">
                     <TypeIcon size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{session.title}</p>
+                      <p className="font-semibold text-gray-900 truncate">
+                        {session.title}
+                        <span className="text-xs font-normal text-gray-400 ml-1.5">{getSessionCode(session, sessions)}</span>
+                      </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs text-gray-400">
                           {format(new Date(session.date), 'EEEE d MMMM yyyy', { locale: fr })}

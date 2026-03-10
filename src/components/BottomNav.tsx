@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3 } from 'lucide-react';
+import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3, ClipboardCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function BottomNav() {
@@ -50,6 +50,10 @@ export default function BottomNav() {
         <NavLink to="/" end className={linkClass}>
           <House size={22} />
           <span>Home</span>
+        </NavLink>
+        <NavLink to="/suivi" className={linkClass}>
+          <ClipboardCheck size={22} />
+          <span>Suivi</span>
         </NavLink>
         <NavLink to="/club" className={linkClass}>
           <BarChart3 size={22} />

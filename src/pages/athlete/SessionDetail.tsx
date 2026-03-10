@@ -4,7 +4,7 @@ import { fr } from 'date-fns/locale';
 import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
-import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary } from '../../lib/calculations';
+import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode } from '../../lib/calculations';
 import { useState, useRef } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
 import type { ObjectiveReached, Sensations } from '../../types';
@@ -146,7 +146,10 @@ export default function SessionDetail() {
               <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">Tous les groupes</span>
             )}
           </div>
-          <h1 className="text-xl font-bold">{session.title}</h1>
+          <h1 className="text-xl font-bold">
+            {session.title}
+            <span className="text-sm font-normal text-white/60 ml-2">{getSessionCode(session, sessions)}</span>
+          </h1>
           <p className="text-white/80 mt-1">
             {format(new Date(session.date), 'EEEE d MMMM yyyy - HH:mm', { locale: fr })}
           </p>

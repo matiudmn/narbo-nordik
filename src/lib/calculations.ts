@@ -1,4 +1,5 @@
-import type { PaceCalculation, AllureZone, SessionBlock } from '../types';
+import { getISOWeek } from 'date-fns';
+import type { PaceCalculation, AllureZone, SessionBlock, Session, Group, SpecificPreparation } from '../types';
 
 export const ALLURE_ZONES: Record<AllureZone, { label: string; pctMin: number; pctMax: number; color: string }> = {
   ef:        { label: 'EF',        pctMin: 55, pctMax: 65, color: '#22c55e' },
@@ -155,4 +156,42 @@ export function formatDuration(duration: string): string {
     return `${h}:${m}:${s}`;
   }
   return duration;
+}
+
+export function getSessionCode(
+  session: Session,
+  allSessions: Session[],
+): string {
+  const sessionDate = new Date(session.date);
+  const weekNum = getISOWeek(sessionDate);
+  const year = sessionDate.getFullYear();
+
+  const siblings = allSessions
+    .filter(s => {
+      const d = new Date(s.date);
+      if (getISOWeek(d) !== weekNum || d.getFullYear() !== year) return false;
+      if (session.preparation_id) return s.preparation_id === session.preparation_id;
+      if (session.group_id) return s.group_id === session.group_id;
+      return !s.group_id && !s.preparation_id;
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  const position = siblings.findIndex(s => s.id === session.id) + 1;
+  return `S${weekNum}-${position}/${siblings.length}`;
+}
+
+export function getSessionLabel(
+  session: Session,
+  groups: Group[],
+  preparations: SpecificPreparation[],
+): string {
+  if (session.preparation_id) {
+    const prep = preparations.find(p => p.id === session.preparation_id);
+    return prep?.name || '';
+  }
+  if (session.group_id) {
+    const group = groups.find(g => g.id === session.group_id);
+    return group?.name || '';
+  }
+  return 'Tous';
 }
