@@ -1,13 +1,20 @@
 import { getISOWeek } from 'date-fns';
-import type { PaceCalculation, AllureZone, SessionBlock, Session, Group, SpecificPreparation } from '../types';
+import type { PaceCalculation, AllureZone, AllureZoneConfig, RacePaceConfig, SessionBlock, Session, Group, SpecificPreparation } from '../types';
 
-export const ALLURE_ZONES: Record<AllureZone, { label: string; pctMin: number; pctMax: number; color: string }> = {
-  ef:        { label: 'EF',        pctMin: 55, pctMax: 65, color: '#22c55e' },
-  endurance: { label: 'Endurance', pctMin: 65, pctMax: 75, color: '#3b82f6' },
+export const DEFAULT_ALLURE_ZONES: Record<AllureZone, AllureZoneConfig> = {
+  ef:        { label: 'EF',        pctMin: 60, pctMax: 65, color: '#22c55e' },
+  endurance: { label: 'Endurance', pctMin: 70, pctMax: 80, color: '#3b82f6' },
   as42:      { label: 'AS42',      pctMin: 75, pctMax: 85, color: '#eab308' },
-  as21:      { label: 'AS21',      pctMin: 85, pctMax: 92, color: '#f97316' },
+  as21:      { label: 'AS21',      pctMin: 83, pctMax: 90, color: '#f97316' },
   vma:       { label: 'VMA',       pctMin: 95, pctMax: 105, color: '#ef4444' },
 };
+
+export const ALLURE_ZONES = DEFAULT_ALLURE_ZONES;
+
+export function getAllureZones(overrides?: Record<string, AllureZoneConfig>): Record<AllureZone, AllureZoneConfig> {
+  if (!overrides) return DEFAULT_ALLURE_ZONES;
+  return { ...DEFAULT_ALLURE_ZONES, ...overrides } as Record<AllureZone, AllureZoneConfig>;
+}
 
 export const BLOCK_TYPES: Record<string, { label: string }> = {
   echauffement:    { label: 'Echauffement' },
@@ -16,8 +23,8 @@ export const BLOCK_TYPES: Record<string, { label: string }> = {
   recuperation:    { label: 'Recuperation' },
 };
 
-export function calculateBlockPace(vma: number, zone: AllureZone) {
-  const z = ALLURE_ZONES[zone];
+export function calculateBlockPace(vma: number, zone: AllureZone, zones?: Record<string, AllureZoneConfig>) {
+  const z = (zones || ALLURE_ZONES)[zone] || ALLURE_ZONES[zone];
   const speedMin = vma * (z.pctMin / 100);
   const speedMax = vma * (z.pctMax / 100);
   return {
@@ -28,19 +35,20 @@ export function calculateBlockPace(vma: number, zone: AllureZone) {
   };
 }
 
-export function estimateBlockEffortSeconds(block: SessionBlock, vma?: number): number {
+export function estimateBlockEffortSeconds(block: SessionBlock, vma?: number, zones?: Record<string, AllureZoneConfig>): number {
   if (block.distance_meters && vma) {
-    const zone = ALLURE_ZONES[block.allure];
-    const avgPct = (zone.pctMin + zone.pctMax) / 2 / 100;
+    const z = (zones || ALLURE_ZONES)[block.allure] || ALLURE_ZONES[block.allure];
+    const avgPct = (z.pctMin + z.pctMax) / 2 / 100;
     const speedMs = (vma * avgPct) / 3.6;
     return Math.round(block.distance_meters / speedMs);
   }
   return block.duration_seconds;
 }
 
-export function estimateRestSeconds(block: SessionBlock, vma?: number): number {
+export function estimateRestSeconds(block: SessionBlock, vma?: number, zones?: Record<string, AllureZoneConfig>): number {
   if (block.rest_distance_meters && vma) {
-    const efPct = (ALLURE_ZONES.ef.pctMin + ALLURE_ZONES.ef.pctMax) / 2 / 100;
+    const efZ = (zones || ALLURE_ZONES).ef || ALLURE_ZONES.ef;
+    const efPct = (efZ.pctMin + efZ.pctMax) / 2 / 100;
     const speedMs = (vma * efPct) / 3.6;
     return Math.round(block.rest_distance_meters / speedMs);
   }
@@ -50,16 +58,16 @@ export function estimateRestSeconds(block: SessionBlock, vma?: number): number {
   return block.rest_seconds;
 }
 
-export function calculateBlockTotalSeconds(block: SessionBlock, vma?: number): number {
-  const effortPerRep = block.distance_meters ? estimateBlockEffortSeconds(block, vma) : block.duration_seconds;
+export function calculateBlockTotalSeconds(block: SessionBlock, vma?: number, zones?: Record<string, AllureZoneConfig>): number {
+  const effortPerRep = block.distance_meters ? estimateBlockEffortSeconds(block, vma, zones) : block.duration_seconds;
   const effort = effortPerRep * block.repetitions;
-  const restPerRep = estimateRestSeconds(block, vma);
+  const restPerRep = estimateRestSeconds(block, vma, zones);
   const rest = restPerRep * Math.max(0, block.repetitions - 1);
   return effort + rest;
 }
 
-export function calculateSessionTotalSeconds(blocks: SessionBlock[], vma?: number): number {
-  return blocks.reduce((sum, b) => sum + calculateBlockTotalSeconds(b, vma), 0);
+export function calculateSessionTotalSeconds(blocks: SessionBlock[], vma?: number, zones?: Record<string, AllureZoneConfig>): number {
+  return blocks.reduce((sum, b) => sum + calculateBlockTotalSeconds(b, vma, zones), 0);
 }
 
 export function formatSeconds(totalSeconds: number): string {
@@ -76,8 +84,8 @@ export function formatDistance(meters: number): string {
   return `${meters}m`;
 }
 
-export function formatBlockSummary(block: SessionBlock): string {
-  const zone = ALLURE_ZONES[block.allure];
+export function formatBlockSummary(block: SessionBlock, zones?: Record<string, AllureZoneConfig>): string {
+  const zone = (zones || ALLURE_ZONES)[block.allure] || ALLURE_ZONES[block.allure];
   const effort = block.distance_meters ? formatDistance(block.distance_meters) : formatSeconds(block.duration_seconds);
   if (block.repetitions <= 1) return `${effort} ${zone.label}`;
   let rest = '';
@@ -89,14 +97,23 @@ export function formatBlockSummary(block: SessionBlock): string {
   return `${block.repetitions}x${effort} ${zone.label}${rest}`;
 }
 
-export const RACE_PACES = {
-  sv1:  { label: 'SV1',  pct: 72, color: '#10b981', description: 'Seuil aerobie' },
-  sv2:  { label: 'SV2',  pct: 87, color: '#8b5cf6', description: 'Seuil anaerobie' },
-  as42: { label: 'AS42', pct: 80, color: '#eab308', description: 'Marathon' },
-  as21: { label: 'AS21', pct: 88, color: '#f97316', description: 'Semi' },
-  as10: { label: 'AS10', pct: 90, color: '#ef4444', description: '10 km' },
-  as5:  { label: 'AS5',  pct: 97, color: '#dc2626', description: '5 km' },
-} as const;
+export const DEFAULT_RACE_PACES: Record<string, RacePaceConfig> = {
+  ef:   { label: 'EF',   pct: 65,  color: '#22c55e', description: 'Endurance fondamentale' },
+  am:   { label: 'AM',   pct: 75,  color: '#10b981', description: 'Aerobie modere' },
+  sa1:  { label: 'SA1',  pct: 78,  color: '#3b82f6', description: 'Seuil aerobie' },
+  sa2:  { label: 'SA2',  pct: 85,  color: '#8b5cf6', description: 'Seuil anaerobie' },
+  as42: { label: 'AS42', pct: 77,  color: '#eab308', description: 'Marathon' },
+  as21: { label: 'AS21', pct: 83,  color: '#f97316', description: 'Semi-marathon' },
+  as10: { label: 'AS10', pct: 89,  color: '#ef4444', description: '10 km' },
+  vma:  { label: 'VMA',  pct: 100, color: '#dc2626', description: 'VMA' },
+};
+
+export const RACE_PACES = DEFAULT_RACE_PACES;
+
+export function getRacePaces(overrides?: Record<string, RacePaceConfig>): Record<string, RacePaceConfig> {
+  if (!overrides) return DEFAULT_RACE_PACES;
+  return overrides;
+}
 
 export function calculateRacePace(vma: number, pct: number): { speed: number; pace: string } {
   const speed = vma * pct / 100;

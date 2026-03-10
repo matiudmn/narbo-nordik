@@ -5,12 +5,13 @@ import { fr } from 'date-fns/locale';
 import { MapPin, ChevronLeft, ChevronRight, Check, Clock, AlertCircle, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { ALLURE_ZONES, formatBlockSummary, RACE_PACES, calculateRacePace, getSessionCode } from '../lib/calculations';
+import { ALLURE_ZONES, formatBlockSummary, getRacePaces, calculateRacePace, getSessionCode } from '../lib/calculations';
 import { getSeasonRange } from '../lib/date-utils';
 
 export default function Home() {
   const { user } = useAuth();
-  const { sessions, validations, groups, preparations, userPreparations } = useData();
+  const { sessions, validations, groups, preparations, userPreparations, clubSettings } = useData();
+  const racePaces = getRacePaces(clubSettings?.race_paces);
   const [weekOffset, setWeekOffset] = useState(0);
 
   const isCoach = user?.role === 'coach';
@@ -181,17 +182,17 @@ export default function Home() {
             <Gauge size={18} className="text-accent" />
             Mes Allures
           </h2>
-          <div className="grid grid-cols-3 gap-2">
-            {Object.entries(RACE_PACES).map(([key, zone]) => {
+          <div className="grid grid-cols-4 gap-1.5">
+            {Object.entries(racePaces).map(([key, zone]) => {
               const { pace } = calculateRacePace(user.vma!, zone.pct);
               return (
-                <div key={key} className="rounded-lg p-2.5 border border-gray-100" style={{ backgroundColor: `${zone.color}08` }}>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
-                    <span className="text-xs font-bold text-gray-600">{zone.label}</span>
+                <div key={key} className="rounded-lg p-2 border border-gray-100" style={{ backgroundColor: `${zone.color}08` }}>
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
+                    <span className="text-[10px] font-bold text-gray-600">{zone.label}</span>
                   </div>
                   <p className="text-sm font-bold text-gray-900">{pace}</p>
-                  <p className="text-[10px] text-gray-400">{zone.description}</p>
+                  <p className="text-[9px] text-gray-400 leading-tight">{zone.description}</p>
                 </div>
               );
             })}

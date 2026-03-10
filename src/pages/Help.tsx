@@ -108,15 +108,34 @@ const athleteSections: Section[] = [
           d'oxygene atteint son maximum. C'est un indicateur fondamental de votre potentiel
           en course a pied. Elle sert de base au calcul de toutes vos allures d'entrainement.
         </p>
-        <p className="font-semibold text-gray-900">Comment lire vos allures</p>
+        <p className="font-semibold text-gray-900">Allures de reference (affichees sur votre profil)</p>
         <p>
-          Les allures sont exprimees en min/km. Elles sont reparties en zones d'intensite :
+          Les allures sont exprimees en min/km et calculees a partir d'un % de votre VMA :
         </p>
         <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Endurance fondamentale (60-65% VMA)</strong> : allure confortable, on peut parler</li>
-          <li><strong>Endurance active (70-75% VMA)</strong> : rythme soutenu mais regulier</li>
-          <li><strong>Seuil (80-85% VMA)</strong> : allure "inconfortablement confortable"</li>
-          <li><strong>VMA (95-105% VMA)</strong> : effort intense, utilise pour les intervalles courts</li>
+          <li><strong>EF — Endurance fondamentale (~65% VMA)</strong> : allure confortable, on peut parler. Developpe le metabolisme aerobie de base.</li>
+          <li><strong>AM — Aerobie modere (~75% VMA)</strong> : rythme soutenu mais regulier. Augmente le volume aerobie et l'economie de course.</li>
+          <li><strong>SA1 — Seuil aerobie (~78% VMA)</strong> : premier seuil lactique. Ameliore le confort sur les efforts prolonges.</li>
+          <li><strong>SA2 — Seuil anaerobie (~85% VMA)</strong> : second seuil lactique. Travail de tolerance au lactate.</li>
+          <li><strong>AS42 — Allure marathon (~77% VMA)</strong> : allure specifique marathon. Efficacite lipidique et economie de course longue duree.</li>
+          <li><strong>AS21 — Allure semi-marathon (~83% VMA)</strong> : allure specifique semi. Gestion de l'effort sur la duree.</li>
+          <li><strong>AS10 — Allure 10 km (~89% VMA)</strong> : allure specifique 10 km. Stimule la puissance aerobie en competition courte.</li>
+          <li><strong>VMA (100% VMA)</strong> : effort maximal aerobie. Utilise pour les intervalles courts et le developpement de la VO2max.</li>
+        </ul>
+        <p className="text-xs text-gray-500 italic">
+          Les pourcentages ci-dessus sont des valeurs indicatives. Le coach peut ajuster ces valeurs
+          depuis les parametres de l'application en fonction du niveau du groupe.
+        </p>
+        <p className="font-semibold text-gray-900">Zones d'entrainement (dans les seances)</p>
+        <p>
+          Dans les blocs de seance, les allures sont exprimees en fourchettes de % VMA :
+        </p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>EF (60-65% VMA)</strong> : endurance fondamentale, footing leger</li>
+          <li><strong>Endurance (70-80% VMA)</strong> : aerobie modere, footing soutenu</li>
+          <li><strong>AS42 (75-85% VMA)</strong> : allure marathon et seuil</li>
+          <li><strong>AS21 (83-90% VMA)</strong> : allure semi et seuil anaerobie</li>
+          <li><strong>VMA (95-105% VMA)</strong> : effort intense, intervalles courts</li>
         </ul>
         <p className="font-semibold text-gray-900">Historique VMA</p>
         <p>
@@ -441,6 +460,37 @@ const coachSections: Section[] = [
           Apres avoir cree un compte athlete, vous pouvez copier et partager les identifiants
           de connexion (email + mot de passe initial) directement via WhatsApp ou un autre
           canal de communication.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'coach-allures',
+    title: 'Parametres — Allures',
+    coachOnly: true,
+    content: (
+      <>
+        <p>
+          L'onglet "Allures" des parametres vous permet de configurer les pourcentages de VMA
+          utilises pour calculer les allures de reference et les zones d'entrainement.
+        </p>
+        <p className="font-semibold text-gray-900">Allures de reference</p>
+        <p>
+          Ce sont les allures affichees sur la fiche de chaque athlete (accueil et annuaire).
+          Chaque allure correspond a un pourcentage fixe de la VMA. En modifiant un pourcentage,
+          les allures de tous les athletes se recalculent instantanement.
+        </p>
+        <p className="font-semibold text-gray-900">Zones d'entrainement</p>
+        <p>
+          Les zones definissent les fourchettes de % VMA utilisees dans les blocs de seance
+          (EF, Endurance, AS42, AS21, VMA). Elles determinent la plage d'allure affichee
+          pour chaque bloc dans les seances.
+        </p>
+        <p className="font-semibold text-gray-900">Valeurs par defaut</p>
+        <p>
+          Un bouton permet de reinitialiser tous les pourcentages aux valeurs par defaut.
+          Ces valeurs correspondent a un profil coureur intermediaire (VMA 12-14 km/h).
+          Vous pouvez les ajuster selon le niveau global de votre groupe.
         </p>
       </>
     ),

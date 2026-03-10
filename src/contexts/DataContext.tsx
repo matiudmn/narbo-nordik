@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import type { Session, SessionValidation, RaceResult, RaceNordik, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation, ObjectiveReached, Sensations } from '../types';
+import type { Session, SessionValidation, RaceResult, RaceNordik, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation, ObjectiveReached, Sensations, ClubSettings, RacePaceConfig, AllureZoneConfig } from '../types';
 import { supabase, createEphemeralClient } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -46,6 +46,8 @@ interface DataContextType {
   deletePreparation: (id: string) => Promise<void>;
   addUserToPreparation: (userId: string, preparationId: string) => Promise<void>;
   removeUserFromPreparation: (userId: string, preparationId: string) => Promise<void>;
+  clubSettings: ClubSettings | null;
+  updateClubSettings: (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>) => Promise<void>;
   refreshAll: () => Promise<void>;
 }
 
@@ -86,10 +88,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>([]);
   const [preparations, setPreparations] = useState<SpecificPreparation[]>([]);
   const [userPreparations, setUserPreparations] = useState<UserPreparation[]>([]);
+  const [clubSettings, setClubSettings] = useState<ClubSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
-    const [s, v, rr, rn, g, u, p, up] = await Promise.all([
+    const [s, v, rr, rn, g, u, p, up, cs] = await Promise.all([
       supabase.from('sessions').select('*').order('date'),
       supabase.from('session_validations').select('*'),
       supabase.from('race_results').select('*'),
@@ -98,6 +101,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       supabase.from('users').select('*'),
       supabase.from('specific_preparations').select('*').order('event_date'),
       supabase.from('user_preparations').select('*'),
+      supabase.from('club_settings').select('*').limit(1).single(),
     ]);
     if (s.data) setSessions(s.data.map(d => ({ ...d, blocks: d.blocks || [] })));
     if (v.data) setValidations(v.data);
@@ -107,6 +111,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (u.data) setUsers(u.data.map(normalizeUser));
     if (p.data) setPreparations(p.data);
     if (up.data) setUserPreparations(up.data);
+    if (cs.data) setClubSettings(cs.data as ClubSettings);
   }, []);
 
   const refreshAll = useCallback(async () => {
@@ -127,6 +132,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setUsers([]);
       setPreparations([]);
       setUserPreparations([]);
+      setClubSettings(null);
       setLoading(false);
     }
   }, [authUser, refreshAll]);
@@ -442,13 +448,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // --- Club Settings ---
+
+  const updateClubSettings = useCallback(async (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>) => {
+    if (!clubSettings) return;
+    const { error } = await supabase.from('club_settings').update({
+      race_paces: racePaces,
+      allure_zones: allureZones,
+      updated_at: new Date().toISOString(),
+      updated_by: authUser?.id,
+    }).eq('id', clubSettings.id);
+    if (!error) {
+      setClubSettings(prev => prev ? { ...prev, race_paces: racePaces, allure_zones: allureZones } : prev);
+    }
+  }, [clubSettings, authUser?.id]);
+
   return (
     <DataContext.Provider value={{
-      sessions, validations, raceResults, raceNordiks, groups, users, preparations, userPreparations, loading,
+      sessions, validations, raceResults, raceNordiks, groups, users, preparations, userPreparations, clubSettings, loading,
       addSession, updateSession, deleteSession, validateSession, updateValidation,
       addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto,
       addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
-      addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, refreshAll,
+      addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, refreshAll,
     }}>
       {children}
     </DataContext.Provider>

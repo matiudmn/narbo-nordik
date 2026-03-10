@@ -1,0 +1,143 @@
+import { useState, useEffect } from 'react';
+import { Save, RotateCcw } from 'lucide-react';
+import { useData } from '../../contexts/DataContext';
+import { DEFAULT_RACE_PACES, DEFAULT_ALLURE_ZONES } from '../../lib/calculations';
+import type { RacePaceConfig, AllureZoneConfig } from '../../types';
+
+export default function AlluresTab() {
+  const { clubSettings, updateClubSettings } = useData();
+  const [racePaces, setRacePaces] = useState<Record<string, RacePaceConfig>>({});
+  const [allureZones, setAllureZones] = useState<Record<string, AllureZoneConfig>>({});
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (clubSettings) {
+      setRacePaces(clubSettings.race_paces && Object.keys(clubSettings.race_paces).length > 0
+        ? clubSettings.race_paces
+        : DEFAULT_RACE_PACES);
+      setAllureZones(clubSettings.allure_zones && Object.keys(clubSettings.allure_zones).length > 0
+        ? clubSettings.allure_zones
+        : DEFAULT_ALLURE_ZONES);
+    } else {
+      setRacePaces(DEFAULT_RACE_PACES);
+      setAllureZones(DEFAULT_ALLURE_ZONES);
+    }
+  }, [clubSettings]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await updateClubSettings(racePaces, allureZones);
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleReset = () => {
+    setRacePaces(DEFAULT_RACE_PACES);
+    setAllureZones(DEFAULT_ALLURE_ZONES);
+  };
+
+  const updatePacePct = (key: string, pct: number) => {
+    setRacePaces(prev => ({ ...prev, [key]: { ...prev[key], pct } }));
+  };
+
+  const updateZoneMin = (key: string, pctMin: number) => {
+    setAllureZones(prev => ({ ...prev, [key]: { ...prev[key], pctMin } }));
+  };
+
+  const updateZoneMax = (key: string, pctMax: number) => {
+    setAllureZones(prev => ({ ...prev, [key]: { ...prev[key], pctMax } }));
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Race Paces */}
+      <div>
+        <h3 className="text-sm font-bold text-gray-900 mb-1">Allures de reference</h3>
+        <p className="text-xs text-gray-500 mb-3">
+          Pourcentages de VMA affiches sur les fiches athletes. Modifier un % recalcule automatiquement les allures de tous les athletes.
+        </p>
+        <div className="space-y-2">
+          {Object.entries(racePaces).map(([key, zone]) => (
+            <div key={key} className="flex items-center gap-3 bg-white rounded-lg border border-gray-100 p-3">
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-bold text-gray-700">{zone.label}</span>
+                <span className="text-[10px] text-gray-400 ml-1.5">{zone.description}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  min={40}
+                  max={120}
+                  value={zone.pct}
+                  onChange={e => updatePacePct(key, Number(e.target.value))}
+                  className="w-16 text-center text-sm font-bold border border-gray-200 rounded-md py-1"
+                />
+                <span className="text-xs text-gray-400">%</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Allure Zones */}
+      <div>
+        <h3 className="text-sm font-bold text-gray-900 mb-1">Zones d'entrainement</h3>
+        <p className="text-xs text-gray-500 mb-3">
+          Fourchettes de % VMA utilisees dans les blocs de seances. Definissent la plage d'allure affichee pour chaque zone.
+        </p>
+        <div className="space-y-2">
+          {Object.entries(allureZones).map(([key, zone]) => (
+            <div key={key} className="flex items-center gap-3 bg-white rounded-lg border border-gray-100 p-3">
+              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-bold text-gray-700">{zone.label}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  min={30}
+                  max={120}
+                  value={zone.pctMin}
+                  onChange={e => updateZoneMin(key, Number(e.target.value))}
+                  className="w-14 text-center text-sm font-bold border border-gray-200 rounded-md py-1"
+                />
+                <span className="text-xs text-gray-400">-</span>
+                <input
+                  type="number"
+                  min={30}
+                  max={130}
+                  value={zone.pctMax}
+                  onChange={e => updateZoneMax(key, Number(e.target.value))}
+                  className="w-14 text-center text-sm font-bold border border-gray-200 rounded-md py-1"
+                />
+                <span className="text-xs text-gray-400">%</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2">
+        <button
+          onClick={handleReset}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600"
+        >
+          <RotateCcw size={14} />
+          Valeurs par defaut
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-primary text-white text-xs font-medium disabled:opacity-50"
+        >
+          <Save size={14} />
+          {saving ? 'Enregistrement...' : saved ? 'Enregistre !' : 'Enregistrer'}
+        </button>
+      </div>
+    </div>
+  );
+}

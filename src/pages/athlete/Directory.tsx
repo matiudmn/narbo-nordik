@@ -7,7 +7,7 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
-import { RACE_PACES, calculateRacePace } from '../../lib/calculations';
+import { getRacePaces, calculateRacePace } from '../../lib/calculations';
 import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
 import { getSeasonRange } from '../../lib/date-utils';
@@ -15,7 +15,8 @@ import type { User } from '../../types';
 
 const MemberStats = memo(function MemberStats({ member }: { member: User }) {
   const { user: currentUser } = useAuth();
-  const { sessions, validations, raceResults, userPreparations } = useData();
+  const { sessions, validations, raceResults, userPreparations, clubSettings } = useData();
+  const racePaces = getRacePaces(clubSettings?.race_paces);
 
   const lastVmaDate = member.vma_history.length > 0
     ? member.vma_history[member.vma_history.length - 1].date
@@ -94,8 +95,8 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
             <Gauge size={14} className="text-accent" />
             Allures
           </h3>
-          <div className="grid grid-cols-3 gap-1.5">
-            {Object.entries(RACE_PACES).map(([key, zone]) => {
+          <div className="grid grid-cols-4 gap-1.5">
+            {Object.entries(racePaces).map(([key, zone]) => {
               const { pace } = calculateRacePace(member.vma!, zone.pct);
               return (
                 <div key={key} className="rounded-lg p-2 border border-gray-100 bg-white">

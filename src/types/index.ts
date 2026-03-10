@@ -152,3 +152,25 @@ export interface PaceCalculation {
   timeMinDisplay: string;
   timeMaxDisplay: string;
 }
+
+export interface RacePaceConfig {
+  label: string;
+  pct: number;
+  color: string;
+  description: string;
+}
+
+export interface AllureZoneConfig {
+  label: string;
+  pctMin: number;
+  pctMax: number;
+  color: string;
+}
+
+export interface ClubSettings {
+  id: string;
+  race_paces: Record<string, RacePaceConfig>;
+  allure_zones: Record<string, AllureZoneConfig>;
+  updated_at: string;
+  updated_by: string | null;
+}

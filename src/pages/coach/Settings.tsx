@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { UsersRound, Users, Target } from 'lucide-react';
+import { UsersRound, Users, Target, Gauge } from 'lucide-react';
 import GroupsTab from './GroupsTab';
 import PreparationsTab from './PreparationsTab';
 import AthletesTab from './AthletesTab';
+import AlluresTab from './AlluresTab';
 
-type Tab = 'groups' | 'preparations' | 'athletes';
+type Tab = 'groups' | 'preparations' | 'athletes' | 'allures';
 
 export default function Settings() {
   const [tab, setTab] = useState<Tab>('groups');
@@ -31,7 +32,7 @@ export default function Settings() {
           }`}
         >
           <Target size={14} />
-          Prep. Specifiques
+          Prep.
         </button>
         <button
           onClick={() => setTab('athletes')}
@@ -42,11 +43,21 @@ export default function Settings() {
           <Users size={14} />
           Athletes
         </button>
+        <button
+          onClick={() => setTab('allures')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium transition-colors ${
+            tab === 'allures' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+          }`}
+        >
+          <Gauge size={14} />
+          Allures
+        </button>
       </div>
 
       {tab === 'groups' && <GroupsTab />}
       {tab === 'preparations' && <PreparationsTab />}
       {tab === 'athletes' && <AthletesTab />}
+      {tab === 'allures' && <AlluresTab />}
     </div>
   );
 }
