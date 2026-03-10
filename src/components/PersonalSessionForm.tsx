@@ -277,7 +277,7 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
           description: sessionDescription,
         });
       } else {
-        const newId = await addSession({
+        const result = await addSession({
           title: title.trim(),
           date: sessionDate,
           session_type: sessionType,
@@ -295,14 +295,14 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
           created_by: user.id,
         });
 
-        if (!newId) {
-          setError('Erreur lors de la creation. Verifiez que la migration SQL a ete appliquee (colonne is_personal).');
+        if ('error' in result) {
+          setError(result.error);
           setSaving(false);
           return;
         }
 
         await validateSession(
-          newId, user.id, 'done',
+          result.id, user.id, 'done',
           feedback.trim() || undefined,
           undefined,
           objectiveReached || undefined,

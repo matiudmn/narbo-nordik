@@ -18,7 +18,7 @@ interface DataContextType {
   preparations: SpecificPreparation[];
   userPreparations: UserPreparation[];
   loading: boolean;
-  addSession: (session: Omit<Session, 'id' | 'created_at'>) => Promise<string | null>;
+  addSession: (session: Omit<Session, 'id' | 'created_at'>) => Promise<{ id: string } | { error: string }>;
   updateSession: (id: string, updates: Partial<Session>) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
   validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File, objectiveReached?: ObjectiveReached, sensations?: Sensations) => Promise<void>;
@@ -133,17 +133,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // --- Sessions ---
 
-  const addSession = useCallback(async (session: Omit<Session, 'id' | 'created_at'>): Promise<string | null> => {
+  const addSession = useCallback(async (session: Omit<Session, 'id' | 'created_at'>): Promise<{ id: string } | { error: string }> => {
     const { data, error } = await supabase.from('sessions').insert(session).select().single();
     if (error) {
-      console.error('addSession error:', error.message, error.details);
-      return null;
+      console.error('addSession error:', error.message, error.details, error.code, error.hint);
+      return { error: `${error.message}${error.hint ? ' (' + error.hint + ')' : ''}${error.code ? ' [' + error.code + ']' : ''}` };
     }
     if (data) {
       setSessions(prev => [...prev, { ...data, blocks: data.blocks || [] }].sort((a, b) => a.date.localeCompare(b.date)));
-      return data.id;
+      return { id: data.id };
     }
-    return null;
+    return { error: 'Aucune donnee retournee par Supabase' };
   }, []);
 
   const updateSession = useCallback(async (id: string, updates: Partial<Session>) => {
