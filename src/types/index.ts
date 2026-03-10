@@ -155,7 +155,7 @@ export interface PaceCalculation {
 
 export interface RacePaceConfig {
   label: string;
-  pct: number;
+  pctByLevel: number[];
   color: string;
   description: string;
 }

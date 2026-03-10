@@ -22,17 +22,17 @@ CREATE POLICY "Coaches can insert club settings" ON club_settings
   FOR INSERT TO authenticated
   WITH CHECK (EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'coach'));
 
--- Insert default row with values from Excel (Intermediaire column)
+-- Insert default row with pctByLevel arrays: [debutant, intermediaire, confirme, avance, elite]
 INSERT INTO club_settings (race_paces, allure_zones) VALUES (
   '{
-    "ef":   { "label": "EF",   "pct": 65,  "color": "#22c55e", "description": "Endurance fondamentale" },
-    "am":   { "label": "AM",   "pct": 75,  "color": "#10b981", "description": "Aerobie modere" },
-    "sa1":  { "label": "SA1",  "pct": 78,  "color": "#3b82f6", "description": "Seuil aerobie" },
-    "sa2":  { "label": "SA2",  "pct": 85,  "color": "#8b5cf6", "description": "Seuil anaerobie" },
-    "as42": { "label": "AS42", "pct": 77,  "color": "#eab308", "description": "Marathon" },
-    "as21": { "label": "AS21", "pct": 83,  "color": "#f97316", "description": "Semi-marathon" },
-    "as10": { "label": "AS10", "pct": 89,  "color": "#ef4444", "description": "10 km" },
-    "vma":  { "label": "VMA",  "pct": 100, "color": "#dc2626", "description": "VMA" }
+    "ef":   { "label": "EF",   "pctByLevel": [60, 65, 65, 65, 65],      "color": "#22c55e", "description": "Endurance fondamentale" },
+    "am":   { "label": "AM",   "pctByLevel": [72, 75, 77, 79, 80],      "color": "#10b981", "description": "Aerobie modere" },
+    "sa1":  { "label": "SA1",  "pctByLevel": [75, 78, 78, 80, 82],      "color": "#3b82f6", "description": "Seuil aerobie" },
+    "sa2":  { "label": "SA2",  "pctByLevel": [83, 85, 87, 88, 89],      "color": "#8b5cf6", "description": "Seuil anaerobie" },
+    "as42": { "label": "AS42", "pctByLevel": [75, 77, 78, 79, 80],      "color": "#eab308", "description": "Marathon" },
+    "as21": { "label": "AS21", "pctByLevel": [82, 83, 84, 85, 85],      "color": "#f97316", "description": "Semi-marathon" },
+    "as10": { "label": "AS10", "pctByLevel": [88, 89, 89, 90, 91],      "color": "#ef4444", "description": "10 km" },
+    "vma":  { "label": "VMA",  "pctByLevel": [100, 100, 100, 100, 100], "color": "#dc2626", "description": "VMA" }
   }'::jsonb,
   '{
     "ef":        { "label": "EF",        "pctMin": 60, "pctMax": 65, "color": "#22c55e" },

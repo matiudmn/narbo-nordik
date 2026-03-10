@@ -7,7 +7,7 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
-import { getRacePaces, calculateRacePace } from '../../lib/calculations';
+import { getRacePaces, calculateRacePace, getVmaLevelIndex } from '../../lib/calculations';
 import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
 import { getSeasonRange } from '../../lib/date-utils';
@@ -96,18 +96,23 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
             Allures
           </h3>
           <div className="grid grid-cols-4 gap-1.5">
-            {Object.entries(racePaces).map(([key, zone]) => {
-              const { pace } = calculateRacePace(member.vma!, zone.pct);
-              return (
-                <div key={key} className="rounded-lg p-2 border border-gray-100 bg-white">
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
-                    <span className="text-[10px] font-bold text-gray-500">{zone.label}</span>
+            {(() => {
+              const levelIdx = getVmaLevelIndex(member.vma!);
+              return Object.entries(racePaces).map(([key, zone]) => {
+                const pct = zone.pctByLevel[levelIdx];
+                const { pace } = calculateRacePace(member.vma!, pct);
+                return (
+                  <div key={key} className="rounded-lg p-2 border border-gray-100 bg-white">
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
+                      <span className="text-[10px] font-bold text-gray-500">{zone.label}</span>
+                    </div>
+                    <p className="text-xs font-bold text-gray-900">{pace}</p>
+                    <p className="text-[9px] text-gray-400">{pct}%</p>
                   </div>
-                  <p className="text-xs font-bold text-gray-900">{pace}</p>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
           {member.vma_history.length > 1 && (
             <Link to={`/vma-history?user=${member.id}`} className="flex items-center gap-1 text-xs text-primary hover:underline mt-2">

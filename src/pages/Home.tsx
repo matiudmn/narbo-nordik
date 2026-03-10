@@ -5,7 +5,7 @@ import { fr } from 'date-fns/locale';
 import { MapPin, ChevronLeft, ChevronRight, Check, Clock, AlertCircle, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { ALLURE_ZONES, formatBlockSummary, getRacePaces, calculateRacePace, getSessionCode } from '../lib/calculations';
+import { ALLURE_ZONES, formatBlockSummary, getRacePaces, calculateRacePace, getVmaLevelIndex, VMA_LEVELS, getSessionCode } from '../lib/calculations';
 import { getSeasonRange } from '../lib/date-utils';
 
 export default function Home() {
@@ -183,20 +183,27 @@ export default function Home() {
             Mes Allures
           </h2>
           <div className="grid grid-cols-4 gap-1.5">
-            {Object.entries(racePaces).map(([key, zone]) => {
-              const { pace } = calculateRacePace(user.vma!, zone.pct);
-              return (
-                <div key={key} className="rounded-lg p-2 border border-gray-100" style={{ backgroundColor: `${zone.color}08` }}>
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
-                    <span className="text-[10px] font-bold text-gray-600">{zone.label}</span>
+            {(() => {
+              const levelIdx = getVmaLevelIndex(user.vma!);
+              return Object.entries(racePaces).map(([key, zone]) => {
+                const pct = zone.pctByLevel[levelIdx];
+                const { pace } = calculateRacePace(user.vma!, pct);
+                return (
+                  <div key={key} className="rounded-lg p-2 border border-gray-100" style={{ backgroundColor: `${zone.color}08` }}>
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
+                      <span className="text-[10px] font-bold text-gray-600">{zone.label}</span>
+                    </div>
+                    <p className="text-sm font-bold text-gray-900">{pace}</p>
+                    <p className="text-[9px] text-gray-400 leading-tight">{pct}% — {zone.description}</p>
                   </div>
-                  <p className="text-sm font-bold text-gray-900">{pace}</p>
-                  <p className="text-[9px] text-gray-400 leading-tight">{zone.description}</p>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
+          <p className="text-[10px] text-gray-400 mt-2">
+            Niveau : {VMA_LEVELS[getVmaLevelIndex(user.vma!)].description}
+          </p>
           <div className="flex items-center gap-1 mt-3 text-xs text-gray-400">
             <Info size={12} />
             <span>{isCoach ? 'Modifiable depuis la fiche athlete' : 'Contacte ton coach pour modifier ta VMA'}</span>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, RotateCcw } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
-import { DEFAULT_RACE_PACES, DEFAULT_ALLURE_ZONES } from '../../lib/calculations';
+import { DEFAULT_RACE_PACES, DEFAULT_ALLURE_ZONES, VMA_LEVELS } from '../../lib/calculations';
 import type { RacePaceConfig, AllureZoneConfig } from '../../types';
 
 export default function AlluresTab() {
@@ -38,8 +38,13 @@ export default function AlluresTab() {
     setAllureZones(DEFAULT_ALLURE_ZONES);
   };
 
-  const updatePacePct = (key: string, pct: number) => {
-    setRacePaces(prev => ({ ...prev, [key]: { ...prev[key], pct } }));
+  const updatePaceLevelPct = (key: string, levelIdx: number, value: number) => {
+    setRacePaces(prev => {
+      const current = prev[key];
+      const newPctByLevel = [...current.pctByLevel];
+      newPctByLevel[levelIdx] = value;
+      return { ...prev, [key]: { ...current, pctByLevel: newPctByLevel } };
+    });
   };
 
   const updateZoneMin = (key: string, pctMin: number) => {
@@ -52,33 +57,50 @@ export default function AlluresTab() {
 
   return (
     <div className="space-y-6">
-      {/* Race Paces */}
+      {/* Race Paces - table by level */}
       <div>
         <h3 className="text-sm font-bold text-gray-900 mb-1">Allures de reference</h3>
         <p className="text-xs text-gray-500 mb-3">
-          Pourcentages de VMA affiches sur les fiches athletes. Modifier un % recalcule automatiquement les allures de tous les athletes.
+          % VMA par niveau. L'allure affichee sur la fiche athlete depend de sa VMA.
         </p>
-        <div className="space-y-2">
-          {Object.entries(racePaces).map(([key, zone]) => (
-            <div key={key} className="flex items-center gap-3 bg-white rounded-lg border border-gray-100 p-3">
-              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
-              <div className="flex-1 min-w-0">
-                <span className="text-xs font-bold text-gray-700">{zone.label}</span>
-                <span className="text-[10px] text-gray-400 ml-1.5">{zone.description}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <input
-                  type="number"
-                  min={40}
-                  max={120}
-                  value={zone.pct}
-                  onChange={e => updatePacePct(key, Number(e.target.value))}
-                  className="w-16 text-center text-sm font-bold border border-gray-200 rounded-md py-1"
-                />
-                <span className="text-xs text-gray-400">%</span>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto -mx-1">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-2 px-1 font-bold text-gray-700 w-16">Zone</th>
+                {VMA_LEVELS.map(level => (
+                  <th key={level.key} className="text-center py-2 px-0.5 font-medium text-gray-500">
+                    <div className="text-[10px] leading-tight">{level.label}</div>
+                    <div className="text-[8px] text-gray-400 font-normal">{level.description}</div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(racePaces).map(([key, zone]) => (
+                <tr key={key} className="border-b border-gray-50">
+                  <td className="py-1.5 px-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
+                      <span className="font-bold text-gray-700">{zone.label}</span>
+                    </div>
+                  </td>
+                  {zone.pctByLevel.map((pct, levelIdx) => (
+                    <td key={levelIdx} className="py-1.5 px-0.5 text-center">
+                      <input
+                        type="number"
+                        min={40}
+                        max={120}
+                        value={pct}
+                        onChange={e => updatePaceLevelPct(key, levelIdx, Number(e.target.value))}
+                        className="w-12 text-center text-xs font-bold border border-gray-200 rounded py-1"
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -86,7 +108,7 @@ export default function AlluresTab() {
       <div>
         <h3 className="text-sm font-bold text-gray-900 mb-1">Zones d'entrainement</h3>
         <p className="text-xs text-gray-500 mb-3">
-          Fourchettes de % VMA utilisees dans les blocs de seances. Definissent la plage d'allure affichee pour chaque zone.
+          Fourchettes de % VMA utilisees dans les blocs de seances.
         </p>
         <div className="space-y-2">
           {Object.entries(allureZones).map(([key, zone]) => (
