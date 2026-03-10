@@ -18,7 +18,7 @@ interface DataContextType {
   preparations: SpecificPreparation[];
   userPreparations: UserPreparation[];
   loading: boolean;
-  addSession: (session: Omit<Session, 'id' | 'created_at'>) => Promise<void>;
+  addSession: (session: Omit<Session, 'id' | 'created_at'>) => Promise<string | null>;
   updateSession: (id: string, updates: Partial<Session>) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
   validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File, objectiveReached?: ObjectiveReached, sensations?: Sensations) => Promise<void>;
@@ -133,11 +133,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // --- Sessions ---
 
-  const addSession = useCallback(async (session: Omit<Session, 'id' | 'created_at'>) => {
+  const addSession = useCallback(async (session: Omit<Session, 'id' | 'created_at'>): Promise<string | null> => {
     const { data, error } = await supabase.from('sessions').insert(session).select().single();
     if (!error && data) {
       setSessions(prev => [...prev, { ...data, blocks: data.blocks || [] }].sort((a, b) => a.date.localeCompare(b.date)));
+      return data.id;
     }
+    return null;
   }, []);
 
   const updateSession = useCallback(async (id: string, updates: Partial<Session>) => {

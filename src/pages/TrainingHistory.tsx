@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, Check, X, Clock, Paperclip, Dumbbell, Mountain, Battery } from 'lucide-react';
+import { ArrowLeft, Check, X, Clock, Paperclip, Dumbbell, Mountain, Battery, Bike, Footprints } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { getSessionCode } from '../lib/calculations';
@@ -12,6 +12,9 @@ const SESSION_TYPE_INFO: Record<SessionType, { label: string; icon: typeof Dumbb
   entrainement: { label: 'Entrainement', icon: Dumbbell },
   sortie_longue: { label: 'Sortie Longue', icon: Mountain },
   recuperation: { label: 'Recuperation', icon: Battery },
+  velo: { label: 'Velo', icon: Bike },
+  marche: { label: 'Marche', icon: Footprints },
+  renfo: { label: 'Renfo', icon: Dumbbell },
 };
 
 const STATUS_BADGES = {
@@ -57,6 +60,7 @@ export default function TrainingHistory() {
   const targetSessions = useMemo(() => {
     return sessions
       .filter(s => {
+        if (s.is_personal) return s.created_by === targetUser.id;
         if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
         if (!s.group_id) return true;
         return s.group_id === targetUser.group_id;

@@ -162,12 +162,15 @@ export function getSessionCode(
   session: Session,
   allSessions: Session[],
 ): string {
+  if (session.is_personal) return 'Hors plan';
+
   const sessionDate = new Date(session.date);
   const weekNum = getISOWeek(sessionDate);
   const year = sessionDate.getFullYear();
 
   const siblings = allSessions
     .filter(s => {
+      if (s.is_personal) return false;
       const d = new Date(s.date);
       if (getISOWeek(d) !== weekNum || d.getFullYear() !== year) return false;
       if (session.preparation_id) return s.preparation_id === session.preparation_id;

@@ -14,7 +14,7 @@ export default function Dashboard() {
   const members = useMemo(() => users.filter(u => u.email !== SUPER_ADMIN_EMAIL), [users]);
 
   const stats = useMemo(() => {
-    const weekSessions = sessions.filter(s => isThisWeek(new Date(s.date), { weekStartsOn: 1 }));
+    const weekSessions = sessions.filter(s => !s.is_personal && isThisWeek(new Date(s.date), { weekStartsOn: 1 }));
     const weekSessionIds = weekSessions.map(s => s.id);
     const weekValidations = validations.filter(v => weekSessionIds.includes(v.session_id));
     const doneCount = weekValidations.filter(v => v.status === 'done').length;

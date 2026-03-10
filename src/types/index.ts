@@ -3,7 +3,7 @@ export type SessionStatus = 'pending' | 'done' | 'missed';
 export type RaceType = 'route' | 'trail' | 'piste';
 export type AllureZone = 'ef' | 'endurance' | 'as42' | 'as21' | 'vma';
 export type BlockType = 'echauffement' | 'travail' | 'retour_au_calme' | 'recuperation';
-export type SessionType = 'entrainement' | 'sortie_longue' | 'recuperation';
+export type SessionType = 'entrainement' | 'sortie_longue' | 'recuperation' | 'velo' | 'marche' | 'renfo';
 export type TerrainOption = 'cotes' | 'piste';
 
 export type ObjectiveReached = 'oui' | 'non' | 'partiel';
@@ -65,6 +65,7 @@ export interface Session {
   vma_percent_min: number | null;
   vma_percent_max: number | null;
   blocks: SessionBlock[];
+  is_personal: boolean;
   created_by: string;
   created_at: string;
 }

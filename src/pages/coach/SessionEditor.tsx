@@ -13,7 +13,7 @@ import type { SessionBlock, AllureZone, BlockType, SessionType, TerrainOption } 
 let blockIdCounter = Date.now();
 const genBlockId = () => `blk_${blockIdCounter++}`;
 
-const SESSION_TYPES: Record<SessionType, string> = {
+const SESSION_TYPES: Partial<Record<SessionType, string>> = {
   entrainement: 'Entrainement',
   sortie_longue: 'Sortie Longue',
   recuperation: 'Recuperation',
@@ -297,6 +297,7 @@ export default function SessionEditor() {
         vma_percent_min: null,
         vma_percent_max: null,
         created_by: user.id,
+        is_personal: false,
         blocks,
       });
     }

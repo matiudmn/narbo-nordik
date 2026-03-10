@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, addMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Check, Target, Smile, Dumbbell, Mountain, Battery } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Target, Smile, Dumbbell, Mountain, Battery, Bike, Footprints } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { getSessionCode } from '../../lib/calculations';
@@ -12,6 +12,9 @@ const SESSION_TYPE_ICON: Record<SessionType, typeof Dumbbell> = {
   entrainement: Dumbbell,
   sortie_longue: Mountain,
   recuperation: Battery,
+  velo: Bike,
+  marche: Footprints,
+  renfo: Dumbbell,
 };
 
 export default function Suivi() {
@@ -32,6 +35,7 @@ export default function Suivi() {
     if (!user) return [];
 
     const userSessions = sessions.filter(s => {
+      if (s.is_personal) return s.created_by === user.id;
       if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
       if (!s.group_id) return true;
       return s.group_id === user.group_id;

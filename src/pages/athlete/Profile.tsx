@@ -2,16 +2,17 @@ import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, ExternalLink, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History } from 'lucide-react';
+import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, ExternalLink, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import NordikButton from '../../components/NordikButton';
+import PersonalSessionForm from '../../components/PersonalSessionForm';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { formatDuration } from '../../lib/calculations';
+import { formatDuration, formatSeconds } from '../../lib/calculations';
 import { getFFACategory } from '../../lib/ffa';
 import Avatar from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
-import type { RaceType, NotificationPreferences } from '../../types';
+import type { RaceType, NotificationPreferences, Session } from '../../types';
 
 function Accordion({ title, icon, children, defaultOpen = false, badge, action }: {
   title: string;
@@ -45,7 +46,7 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
-  const { raceResults, addRaceResult, updateRaceResult, deleteRaceResult, groups, users, validations, preparations, userPreparations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
+  const { sessions, raceResults, addRaceResult, updateRaceResult, deleteRaceResult, deleteSession, groups, users, validations, preparations, userPreparations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
   const [showAddRace, setShowAddRace] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -75,6 +76,9 @@ export default function Profile() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  const [showAddPerso, setShowAddPerso] = useState(false);
+  const [editingPersoSession, setEditingPersoSession] = useState<Session | null>(null);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -139,6 +143,33 @@ export default function Profile() {
   const userRaces = raceResults
     .filter(r => r.user_id === user.id)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const personalSessions = sessions
+    .filter(s => s.is_personal && s.created_by === user.id)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const PERSO_TYPE_LABEL: Record<string, string> = {
+    entrainement: 'Run',
+    velo: 'Velo',
+    marche: 'Marche',
+    renfo: 'Renfo',
+  };
+
+  const PERSO_TYPE_COLOR: Record<string, string> = {
+    entrainement: 'bg-primary/10 text-primary',
+    velo: 'bg-blue-100 text-blue-700',
+    marche: 'bg-green-100 text-green-700',
+    renfo: 'bg-orange-100 text-orange-700',
+  };
+
+  const getPersoSessionDuration = (s: Session) => {
+    if (s.session_type === 'entrainement') {
+      const total = s.blocks.reduce((acc, b) => acc + (b.duration_seconds * b.repetitions) + (b.rest_seconds * Math.max(0, b.repetitions - 1)), 0);
+      return total > 0 ? formatSeconds(total) : null;
+    }
+    if (s.blocks[0]?.duration_seconds) return formatSeconds(s.blocks[0].duration_seconds);
+    return null;
+  };
 
   const group = groups.find(g => g.id === user.group_id);
   const userPrepId = userPreparations.find(up => up.user_id === user.id)?.preparation_id;
@@ -601,6 +632,67 @@ export default function Profile() {
             </button>
           </div>
         </div>
+      </Accordion>
+
+      {/* Seances personnelles */}
+      <Accordion
+        title="Seances personnelles"
+        icon={<Activity size={18} className="text-primary" />}
+        defaultOpen={false}
+        badge={personalSessions.length > 0 ? <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">{personalSessions.length}</span> : undefined}
+        action={
+          <button
+            onClick={() => { setShowAddPerso(!showAddPerso); setEditingPersoSession(null); }}
+            className="flex items-center gap-1 text-sm text-primary font-medium hover:text-primary/80"
+          >
+            <Plus size={16} />
+          </button>
+        }
+      >
+        {(showAddPerso || editingPersoSession) && (
+          <PersonalSessionForm
+            onClose={() => { setShowAddPerso(false); setEditingPersoSession(null); }}
+            editSession={editingPersoSession || undefined}
+          />
+        )}
+
+        {personalSessions.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-4">Aucune seance personnelle</p>
+        ) : (
+          <div className="space-y-2">
+            {personalSessions.map(s => {
+              const dur = getPersoSessionDuration(s);
+              return (
+                <div key={s.id} className="flex items-center gap-3 border border-gray-100 rounded-lg p-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm truncate">{s.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${PERSO_TYPE_COLOR[s.session_type] || 'bg-gray-100 text-gray-600'}`}>
+                        {PERSO_TYPE_LABEL[s.session_type] || s.session_type}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {format(new Date(s.date), 'dd/MM/yyyy', { locale: fr })}
+                      </span>
+                      {dur && <span className="text-xs text-gray-500 font-medium">{dur}</span>}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setEditingPersoSession(s); setShowAddPerso(false); }}
+                    className="p-1.5 text-gray-300 hover:text-primary transition-colors"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    onClick={() => deleteSession(s.id)}
+                    className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </Accordion>
 
       {/* Palmares */}

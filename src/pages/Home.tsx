@@ -32,6 +32,7 @@ export default function Home() {
     const { start: sStart, end: sEnd } = getSeasonRange();
 
     const userSessions = sessions.filter(s => {
+      if (s.is_personal) return s.created_by === user.id;
       if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
       if (!s.group_id) return true;
       return s.group_id === user.group_id;
@@ -64,6 +65,7 @@ export default function Home() {
       .filter(s => {
         const sessionDate = new Date(s.date);
         if (sessionDate < weekStart || sessionDate > weekEnd) return false;
+        if (s.is_personal) return s.created_by === user?.id;
         if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
         if (!s.group_id) return true;
         return s.group_id === user?.group_id;

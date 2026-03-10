@@ -35,6 +35,7 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
     const { start: sStart, end: sEnd } = getSeasonRange();
 
     const memberSessions = sessions.filter(s => {
+      if (s.is_personal) return s.created_by === member.id;
       if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
       if (!s.group_id) return true;
       return s.group_id === member.group_id;
