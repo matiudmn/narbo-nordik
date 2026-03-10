@@ -241,7 +241,7 @@ export default function Home() {
       )}
 
       {showPrepRequest && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={resetPrepForm}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40" onClick={resetPrepForm}>
           <div
             className="bg-white w-full max-w-lg rounded-t-2xl flex flex-col max-h-[85vh]"
             onClick={e => e.stopPropagation()}
@@ -303,7 +303,7 @@ export default function Home() {
               )}
             </div>
 
-            <div className="flex gap-2 p-5 pt-3 flex-shrink-0 border-t border-gray-100">
+            <div className="flex gap-2 p-5 pt-3 pb-8 flex-shrink-0 border-t border-gray-100">
               <button onClick={handleCopyPrep} disabled={!prepMessage}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors">
                 <Copy size={14} />
