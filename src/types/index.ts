@@ -162,8 +162,8 @@ export interface RacePaceConfig {
 
 export interface AllureZoneConfig {
   label: string;
-  pctMin: number;
-  pctMax: number;
+  pctMinByLevel: number[];
+  pctMaxByLevel: number[];
   color: string;
 }
 

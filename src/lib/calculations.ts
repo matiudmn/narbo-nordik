@@ -2,18 +2,24 @@ import { getISOWeek } from 'date-fns';
 import type { PaceCalculation, AllureZone, AllureZoneConfig, RacePaceConfig, SessionBlock, Session, Group, SpecificPreparation } from '../types';
 
 export const DEFAULT_ALLURE_ZONES: Record<AllureZone, AllureZoneConfig> = {
-  ef:        { label: 'EF',        pctMin: 60, pctMax: 65, color: '#22c55e' },
-  endurance: { label: 'Endurance', pctMin: 70, pctMax: 80, color: '#3b82f6' },
-  as42:      { label: 'AS42',      pctMin: 75, pctMax: 85, color: '#eab308' },
-  as21:      { label: 'AS21',      pctMin: 83, pctMax: 90, color: '#f97316' },
-  vma:       { label: 'VMA',       pctMin: 95, pctMax: 105, color: '#ef4444' },
+  ef:        { label: 'EF',        pctMinByLevel: [55, 60, 60, 60, 60],    pctMaxByLevel: [65, 70, 70, 70, 70],    color: '#22c55e' },
+  endurance: { label: 'Endurance', pctMinByLevel: [65, 68, 70, 72, 73],    pctMaxByLevel: [75, 78, 80, 82, 83],    color: '#3b82f6' },
+  as42:      { label: 'AS42',      pctMinByLevel: [72, 74, 75, 76, 77],    pctMaxByLevel: [80, 82, 83, 84, 85],    color: '#eab308' },
+  as21:      { label: 'AS21',      pctMinByLevel: [79, 80, 81, 82, 82],    pctMaxByLevel: [87, 88, 89, 90, 90],    color: '#f97316' },
+  vma:       { label: 'VMA',       pctMinByLevel: [95, 95, 97, 100, 100],  pctMaxByLevel: [105, 107, 107, 110, 110], color: '#ef4444' },
 };
 
 export const ALLURE_ZONES = DEFAULT_ALLURE_ZONES;
 
 export function getAllureZones(overrides?: Record<string, AllureZoneConfig>): Record<AllureZone, AllureZoneConfig> {
-  if (!overrides) return DEFAULT_ALLURE_ZONES;
-  return { ...DEFAULT_ALLURE_ZONES, ...overrides } as Record<AllureZone, AllureZoneConfig>;
+  if (!overrides || Object.keys(overrides).length === 0) return DEFAULT_ALLURE_ZONES;
+  const valid = Object.values(overrides).every(z => Array.isArray(z.pctMinByLevel) && Array.isArray(z.pctMaxByLevel));
+  return valid ? { ...DEFAULT_ALLURE_ZONES, ...overrides } as Record<AllureZone, AllureZoneConfig> : DEFAULT_ALLURE_ZONES;
+}
+
+function resolveZonePct(z: AllureZoneConfig, vma: number): { pctMin: number; pctMax: number } {
+  const lvl = getVmaLevelIndex(vma);
+  return { pctMin: z.pctMinByLevel[lvl], pctMax: z.pctMaxByLevel[lvl] };
 }
 
 export const BLOCK_TYPES: Record<string, { label: string }> = {
@@ -25,8 +31,9 @@ export const BLOCK_TYPES: Record<string, { label: string }> = {
 
 export function calculateBlockPace(vma: number, zone: AllureZone, zones?: Record<string, AllureZoneConfig>) {
   const z = (zones || ALLURE_ZONES)[zone] || ALLURE_ZONES[zone];
-  const speedMin = vma * (z.pctMin / 100);
-  const speedMax = vma * (z.pctMax / 100);
+  const { pctMin, pctMax } = resolveZonePct(z, vma);
+  const speedMin = vma * (pctMin / 100);
+  const speedMax = vma * (pctMax / 100);
   return {
     speedMin,
     speedMax,
@@ -38,7 +45,8 @@ export function calculateBlockPace(vma: number, zone: AllureZone, zones?: Record
 export function estimateBlockEffortSeconds(block: SessionBlock, vma?: number, zones?: Record<string, AllureZoneConfig>): number {
   if (block.distance_meters && vma) {
     const z = (zones || ALLURE_ZONES)[block.allure] || ALLURE_ZONES[block.allure];
-    const avgPct = (z.pctMin + z.pctMax) / 2 / 100;
+    const { pctMin, pctMax } = resolveZonePct(z, vma);
+    const avgPct = (pctMin + pctMax) / 2 / 100;
     const speedMs = (vma * avgPct) / 3.6;
     return Math.round(block.distance_meters / speedMs);
   }
@@ -48,7 +56,8 @@ export function estimateBlockEffortSeconds(block: SessionBlock, vma?: number, zo
 export function estimateRestSeconds(block: SessionBlock, vma?: number, zones?: Record<string, AllureZoneConfig>): number {
   if (block.rest_distance_meters && vma) {
     const efZ = (zones || ALLURE_ZONES).ef || ALLURE_ZONES.ef;
-    const efPct = (efZ.pctMin + efZ.pctMax) / 2 / 100;
+    const { pctMin, pctMax } = resolveZonePct(efZ, vma);
+    const efPct = (pctMin + pctMax) / 2 / 100;
     const speedMs = (vma * efPct) / 3.6;
     return Math.round(block.rest_distance_meters / speedMs);
   }

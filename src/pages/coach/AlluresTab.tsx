@@ -14,12 +14,14 @@ export default function AlluresTab() {
   useEffect(() => {
     if (clubSettings) {
       const rp = clubSettings.race_paces;
-      const hasValidFormat = rp && Object.keys(rp).length > 0
+      const hasValidPaces = rp && Object.keys(rp).length > 0
         && Object.values(rp).every(z => Array.isArray(z.pctByLevel));
-      setRacePaces(hasValidFormat ? rp : DEFAULT_RACE_PACES);
-      setAllureZones(clubSettings.allure_zones && Object.keys(clubSettings.allure_zones).length > 0
-        ? clubSettings.allure_zones
-        : DEFAULT_ALLURE_ZONES);
+      setRacePaces(hasValidPaces ? rp : DEFAULT_RACE_PACES);
+
+      const az = clubSettings.allure_zones;
+      const hasValidZones = az && Object.keys(az).length > 0
+        && Object.values(az).every(z => Array.isArray(z.pctMinByLevel) && Array.isArray(z.pctMaxByLevel));
+      setAllureZones(hasValidZones ? az : DEFAULT_ALLURE_ZONES);
     } else {
       setRacePaces(DEFAULT_RACE_PACES);
       setAllureZones(DEFAULT_ALLURE_ZONES);
@@ -48,12 +50,22 @@ export default function AlluresTab() {
     });
   };
 
-  const updateZoneMin = (key: string, pctMin: number) => {
-    setAllureZones(prev => ({ ...prev, [key]: { ...prev[key], pctMin } }));
+  const updateZoneLevelMin = (key: string, levelIdx: number, value: number) => {
+    setAllureZones(prev => {
+      const current = prev[key];
+      const arr = [...current.pctMinByLevel];
+      arr[levelIdx] = value;
+      return { ...prev, [key]: { ...current, pctMinByLevel: arr } };
+    });
   };
 
-  const updateZoneMax = (key: string, pctMax: number) => {
-    setAllureZones(prev => ({ ...prev, [key]: { ...prev[key], pctMax } }));
+  const updateZoneLevelMax = (key: string, levelIdx: number, value: number) => {
+    setAllureZones(prev => {
+      const current = prev[key];
+      const arr = [...current.pctMaxByLevel];
+      arr[levelIdx] = value;
+      return { ...prev, [key]: { ...current, pctMaxByLevel: arr } };
+    });
   };
 
   return (
@@ -105,41 +117,61 @@ export default function AlluresTab() {
         </div>
       </div>
 
-      {/* Allure Zones */}
+      {/* Allure Zones - table by level with min/max */}
       <div>
         <h3 className="text-sm font-bold text-gray-900 mb-1">Zones d'entrainement</h3>
         <p className="text-xs text-gray-500 mb-3">
-          Fourchettes de % VMA utilisees dans les blocs de seances.
+          Fourchettes min-max de % VMA par niveau, utilisees dans les blocs de seances.
         </p>
-        <div className="space-y-2">
-          {Object.entries(allureZones).map(([key, zone]) => (
-            <div key={key} className="flex items-center gap-3 bg-white rounded-lg border border-gray-100 p-3">
-              <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
-              <div className="flex-1 min-w-0">
-                <span className="text-xs font-bold text-gray-700">{zone.label}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <input
-                  type="number"
-                  min={30}
-                  max={120}
-                  value={zone.pctMin}
-                  onChange={e => updateZoneMin(key, Number(e.target.value))}
-                  className="w-14 text-center text-sm font-bold border border-gray-200 rounded-md py-1"
-                />
-                <span className="text-xs text-gray-400">-</span>
-                <input
-                  type="number"
-                  min={30}
-                  max={130}
-                  value={zone.pctMax}
-                  onChange={e => updateZoneMax(key, Number(e.target.value))}
-                  className="w-14 text-center text-sm font-bold border border-gray-200 rounded-md py-1"
-                />
-                <span className="text-xs text-gray-400">%</span>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto -mx-1">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-2 px-1 font-bold text-gray-700 w-16">Zone</th>
+                {VMA_LEVELS.map(level => (
+                  <th key={level.key} className="text-center py-2 px-0.5 font-medium text-gray-500">
+                    <div className="text-[10px] leading-tight">{level.label}</div>
+                    <div className="text-[8px] text-gray-400 font-normal">{level.description}</div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(allureZones).map(([key, zone]) => (
+                <tr key={key} className="border-b border-gray-50">
+                  <td className="py-1.5 px-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
+                      <span className="font-bold text-gray-700">{zone.label}</span>
+                    </div>
+                  </td>
+                  {zone.pctMinByLevel.map((min, levelIdx) => (
+                    <td key={levelIdx} className="py-1.5 px-0.5 text-center">
+                      <div className="flex items-center justify-center gap-0.5">
+                        <input
+                          type="number"
+                          min={30}
+                          max={130}
+                          value={min}
+                          onChange={e => updateZoneLevelMin(key, levelIdx, Number(e.target.value))}
+                          className="w-10 text-center text-[10px] font-bold border border-gray-200 rounded py-0.5"
+                        />
+                        <span className="text-[8px] text-gray-300">-</span>
+                        <input
+                          type="number"
+                          min={30}
+                          max={130}
+                          value={zone.pctMaxByLevel[levelIdx]}
+                          onChange={e => updateZoneLevelMax(key, levelIdx, Number(e.target.value))}
+                          className="w-10 text-center text-[10px] font-bold border border-gray-200 rounded py-0.5"
+                        />
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 

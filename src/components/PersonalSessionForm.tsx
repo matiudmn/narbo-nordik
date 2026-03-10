@@ -86,7 +86,7 @@ const BlockCard = memo(function BlockCard({
           <label className="text-xs text-gray-500">Allure</label>
           <select value={block.allure} onChange={e => onUpdate({ ...block, allure: e.target.value as AllureZone })}
             className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
-            {Object.entries(ALLURE_ZONES).map(([k, v]) => <option key={k} value={k}>{v.label} ({v.pctMin}-{v.pctMax}%)</option>)}
+            {Object.entries(ALLURE_ZONES).map(([k, v]) => <option key={k} value={k}>{v.label} ({Math.min(...v.pctMinByLevel)}-{Math.max(...v.pctMaxByLevel)}%)</option>)}
           </select>
         </div>
         <div>
