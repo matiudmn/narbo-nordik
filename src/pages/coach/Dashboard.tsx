@@ -6,6 +6,7 @@ import { TrendingUp, Users, MessageSquare, CheckCircle, AlertTriangle, Phone, Ch
 import { useData } from '../../contexts/DataContext';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { getAttachmentUrl } from '../../lib/storage';
+import { getSessionCode } from '../../lib/calculations';
 import Avatar from '../../components/Avatar';
 
 export default function Dashboard() {
@@ -184,7 +185,12 @@ export default function Dashboard() {
                     {format(new Date(item.created_at), 'dd/MM', { locale: fr })}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 mb-0.5">{item.session?.title}</p>
+                <p className="text-xs text-gray-500 mb-0.5">
+                  {item.session?.title}
+                  {item.session && (
+                    <span className="text-gray-400 ml-1">{getSessionCode(item.session, sessions)}</span>
+                  )}
+                </p>
                 {item.feedback && <p className="text-sm text-gray-700 italic">"{item.feedback}"</p>}
                 {item.attachment_path && (
                   <a
