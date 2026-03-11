@@ -251,6 +251,7 @@ export default function SessionEditor() {
   const weekSessions = useMemo(() =>
     sessions
       .filter(s => {
+        if (s.is_personal) return false;
         const d = new Date(s.date);
         return d >= weekStart && d <= weekEnd;
       })
