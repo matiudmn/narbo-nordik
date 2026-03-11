@@ -67,12 +67,13 @@ export default function Home() {
         const sessionDate = new Date(s.date);
         if (sessionDate < weekStart || sessionDate > weekEnd) return false;
         if (s.is_personal) return s.created_by === user?.id;
+        if (isCoach) return s.created_by === user?.id;
         if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
         if (!s.group_id) return true;
         return s.group_id === user?.group_id;
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [sessions, user?.group_id, weekStart, weekEnd, userPrepIds]);
+  }, [sessions, user?.group_id, user?.id, isCoach, weekStart, weekEnd, userPrepIds]);
 
   const getValidation = (sessionId: string) =>
     validations.find(v => v.session_id === sessionId && v.user_id === user?.id);
