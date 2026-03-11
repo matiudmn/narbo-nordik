@@ -115,8 +115,8 @@ const athleteSections: Section[] = [
         <ul className="list-disc pl-5 space-y-1">
           <li><strong>EF — Endurance fondamentale (~65% VMA)</strong> : allure confortable, on peut parler. Developpe le metabolisme aerobie de base.</li>
           <li><strong>AM — Aerobie modere (~75% VMA)</strong> : rythme soutenu mais regulier. Augmente le volume aerobie et l'economie de course.</li>
-          <li><strong>SA1 — Seuil aerobie (~78% VMA)</strong> : premier seuil lactique. Ameliore le confort sur les efforts prolonges.</li>
-          <li><strong>SA2 — Seuil anaerobie (~85% VMA)</strong> : second seuil lactique. Travail de tolerance au lactate.</li>
+          <li><strong>SV1 — Seuil ventilatoire 1 (~78% VMA)</strong> : premier seuil lactique. Ameliore le confort sur les efforts prolonges.</li>
+          <li><strong>SV2 — Seuil ventilatoire 2 (~85% VMA)</strong> : second seuil lactique. Travail de tolerance au lactate.</li>
           <li><strong>AS42 — Allure marathon (~77% VMA)</strong> : allure specifique marathon. Efficacite lipidique et economie de course longue duree.</li>
           <li><strong>AS21 — Allure semi-marathon (~83% VMA)</strong> : allure specifique semi. Gestion de l'effort sur la duree.</li>
           <li><strong>AS10 — Allure 10 km (~89% VMA)</strong> : allure specifique 10 km. Stimule la puissance aerobie en competition courte.</li>

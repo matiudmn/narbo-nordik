@@ -3,10 +3,14 @@ import type { PaceCalculation, AllureZone, AllureZoneConfig, RacePaceConfig, Ses
 
 export const DEFAULT_ALLURE_ZONES: Record<AllureZone, AllureZoneConfig> = {
   ef:        { label: 'EF',        pctMinByLevel: [55, 60, 60, 60, 60],    pctMaxByLevel: [65, 70, 70, 70, 70],    color: '#22c55e' },
+  am:        { label: 'AM',        pctMinByLevel: [68, 71, 73, 75, 76],    pctMaxByLevel: [76, 79, 81, 83, 84],    color: '#10b981' },
   endurance: { label: 'Endurance', pctMinByLevel: [65, 68, 70, 72, 73],    pctMaxByLevel: [75, 78, 80, 82, 83],    color: '#3b82f6' },
+  sv1:       { label: 'SV1',       pctMinByLevel: [72, 75, 75, 77, 79],    pctMaxByLevel: [78, 81, 81, 83, 85],    color: '#6366f1' },
+  sv2:       { label: 'SV2',       pctMinByLevel: [80, 82, 84, 85, 86],    pctMaxByLevel: [86, 88, 90, 91, 92],    color: '#8b5cf6' },
   as42:      { label: 'AS42',      pctMinByLevel: [72, 74, 75, 76, 77],    pctMaxByLevel: [80, 82, 83, 84, 85],    color: '#eab308' },
   as21:      { label: 'AS21',      pctMinByLevel: [79, 80, 81, 82, 82],    pctMaxByLevel: [87, 88, 89, 90, 90],    color: '#f97316' },
-  vma:       { label: 'VMA',       pctMinByLevel: [95, 95, 97, 100, 100],  pctMaxByLevel: [105, 107, 107, 110, 110], color: '#ef4444' },
+  as10:      { label: 'AS10',      pctMinByLevel: [85, 86, 86, 87, 88],    pctMaxByLevel: [91, 92, 92, 93, 94],    color: '#ef4444' },
+  vma:       { label: 'VMA',       pctMinByLevel: [95, 95, 97, 100, 100],  pctMaxByLevel: [105, 107, 107, 110, 110], color: '#dc2626' },
 };
 
 export const ALLURE_ZONES = DEFAULT_ALLURE_ZONES;
@@ -125,8 +129,8 @@ export function getVmaLevelIndex(vma: number): number {
 export const DEFAULT_RACE_PACES: Record<string, RacePaceConfig> = {
   ef:   { label: 'EF',   pctByLevel: [60, 65, 65, 65, 65],      color: '#22c55e', description: 'Endurance fondamentale' },
   am:   { label: 'AM',   pctByLevel: [72, 75, 77, 79, 80],      color: '#10b981', description: 'Aerobie modere' },
-  sa1:  { label: 'SA1',  pctByLevel: [75, 78, 78, 80, 82],      color: '#3b82f6', description: 'Seuil aerobie' },
-  sa2:  { label: 'SA2',  pctByLevel: [83, 85, 87, 88, 89],      color: '#8b5cf6', description: 'Seuil anaerobie' },
+  sv1:  { label: 'SV1',  pctByLevel: [75, 78, 78, 80, 82],      color: '#3b82f6', description: 'Seuil ventillatoire 1' },
+  sv2:  { label: 'SV2',  pctByLevel: [83, 85, 87, 88, 89],      color: '#8b5cf6', description: 'Seuil ventillatoire 2' },
   as42: { label: 'AS42', pctByLevel: [75, 77, 78, 79, 80],      color: '#eab308', description: 'Marathon' },
   as21: { label: 'AS21', pctByLevel: [82, 83, 84, 85, 85],      color: '#f97316', description: 'Semi-marathon' },
   as10: { label: 'AS10', pctByLevel: [88, 89, 89, 90, 91],      color: '#ef4444', description: '10 km' },
