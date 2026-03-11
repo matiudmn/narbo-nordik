@@ -62,7 +62,12 @@ export default function Dashboard() {
 
   const recentFeedback = useMemo(() => {
     return validations
-      .filter(v => v.feedback || v.attachment_path)
+      .filter(v => {
+        if (!v.feedback && !v.attachment_path) return false;
+        const s = sessions.find(s => s.id === v.session_id);
+        if (!s || s.is_personal) return false;
+        return true;
+      })
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 10)
       .map(v => {

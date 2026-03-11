@@ -69,6 +69,7 @@ export default function Suivi() {
         if (v.status !== 'done') return false;
         const s = sessions.find(s => s.id === v.session_id);
         if (!s) return false;
+        if (s.is_personal) return false;
         const d = new Date(s.date);
         return d >= monthStart && d <= monthEnd;
       })
