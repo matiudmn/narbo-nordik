@@ -1,9 +1,11 @@
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-interface HeatmapSession {
+
+export interface HeatmapSession {
   date: string;
   title: string;
   session_type: string;
+  is_personal: boolean;
 }
 
 interface YearlyHeatmapProps {
@@ -19,6 +21,24 @@ const MONTHS = [
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
+
+type CellType = 'empty' | 'coach' | 'personal' | 'both';
+
+function getCellType(sessions: HeatmapSession[]): CellType {
+  const hasCoach = sessions.some(s => !s.is_personal);
+  const hasPersonal = sessions.some(s => s.is_personal);
+  if (hasCoach && hasPersonal) return 'both';
+  if (hasCoach) return 'coach';
+  if (hasPersonal) return 'personal';
+  return 'empty';
+}
+
+const CELL_STYLES: Record<CellType, string> = {
+  empty: 'bg-gray-100',
+  coach: 'bg-accent',
+  personal: 'bg-amber-400',
+  both: 'bg-gradient-to-br from-accent to-amber-400',
+};
 
 export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapProps) {
   const [year, setYear] = useState(initialYear ?? new Date().getFullYear());
@@ -37,8 +57,13 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
     return map;
   }, [sessions, year]);
 
-  const totalValidated = useMemo(() => {
-    return sessions.filter(s => new Date(s.date).getFullYear() === year).length;
+  const counts = useMemo(() => {
+    const yearSessions = sessions.filter(s => new Date(s.date).getFullYear() === year);
+    return {
+      total: yearSessions.length,
+      coach: yearSessions.filter(s => !s.is_personal).length,
+      personal: yearSessions.filter(s => s.is_personal).length,
+    };
   }, [sessions, year]);
 
   const handleCellHover = useCallback((e: React.PointerEvent, month: number, day: number) => {
@@ -49,7 +74,7 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
     const containerRect = (e.target as HTMLElement).closest('.heatmap-container')?.getBoundingClientRect();
     if (!containerRect) return;
     const text = cellSessions
-      .map(s => `${s.title} (${s.session_type})`)
+      .map(s => `${s.is_personal ? '[Perso] ' : ''}${s.title} (${s.session_type})`)
       .join('\n');
     setTooltip({
       x: rect.left - containerRect.left + rect.width / 2,
@@ -83,7 +108,10 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
       </div>
 
       <p className="text-xs text-gray-400 mb-3">
-        {totalValidated} seance{totalValidated > 1 ? 's' : ''} validee{totalValidated > 1 ? 's' : ''} en {year}
+        {counts.total} seance{counts.total > 1 ? 's' : ''} en {year}
+        {counts.coach > 0 && counts.personal > 0 && (
+          <span> ({counts.coach} club, {counts.personal} perso)</span>
+        )}
       </p>
 
       <div className="heatmap-container relative overflow-x-auto">
@@ -119,17 +147,12 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
                       year === new Date().getFullYear() &&
                       month === new Date().getMonth() &&
                       day === new Date().getDate();
+                    const cellType = cellSessions ? getCellType(cellSessions) : 'empty';
 
                     return (
                       <td key={i} className="p-[1px]">
                         <div
-                          className={`w-full aspect-square rounded-[2px] transition-colors cursor-default ${
-                            cellSessions
-                              ? cellSessions.length >= 2
-                                ? 'bg-accent'
-                                : 'bg-accent/50'
-                              : 'bg-gray-100'
-                          } ${isToday ? 'ring-1 ring-primary' : ''}`}
+                          className={`w-full aspect-square rounded-[2px] transition-colors cursor-default ${CELL_STYLES[cellType]} ${isToday ? 'ring-1 ring-primary' : ''}`}
                           onPointerEnter={cellSessions ? (e) => handleCellHover(e, month, day) : undefined}
                           onPointerLeave={cellSessions ? handleCellLeave : undefined}
                         />
@@ -162,12 +185,16 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
           <span>Aucune</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-accent/50" />
-          <span>1 seance</span>
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-accent" />
+          <span>Club</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-accent" />
-          <span>2+ seances</span>
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-amber-400" />
+          <span>Perso</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-gradient-to-br from-accent to-amber-400" />
+          <span>Les deux</span>
         </div>
       </div>
     </div>

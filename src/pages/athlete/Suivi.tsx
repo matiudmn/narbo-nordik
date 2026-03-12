@@ -7,6 +7,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { getSessionCode } from '../../lib/calculations';
 import Avatar from '../../components/Avatar';
+import YearlyHeatmap from '../../components/YearlyHeatmap';
+import type { HeatmapSession } from '../../components/YearlyHeatmap';
 import type { SessionType } from '../../types';
 
 const SESSION_TYPE_ICON: Record<SessionType, typeof Dumbbell> = {
@@ -94,6 +96,28 @@ export default function Suivi() {
     return { total, objOui, objPartiel, objNon, sensExc, sensBon, sensMauv };
   }, [completedSessions, athleteSessions, isCoach, view]);
 
+  const heatmapSessions = useMemo((): HeatmapSession[] => {
+    if (!user) return [];
+    const doneSessionIds = new Set(
+      validations
+        .filter(v => v.user_id === user.id && v.status === 'done')
+        .map(v => v.session_id)
+    );
+    const userSessions = sessions.filter(s => {
+      if (!doneSessionIds.has(s.id)) return false;
+      if (s.is_personal) return s.created_by === user.id;
+      if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
+      if (!s.group_id) return true;
+      return s.group_id === user.group_id;
+    });
+    return userSessions.map(s => ({
+      date: s.date,
+      title: s.title,
+      session_type: s.session_type,
+      is_personal: s.is_personal,
+    }));
+  }, [user, sessions, validations, userPrepIds]);
+
   if (!user) return null;
 
   const showingAthletes = isCoach && view === 'athletes';
@@ -126,6 +150,8 @@ export default function Suivi() {
           </button>
         </div>
       )}
+
+      {!showingAthletes && <YearlyHeatmap sessions={heatmapSessions} />}
 
       {/* Month navigation */}
       <div className="flex items-center justify-between mb-4">

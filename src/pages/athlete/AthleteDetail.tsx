@@ -94,6 +94,7 @@ export default function AthleteDetail() {
         date: s.date,
         title: s.title,
         session_type: s.session_type,
+        is_personal: s.is_personal,
       }));
   }, [member, sessions, validations]);
 
