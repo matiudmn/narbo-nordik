@@ -98,24 +98,28 @@ export default function Suivi() {
 
   const heatmapSessions = useMemo((): HeatmapSession[] => {
     if (!user) return [];
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
     const doneSessionIds = new Set(
       validations
         .filter(v => v.user_id === user.id && v.status === 'done')
         .map(v => v.session_id)
     );
     const userSessions = sessions.filter(s => {
-      if (!doneSessionIds.has(s.id)) return false;
       if (s.is_personal) return s.created_by === user.id;
       if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
       if (!s.group_id) return true;
       return s.group_id === user.group_id;
     });
-    return userSessions.map(s => ({
-      date: s.date,
-      title: s.title,
-      session_type: s.session_type,
-      is_personal: s.is_personal,
-    }));
+    return userSessions
+      .filter(s => doneSessionIds.has(s.id) || new Date(s.date) <= today)
+      .map(s => ({
+        date: s.date,
+        title: s.title,
+        session_type: s.session_type,
+        is_personal: s.is_personal,
+        done: doneSessionIds.has(s.id),
+      }));
   }, [user, sessions, validations, userPrepIds]);
 
   if (!user) return null;

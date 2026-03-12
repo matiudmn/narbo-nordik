@@ -6,6 +6,7 @@ export interface HeatmapSession {
   title: string;
   session_type: string;
   is_personal: boolean;
+  done: boolean;
 }
 
 interface YearlyHeatmapProps {
@@ -22,11 +23,17 @@ function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
-type CellType = 'empty' | 'coach' | 'personal' | 'both';
+type CellType = 'empty' | 'coach' | 'personal' | 'both' | 'missed' | 'mixed';
 
 function getCellType(sessions: HeatmapSession[]): CellType {
-  const hasCoach = sessions.some(s => !s.is_personal);
-  const hasPersonal = sessions.some(s => s.is_personal);
+  const done = sessions.filter(s => s.done);
+  const missed = sessions.filter(s => !s.done);
+
+  if (done.length > 0 && missed.length > 0) return 'mixed';
+  if (missed.length > 0) return 'missed';
+
+  const hasCoach = done.some(s => !s.is_personal);
+  const hasPersonal = done.some(s => s.is_personal);
   if (hasCoach && hasPersonal) return 'both';
   if (hasCoach) return 'coach';
   if (hasPersonal) return 'personal';
@@ -38,6 +45,8 @@ const CELL_STYLES: Record<CellType, string> = {
   coach: 'bg-accent',
   personal: 'bg-amber-400',
   both: 'bg-gradient-to-br from-accent to-amber-400',
+  missed: 'bg-red-300',
+  mixed: 'bg-gradient-to-br from-accent to-red-300',
 };
 
 export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapProps) {
@@ -60,9 +69,8 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
   const counts = useMemo(() => {
     const yearSessions = sessions.filter(s => new Date(s.date).getFullYear() === year);
     return {
-      total: yearSessions.length,
-      coach: yearSessions.filter(s => !s.is_personal).length,
-      personal: yearSessions.filter(s => s.is_personal).length,
+      done: yearSessions.filter(s => s.done).length,
+      missed: yearSessions.filter(s => !s.done).length,
     };
   }, [sessions, year]);
 
@@ -74,7 +82,10 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
     const containerRect = (e.target as HTMLElement).closest('.heatmap-container')?.getBoundingClientRect();
     if (!containerRect) return;
     const text = cellSessions
-      .map(s => `${s.is_personal ? '[Perso] ' : ''}${s.title} (${s.session_type})`)
+      .map(s => {
+        const prefix = !s.done ? '[Non faite] ' : s.is_personal ? '[Perso] ' : '';
+        return `${prefix}${s.title} (${s.session_type})`;
+      })
       .join('\n');
     setTooltip({
       x: rect.left - containerRect.left + rect.width / 2,
@@ -108,10 +119,8 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
       </div>
 
       <p className="text-xs text-gray-400 mb-3">
-        {counts.total} seance{counts.total > 1 ? 's' : ''} en {year}
-        {counts.coach > 0 && counts.personal > 0 && (
-          <span> ({counts.coach} club, {counts.personal} perso)</span>
-        )}
+        {counts.done} faite{counts.done > 1 ? 's' : ''}
+        {counts.missed > 0 && <span className="text-red-400"> · {counts.missed} non faite{counts.missed > 1 ? 's' : ''}</span>}
       </p>
 
       <div className="heatmap-container relative overflow-x-auto">
@@ -179,7 +188,7 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
         )}
       </div>
 
-      <div className="flex items-center gap-3 mt-3 text-[10px] text-gray-400">
+      <div className="flex flex-wrap items-center gap-3 mt-3 text-[10px] text-gray-400">
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-[2px] bg-gray-100" />
           <span>Aucune</span>
@@ -193,8 +202,8 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
           <span>Perso</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-gradient-to-br from-accent to-amber-400" />
-          <span>Les deux</span>
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-red-300" />
+          <span>Non faite</span>
         </div>
       </div>
     </div>

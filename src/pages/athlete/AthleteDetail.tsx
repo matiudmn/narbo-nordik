@@ -80,23 +80,35 @@ export default function AthleteDetail() {
       .slice(0, 4);
   }, [raceResults, member]);
 
-  // Heatmap data: coach-created sessions validated by this athlete
+  // Heatmap data: coach-created sessions (done + missed) for this athlete
   const heatmapSessions = useMemo(() => {
     if (!member) return [];
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
     const doneSessionIds = new Set(
       validations
         .filter(v => v.user_id === member.id && v.status === 'done')
         .map(v => v.session_id)
     );
+    const memberPrepIds = userPreparations
+      .filter(up => up.user_id === member.id)
+      .map(up => up.preparation_id);
     return sessions
-      .filter(s => !s.is_personal && doneSessionIds.has(s.id))
+      .filter(s => {
+        if (s.is_personal) return false;
+        if (s.preparation_id) return memberPrepIds.includes(s.preparation_id);
+        if (!s.group_id) return true;
+        return s.group_id === member.group_id;
+      })
+      .filter(s => doneSessionIds.has(s.id) || new Date(s.date) <= today)
       .map(s => ({
         date: s.date,
         title: s.title,
         session_type: s.session_type,
         is_personal: s.is_personal,
+        done: doneSessionIds.has(s.id),
       }));
-  }, [member, sessions, validations]);
+  }, [member, sessions, validations, userPreparations]);
 
   if (!member) {
     return (
