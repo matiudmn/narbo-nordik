@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile } from 'lucide-react';
+import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile, Heart } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode } from '../../lib/calculations';
@@ -13,7 +13,7 @@ export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { sessions, validations, validateSession, updateValidation, groups, userPreparations } = useData();
+  const { sessions, validations, validateSession, updateValidation, groups, userPreparations, sessionNordiks, toggleSessionNordik } = useData();
 
   const session = sessions.find(s => s.id === id);
   const validation = validations.find(v => v.session_id === id && v.user_id === user?.id);
@@ -290,9 +290,33 @@ export default function SessionDetail() {
           </div>
         )}
 
-        {/* Validation */}
+        {/* Nordik or Validation */}
         <div className="p-4 border-t border-gray-100">
-          {validation?.status === 'done' && !isEditing ? (
+          {session.is_personal && session.created_by !== user?.id ? (() => {
+            const hasNordiked = user ? sessionNordiks.some(n => n.session_id === session.id && n.user_id === user.id) : false;
+            return (
+              <div className="text-center py-2">
+                <button
+                  onClick={() => user && toggleSessionNordik(session.id, user.id)}
+                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-lg transition-all active:scale-110 ${
+                    hasNordiked
+                      ? 'bg-red-50 text-red-500'
+                      : 'bg-gray-50 text-gray-400 hover:text-red-400 hover:bg-red-50'
+                  }`}
+                >
+                  <Heart
+                    size={22}
+                    fill={hasNordiked ? 'currentColor' : 'none'}
+                    className={hasNordiked ? 'animate-[pulse_0.3s_ease-in-out]' : ''}
+                  />
+                  Nordik
+                </button>
+                {hasNordiked && (
+                  <p className="text-xs text-gray-400 mt-2">Tu as encourage cet athlete</p>
+                )}
+              </div>
+            );
+          })() : validation?.status === 'done' && !isEditing ? (
             <div className="bg-success/10 rounded-xl p-4">
               <div className="text-center">
                 <Check size={24} className="mx-auto mb-1 text-success" />

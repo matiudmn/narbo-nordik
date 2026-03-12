@@ -78,6 +78,15 @@ CREATE TABLE race_nordiks (
   UNIQUE(race_id, user_id)
 );
 
+-- Session nordiks (likes/endorsements on personal sessions)
+CREATE TABLE session_nordiks (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id UUID REFERENCES sessions(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(session_id, user_id)
+);
+
 -- Exit feedbacks (anonymous, for account deletion survey)
 CREATE TABLE exit_feedbacks (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -94,6 +103,8 @@ CREATE INDEX idx_validations_user ON session_validations(user_id);
 CREATE INDEX idx_race_results_user ON race_results(user_id);
 CREATE INDEX idx_race_nordiks_race ON race_nordiks(race_id);
 CREATE INDEX idx_race_nordiks_user ON race_nordiks(user_id);
+CREATE INDEX idx_session_nordiks_session ON session_nordiks(session_id);
+CREATE INDEX idx_session_nordiks_user ON session_nordiks(user_id);
 
 -- Row Level Security (RLS)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -101,6 +112,7 @@ ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE session_validations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE race_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE race_nordiks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE session_nordiks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exit_feedbacks ENABLE ROW LEVEL SECURITY;
 
@@ -192,6 +204,17 @@ CREATE POLICY "Users can insert their own nordiks" ON race_nordiks
   WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Users can delete their own nordiks" ON race_nordiks
+  FOR DELETE TO authenticated USING (user_id = auth.uid());
+
+-- Policies: Session nordiks
+CREATE POLICY "Session nordiks readable by authenticated" ON session_nordiks
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Users can insert own session nordiks" ON session_nordiks
+  FOR INSERT TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can delete own session nordiks" ON session_nordiks
   FOR DELETE TO authenticated USING (user_id = auth.uid());
 
 -- Policies: Exit feedbacks (anonymous insert only)

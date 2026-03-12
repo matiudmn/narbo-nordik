@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import type { Session, SessionValidation, RaceResult, RaceNordik, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation, ObjectiveReached, Sensations, ClubSettings, RacePaceConfig, AllureZoneConfig } from '../types';
+import type { Session, SessionValidation, RaceResult, RaceNordik, SessionNordik, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation, ObjectiveReached, Sensations, ClubSettings, RacePaceConfig, AllureZoneConfig } from '../types';
 import { supabase, createEphemeralClient } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -13,6 +13,7 @@ interface DataContextType {
   validations: SessionValidation[];
   raceResults: RaceResult[];
   raceNordiks: RaceNordik[];
+  sessionNordiks: SessionNordik[];
   groups: Group[];
   users: User[];
   preparations: SpecificPreparation[];
@@ -27,6 +28,7 @@ interface DataContextType {
   updateRaceResult: (id: string, updates: Partial<Omit<RaceResult, 'id' | 'created_at'>>) => Promise<void>;
   deleteRaceResult: (id: string) => Promise<void>;
   toggleNordik: (raceId: string, userId: string) => Promise<void>;
+  toggleSessionNordik: (sessionId: string, userId: string) => Promise<void>;
   updateUserVma: (userId: string, vma: number, reason?: string) => Promise<void>;
   updateUserPublic: (userId: string, isPublic: boolean) => Promise<void>;
   updateUserPhone: (userId: string, phone: string | null) => Promise<void>;
@@ -84,6 +86,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [validations, setValidations] = useState<SessionValidation[]>([]);
   const [raceResults, setRaceResults] = useState<RaceResult[]>([]);
   const [raceNordiks, setRaceNordiks] = useState<RaceNordik[]>([]);
+  const [sessionNordiks, setSessionNordiks] = useState<SessionNordik[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [preparations, setPreparations] = useState<SpecificPreparation[]>([]);
@@ -92,11 +95,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
-    const [s, v, rr, rn, g, u, p, up] = await Promise.all([
+    const [s, v, rr, rn, sn, g, u, p, up] = await Promise.all([
       supabase.from('sessions').select('*').order('date'),
       supabase.from('session_validations').select('*'),
       supabase.from('race_results').select('*'),
       supabase.from('race_nordiks').select('*'),
+      supabase.from('session_nordiks').select('*'),
       supabase.from('groups').select('*'),
       supabase.from('users').select('*'),
       supabase.from('specific_preparations').select('*').order('event_date'),
@@ -106,6 +110,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (v.data) setValidations(v.data);
     if (rr.data) setRaceResults(rr.data);
     if (rn.data) setRaceNordiks(rn.data);
+    if (sn.data) setSessionNordiks(sn.data);
     if (g.data) setGroups(g.data);
     if (u.data) setUsers(u.data.map(normalizeUser));
     if (p.data) setPreparations(p.data);
@@ -130,6 +135,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setValidations([]);
       setRaceResults([]);
       setRaceNordiks([]);
+      setSessionNordiks([]);
       setGroups([]);
       setUsers([]);
       setPreparations([]);
@@ -291,6 +297,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [raceNordiks]);
 
+  const toggleSessionNordik = useCallback(async (sessionId: string, userId: string) => {
+    const existing = sessionNordiks.find(n => n.session_id === sessionId && n.user_id === userId);
+    if (existing) {
+      const { error } = await supabase.from('session_nordiks').delete().eq('id', existing.id);
+      if (!error) setSessionNordiks(prev => prev.filter(n => n.id !== existing.id));
+    } else {
+      const { data, error } = await supabase.from('session_nordiks').insert({ session_id: sessionId, user_id: userId }).select().single();
+      if (!error && data) {
+        setSessionNordiks(prev => [...prev, data]);
+        // Send in-app notification to the session creator
+        const session = sessions.find(s => s.id === sessionId);
+        const coach = users.find(u => u.id === userId);
+        if (session && coach && session.created_by !== userId) {
+          await supabase.from('notifications').insert({
+            user_id: session.created_by,
+            type: 'system',
+            title: 'Nordik !',
+            body: `${coach.firstname} a aime ta seance "${session.title}"`,
+          });
+        }
+      }
+    }
+  }, [sessionNordiks, sessions, users]);
+
   // --- Users ---
 
   const patchUser = useCallback(async (userId: string, updates: Partial<User>) => {
@@ -382,6 +412,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setValidations(prev => prev.filter(v => v.user_id !== id));
       setRaceResults(prev => prev.filter(r => r.user_id !== id));
       setRaceNordiks(prev => prev.filter(n => n.user_id !== id));
+      setSessionNordiks(prev => prev.filter(n => n.user_id !== id));
     }
   }, []);
 
@@ -472,9 +503,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   return (
     <DataContext.Provider value={{
-      sessions, validations, raceResults, raceNordiks, groups, users, preparations, userPreparations, clubSettings, loading,
+      sessions, validations, raceResults, raceNordiks, sessionNordiks, groups, users, preparations, userPreparations, clubSettings, loading,
       addSession, updateSession, deleteSession, validateSession, updateValidation,
-      addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto,
+      addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto,
       addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
       addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, refreshAll,
     }}>

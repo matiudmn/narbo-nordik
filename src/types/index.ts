@@ -117,6 +117,13 @@ export interface RaceNordik {
   created_at: string;
 }
 
+export interface SessionNordik {
+  id: string;
+  session_id: string;
+  user_id: string;
+  created_at: string;
+}
+
 export interface SessionWithValidation extends Session {
   validation?: SessionValidation;
   group?: Group;
