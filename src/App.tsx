@@ -14,6 +14,7 @@ import SessionDetail from './pages/athlete/SessionDetail';
 import Directory from './pages/athlete/Directory';
 import Profile from './pages/athlete/Profile';
 
+const AthleteDetail = lazy(() => import('./pages/athlete/AthleteDetail'));
 const ClubProfile = lazy(() => import('./pages/ClubProfile'));
 const Dashboard = lazy(() => import('./pages/coach/Dashboard'));
 const SessionEditor = lazy(() => import('./pages/coach/SessionEditor'));
@@ -42,6 +43,7 @@ function AppRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/session/:id" element={<SessionDetail />} />
           <Route path="/directory" element={<Directory />} />
+          <Route path="/directory/:id" element={<AthleteDetail />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/club" element={<ClubProfile />} />
           <Route path="/palmares" element={<Palmares />} />

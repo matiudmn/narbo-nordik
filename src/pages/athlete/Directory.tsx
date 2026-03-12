@@ -1,6 +1,6 @@
 import { useState, useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Phone, ExternalLink, Shield, Cake, ChevronDown, Gauge, Target, Trophy, History } from 'lucide-react';
+import { Search, Phone, ExternalLink, Shield, Cake, ChevronDown, Gauge, Target, Trophy, History, User as UserIcon } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useData } from '../../contexts/DataContext';
@@ -15,6 +15,7 @@ import type { User } from '../../types';
 
 const MemberStats = memo(function MemberStats({ member }: { member: User }) {
   const { user: currentUser } = useAuth();
+  const isCoach = currentUser?.role === 'coach';
   const { sessions, validations, raceResults, userPreparations, clubSettings } = useData();
   const racePaces = getRacePaces(clubSettings?.race_paces);
 
@@ -183,6 +184,16 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
             ))}
           </div>
         </div>
+      )}
+
+      {isCoach && (
+        <Link
+          to={`/directory/${member.id}`}
+          className="flex items-center justify-center gap-1.5 w-full py-2 text-xs font-medium text-primary bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
+        >
+          <UserIcon size={14} />
+          Voir la fiche complete
+        </Link>
       )}
     </div>
   );
