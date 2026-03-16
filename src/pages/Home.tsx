@@ -7,10 +7,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { ALLURE_ZONES, formatBlockSummary, getRacePaces, calculateRacePace, getVmaLevelIndex, VMA_LEVELS, getSessionCode } from '../lib/calculations';
 import { getSeasonRange } from '../lib/date-utils';
+import { PageSkeleton } from '../components/Skeleton';
 
 export default function Home() {
   const { user } = useAuth();
-  const { sessions, validations, groups, preparations, userPreparations, clubSettings } = useData();
+  const { sessions, validations, groups, preparations, userPreparations, clubSettings, loading } = useData();
   const racePaces = getRacePaces(clubSettings?.race_paces);
   const [weekOffset, setWeekOffset] = useState(0);
 
@@ -116,6 +117,7 @@ export default function Home() {
   const [prepCopied, setPrepCopied] = useState(false);
 
   if (!user) return null;
+  if (loading && sessions.length === 0) return <PageSkeleton />;
 
   const rateColor = (rate: number) => rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-red-400';
 
@@ -153,7 +155,7 @@ export default function Home() {
           <div className="bg-primary/5 rounded-lg p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-400">VMA</p>
+                <p className="text-xs text-gray-500">VMA</p>
                 <p className="text-2xl font-bold text-primary">
                   {user.vma} <span className="text-sm font-normal">km/h</span>
                 </p>
@@ -231,7 +233,7 @@ export default function Home() {
                   style={{ width: `${stat.value}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-400 mt-1">{stat.label}</p>
+              <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -249,14 +251,14 @@ export default function Home() {
       )}
 
       {showPrepRequest && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40" onClick={resetPrepForm}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40" onClick={resetPrepForm} role="dialog" aria-modal="true" aria-labelledby="prep-dialog-title">
           <div
-            className="bg-white w-full max-w-lg rounded-t-2xl flex flex-col max-h-[85vh]"
+            className="bg-white w-full max-w-lg rounded-t-2xl flex flex-col max-h-[85vh] animate-slide-up"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 pb-3 flex-shrink-0">
-              <h2 className="font-bold text-gray-900">Demande de preparation</h2>
-              <button onClick={resetPrepForm} className="p-1 text-gray-400 hover:text-gray-600">
+              <h2 id="prep-dialog-title" className="font-bold text-gray-900">Demande de preparation</h2>
+              <button onClick={resetPrepForm} className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 rounded-lg transition-colors" aria-label="Fermer">
                 <X size={20} />
               </button>
             </div>
@@ -330,7 +332,7 @@ export default function Home() {
       {/* Seances de la semaine */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <button onClick={() => setWeekOffset(o => o - 1)} className="p-2 hover:bg-gray-100 rounded-lg">
+          <button onClick={() => setWeekOffset(o => o - 1)} className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Semaine precedente">
             <ChevronLeft size={20} />
           </button>
           <div className="text-center">
@@ -340,7 +342,7 @@ export default function Home() {
               {weekOffset === 0 && <span className="ml-1 text-accent font-medium">(cette semaine)</span>}
             </p>
           </div>
-          <button onClick={() => setWeekOffset(o => o + 1)} className="p-2 hover:bg-gray-100 rounded-lg">
+          <button onClick={() => setWeekOffset(o => o + 1)} className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Semaine suivante">
             <ChevronRight size={20} />
           </button>
         </div>
@@ -355,9 +357,10 @@ export default function Home() {
         )}
 
         {filteredSessions.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <CalendarIcon size={48} className="mx-auto mb-3 opacity-50" />
-            <p className="font-medium">Aucune seance cette semaine</p>
+          <div className="text-center py-12">
+            <CalendarIcon size={48} className="mx-auto mb-3 text-gray-300" />
+            <p className="font-medium text-gray-500">Aucune seance cette semaine</p>
+            <p className="text-sm text-gray-400 mt-1">Les seances planifiees apparaitront ici</p>
           </div>
         ) : (
           <div className="space-y-3">

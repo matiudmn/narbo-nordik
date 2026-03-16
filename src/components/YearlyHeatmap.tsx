@@ -103,7 +103,8 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
         <div className="flex items-center gap-2">
           <button
             onClick={() => setYear(y => y - 1)}
-            className="p-1 rounded-lg hover:bg-gray-100 text-gray-500"
+            className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+            aria-label="Annee precedente"
           >
             <ChevronLeft size={18} />
           </button>
@@ -111,7 +112,8 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
           <button
             onClick={() => setYear(y => y + 1)}
             disabled={year >= new Date().getFullYear()}
-            className="p-1 rounded-lg hover:bg-gray-100 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label="Annee suivante"
           >
             <ChevronRight size={18} />
           </button>
@@ -124,7 +126,7 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
       </p>
 
       <div className="heatmap-container relative overflow-x-auto">
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse" role="grid" aria-label={`Calendrier des seances ${year}`}>
           <thead>
             <tr>
               <th className="text-[10px] text-gray-400 font-normal text-left pr-1 w-8" />

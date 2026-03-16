@@ -39,9 +39,9 @@ export default function Header() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {isSuperAdmin && !isImpersonating && (
-              <div className="p-1.5 bg-white/20 rounded-full" title="Super Admin">
+              <div className="p-1.5 bg-white/20 rounded-full" title="Super Admin" aria-label="Super Admin">
                 <Shield size={14} />
               </div>
             )}
@@ -49,36 +49,42 @@ export default function Header() {
               href="https://chat.whatsapp.com/JwBh6hcJ7o00aBqonTAtD8?mode=hqctcli"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              title="Groupe WhatsApp"
+              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+              aria-label="Groupe WhatsApp"
             >
               <MessageCircle size={18} />
             </a>
             <button
               onClick={() => navigate('/notifications')}
-              className="relative p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="relative flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+              aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} non lues` : ''}`}
             >
               <Bell size={18} />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1">
+                <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1" aria-hidden="true">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </button>
             <button
               onClick={() => navigate('/aide')}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              title="Aide"
+              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+              aria-label="Aide"
             >
               <HelpCircle size={18} />
             </button>
             <button
               onClick={() => navigate('/profile')}
-              className="p-1 hover:bg-white/10 rounded-full transition-colors"
+              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-full transition-colors"
+              aria-label="Mon profil"
             >
               {user && <Avatar user={user} size="sm" />}
             </button>
-            <button onClick={logout} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+            <button
+              onClick={logout}
+              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+              aria-label="Se deconnecter"
+            >
               <LogOut size={18} />
             </button>
           </div>

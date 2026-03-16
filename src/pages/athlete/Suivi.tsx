@@ -159,7 +159,7 @@ export default function Suivi() {
 
       {/* Month navigation */}
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setMonthOffset(p => p - 1)} className="p-2 hover:bg-gray-100 rounded-lg">
+        <button onClick={() => setMonthOffset(p => p - 1)} className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Mois precedent">
           <ChevronLeft size={20} className="text-gray-600" />
         </button>
         <span className="font-semibold text-gray-900 capitalize">
@@ -168,7 +168,8 @@ export default function Suivi() {
         <button
           onClick={() => setMonthOffset(p => p + 1)}
           disabled={monthOffset >= 0}
-          className="p-2 hover:bg-gray-100 rounded-lg disabled:opacity-30"
+          className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-30"
+          aria-label="Mois suivant"
         >
           <ChevronRight size={20} className="text-gray-600" />
         </button>
@@ -211,8 +212,12 @@ export default function Suivi() {
       {/* Session list */}
       {currentList.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-400">
+          <Check size={40} className="mx-auto mb-3 text-gray-300" />
+          <p className="font-medium text-gray-500">
             {showingAthletes ? 'Aucun retour athlete ce mois' : 'Aucune seance validee ce mois'}
+          </p>
+          <p className="text-sm text-gray-400 mt-1">
+            {showingAthletes ? 'Les validations des athletes apparaitront ici' : 'Validez vos seances pour les voir apparaitre ici'}
           </p>
         </div>
       ) : (

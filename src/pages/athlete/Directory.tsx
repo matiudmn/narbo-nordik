@@ -211,7 +211,7 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-      <div className="p-4 cursor-pointer" onClick={onToggle}>
+      <button className="w-full p-4 cursor-pointer text-left" onClick={onToggle} aria-expanded={isExpanded} aria-label={`${member.firstname} ${member.lastname}`}>
         <div className="flex items-center gap-3">
           <Avatar user={member} size="md" />
           <div className="flex-1 min-w-0">
@@ -276,7 +276,7 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
             />
           </div>
         </div>
-      </div>
+      </button>
       {isExpanded && <MemberStats member={member} />}
     </div>
   );
@@ -330,6 +330,7 @@ export default function Directory() {
           placeholder="Rechercher un membre..."
           value={search}
           onChange={e => setSearch(e.target.value)}
+          aria-label="Rechercher un membre"
           className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
         />
       </div>
@@ -348,7 +349,11 @@ export default function Directory() {
       </div>
 
       {sorted.length === 0 && (
-        <p className="text-center text-gray-400 py-8">Aucun membre trouve</p>
+        <div className="text-center py-12">
+          <Search size={40} className="mx-auto mb-3 text-gray-300" />
+          <p className="font-medium text-gray-500">Aucun membre trouve</p>
+          <p className="text-sm text-gray-400 mt-1">Essayez avec un autre nom</p>
+        </div>
       )}
     </div>
   );

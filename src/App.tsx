@@ -13,6 +13,7 @@ import Home from './pages/Home';
 import SessionDetail from './pages/athlete/SessionDetail';
 import Directory from './pages/athlete/Directory';
 import Profile from './pages/athlete/Profile';
+import { PageSkeleton } from './components/Skeleton';
 
 const AthleteDetail = lazy(() => import('./pages/athlete/AthleteDetail'));
 const ClubProfile = lazy(() => import('./pages/ClubProfile'));
@@ -36,7 +37,7 @@ function AppRoutes() {
   const isCoach = user.role === 'coach';
 
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+    <Suspense fallback={<div className="pt-14 pb-20 px-4 max-w-5xl mx-auto"><PageSkeleton /></div>}>
       <Routes>
         <Route element={<Layout />}>
           {/* Shared routes */}

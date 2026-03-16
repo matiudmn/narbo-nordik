@@ -7,13 +7,13 @@ export default function BottomNav() {
   const isCoach = user?.role === 'coach';
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex flex-col items-center gap-0.5 text-xs transition-colors ${
+    `flex flex-col items-center justify-center gap-0.5 text-xs transition-colors min-w-[44px] min-h-[44px] ${
       isActive ? 'text-accent font-semibold' : 'text-gray-500'
     }`;
 
   if (isCoach) {
     return (
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pb-[env(safe-area-inset-bottom)] z-50">
+      <nav aria-label="Navigation principale" className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pb-[env(safe-area-inset-bottom)] z-50">
         <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
           <NavLink to="/" end className={linkClass}>
             <House size={22} />
@@ -45,7 +45,7 @@ export default function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pb-[env(safe-area-inset-bottom)] z-50">
+    <nav aria-label="Navigation principale" className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pb-[env(safe-area-inset-bottom)] z-50">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
         <NavLink to="/" end className={linkClass}>
           <House size={22} />

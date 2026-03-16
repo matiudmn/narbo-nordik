@@ -70,9 +70,11 @@ export default function NordikButton({ raceId }: NordikButtonProps) {
     <div className="relative" ref={popoverRef}>
       <button
         onClick={handleClick}
-        className={`flex items-center gap-1 transition-all active:scale-125 ${
+        className={`flex items-center justify-center gap-1 min-w-[44px] min-h-[44px] transition-all active:scale-125 ${
           hasNordiked ? 'text-red-500' : 'text-gray-300 hover:text-red-300'
         }`}
+        aria-label={hasNordiked ? `Retirer le Nordik (${count})` : `Donner un Nordik (${count})`}
+        aria-pressed={hasNordiked}
       >
         <Heart
           size={18}
