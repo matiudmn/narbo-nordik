@@ -13,6 +13,7 @@ import Home from './pages/Home';
 import SessionDetail from './pages/athlete/SessionDetail';
 import Directory from './pages/athlete/Directory';
 import Profile from './pages/athlete/Profile';
+import ResetPassword from './pages/ResetPassword';
 import { PageSkeleton } from './components/Skeleton';
 
 const AthleteDetail = lazy(() => import('./pages/athlete/AthleteDetail'));
@@ -29,6 +30,11 @@ const Suivi = lazy(() => import('./pages/athlete/Suivi'));
 
 function AppRoutes() {
   const { user } = useAuth();
+
+  // Reset password must be accessible without full auth (recovery token only)
+  if (window.location.pathname === '/reset-password') {
+    return <ResetPassword />;
+  }
 
   if (!user) {
     return <Login />;
