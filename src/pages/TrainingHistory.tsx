@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, Check, X, Clock, Paperclip, Dumbbell, Mountain, Battery, Bike, Footprints } from 'lucide-react';
+import { ArrowLeft, Check, X, Clock, Paperclip, Dumbbell, Mountain, Battery, Bike, Footprints, Trophy } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { getSessionCode } from '../lib/calculations';
@@ -10,6 +10,7 @@ import type { SessionType } from '../types';
 
 const SESSION_TYPE_INFO: Record<SessionType, { label: string; icon: typeof Dumbbell }> = {
   entrainement: { label: 'Entrainement', icon: Dumbbell },
+  course: { label: 'Course', icon: Trophy },
   sortie_longue: { label: 'Sortie Longue', icon: Mountain },
   recuperation: { label: 'Recuperation', icon: Battery },
   velo: { label: 'Velo', icon: Bike },

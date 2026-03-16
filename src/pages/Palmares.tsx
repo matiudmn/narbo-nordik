@@ -32,9 +32,9 @@ const raceTypeColors: Record<string, string> = {
 
 function RaceForm({ users: usersList, onSubmit, onCancel, initial, showUserSelect }: {
   users: { id: string; firstname: string; lastname: string }[];
-  onSubmit: (data: { user_id: string; race_name: string; race_type: RaceType; distance_km: number; date: string; time_duration: string; is_label: boolean }) => void;
+  onSubmit: (data: { user_id: string; race_name: string; race_type: RaceType; distance_km: number; date: string; time_duration: string; is_label: boolean; comment: string | null }) => void;
   onCancel: () => void;
-  initial?: { user_id?: string; race_name: string; race_type: RaceType; distance_km: number; date: string; time_duration: string; is_label: boolean };
+  initial?: { user_id?: string; race_name: string; race_type: RaceType; distance_km: number; date: string; time_duration: string; is_label: boolean; comment?: string | null };
   showUserSelect?: boolean;
 }) {
   const [userId, setUserId] = useState(initial?.user_id || '');
@@ -44,6 +44,7 @@ function RaceForm({ users: usersList, onSubmit, onCancel, initial, showUserSelec
   const [date, setDate] = useState(initial?.date || '');
   const [time, setTime] = useState(initial?.time_duration || '');
   const [label, setLabel] = useState(initial?.is_label || false);
+  const [comment, setComment] = useState(initial?.comment || '');
 
   const handleSubmit = () => {
     if (!name || !distance || !date || !time) return;
@@ -56,6 +57,7 @@ function RaceForm({ users: usersList, onSubmit, onCancel, initial, showUserSelec
       date,
       time_duration: time,
       is_label: label,
+      comment: comment.trim() || null,
     });
   };
 
@@ -121,6 +123,13 @@ function RaceForm({ users: usersList, onSubmit, onCancel, initial, showUserSelec
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
       </div>
+      <textarea
+        placeholder="Commentaire (optionnel)"
+        value={comment}
+        onChange={e => setComment(e.target.value)}
+        rows={2}
+        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+      />
       <label className="flex items-center gap-2 cursor-pointer">
         <input type="checkbox" checked={label} onChange={e => setLabel(e.target.checked)} className="rounded border-gray-300 text-primary focus:ring-primary/30" />
         <span className="text-sm text-gray-700">Course a label</span>
@@ -199,6 +208,7 @@ export default function Palmares() {
                 date: data.date,
                 time_duration: data.time_duration,
                 is_label: data.is_label,
+                comment: data.comment,
               });
               setShowCoachAdd(false);
             }}
@@ -224,6 +234,7 @@ export default function Palmares() {
                       date: race.date,
                       time_duration: race.time_duration,
                       is_label: race.is_label,
+                      comment: race.comment,
                     }}
                     onCancel={() => setEditingId(null)}
                     onSubmit={data => {
@@ -234,6 +245,7 @@ export default function Palmares() {
                         date: data.date,
                         time_duration: data.time_duration,
                         is_label: data.is_label,
+                        comment: data.comment,
                       });
                       setEditingId(null);
                     }}
@@ -271,6 +283,9 @@ export default function Palmares() {
                         {format(new Date(race.date), 'd MMM yyyy', { locale: fr })}
                       </span>
                     </div>
+                    {race.comment && (
+                      <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">{race.comment}</p>
+                    )}
                   </div>
                   <div className="flex-shrink-0 text-right">
                     <p className="text-sm font-bold text-gray-900">{formatDuration(race.time_duration)}</p>

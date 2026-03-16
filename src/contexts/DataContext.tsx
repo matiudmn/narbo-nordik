@@ -264,7 +264,67 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addRaceResult = useCallback(async (result: Omit<RaceResult, 'id' | 'created_at'>) => {
     const { data, error } = await supabase.from('race_results').insert(result).select().single();
-    if (!error && data) setRaceResults(prev => [...prev, data]);
+    if (!error && data) {
+      setRaceResults(prev => [...prev, data]);
+
+      // Auto-create a personal session marked as done
+      const durationParts = result.time_duration.split(':').map(Number);
+      const totalSeconds = (durationParts[0] || 0) * 3600 + (durationParts[1] || 0) * 60 + (durationParts[2] || 0);
+      const distanceMeters = Math.round(result.distance_km * 1000);
+
+      const sessionPayload = {
+        title: `Course : ${result.race_name}`,
+        date: new Date(result.date).toISOString(),
+        session_type: 'course' as const,
+        terrain_options: [] as string[],
+        location: null,
+        location_url: null,
+        description: result.comment || null,
+        group_id: null,
+        preparation_id: null,
+        target_distance: null,
+        vma_percent_min: null,
+        vma_percent_max: null,
+        blocks: [{
+          id: `blk_race_${Date.now()}`,
+          type: 'travail' as const,
+          allure: 'endurance' as const,
+          duration_seconds: totalSeconds,
+          distance_meters: distanceMeters,
+          repetitions: 1,
+          rest_seconds: 0,
+          rest_distance_meters: null,
+        }],
+        is_personal: true,
+        created_by: result.user_id,
+      };
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('sessions').insert(sessionPayload).select().single();
+
+      if (!sessionError && sessionData) {
+        setSessions(prev => [...prev, { ...sessionData, blocks: sessionData.blocks || [] }].sort((a, b) => a.date.localeCompare(b.date)));
+
+        const validationRow = {
+          session_id: sessionData.id,
+          user_id: result.user_id,
+          status: 'done',
+          feedback: result.comment || null,
+          attachment_path: null,
+          attachment_type: null,
+          objective_reached: 'oui',
+          sensations: null,
+          created_at: new Date().toISOString(),
+        };
+
+        const { data: valData, error: valError } = await supabase
+          .from('session_validations').insert(validationRow).select().single();
+
+        if (!valError && valData) {
+          setValidations(prev => [...prev, valData]);
+        }
+      }
+    }
   }, []);
 
   const updateRaceResult = useCallback(async (id: string, updates: Partial<Omit<RaceResult, 'id' | 'created_at'>>) => {

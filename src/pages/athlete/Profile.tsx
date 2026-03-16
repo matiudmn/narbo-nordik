@@ -57,6 +57,7 @@ export default function Profile() {
   const [raceDate, setRaceDate] = useState('');
   const [raceTime, setRaceTime] = useState('');
   const [raceLabel, setRaceLabel] = useState(false);
+  const [raceComment, setRaceComment] = useState('');
   const [editingRaceId, setEditingRaceId] = useState<string | null>(null);
 
   const [editingPhone, setEditingPhone] = useState(false);
@@ -150,6 +151,7 @@ export default function Profile() {
 
   const PERSO_TYPE_LABEL: Record<string, string> = {
     entrainement: 'Run',
+    course: 'Course',
     velo: 'Velo',
     marche: 'Marche',
     renfo: 'Renfo',
@@ -157,13 +159,14 @@ export default function Profile() {
 
   const PERSO_TYPE_COLOR: Record<string, string> = {
     entrainement: 'bg-primary/10 text-primary',
+    course: 'bg-amber-100 text-amber-700',
     velo: 'bg-blue-100 text-blue-700',
     marche: 'bg-green-100 text-green-700',
     renfo: 'bg-orange-100 text-orange-700',
   };
 
   const getPersoSessionDuration = (s: Session) => {
-    if (s.session_type === 'entrainement') {
+    if (s.session_type === 'entrainement' || s.session_type === 'course') {
       const total = s.blocks.reduce((acc, b) => acc + (b.duration_seconds * b.repetitions) + (b.rest_seconds * Math.max(0, b.repetitions - 1)), 0);
       return total > 0 ? formatSeconds(total) : null;
     }
@@ -201,7 +204,7 @@ export default function Profile() {
   const resetRaceForm = () => {
     setShowAddRace(false);
     setEditingRaceId(null);
-    setRaceName(''); setRaceDistance(''); setRaceDate(''); setRaceTime(''); setRaceLabel(false);
+    setRaceName(''); setRaceDistance(''); setRaceDate(''); setRaceTime(''); setRaceLabel(false); setRaceComment('');
   };
 
   const handleAddRace = () => {
@@ -214,6 +217,7 @@ export default function Profile() {
         date: raceDate,
         time_duration: raceTime,
         is_label: raceLabel,
+        comment: raceComment.trim() || null,
       });
     } else {
       addRaceResult({
@@ -224,6 +228,7 @@ export default function Profile() {
         date: raceDate,
         time_duration: raceTime,
         is_label: raceLabel,
+        comment: raceComment.trim() || null,
       });
     }
     resetRaceForm();
@@ -237,6 +242,7 @@ export default function Profile() {
     setRaceDate(race.date);
     setRaceTime(race.time_duration);
     setRaceLabel(race.is_label);
+    setRaceComment(race.comment || '');
     setShowAddRace(true);
   };
 
@@ -761,6 +767,13 @@ export default function Profile() {
                 className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
               />
             </div>
+            <textarea
+              placeholder="Commentaire (optionnel)"
+              value={raceComment}
+              onChange={e => setRaceComment(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
+            />
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={raceLabel} onChange={e => setRaceLabel(e.target.checked)} className="rounded border-gray-300 text-accent focus:ring-accent/30" />
               <span className="text-sm text-gray-700">Course a label</span>
@@ -793,6 +806,9 @@ export default function Profile() {
                       {format(new Date(race.date), 'dd/MM/yyyy', { locale: fr })}
                     </span>
                   </div>
+                  {race.comment && (
+                    <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">{race.comment}</p>
+                  )}
                 </div>
                 <span className="text-sm font-bold text-primary tabular-nums">{formatDuration(race.time_duration)}</span>
                 <NordikButton raceId={race.id} />

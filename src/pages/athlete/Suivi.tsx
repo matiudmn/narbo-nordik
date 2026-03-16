@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, addMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Check, Target, Smile, Dumbbell, Mountain, Battery, Bike, Footprints, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Target, Smile, Dumbbell, Mountain, Battery, Bike, Footprints, Users, Trophy } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { getSessionCode } from '../../lib/calculations';
@@ -13,6 +13,7 @@ import type { SessionType } from '../../types';
 
 const SESSION_TYPE_ICON: Record<SessionType, typeof Dumbbell> = {
   entrainement: Dumbbell,
+  course: Trophy,
   sortie_longue: Mountain,
   recuperation: Battery,
   velo: Bike,
