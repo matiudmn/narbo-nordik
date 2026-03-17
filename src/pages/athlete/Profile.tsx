@@ -14,7 +14,7 @@ import Avatar from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
 import ExpandableText from '../../components/ExpandableText';
 import { useStrava } from '../../hooks/useStrava';
-import type { RaceType, NotificationPreferences, Session } from '../../types';
+import type { RaceType, NotificationPreferences, Session, StravaActivity } from '../../types';
 
 function Accordion({ title, icon, children, defaultOpen = false, badge, action }: {
   title: string;
@@ -48,7 +48,7 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
-  const { sessions, raceResults, addRaceResult, updateRaceResult, deleteRaceResult, deleteSession, groups, users, validations, preparations, userPreparations, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
+  const { sessions, raceResults, addRaceResult, updateRaceResult, deleteRaceResult, deleteSession, addSession, validateSession, groups, users, validations, preparations, userPreparations, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
   const [showAddRace, setShowAddRace] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -96,6 +96,59 @@ export default function Profile() {
   const stravaAuthUrl = stravaClientId
     ? `https://www.strava.com/oauth/authorize?client_id=${stravaClientId}&response_type=code&redirect_uri=${encodeURIComponent(stravaRedirectUri)}&approval_prompt=auto&scope=activity:read_all,profile:read_all`
     : null;
+  const [creatingFromStrava, setCreatingFromStrava] = useState<string | null>(null);
+
+  const handleCreateSessionFromStrava = async (act: StravaActivity) => {
+    if (!user) return;
+    setCreatingFromStrava(act.id);
+
+    const sportMap: Record<string, Session['session_type']> = {
+      Run: 'entrainement', Trail: 'entrainement', Walk: 'marche',
+      Hike: 'marche', Ride: 'velo', VirtualRide: 'velo',
+    };
+    const sessionType = sportMap[act.sport_type] || 'entrainement';
+
+    const distMeters = act.distance_meters || null;
+    const durationSec = act.moving_time_seconds || 0;
+
+    const block = {
+      id: `blk_strava_${Date.now()}`,
+      type: 'travail' as const,
+      allure: 'ef' as const,
+      duration_seconds: durationSec,
+      distance_meters: distMeters,
+      repetitions: 1,
+      rest_seconds: 0,
+      rest_distance_meters: null,
+    };
+
+    const result = await addSession({
+      title: act.name || act.sport_type,
+      date: act.start_date_local || act.start_date,
+      session_type: sessionType,
+      terrain_options: [],
+      location: null,
+      location_url: null,
+      description: null,
+      group_id: null,
+      preparation_id: null,
+      target_distance: null,
+      vma_percent_min: null,
+      vma_percent_max: null,
+      blocks: [block],
+      is_personal: true,
+      created_by: user.id,
+    });
+
+    if ('id' in result) {
+      await validateSession(result.id, user.id, 'done');
+      await supabase.from('strava_activities')
+        .update({ matched_session_id: result.id, match_status: 'manual' })
+        .eq('id', act.id);
+      await strava.fetchRecentActivities();
+    }
+    setCreatingFromStrava(null);
+  };
 
   const handleChangePassword = async () => {
     if (newPassword.length < 6) {
@@ -926,7 +979,18 @@ export default function Profile() {
                       {act.matched_session_id ? (
                         <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">Associee</span>
                       ) : (
-                        <span className="text-[10px] text-gray-400">Non associee</span>
+                        <button
+                          onClick={() => handleCreateSessionFromStrava(act)}
+                          disabled={creatingFromStrava === act.id}
+                          className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 bg-[#FC4C02] text-white text-[10px] font-medium rounded-lg hover:bg-[#e04400] transition-colors disabled:opacity-50"
+                        >
+                          {creatingFromStrava === act.id ? (
+                            <Loader2 size={10} className="animate-spin" />
+                          ) : (
+                            <Plus size={10} />
+                          )}
+                          Saisir
+                        </button>
                       )}
                     </div>
                   );
