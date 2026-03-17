@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity } from 'lucide-react';
+import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity, RefreshCw, Unlink, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import NordikButton from '../../components/NordikButton';
@@ -470,66 +470,17 @@ export default function Profile() {
             )}
           </div>
 
-          {/* Strava */}
-          <div className="mt-3">
-            <div className="flex items-center gap-2 mb-1">
-              <Activity size={16} className="text-[#FC4C02]" />
-              <p className="text-xs text-gray-400">Strava</p>
-            </div>
-            {strava.connected ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 text-xs font-medium rounded-full">
-                    <Check size={12} /> Connecte
-                  </span>
-                  {strava.connectionStatus?.connected_at && (
-                    <span className="text-xs text-gray-400">
-                      depuis le {format(new Date(strava.connectionStatus.connected_at), 'd MMM yyyy', { locale: fr })}
-                    </span>
-                  )}
-                </div>
-                {confirmDisconnectStrava ? (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setConfirmDisconnectStrava(false)}
-                      className="px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 rounded"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      onClick={async () => {
-                        await strava.disconnect();
-                        setConfirmDisconnectStrava(false);
-                      }}
-                      className="px-2 py-1 text-xs text-white bg-red-500 hover:bg-red-600 rounded"
-                    >
-                      Confirmer
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setConfirmDisconnectStrava(true)}
-                    className="text-xs text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    Deconnecter
-                  </button>
-                )}
+          {/* Strava status badge (detail in section below) */}
+          {strava.connected && (
+            <div className="mt-3">
+              <div className="flex items-center gap-2">
+                <Activity size={16} className="text-[#FC4C02]" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 text-xs font-medium rounded-full">
+                  <Check size={12} /> Strava connecte
+                </span>
               </div>
-            ) : stravaAuthUrl ? (
-              <a
-                href={stravaAuthUrl}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#FC4C02] text-white text-sm font-medium rounded-lg hover:bg-[#e04400] transition-colors"
-              >
-                <Activity size={16} />
-                Connecter Strava
-              </a>
-            ) : (
-              <p className="text-xs text-gray-400">Integration Strava non configuree</p>
-            )}
-            {strava.error && (
-              <p className="text-xs text-red-500 mt-1">{strava.error}</p>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* License number */}
           <div className="mt-3 flex items-center justify-between">
@@ -846,6 +797,161 @@ export default function Profile() {
               </div>
             ))}
           </div>
+        )}
+      </Accordion>
+
+      {/* Strava */}
+      <Accordion
+        title="Strava"
+        icon={<Activity size={18} className="text-[#FC4C02]" />}
+        badge={strava.connected
+          ? <span className="text-xs bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Connecte</span>
+          : undefined
+        }
+      >
+        {strava.connected ? (
+          <div className="space-y-4">
+            {/* Action buttons - square cards */}
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={async () => {
+                  const count = await strava.syncActivities();
+                  if (count > 0) alert(`${count} activite(s) synchronisee(s)`);
+                  else alert('Aucune nouvelle activite');
+                }}
+                disabled={strava.loading}
+                className="flex flex-col items-center justify-center gap-2 p-4 bg-[#FC4C02]/5 border border-[#FC4C02]/20 rounded-xl hover:bg-[#FC4C02]/10 transition-colors disabled:opacity-50"
+              >
+                {strava.loading ? (
+                  <Loader2 size={24} className="text-[#FC4C02] animate-spin" />
+                ) : (
+                  <RefreshCw size={24} className="text-[#FC4C02]" />
+                )}
+                <span className="text-xs font-medium text-gray-700">Synchroniser</span>
+              </button>
+              <button
+                onClick={() => {
+                  if (!strava.athleteStats) strava.fetchStats();
+                  if (strava.recentActivities.length === 0) strava.fetchRecentActivities();
+                }}
+                className="flex flex-col items-center justify-center gap-2 p-4 bg-[#FC4C02]/5 border border-[#FC4C02]/20 rounded-xl hover:bg-[#FC4C02]/10 transition-colors"
+              >
+                <Activity size={24} className="text-[#FC4C02]" />
+                <span className="text-xs font-medium text-gray-700">Mes stats</span>
+              </button>
+              <button
+                onClick={() => setConfirmDisconnectStrava(true)}
+                className="flex flex-col items-center justify-center gap-2 p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-red-50 hover:border-red-200 transition-colors"
+              >
+                <Unlink size={24} className="text-gray-400" />
+                <span className="text-xs font-medium text-gray-500">Deconnecter</span>
+              </button>
+            </div>
+
+            {/* Disconnect confirmation */}
+            {confirmDisconnectStrava && (
+              <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl p-3">
+                <p className="text-sm text-red-700">Deconnecter Strava ?</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setConfirmDisconnectStrava(false)}
+                    className="px-3 py-1.5 text-xs text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await strava.disconnect();
+                      setConfirmDisconnectStrava(false);
+                    }}
+                    className="px-3 py-1.5 text-xs text-white bg-red-500 rounded-lg hover:bg-red-600"
+                  >
+                    Confirmer
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Connection info */}
+            <div className="flex items-center gap-2 text-xs text-gray-400">
+              <Check size={12} className="text-green-500" />
+              {strava.connectionStatus?.connected_at && (
+                <span>Connecte depuis le {format(new Date(strava.connectionStatus.connected_at), 'd MMM yyyy', { locale: fr })}</span>
+              )}
+            </div>
+
+            {/* Stats display */}
+            {strava.athleteStats && (
+              <div className="space-y-3">
+                <p className="text-xs font-bold text-gray-500 uppercase">Statistiques annuelles</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-gray-900">{strava.athleteStats.ytd_run_totals?.count ?? 0}</p>
+                    <p className="text-[10px] text-gray-400">Sorties</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-gray-900">
+                      {strava.athleteStats.ytd_run_totals?.distance ? (strava.athleteStats.ytd_run_totals.distance / 1000).toFixed(0) : 0}
+                    </p>
+                    <p className="text-[10px] text-gray-400">km</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <p className="text-lg font-bold text-gray-900">
+                      {strava.athleteStats.ytd_run_totals?.moving_time ? Math.round(strava.athleteStats.ytd_run_totals.moving_time / 3600) : 0}
+                    </p>
+                    <p className="text-[10px] text-gray-400">heures</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Recent activities */}
+            {strava.recentActivities.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-gray-500 uppercase">Activites recentes</p>
+                {strava.recentActivities.map(act => {
+                  const distKm = act.distance_meters ? (act.distance_meters / 1000).toFixed(1) : null;
+                  const durationMin = act.moving_time_seconds ? Math.round(act.moving_time_seconds / 60) : null;
+                  return (
+                    <div key={act.id} className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+                      <Activity size={14} className="text-[#FC4C02] shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{act.name || act.sport_type}</p>
+                        <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
+                          {act.start_date_local && <span>{format(new Date(act.start_date_local), 'd MMM', { locale: fr })}</span>}
+                          {distKm && <span>{distKm} km</span>}
+                          {durationMin && <span>{durationMin} min</span>}
+                        </div>
+                      </div>
+                      {act.matched_session_id ? (
+                        <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">Associee</span>
+                      ) : (
+                        <span className="text-[10px] text-gray-400">Non associee</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {strava.error && (
+              <p className="text-xs text-red-500">{strava.error}</p>
+            )}
+          </div>
+        ) : stravaAuthUrl ? (
+          <div className="text-center py-6">
+            <Activity size={40} className="text-[#FC4C02]/30 mx-auto mb-3" />
+            <p className="text-sm text-gray-600 mb-4">Connecte ton compte Strava pour synchroniser tes activites et enrichir tes seances.</p>
+            <a
+              href={stravaAuthUrl}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#FC4C02] text-white text-sm font-medium rounded-xl hover:bg-[#e04400] transition-colors"
+            >
+              <ExternalLink size={16} />
+              Connecter Strava
+            </a>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400 text-center py-4">Integration Strava non configuree</p>
         )}
       </Accordion>
 
