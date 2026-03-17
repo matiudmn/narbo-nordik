@@ -23,6 +23,7 @@ export async function callEdgeFunction<T = unknown>(
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`,
+      'apikey': supabaseAnonKey,
     },
     body: JSON.stringify(body),
   });
