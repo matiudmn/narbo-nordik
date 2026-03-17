@@ -221,13 +221,18 @@ export interface StravaAthleteStats {
   recent_run_totals: StravaRunTotals;
   ytd_run_totals: StravaRunTotals;
   all_run_totals: StravaRunTotals;
+  recent_ride_totals?: StravaRunTotals;
+  ytd_ride_totals?: StravaRunTotals;
+  all_ride_totals?: StravaRunTotals;
 }
 
 export interface StravaRunTotals {
   count: number;
   distance: number;
   moving_time: number;
+  elapsed_time?: number;
   elevation_gain: number;
+  achievement_count?: number;
 }
 
 export interface StravaHeartRateZone {
