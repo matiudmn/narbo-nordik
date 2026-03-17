@@ -619,13 +619,26 @@ export default function SessionDetail() {
                     )}
                   </div>
                 )}
-                {matchedActivity.device_name && (
-                  <p className="text-[10px] text-gray-400 text-center mt-2">{matchedActivity.device_name}</p>
+                {(matchedActivity.average_cadence || matchedActivity.calories) && (
+                  <div className="flex justify-center gap-6 mt-1 text-xs text-gray-500">
+                    {matchedActivity.average_cadence && (
+                      <span>Cadence {Math.round(matchedActivity.average_cadence)} spm</span>
+                    )}
+                    {matchedActivity.calories && matchedActivity.calories > 0 && (
+                      <span>{matchedActivity.calories} kcal</span>
+                    )}
+                  </div>
+                )}
+                {matchedActivity.start_date_local && (
+                  <p className="text-[10px] text-gray-400 text-center mt-2">
+                    {format(new Date(matchedActivity.start_date_local), "d MMM yyyy 'a' HH:mm", { locale: fr })}
+                    {matchedActivity.device_name && <> - {matchedActivity.device_name}</>}
+                  </p>
                 )}
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs text-gray-500 mb-2">Activites Strava du {format(new Date(session.date), 'd MMMM', { locale: fr })} :</p>
+                <p className="text-xs text-gray-500 mb-2">Activites Strava proches de cette seance :</p>
                 {stravaActivities.map(act => {
                   const distKm = act.distance_meters ? (act.distance_meters / 1000).toFixed(1) : null;
                   const durationMin = act.moving_time_seconds ? Math.round(act.moving_time_seconds / 60) : null;
@@ -637,6 +650,7 @@ export default function SessionDetail() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{act.name || act.sport_type}</p>
                         <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
+                          {act.start_date_local && <span>{format(new Date(act.start_date_local), 'd MMM', { locale: fr })}</span>}
                           {distKm && <span>{distKm} km</span>}
                           {durationMin && <span>{durationMin} min</span>}
                           {pace && <span className="text-[#FC4C02] font-medium">{pace}/km</span>}
