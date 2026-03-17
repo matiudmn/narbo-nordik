@@ -288,7 +288,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         blocks: [{
           id: `blk_race_${Date.now()}`,
           type: 'travail' as const,
-          allure: 'endurance' as const,
+          allure: 'ef' as const,
           duration_seconds: totalSeconds,
           distance_meters: distanceMeters,
           repetitions: 1,

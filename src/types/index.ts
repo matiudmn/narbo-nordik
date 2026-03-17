@@ -1,7 +1,7 @@
 export type Role = 'athlete' | 'coach';
 export type SessionStatus = 'pending' | 'done' | 'missed';
 export type RaceType = 'route' | 'trail' | 'piste';
-export type AllureZone = 'ef' | 'am' | 'endurance' | 'sv1' | 'sv2' | 'as42' | 'as21' | 'as10' | 'vma';
+export type AllureZone = 'ef' | 'sv1' | 'sv2' | 'as42' | 'as21' | 'as10' | 'as5' | 'vma';
 export type BlockType = 'echauffement' | 'travail' | 'retour_au_calme' | 'recuperation';
 export type SessionType = 'entrainement' | 'sortie_longue' | 'recuperation' | 'velo' | 'marche' | 'renfo' | 'course';
 export type TerrainOption = 'cotes' | 'piste';

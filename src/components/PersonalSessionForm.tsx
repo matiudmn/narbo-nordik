@@ -208,7 +208,7 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
   const previewVma = user.vma;
 
   const addBlock = () => {
-    setBlocks(prev => [...prev, makeBlock('travail', 'endurance', 300)]);
+    setBlocks(prev => [...prev, makeBlock('travail', 'ef', 300)]);
   };
 
   const updateBlock = (id: string, updated: SessionBlock) => {
@@ -256,14 +256,14 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
     } else if (activity === 'velo') {
       sessionType = 'velo';
       const distMeters = parseFloat(distanceKm) * 1000 || null;
-      sessionBlocks = [makeBlock('travail', 'endurance', duration, 1, 0, distMeters)];
+      sessionBlocks = [makeBlock('travail', 'ef', duration, 1, 0, distMeters)];
     } else if (activity === 'marche') {
       sessionType = 'marche';
       const distMeters = parseFloat(distanceKm) * 1000 || null;
       sessionBlocks = [makeBlock('travail', 'ef', duration, 1, 0, distMeters)];
     } else {
       sessionType = 'renfo';
-      sessionBlocks = [makeBlock('travail', 'endurance', duration)];
+      sessionBlocks = [makeBlock('travail', 'ef', duration)];
       sessionDescription = description.trim() || null;
     }
 
