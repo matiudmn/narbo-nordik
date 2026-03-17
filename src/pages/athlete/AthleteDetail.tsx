@@ -10,6 +10,7 @@ import { getRacePaces, calculateRacePace, getVmaLevelIndex } from '../../lib/cal
 import { getSeasonRange } from '../../lib/date-utils';
 import Avatar from '../../components/Avatar';
 import YearlyHeatmap from '../../components/YearlyHeatmap';
+import ExpandableText from '../../components/ExpandableText';
 
 export default function AthleteDetail() {
   const { id } = useParams<{ id: string }>();
@@ -293,7 +294,7 @@ export default function AthleteDetail() {
                   <span className="font-medium text-gray-900 truncate block">{race.race_name}</span>
                   <span className="text-gray-400">{format(new Date(race.date), 'd MMM yyyy', { locale: fr })}</span>
                   {race.comment && (
-                    <p className="text-gray-500 italic mt-0.5 line-clamp-1">{race.comment}</p>
+                    <ExpandableText text={race.comment} maxLines={1} className="text-gray-500 italic mt-0.5" />
                   )}
                 </div>
                 <div className="text-right flex-shrink-0 ml-2">

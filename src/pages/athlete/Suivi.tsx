@@ -283,7 +283,7 @@ export default function Suivi() {
                 )}
 
                 {validation.feedback && (
-                  <p className="text-sm text-gray-500 italic mt-2 line-clamp-2">"{validation.feedback}"</p>
+                  <p className="text-sm text-gray-500 italic mt-2">"{validation.feedback}"</p>
                 )}
               </Link>
             );

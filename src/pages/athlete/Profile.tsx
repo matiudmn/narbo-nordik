@@ -12,6 +12,7 @@ import { formatDuration, formatSeconds } from '../../lib/calculations';
 import { getFFACategory } from '../../lib/ffa';
 import Avatar from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
+import ExpandableText from '../../components/ExpandableText';
 import type { RaceType, NotificationPreferences, Session } from '../../types';
 
 function Accordion({ title, icon, children, defaultOpen = false, badge, action }: {
@@ -807,7 +808,7 @@ export default function Profile() {
                     </span>
                   </div>
                   {race.comment && (
-                    <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">{race.comment}</p>
+                    <ExpandableText text={race.comment} maxLines={2} className="text-xs text-gray-500 italic mt-1" />
                   )}
                 </div>
                 <span className="text-sm font-bold text-primary tabular-nums">{formatDuration(race.time_duration)}</span>

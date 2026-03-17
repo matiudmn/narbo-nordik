@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ArrowLeft, Trophy, Medal, Pencil, Plus, X, Star, Trash2 } from 'lucide-react';
 import NordikButton from '../components/NordikButton';
+import ExpandableText from '../components/ExpandableText';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SUPER_ADMIN_EMAIL } from '../lib/constants';
@@ -287,7 +288,7 @@ export default function Palmares() {
                         </span>
                       </div>
                       {race.comment && (
-                        <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">{race.comment}</p>
+                        <ExpandableText text={race.comment} maxLines={2} className="text-xs text-gray-500 italic mt-1" />
                       )}
                     </div>
                     <div className="flex-shrink-0 text-right">

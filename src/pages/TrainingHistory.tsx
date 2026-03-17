@@ -128,7 +128,7 @@ export default function TrainingHistory() {
                   </span>
                 </div>
                 {validation?.feedback && (
-                  <p className="text-sm text-gray-500 italic mt-2 line-clamp-2">"{validation.feedback}"</p>
+                  <p className="text-sm text-gray-500 italic mt-2">"{validation.feedback}"</p>
                 )}
                 {validation?.attachment_path && (
                   <span className="inline-flex items-center gap-1 text-xs text-primary mt-1">
