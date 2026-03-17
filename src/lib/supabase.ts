@@ -28,7 +28,13 @@ export async function callEdgeFunction<T = unknown>(
     body: JSON.stringify(body),
   });
 
-  const json = await res.json();
-  if (!res.ok) return { data: null, error: json.error || 'Erreur inconnue' };
+  let json: Record<string, unknown>;
+  try {
+    json = await res.json();
+  } catch {
+    const text = await res.text().catch(() => '');
+    return { data: null, error: `HTTP ${res.status}: ${text || res.statusText}` };
+  }
+  if (!res.ok) return { data: null, error: (json.error as string) || `HTTP ${res.status}` };
   return { data: json as T, error: null };
 }

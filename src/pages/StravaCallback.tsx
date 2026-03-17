@@ -6,7 +6,7 @@ import { useStrava } from '../hooks/useStrava';
 export default function StravaCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { connect, error: stravaError } = useStrava();
+  const { connect } = useStrava();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -28,13 +28,13 @@ export default function StravaCallback() {
       return;
     }
 
-    connect(code).then((success) => {
-      if (success) {
+    connect(code).then((result) => {
+      if (result.success) {
         setStatus('success');
         setTimeout(() => navigate('/profile', { state: { stravaConnected: true } }), 1500);
       } else {
         setStatus('error');
-        setErrorMsg(stravaError || 'Impossible de finaliser la connexion Strava.');
+        setErrorMsg(result.error || 'Impossible de finaliser la connexion Strava.');
       }
     });
   }, [searchParams, connect, navigate]);

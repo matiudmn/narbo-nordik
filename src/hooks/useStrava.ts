@@ -11,7 +11,7 @@ interface UseStravaReturn {
   recentActivities: StravaActivity[];
   hrZones: StravaHeartRateZone[];
   checkConnection: () => Promise<void>;
-  connect: (code: string) => Promise<boolean>;
+  connect: (code: string) => Promise<{ success: boolean; error?: string }>;
   disconnect: () => Promise<boolean>;
   fetchStats: () => Promise<void>;
   fetchRecentActivities: (perPage?: number) => Promise<void>;
@@ -41,7 +41,7 @@ export function useStrava(targetUserId?: string): UseStravaReturn {
     setConnectionStatus(data?.connection ?? null);
   }, [targetUserId]);
 
-  const connect = useCallback(async (code: string): Promise<boolean> => {
+  const connect = useCallback(async (code: string): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
     setError(null);
     const { data, error: err } = await callEdgeFunction<{ success: boolean; strava_athlete_id: number }>(
@@ -49,7 +49,7 @@ export function useStrava(targetUserId?: string): UseStravaReturn {
       { action: 'exchange', code }
     );
     setLoading(false);
-    if (err) { setError(err); return false; }
+    if (err) { setError(err); return { success: false, error: err }; }
     if (data?.success) {
       setConnected(true);
       setConnectionStatus({
@@ -58,9 +58,9 @@ export function useStrava(targetUserId?: string): UseStravaReturn {
         connected_at: new Date().toISOString(),
         is_active: true,
       });
-      return true;
+      return { success: true };
     }
-    return false;
+    return { success: false, error: 'Reponse inattendue' };
   }, []);
 
   const disconnect = useCallback(async (): Promise<boolean> => {
