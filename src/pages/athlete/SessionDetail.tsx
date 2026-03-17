@@ -37,10 +37,12 @@ export default function SessionDetail() {
   useEffect(() => {
     if (!session || !user) return;
     const sessionDate = new Date(session.date);
-    const dayStart = new Date(sessionDate);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(sessionDate);
-    dayEnd.setHours(23, 59, 59, 999);
+    const rangeStart = new Date(sessionDate);
+    rangeStart.setDate(rangeStart.getDate() - 4);
+    rangeStart.setHours(0, 0, 0, 0);
+    const rangeEnd = new Date(sessionDate);
+    rangeEnd.setDate(rangeEnd.getDate() + 4);
+    rangeEnd.setHours(23, 59, 59, 999);
 
     // Check for already matched activity
     supabase.from('strava_activities')
@@ -52,12 +54,12 @@ export default function SessionDetail() {
         if (data) setMatchedActivity(data as StravaActivity);
       });
 
-    // Fetch unmatched activities from same day
+    // Fetch unmatched activities within +/- 4 days
     supabase.from('strava_activities')
       .select('*')
       .eq('user_id', user.id)
-      .gte('start_date_local', dayStart.toISOString())
-      .lte('start_date_local', dayEnd.toISOString())
+      .gte('start_date_local', rangeStart.toISOString())
+      .lte('start_date_local', rangeEnd.toISOString())
       .is('matched_session_id', null)
       .order('start_date_local', { ascending: true })
       .then(({ data }) => {

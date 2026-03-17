@@ -116,10 +116,13 @@ export default function Profile() {
   const getSessionsForDate = (dateStr: string) => {
     if (!user) return [];
     const actDate = new Date(dateStr);
-    const actDay = format(actDate, 'yyyy-MM-dd');
+    const minDate = new Date(actDate);
+    minDate.setDate(minDate.getDate() - 4);
+    const maxDate = new Date(actDate);
+    maxDate.setDate(maxDate.getDate() + 4);
     return sessions.filter(s => {
-      const sDay = format(new Date(s.date), 'yyyy-MM-dd');
-      return sDay === actDay && (
+      const sDate = new Date(s.date);
+      return sDate >= minDate && sDate <= maxDate && (
         s.created_by === user.id ||
         validations.some(v => v.session_id === s.id && v.user_id === user.id)
       );
