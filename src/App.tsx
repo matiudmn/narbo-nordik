@@ -27,6 +27,7 @@ const VmaHistory = lazy(() => import('./pages/VmaHistory'));
 const TrainingHistory = lazy(() => import('./pages/TrainingHistory'));
 const Help = lazy(() => import('./pages/Help'));
 const Suivi = lazy(() => import('./pages/athlete/Suivi'));
+const StravaCallback = lazy(() => import('./pages/StravaCallback'));
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -59,6 +60,7 @@ function AppRoutes() {
           <Route path="/training-history" element={<TrainingHistory />} />
           <Route path="/aide" element={<Help />} />
           <Route path="/suivi" element={<Suivi />} />
+          <Route path="/strava/callback" element={<StravaCallback />} />
 
           {/* Coach routes */}
           <Route path="/coach" element={isCoach ? <Dashboard /> : <Navigate to="/" />} />

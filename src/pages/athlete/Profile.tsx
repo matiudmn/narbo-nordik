@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, ExternalLink, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity } from 'lucide-react';
+import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import NordikButton from '../../components/NordikButton';
@@ -13,6 +13,7 @@ import { getFFACategory } from '../../lib/ffa';
 import Avatar from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
 import ExpandableText from '../../components/ExpandableText';
+import { useStrava } from '../../hooks/useStrava';
 import type { RaceType, NotificationPreferences, Session } from '../../types';
 
 function Accordion({ title, icon, children, defaultOpen = false, badge, action }: {
@@ -47,7 +48,7 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
-  const { sessions, raceResults, addRaceResult, updateRaceResult, deleteRaceResult, deleteSession, groups, users, validations, preparations, userPreparations, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
+  const { sessions, raceResults, addRaceResult, updateRaceResult, deleteRaceResult, deleteSession, groups, users, validations, preparations, userPreparations, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
   const [showAddRace, setShowAddRace] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,8 +64,7 @@ export default function Profile() {
 
   const [editingPhone, setEditingPhone] = useState(false);
   const [phoneValue, setPhoneValue] = useState('');
-  const [editingStrava, setEditingStrava] = useState(false);
-  const [stravaValue, setStravaValue] = useState('');
+  const [confirmDisconnectStrava, setConfirmDisconnectStrava] = useState(false);
   const [editingLicense, setEditingLicense] = useState(false);
   const [licenseValue, setLicenseValue] = useState('');
   const [editingBirthDate, setEditingBirthDate] = useState(false);
@@ -87,6 +87,15 @@ export default function Profile() {
   const [exitReason, setExitReason] = useState('');
   const [exitComment, setExitComment] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const strava = useStrava();
+  useEffect(() => { strava.checkConnection(); }, [strava.checkConnection]);
+
+  const stravaClientId = import.meta.env.VITE_STRAVA_CLIENT_ID;
+  const stravaRedirectUri = `${window.location.origin}/strava/callback`;
+  const stravaAuthUrl = stravaClientId
+    ? `https://www.strava.com/oauth/authorize?client_id=${stravaClientId}&response_type=code&redirect_uri=${encodeURIComponent(stravaRedirectUri)}&approval_prompt=auto&scope=activity:read_all,profile:read_all`
+    : null;
 
   const handleChangePassword = async () => {
     if (newPassword.length < 6) {
@@ -453,7 +462,7 @@ export default function Profile() {
             </div>
             {!editingPhone && (
               <button
-                onClick={() => { setPhoneValue(user.phone || ''); setEditingPhone(true); setEditingStrava(false); setEditingLicense(false); setEditingBirthDate(false); }}
+                onClick={() => { setPhoneValue(user.phone || ''); setEditingPhone(true); setEditingLicense(false); setEditingBirthDate(false); }}
                 className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
               >
                 <Pencil size={14} />
@@ -462,54 +471,63 @@ export default function Profile() {
           </div>
 
           {/* Strava */}
-          <div className="mt-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ExternalLink size={16} className="text-orange-500" />
-              <div>
-                <p className="text-xs text-gray-400">Profil Strava (lien URL)</p>
-                {editingStrava ? (
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <input
-                      type="url"
-                      placeholder="https://www.strava.com/athletes/..."
-                      value={stravaValue}
-                      onChange={e => setStravaValue(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') {
-                          const v = stravaValue.trim() || null;
-                          updateUserStrava(user.id, v).then(() => refreshUser());
-                          setEditingStrava(false);
-                        }
-                      }}
-                      className="w-52 px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      autoFocus
-                    />
+          <div className="mt-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Activity size={16} className="text-[#FC4C02]" />
+              <p className="text-xs text-gray-400">Strava</p>
+            </div>
+            {strava.connected ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 text-xs font-medium rounded-full">
+                    <Check size={12} /> Connecte
+                  </span>
+                  {strava.connectionStatus?.connected_at && (
+                    <span className="text-xs text-gray-400">
+                      depuis le {format(new Date(strava.connectionStatus.connected_at), 'd MMM yyyy', { locale: fr })}
+                    </span>
+                  )}
+                </div>
+                {confirmDisconnectStrava ? (
+                  <div className="flex items-center gap-1">
                     <button
-                      onClick={() => {
-                        const v = stravaValue.trim() || null;
-                        updateUserStrava(user.id, v).then(() => refreshUser());
-                        setEditingStrava(false);
-                      }}
-                      className="p-1 text-orange-500 hover:bg-orange-50 rounded"
+                      onClick={() => setConfirmDisconnectStrava(false)}
+                      className="px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 rounded"
                     >
-                      <Check size={14} />
+                      Annuler
                     </button>
-                    <button onClick={() => setEditingStrava(false)} className="p-1 text-gray-400 hover:bg-gray-100 rounded">
-                      <X size={14} />
+                    <button
+                      onClick={async () => {
+                        await strava.disconnect();
+                        setConfirmDisconnectStrava(false);
+                      }}
+                      className="px-2 py-1 text-xs text-white bg-red-500 hover:bg-red-600 rounded"
+                    >
+                      Confirmer
                     </button>
                   </div>
                 ) : (
-                  <p className="font-medium text-gray-900 text-sm">{user.strava_id || 'Non renseigne'}</p>
+                  <button
+                    onClick={() => setConfirmDisconnectStrava(true)}
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    Deconnecter
+                  </button>
                 )}
               </div>
-            </div>
-            {!editingStrava && (
-              <button
-                onClick={() => { setStravaValue(user.strava_id || ''); setEditingStrava(true); setEditingPhone(false); setEditingLicense(false); setEditingBirthDate(false); }}
-                className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+            ) : stravaAuthUrl ? (
+              <a
+                href={stravaAuthUrl}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#FC4C02] text-white text-sm font-medium rounded-lg hover:bg-[#e04400] transition-colors"
               >
-                <Pencil size={14} />
-              </button>
+                <Activity size={16} />
+                Connecter Strava
+              </a>
+            ) : (
+              <p className="text-xs text-gray-400">Integration Strava non configuree</p>
+            )}
+            {strava.error && (
+              <p className="text-xs text-red-500 mt-1">{strava.error}</p>
             )}
           </div>
 
@@ -557,7 +575,7 @@ export default function Profile() {
             </div>
             {!editingLicense && (
               <button
-                onClick={() => { setLicenseValue(user.license_number || ''); setEditingLicense(true); setEditingPhone(false); setEditingStrava(false); setEditingBirthDate(false); }}
+                onClick={() => { setLicenseValue(user.license_number || ''); setEditingLicense(true); setEditingPhone(false); setEditingBirthDate(false); }}
                 className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
               >
                 <Pencil size={14} />
@@ -617,7 +635,7 @@ export default function Profile() {
             </div>
             {!editingBirthDate && (
               <button
-                onClick={() => { setBirthDateValue(user.birth_date || ''); setEditingBirthDate(true); setEditingPhone(false); setEditingStrava(false); setEditingLicense(false); }}
+                onClick={() => { setBirthDateValue(user.birth_date || ''); setEditingBirthDate(true); setEditingPhone(false); setEditingLicense(false); }}
                 className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
               >
                 <Pencil size={14} />

@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Phone, ExternalLink, Shield, Cake, Gauge, Target, Trophy, History } from 'lucide-react';
+import { ArrowLeft, Phone, ExternalLink, Shield, Cake, Gauge, Target, Trophy, History, Activity, ChevronDown } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useData } from '../../contexts/DataContext';
@@ -11,6 +11,7 @@ import { getSeasonRange } from '../../lib/date-utils';
 import Avatar from '../../components/Avatar';
 import YearlyHeatmap from '../../components/YearlyHeatmap';
 import ExpandableText from '../../components/ExpandableText';
+import { useStrava } from '../../hooks/useStrava';
 
 export default function AthleteDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,21 @@ export default function AthleteDetail() {
   const member = useMemo(() => users.find(u => u.id === id), [users, id]);
   const racePaces = getRacePaces(clubSettings?.race_paces);
   const isCoach = currentUser?.role === 'coach';
+
+  const strava = useStrava(id);
+  const [stravaOpen, setStravaOpen] = useState(false);
+  const [stravaLoaded, setStravaLoaded] = useState(false);
+
+  useEffect(() => { strava.checkConnection(); }, [strava.checkConnection]);
+
+  useEffect(() => {
+    if (stravaOpen && strava.connected && !stravaLoaded) {
+      setStravaLoaded(true);
+      strava.fetchStats();
+      strava.fetchRecentActivities();
+      strava.fetchZones();
+    }
+  }, [stravaOpen, strava.connected, stravaLoaded, strava.fetchStats, strava.fetchRecentActivities, strava.fetchZones]);
 
   const groupName = useMemo(() => {
     if (!member?.group_id) return undefined;
@@ -276,6 +292,128 @@ export default function AthleteDetail() {
 
       {/* Heatmap */}
       {isCoach && <YearlyHeatmap sessions={heatmapSessions} />}
+
+      {/* Strava */}
+      {strava.connected && (
+        <div className="bg-white rounded-xl border border-gray-100">
+          <button
+            onClick={() => setStravaOpen(!stravaOpen)}
+            className="w-full flex items-center justify-between p-4"
+          >
+            <div className="flex items-center gap-2">
+              <Activity size={16} className="text-[#FC4C02]" />
+              <span className="text-xs font-bold text-gray-500 uppercase">Strava</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 bg-green-50 text-green-700 text-[10px] font-medium rounded-full">
+                Connecte
+              </span>
+            </div>
+            <ChevronDown size={16} className={`text-gray-400 transition-transform ${stravaOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {stravaOpen && (
+            <div className="px-4 pb-4 space-y-4">
+              {strava.error && (
+                <p className="text-xs text-red-500">{strava.error}</p>
+              )}
+
+              {/* Stats */}
+              {strava.athleteStats && (
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Cette annee</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-gray-900">{strava.athleteStats.ytd_run_totals.count}</p>
+                      <p className="text-[10px] text-gray-400">Sorties</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-gray-900">{Math.round(strava.athleteStats.ytd_run_totals.distance / 1000)}</p>
+                      <p className="text-[10px] text-gray-400">km</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-gray-900">{Math.round(strava.athleteStats.ytd_run_totals.moving_time / 3600)}h</p>
+                      <p className="text-[10px] text-gray-400">Temps</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-gray-900">+{Math.round(strava.athleteStats.ytd_run_totals.elevation_gain)}</p>
+                      <p className="text-[10px] text-gray-400">D+ m</p>
+                    </div>
+                  </div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase mt-3 mb-2">Tout temps</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="text-center">
+                      <p className="text-sm font-bold text-gray-700">{strava.athleteStats.all_run_totals.count}</p>
+                      <p className="text-[10px] text-gray-400">Sorties</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-bold text-gray-700">{Math.round(strava.athleteStats.all_run_totals.distance / 1000)} km</p>
+                      <p className="text-[10px] text-gray-400">Distance</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-bold text-gray-700">{Math.round(strava.athleteStats.all_run_totals.moving_time / 3600)}h</p>
+                      <p className="text-[10px] text-gray-400">Temps</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* HR Zones */}
+              {strava.hrZones.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Zones FC</p>
+                  <div className="space-y-1">
+                    {strava.hrZones.map((zone, i) => {
+                      const colors = ['#93c5fd', '#86efac', '#fde047', '#fdba74', '#fca5a5'];
+                      return (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          <span className="w-4 text-right text-gray-400">Z{i + 1}</span>
+                          <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ backgroundColor: colors[i] || '#d1d5db', width: '100%' }} />
+                          </div>
+                          <span className="text-gray-500 w-20 text-right">
+                            {zone.min} - {zone.max === -1 ? '...' : zone.max} bpm
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Recent activities */}
+              {strava.recentActivities.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Dernieres activites</p>
+                  <div className="space-y-1.5">
+                    {strava.recentActivities.map((act, i) => {
+                      const distKm = act.distance_meters ? (act.distance_meters / 1000).toFixed(1) : null;
+                      const durationMin = act.moving_time_seconds ? Math.round(act.moving_time_seconds / 60) : null;
+                      const pace = act.average_speed && act.average_speed > 0
+                        ? `${Math.floor(1000 / act.average_speed / 60)}:${String(Math.round((1000 / act.average_speed) % 60)).padStart(2, '0')}`
+                        : null;
+                      return (
+                        <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-gray-50 last:border-0">
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium text-gray-900 truncate block">{act.name || act.sport_type}</span>
+                            <span className="text-gray-400">{format(new Date(act.start_date_local), 'd MMM', { locale: fr })}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-right flex-shrink-0">
+                            {distKm && <span className="text-gray-700">{distKm} km</span>}
+                            {durationMin && <span className="text-gray-500">{durationMin} min</span>}
+                            {pace && <span className="font-medium text-[#FC4C02]">{pace}/km</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {!strava.athleteStats && !strava.error && (
+                <p className="text-xs text-gray-400 text-center py-2">Chargement...</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Palmares */}
       {memberRaces.length > 0 && (
