@@ -928,7 +928,7 @@ export default function Profile() {
 
       {/* Securite */}
       <Accordion
-        title="Securite"
+        title="Sécurité"
         icon={<Lock size={18} className="text-primary" />}
       >
         <div className="space-y-3">
@@ -948,7 +948,7 @@ export default function Profile() {
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
           {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
-          {passwordSuccess && <p className="text-green-600 text-sm">Mot de passe modifie avec succes</p>}
+          {passwordSuccess && <p className="text-green-600 text-sm">Mot de passe modifié avec succès</p>}
           <button
             onClick={handleChangePassword}
             disabled={!newPassword || !confirmPassword || passwordLoading}
@@ -962,7 +962,7 @@ export default function Profile() {
 
       {/* Donnees personnelles */}
       <Accordion
-        title="Donnees personnelles"
+        title="Données personnelles"
         icon={<Shield size={18} className="text-primary" />}
       >
         <div className="space-y-3">
@@ -984,7 +984,7 @@ export default function Profile() {
             className="flex items-center gap-2 w-full text-left px-3 py-2.5 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Download size={16} className="text-primary" />
-            <span>Exporter mes donnees (JSON)</span>
+            <span>Exporter mes données (JSON)</span>
           </button>
           <button
             onClick={() => {

@@ -72,12 +72,11 @@ export default function AthleteDetail() {
     return { week: calc(wStart, wEnd), month: calc(mStart, mEnd), season: calc(sStart, sEnd) };
   }, [member, sessions, validations, userPrepIds]);
 
-  const lastRaces = useMemo(() => {
+  const memberRaces = useMemo(() => {
     if (!member) return [];
     return raceResults
       .filter(r => r.user_id === member.id)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 4);
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [raceResults, member]);
 
   // Heatmap data: coach-created sessions (done + missed) for this athlete
@@ -252,7 +251,7 @@ export default function AthleteDetail() {
       <div className="bg-white rounded-xl border border-gray-100 p-4">
         <h3 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase mb-2">
           <Target size={14} className="text-primary" />
-          Assiduite
+          Assiduité
         </h3>
         <div className="grid grid-cols-3 gap-3">
           {([
@@ -277,19 +276,25 @@ export default function AthleteDetail() {
       {/* Heatmap */}
       {isCoach && <YearlyHeatmap sessions={heatmapSessions} />}
 
-      {/* Derniers palmares */}
-      {lastRaces.length > 0 && (
+      {/* Palmares */}
+      {memberRaces.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <h3 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase mb-2">
-            <Trophy size={14} className="text-accent" />
-            Derniers palmares
-          </h3>
-          <div className="space-y-1.5">
-            {lastRaces.map(race => (
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase">
+              <Trophy size={14} className="text-accent" />
+              Palmarès ({memberRaces.length})
+            </h3>
+            <Link to="/palmares" className="text-[10px] text-primary hover:underline">Voir tout</Link>
+          </div>
+          <div className="space-y-2">
+            {memberRaces.map(race => (
               <div key={race.id} className="flex items-center justify-between text-xs">
                 <div className="flex-1 min-w-0">
                   <span className="font-medium text-gray-900 truncate block">{race.race_name}</span>
                   <span className="text-gray-400">{format(new Date(race.date), 'd MMM yyyy', { locale: fr })}</span>
+                  {race.comment && (
+                    <p className="text-gray-500 italic mt-0.5 line-clamp-1">{race.comment}</p>
+                  )}
                 </div>
                 <div className="text-right flex-shrink-0 ml-2">
                   <span className="font-bold text-primary">{race.time_duration}</span>

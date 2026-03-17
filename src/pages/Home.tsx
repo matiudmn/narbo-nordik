@@ -217,7 +217,7 @@ export default function Home() {
       <div className="bg-white rounded-xl border border-gray-100 p-4">
         <h2 className="flex items-center gap-2 font-bold text-gray-900 mb-3">
           <Target size={18} className="text-primary" />
-          Assiduite
+          Assiduité
         </h2>
         <div className="grid grid-cols-3 gap-3">
           {([

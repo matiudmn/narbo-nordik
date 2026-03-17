@@ -14,13 +14,13 @@ let blockIdCounter = Date.now();
 const genBlockId = () => `blk_${blockIdCounter++}`;
 
 const SESSION_TYPES: Partial<Record<SessionType, string>> = {
-  entrainement: 'Entrainement',
+  entrainement: 'Entraînement',
   sortie_longue: 'Sortie Longue',
-  recuperation: 'Recuperation',
+  recuperation: 'Récupération',
 };
 
 const TERRAIN_OPTIONS: Record<TerrainOption, string> = {
-  cotes: 'Cotes',
+  cotes: 'Côtes',
   piste: 'Piste',
 };
 
@@ -233,6 +233,8 @@ export default function SessionEditor() {
   const [showForm, setShowForm] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [duplicatedId, setDuplicatedId] = useState<string | null>(null);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -467,7 +469,7 @@ export default function SessionEditor() {
             <div className="flex gap-2">
               <button onClick={() => addBlock('echauffement')}
                 className="flex-1 text-xs py-2 rounded-lg border border-dashed border-green-300 text-green-600 hover:bg-green-50 font-medium transition-colors">
-                + Echauffement
+                + Échauffement
               </button>
               <button onClick={() => addBlock('travail')}
                 className="flex-1 text-xs py-2 rounded-lg border border-dashed border-red-300 text-red-500 hover:bg-red-50 font-medium transition-colors">
@@ -541,7 +543,7 @@ export default function SessionEditor() {
           </div>
 
           <textarea
-            placeholder="Consignes (echauffement, recuperation...)"
+            placeholder="Consignes (échauffement, récupération...)"
             value={description} onChange={e => setDescription(e.target.value)}
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
@@ -620,20 +622,36 @@ export default function SessionEditor() {
                       <Pencil size={16} />
                     </button>
                     <button
-                      onClick={() => loadSessionIntoForm(session, false)}
-                      className="p-1.5 text-gray-300 hover:text-accent transition-colors"
+                      onClick={() => {
+                        loadSessionIntoForm(session, false);
+                        setDuplicatedId(session.id);
+                        setTimeout(() => setDuplicatedId(null), 2000);
+                      }}
+                      className={`p-1.5 transition-colors ${duplicatedId === session.id ? 'text-accent' : 'text-gray-300 hover:text-accent'}`}
                       title="Dupliquer"
                     >
                       <Copy size={16} />
                     </button>
                     <button
-                      onClick={() => deleteSession(session.id)}
+                      onClick={() => setConfirmDeleteId(session.id)}
                       className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
                       title="Supprimer"
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
+                  {duplicatedId === session.id && (
+                    <p className="text-xs text-accent mt-1">Seance copiee dans le formulaire ci-dessus</p>
+                  )}
+                  {confirmDeleteId === session.id && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
+                      <p className="text-sm text-red-700 mb-2">Supprimer la seance "{session.title}" ?</p>
+                      <div className="flex gap-2">
+                        <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-600">Annuler</button>
+                        <button onClick={() => { deleteSession(session.id); setConfirmDeleteId(null); }} className="flex-1 py-1.5 text-sm bg-red-500 text-white rounded-lg font-medium">Supprimer</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );

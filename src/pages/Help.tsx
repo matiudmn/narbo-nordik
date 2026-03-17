@@ -47,7 +47,7 @@ const athleteSections: Section[] = [
           calculees automatiquement. Ces allures correspondent aux differentes zones d'intensite
           utilisees lors des seances (endurance fondamentale, seuil, VMA, etc.).
         </p>
-        <p className="font-semibold text-gray-900">Assiduite</p>
+        <p className="font-semibold text-gray-900">Assiduité</p>
         <p>
           Un indicateur affiche votre taux de presence aux seances sur la saison en cours.
           Il se met a jour automatiquement lorsque vous validez votre participation a une seance.
@@ -73,7 +73,7 @@ const athleteSections: Section[] = [
         <p className="font-semibold text-gray-900">Structure d'une seance</p>
         <p>
           Chaque seance est composee de blocs d'entrainement. Un bloc peut etre une phase
-          d'echauffement, un travail d'intervalle, du seuil, de la recuperation, etc.
+          d'échauffement, un travail d'intervalle, du seuil, de la récupération, etc.
           Pour chaque bloc, vous voyez la distance ou la duree, l'allure cible adaptee
           a votre VMA, et la zone d'intensite correspondante.
         </p>
@@ -333,8 +333,8 @@ const coachSections: Section[] = [
         </p>
         <p className="font-semibold text-gray-900">Blocs d'entrainement</p>
         <p>
-          Chaque bloc definit une phase de la seance : echauffement, travail specifique,
-          recuperation, retour au calme. Pour chaque bloc, vous definissez le type,
+          Chaque bloc définit une phase de la séance : échauffement, travail spécifique,
+          récupération, retour au calme. Pour chaque bloc, vous définissez le type,
           la distance ou duree (heures, minutes, secondes), et le pourcentage de VMA.
           L'application calculera automatiquement l'allure personnalisee pour chaque athlete.
         </p>

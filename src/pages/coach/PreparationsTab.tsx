@@ -46,12 +46,12 @@ export default function PreparationsTab() {
       {/* Add button */}
       {!showAdd ? (
         <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 text-sm font-medium text-primary">
-          <Plus size={16} /> Nouvelle preparation
+          <Plus size={16} /> Nouvelle préparation
         </button>
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
           <input
-            type="text" placeholder="Nom de la preparation" value={newName}
+            type="text" placeholder="Nom de la préparation" value={newName}
             onChange={e => setNewName(e.target.value)}
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
           />

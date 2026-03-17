@@ -9,11 +9,11 @@ import { getSessionCode } from '../lib/calculations';
 import type { SessionType } from '../types';
 
 const SESSION_TYPE_INFO: Record<SessionType, { label: string; icon: typeof Dumbbell }> = {
-  entrainement: { label: 'Entrainement', icon: Dumbbell },
+  entrainement: { label: 'Entraînement', icon: Dumbbell },
   course: { label: 'Course', icon: Trophy },
   sortie_longue: { label: 'Sortie Longue', icon: Mountain },
-  recuperation: { label: 'Recuperation', icon: Battery },
-  velo: { label: 'Velo', icon: Bike },
+  recuperation: { label: 'Récupération', icon: Battery },
+  velo: { label: 'Vélo', icon: Bike },
   marche: { label: 'Marche', icon: Footprints },
   renfo: { label: 'Renfo', icon: Dumbbell },
 };

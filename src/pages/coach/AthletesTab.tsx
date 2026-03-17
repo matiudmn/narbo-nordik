@@ -74,15 +74,19 @@ export default function AthletesTab() {
   const getShareMessage = (name: string, email: string, tempPassword: string) =>
     `Salut ${name} ! Bienvenue sur Narbo Nordik. Ton compte a ete cree.\nEmail : ${email}\nMot de passe : ${tempPassword}\n${window.location.origin}`;
 
+  const capitalize = (s: string) => s.split(/[-\s]/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(s.includes('-') ? '-' : ' ');
+
   const handleAddAthlete = async () => {
     if (!newFirstname || !newLastname || !newEmail) return;
     setAddingAthlete(true);
     setAddError('');
-    const name = `${newFirstname} ${newLastname}`;
+    const first = capitalize(newFirstname.trim());
+    const last = capitalize(newLastname.trim());
+    const name = `${first} ${last}`;
     const email = newEmail;
     const result = await addUser({
-      firstname: newFirstname,
-      lastname: newLastname,
+      firstname: first,
+      lastname: last,
       email,
       role: 'athlete' as Role,
       vma: newVma ? parseFloat(newVma) : null,

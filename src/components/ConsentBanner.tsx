@@ -82,7 +82,7 @@ export default function ConsentBanner() {
             <Shield size={20} className="text-primary" />
           </div>
           <div>
-            <h2 className="font-bold text-gray-900">Protection des donnees</h2>
+            <h2 className="font-bold text-gray-900">Protection des données</h2>
             <p className="text-xs text-gray-500">Conforme RGPD</p>
           </div>
         </div>

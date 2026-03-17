@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, Trophy, Medal, Pencil, Plus, X, Star } from 'lucide-react';
+import { ArrowLeft, Trophy, Medal, Pencil, Plus, X, Star, Trash2 } from 'lucide-react';
 import NordikButton from '../components/NordikButton';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -69,7 +69,7 @@ function RaceForm({ users: usersList, onSubmit, onCancel, initial, showUserSelec
           onChange={e => setUserId(e.target.value)}
           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
-          <option value="">Selectionner un athlete</option>
+          <option value="">Sélectionner un athlète</option>
           {usersList.map(u => (
             <option key={u.id} value={u.id}>{u.firstname} {u.lastname}</option>
           ))}
@@ -110,15 +110,16 @@ function RaceForm({ users: usersList, onSubmit, onCancel, initial, showUserSelec
         />
         <input
           type="text"
-          inputMode="numeric"
-          placeholder="hh:mm:ss"
+          placeholder="h:mm:ss"
           value={time}
-          onChange={e => {
-            const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
-            let formatted = digits;
-            if (digits.length > 4) formatted = `${digits.slice(0, 2)}:${digits.slice(2, 4)}:${digits.slice(4)}`;
-            else if (digits.length > 2) formatted = `${digits.slice(0, 2)}:${digits.slice(2)}`;
-            setTime(formatted);
+          onChange={e => setTime(e.target.value)}
+          onBlur={() => {
+            const parts = time.split(':').map(s => s.trim());
+            if (parts.length === 3) {
+              setTime(parts.map(p => p.padStart(2, '0')).join(':'));
+            } else if (parts.length === 2) {
+              setTime(`00:${parts.map(p => p.padStart(2, '0')).join(':')}`);
+            }
           }}
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
@@ -147,11 +148,12 @@ function RaceForm({ users: usersList, onSubmit, onCancel, initial, showUserSelec
 export default function Palmares() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { raceResults, users, addRaceResult, updateRaceResult } = useData();
+  const { raceResults, users, addRaceResult, updateRaceResult, deleteRaceResult } = useData();
   const isCoach = user?.role === 'coach';
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCoachAdd, setShowCoachAdd] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const sortedUsers = useMemo(() =>
     [...users].filter(u => u.email !== SUPER_ADMIN_EMAIL).sort((a, b) => a.firstname.localeCompare(b.firstname)),
@@ -252,60 +254,79 @@ export default function Palmares() {
                   />
                 </div>
               ) : (
-                <div
-                  className={`bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex items-center gap-3 ${
-                    idx === 0 ? 'ring-2 ring-amber-200' : ''
-                  }`}
-                >
-                  <div className="flex-shrink-0">
-                    {idx < 3 ? (
-                      <Medal size={20} className={
-                        idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-gray-400' : 'text-amber-700'
-                      } />
-                    ) : (
-                      <div className="w-5 h-5 flex items-center justify-center text-xs text-gray-400 font-bold">
-                        {idx + 1}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {race.race_name}
-                      {race.is_label && (
-                        <Star size={12} className="inline ml-1 text-amber-500 fill-amber-500" />
+                <>
+                  <div
+                    className={`bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex items-center gap-3 ${
+                      idx === 0 ? 'ring-2 ring-amber-200' : ''
+                    }`}
+                  >
+                    <div className="flex-shrink-0">
+                      {idx < 3 ? (
+                        <Medal size={20} className={
+                          idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-gray-400' : 'text-amber-700'
+                        } />
+                      ) : (
+                        <div className="w-5 h-5 flex items-center justify-center text-xs text-gray-400 font-bold">
+                          {idx + 1}
+                        </div>
                       )}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-gray-500">
-                        {race.user?.firstname} {race.user?.lastname.charAt(0)}.
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {format(new Date(race.date), 'd MMM yyyy', { locale: fr })}
-                      </span>
                     </div>
-                    {race.comment && (
-                      <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">{race.comment}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {race.race_name}
+                        {race.is_label && (
+                          <Star size={12} className="inline ml-1 text-amber-500 fill-amber-500" />
+                        )}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-gray-500">
+                          {race.user?.firstname} {race.user?.lastname.charAt(0)}.
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {format(new Date(race.date), 'd MMM yyyy', { locale: fr })}
+                        </span>
+                      </div>
+                      {race.comment && (
+                        <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">{race.comment}</p>
+                      )}
+                    </div>
+                    <div className="flex-shrink-0 text-right">
+                      <p className="text-sm font-bold text-gray-900">{formatDuration(race.time_duration)}</p>
+                      <div className="flex items-center gap-1 justify-end mt-0.5">
+                        <span className="text-xs text-gray-400">{race.distance_km}km</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${raceTypeColors[race.race_type] || 'bg-gray-100 text-gray-600'}`}>
+                          {raceTypeLabels[race.race_type] || race.race_type}
+                        </span>
+                      </div>
+                    </div>
+                    <NordikButton raceId={race.id} />
+                    {canEdit(race.user_id) && (
+                      <>
+                        <button
+                          onClick={() => { setEditingId(race.id); setShowCoachAdd(false); setConfirmDeleteId(null); }}
+                          className="p-1.5 text-gray-300 hover:text-primary transition-colors"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => { setConfirmDeleteId(race.id); setEditingId(null); }}
+                          className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </>
                     )}
                   </div>
-                  <div className="flex-shrink-0 text-right">
-                    <p className="text-sm font-bold text-gray-900">{formatDuration(race.time_duration)}</p>
-                    <div className="flex items-center gap-1 justify-end mt-0.5">
-                      <span className="text-xs text-gray-400">{race.distance_km}km</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${raceTypeColors[race.race_type] || 'bg-gray-100 text-gray-600'}`}>
-                        {raceTypeLabels[race.race_type] || race.race_type}
-                      </span>
+                  {confirmDeleteId === race.id && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
+                      <p className="text-sm text-red-700 mb-2">Supprimer ce résultat de "{race.race_name}" ?</p>
+                      <div className="flex gap-2">
+                        <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-600">Annuler</button>
+                        <button onClick={() => { deleteRaceResult(race.id); setConfirmDeleteId(null); }} className="flex-1 py-1.5 text-sm bg-red-500 text-white rounded-lg font-medium">Supprimer</button>
+                      </div>
                     </div>
-                  </div>
-                  <NordikButton raceId={race.id} />
-                  {canEdit(race.user_id) && (
-                    <button
-                      onClick={() => { setEditingId(race.id); setShowCoachAdd(false); }}
-                      className="p-1.5 text-gray-300 hover:text-primary transition-colors"
-                    >
-                      <Pencil size={14} />
-                    </button>
                   )}
-                </div>
+                </>
               )}
             </div>
           ))}
