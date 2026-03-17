@@ -97,18 +97,18 @@ export default function Profile() {
     ? `https://www.strava.com/oauth/authorize?client_id=${stravaClientId}&response_type=code&redirect_uri=${encodeURIComponent(stravaRedirectUri)}&approval_prompt=auto&scope=activity:read_all,profile:read_all`
     : null;
   const [creatingFromStrava, setCreatingFromStrava] = useState<string | null>(null);
-  const [unmatchedActivities, setUnmatchedActivities] = useState<StravaActivity[]>([]);
+  const [allStravaActivities, setAllStravaActivities] = useState<StravaActivity[]>([]);
   const [showStravaMatching, setShowStravaMatching] = useState(false);
   const [matchingActivityId, setMatchingActivityId] = useState<string | null>(null);
 
-  const loadUnmatchedActivities = async () => {
+  const loadStravaActivities = async () => {
     if (!user) return;
     const { data } = await supabase.from('strava_activities')
       .select('*')
       .eq('user_id', user.id)
-      .is('matched_session_id', null)
-      .order('start_date_local', { ascending: false });
-    if (data) setUnmatchedActivities(data as StravaActivity[]);
+      .order('start_date_local', { ascending: false })
+      .limit(30);
+    if (data) setAllStravaActivities(data as StravaActivity[]);
     setShowStravaMatching(true);
     if (!strava.athleteStats) strava.fetchStats();
   };
@@ -131,10 +131,15 @@ export default function Profile() {
 
   const handleMatchToSession = async (act: StravaActivity, sessionId: string) => {
     setMatchingActivityId(act.id);
-    await supabase.from('strava_activities')
+    const { error } = await supabase.from('strava_activities')
       .update({ matched_session_id: sessionId, match_status: 'manual' })
       .eq('id', act.id);
-    setUnmatchedActivities(prev => prev.filter(a => a.id !== act.id));
+    if (error) {
+      console.error('Match error:', error);
+      alert(`Erreur lors de l'association : ${error.message}`);
+    } else {
+      setAllStravaActivities(prev => prev.map(a => a.id === act.id ? { ...a, matched_session_id: sessionId, match_status: 'manual' } : a));
+    }
     setMatchingActivityId(null);
   };
 
@@ -182,11 +187,15 @@ export default function Profile() {
 
     if ('id' in result) {
       await validateSession(result.id, user.id, 'done');
-      await supabase.from('strava_activities')
+      const { error } = await supabase.from('strava_activities')
         .update({ matched_session_id: result.id, match_status: 'manual' })
         .eq('id', act.id);
-      setUnmatchedActivities(prev => prev.filter(a => a.id !== act.id));
-      await strava.fetchRecentActivities();
+      if (error) {
+        console.error('Auto-match error:', error);
+        alert(`Seance creee mais erreur lors de l'association automatique : ${error.message}`);
+      } else {
+        setAllStravaActivities(prev => prev.map(a => a.id === act.id ? { ...a, matched_session_id: result.id, match_status: 'manual' } : a));
+      }
     }
     setCreatingFromStrava(null);
   };
@@ -924,7 +933,7 @@ export default function Profile() {
                 <span className="text-xs font-medium text-gray-700">Synchroniser</span>
               </button>
               <button
-                onClick={loadUnmatchedActivities}
+                onClick={loadStravaActivities}
                 className="flex flex-col items-center justify-center gap-2 p-4 bg-[#FC4C02]/5 border border-[#FC4C02]/20 rounded-xl hover:bg-[#FC4C02]/10 transition-colors"
               >
                 <Link2 size={24} className="text-[#FC4C02]" />
@@ -996,74 +1005,110 @@ export default function Profile() {
               </div>
             )}
 
-            {/* Unmatched activities - matching UI */}
+            {/* All Strava activities */}
             {showStravaMatching && (
               <div className="space-y-3">
-                <p className="text-xs font-bold text-gray-500 uppercase">
-                  Seances a traiter
-                  {unmatchedActivities.length > 0 && (
-                    <span className="ml-2 text-[10px] bg-[#FC4C02]/10 text-[#FC4C02] px-1.5 py-0.5 rounded-full font-medium">{unmatchedActivities.length}</span>
-                  )}
-                </p>
-                {unmatchedActivities.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-3">Toutes les activites sont associees</p>
-                ) : (
-                  unmatchedActivities.map(act => {
-                    const distKm = act.distance_meters ? (act.distance_meters / 1000).toFixed(1) : null;
-                    const durationMin = act.moving_time_seconds ? Math.round(act.moving_time_seconds / 60) : null;
-                    const matchingSessions = act.start_date_local ? getSessionsForDate(act.start_date_local) : [];
-                    const isProcessing = creatingFromStrava === act.id || matchingActivityId === act.id;
+                {(() => {
+                  const unmatched = allStravaActivities.filter(a => !a.matched_session_id);
+                  const matched = allStravaActivities.filter(a => a.matched_session_id);
+                  return (
+                    <>
+                      <p className="text-xs font-bold text-gray-500 uppercase">
+                        Seances a traiter
+                        {unmatched.length > 0 && (
+                          <span className="ml-2 text-[10px] bg-[#FC4C02]/10 text-[#FC4C02] px-1.5 py-0.5 rounded-full font-medium">{unmatched.length}</span>
+                        )}
+                      </p>
+                      {unmatched.length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-3">Toutes les activites sont associees</p>
+                      ) : (
+                        unmatched.map(act => {
+                          const distKm = act.distance_meters ? (act.distance_meters / 1000).toFixed(1) : null;
+                          const durationMin = act.moving_time_seconds ? Math.round(act.moving_time_seconds / 60) : null;
+                          const matchingSessions = act.start_date_local ? getSessionsForDate(act.start_date_local) : [];
+                          const isProcessing = creatingFromStrava === act.id || matchingActivityId === act.id;
 
-                    return (
-                      <div key={act.id} className="bg-gray-50 rounded-xl p-3 space-y-2">
-                        <div className="flex items-center gap-3">
-                          <Activity size={14} className="text-[#FC4C02] shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{act.name || act.sport_type}</p>
-                            <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
-                              {act.start_date_local && <span>{format(new Date(act.start_date_local), 'd MMM', { locale: fr })}</span>}
-                              {distKm && <span>{distKm} km</span>}
-                              {durationMin && <span>{durationMin} min</span>}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Matching options */}
-                        <div className="pl-7 space-y-1.5">
-                          {matchingSessions.length > 0 && (
-                            <>
-                              <p className="text-[10px] text-gray-400 uppercase font-medium">Associer a une seance existante :</p>
-                              {matchingSessions.map(s => (
-                                <div key={s.id} className="flex items-center justify-between bg-white rounded-lg p-2 border border-gray-100">
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-900 truncate">{s.title}</p>
-                                    <p className="text-[10px] text-gray-400">{format(new Date(s.date), 'HH:mm', { locale: fr })}</p>
+                          return (
+                            <div key={act.id} className="bg-gray-50 rounded-xl p-3 space-y-2">
+                              <div className="flex items-center gap-3">
+                                <Activity size={14} className="text-[#FC4C02] shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{act.name || act.sport_type}</p>
+                                  <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
+                                    {act.start_date_local && <span>{format(new Date(act.start_date_local), 'd MMM', { locale: fr })}</span>}
+                                    {distKm && <span>{distKm} km</span>}
+                                    {durationMin && <span>{durationMin} min</span>}
                                   </div>
-                                  <button
-                                    onClick={() => handleMatchToSession(act, s.id)}
-                                    disabled={isProcessing}
-                                    className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 bg-primary text-white text-[10px] font-medium rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-                                  >
-                                    {matchingActivityId === act.id ? <Loader2 size={10} className="animate-spin" /> : <Link2 size={10} />}
-                                    Associer
-                                  </button>
                                 </div>
-                              ))}
-                            </>
-                          )}
-                          <button
-                            onClick={() => handleCreateSessionFromStrava(act)}
-                            disabled={isProcessing}
-                            className="w-full flex items-center justify-center gap-1.5 py-2 border border-dashed border-[#FC4C02]/30 text-[#FC4C02] text-xs font-medium rounded-lg hover:bg-[#FC4C02]/5 transition-colors disabled:opacity-50"
-                          >
-                            {creatingFromStrava === act.id ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-                            Creer une seance personnelle
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
+                              </div>
+
+                              {/* Matching options */}
+                              <div className="pl-7 space-y-1.5">
+                                {matchingSessions.length > 0 && (
+                                  <>
+                                    <p className="text-[10px] text-gray-400 uppercase font-medium">Associer a une seance existante :</p>
+                                    {matchingSessions.map(s => (
+                                      <div key={s.id} className="flex items-center justify-between bg-white rounded-lg p-2 border border-gray-100">
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-xs font-medium text-gray-900 truncate">{s.title}</p>
+                                          <p className="text-[10px] text-gray-400">{format(new Date(s.date), 'd MMM - HH:mm', { locale: fr })}</p>
+                                        </div>
+                                        <button
+                                          onClick={() => handleMatchToSession(act, s.id)}
+                                          disabled={isProcessing}
+                                          className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 bg-primary text-white text-[10px] font-medium rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                                        >
+                                          {matchingActivityId === act.id ? <Loader2 size={10} className="animate-spin" /> : <Link2 size={10} />}
+                                          Associer
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </>
+                                )}
+                                <button
+                                  onClick={() => handleCreateSessionFromStrava(act)}
+                                  disabled={isProcessing}
+                                  className="w-full flex items-center justify-center gap-1.5 py-2 border border-dashed border-[#FC4C02]/30 text-[#FC4C02] text-xs font-medium rounded-lg hover:bg-[#FC4C02]/5 transition-colors disabled:opacity-50"
+                                >
+                                  {creatingFromStrava === act.id ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                                  Creer une seance personnelle
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+
+                      {/* Already matched activities */}
+                      {matched.length > 0 && (
+                        <>
+                          <p className="text-xs font-bold text-gray-500 uppercase mt-4">
+                            Deja associees
+                            <span className="ml-2 text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-medium">{matched.length}</span>
+                          </p>
+                          {matched.map(act => {
+                            const distKm = act.distance_meters ? (act.distance_meters / 1000).toFixed(1) : null;
+                            const durationMin = act.moving_time_seconds ? Math.round(act.moving_time_seconds / 60) : null;
+                            return (
+                              <div key={act.id} className="flex items-center gap-3 bg-green-50/50 rounded-lg p-3">
+                                <Activity size={14} className="text-green-600 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{act.name || act.sport_type}</p>
+                                  <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
+                                    {act.start_date_local && <span>{format(new Date(act.start_date_local), 'd MMM', { locale: fr })}</span>}
+                                    {distKm && <span>{distKm} km</span>}
+                                    {durationMin && <span>{durationMin} min</span>}
+                                  </div>
+                                </div>
+                                <Check size={14} className="text-green-600 shrink-0" />
+                              </div>
+                            );
+                          })}
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
 
