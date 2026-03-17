@@ -106,8 +106,7 @@ export default function Profile() {
     const { data } = await supabase.from('strava_activities')
       .select('*')
       .eq('user_id', user.id)
-      .order('start_date_local', { ascending: false })
-      .limit(30);
+      .order('start_date_local', { ascending: false });
     if (data) setAllStravaActivities(data as StravaActivity[]);
     setShowStravaMatching(true);
     if (!strava.athleteStats) strava.fetchStats();
@@ -131,9 +130,10 @@ export default function Profile() {
 
   const handleMatchToSession = async (act: StravaActivity, sessionId: string) => {
     setMatchingActivityId(act.id);
-    const { error } = await supabase.from('strava_activities')
-      .update({ matched_session_id: sessionId, match_status: 'manual' })
-      .eq('id', act.id);
+    const { error } = await supabase.rpc('match_strava_activity', {
+      p_activity_id: act.id,
+      p_session_id: sessionId,
+    });
     if (error) {
       console.error('Match error:', error);
       alert(`Erreur lors de l'association : ${error.message}`);
@@ -187,9 +187,10 @@ export default function Profile() {
 
     if ('id' in result) {
       await validateSession(result.id, user.id, 'done');
-      const { error } = await supabase.from('strava_activities')
-        .update({ matched_session_id: result.id, match_status: 'manual' })
-        .eq('id', act.id);
+      const { error } = await supabase.rpc('match_strava_activity', {
+        p_activity_id: act.id,
+        p_session_id: result.id,
+      });
       if (error) {
         console.error('Auto-match error:', error);
         alert(`Seance creee mais erreur lors de l'association automatique : ${error.message}`);
@@ -919,8 +920,12 @@ export default function Profile() {
               <button
                 onClick={async () => {
                   const count = await strava.syncActivities();
-                  if (count > 0) alert(`${count} activite(s) synchronisee(s)`);
-                  else alert('Aucune nouvelle activite');
+                  if (count > 0) {
+                    alert(`${count} activite(s) synchronisee(s)`);
+                    await loadStravaActivities();
+                  } else {
+                    alert('Aucune nouvelle activite');
+                  }
                 }}
                 disabled={strava.loading}
                 className="flex flex-col items-center justify-center gap-2 p-4 bg-[#FC4C02]/5 border border-[#FC4C02]/20 rounded-xl hover:bg-[#FC4C02]/10 transition-colors disabled:opacity-50"

@@ -112,7 +112,7 @@ export function useStrava(targetUserId?: string): UseStravaReturn {
     setError(null);
     const { data, error: err } = await callEdgeFunction<{ synced: number }>(
       'strava-api',
-      { action: 'sync_activities', target_user_id: targetUserId }
+      { action: 'sync_activities', per_page: 200, target_user_id: targetUserId }
     );
     setLoading(false);
     if (err) { setError(err); return 0; }

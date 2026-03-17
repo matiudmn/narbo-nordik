@@ -69,22 +69,31 @@ export default function SessionDetail() {
 
   const handleMatchStrava = async (activity: StravaActivity) => {
     setStravaLoading(true);
-    await supabase.from('strava_activities')
-      .update({ matched_session_id: session!.id, match_status: 'manual' })
-      .eq('id', activity.id);
-    setMatchedActivity(activity);
-    setStravaActivities(prev => prev.filter(a => a.id !== activity.id));
+    const { error } = await supabase.rpc('match_strava_activity', {
+      p_activity_id: activity.id,
+      p_session_id: session!.id,
+    });
+    if (error) {
+      console.error('Match error:', error);
+    } else {
+      setMatchedActivity(activity);
+      setStravaActivities(prev => prev.filter(a => a.id !== activity.id));
+    }
     setStravaLoading(false);
   };
 
   const handleUnmatchStrava = async () => {
     if (!matchedActivity) return;
     setStravaLoading(true);
-    await supabase.from('strava_activities')
-      .update({ matched_session_id: null, match_status: 'unmatched' })
-      .eq('id', matchedActivity.id);
-    setStravaActivities(prev => [...prev, matchedActivity]);
-    setMatchedActivity(null);
+    const { error } = await supabase.rpc('unmatch_strava_activity', {
+      p_activity_id: matchedActivity.id,
+    });
+    if (error) {
+      console.error('Unmatch error:', error);
+    } else {
+      setStravaActivities(prev => [...prev, matchedActivity]);
+      setMatchedActivity(null);
+    }
     setStravaLoading(false);
   };
 
