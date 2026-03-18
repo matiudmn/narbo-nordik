@@ -52,12 +52,26 @@ const athleteSections: Section[] = [
           Un indicateur affiche votre taux de presence aux seances sur la saison en cours.
           Il se met a jour automatiquement lorsque vous validez votre participation a une seance.
         </p>
+        <p className="font-semibold text-gray-900">Stats Strava</p>
+        <p>
+          Si votre compte Strava est connecte, un bloc orange affiche vos statistiques :
+          nombre de sorties, kilometres, heures et denivele positif sur l'annee en cours,
+          ainsi que vos stats cumulees depuis toujours et votre allure moyenne.
+          Ces donnees se mettent a jour automatiquement chaque jour.
+        </p>
         <p className="font-semibold text-gray-900">Seances de la semaine</p>
         <p>
           La partie principale liste les seances prevues pour la semaine en cours. Chaque carte
           de seance indique la date, le type de seance, le groupe concerne et un apercu du contenu.
           Vous pouvez naviguer entre les semaines avec les fleches pour consulter les seances
           passees ou a venir.
+        </p>
+        <p className="font-semibold text-gray-900">Demander une preparation specifique</p>
+        <p>
+          En bas de la page d'accueil, un bouton vous permet de demander au coach une preparation
+          specifique pour un objectif precis (course, trail, etc.). Renseignez le nom de l'epreuve,
+          la date, la distance, votre niveau de forme et un commentaire. La demande est envoyee
+          directement au coach par WhatsApp.
         </p>
       </>
     ),
@@ -83,10 +97,35 @@ const athleteSections: Section[] = [
           votre VMA. Elles sont donc uniques et adaptees a votre niveau. Si votre VMA est
           mise a jour, toutes les allures se recalculent.
         </p>
+        <p className="font-semibold text-gray-900">Lieu de la seance</p>
+        <p>
+          Si le coach a renseigne un lieu pour la seance, celui-ci est affiche avec un lien
+          cliquable qui ouvre la localisation sur une carte.
+        </p>
         <p className="font-semibold text-gray-900">Valider sa participation</p>
         <p>
           Apres la seance, vous pouvez indiquer si vous etiez present ("Fait") ou absent
           ("Manque"). Cette validation alimente votre taux d'assiduite.
+        </p>
+        <p className="font-semibold text-gray-900">Objectif atteint et sensations</p>
+        <p>
+          Lors de la validation, vous pouvez preciser si l'objectif de la seance a ete atteint
+          (Oui, Partiel ou Non) et qualifier vos sensations (Excellentes, Bonnes ou Mauvaises).
+          Ces informations sont visibles par le coach et alimentent votre page de suivi.
+        </p>
+        <p className="font-semibold text-gray-900">Bouton Nordik</p>
+        <p>
+          Un bouton coeur est disponible sur chaque seance. Il vous permet de marquer une seance
+          comme coup de coeur. C'est un moyen simple de signaler au coach les seances que vous
+          avez particulierement appreciees.
+        </p>
+        <p className="font-semibold text-gray-900">Associer une activite Strava</p>
+        <p>
+          Si votre compte Strava est connecte, les activites Strava proches de la date de la seance
+          (+/- 4 jours) sont affichees en bas de la page. Vous pouvez associer manuellement
+          une activite a la seance pour l'enrichir avec vos donnees reelles : distance, temps,
+          frequence cardiaque, cadence, calories, denivele et appareil utilise.
+          Vous pouvez aussi dissocier une activite si vous vous etes trompe.
         </p>
         <p className="font-semibold text-gray-900">Retour et photo</p>
         <p>
@@ -183,6 +222,49 @@ const athleteSections: Section[] = [
     ),
   },
   {
+    id: 'suivi',
+    title: 'Suivi',
+    content: (
+      <>
+        <p>
+          La page Suivi est votre tableau de bord personnel d'entrainement. Elle est accessible
+          depuis la barre de navigation en bas de l'ecran.
+        </p>
+        <p className="font-semibold text-gray-900">Heatmap annuelle</p>
+        <p>
+          Une carte de chaleur affiche votre activite sur l'annee : chaque jour ou vous avez
+          valide une seance est colore. Plus la couleur est intense, plus vous avez ete actif.
+          Cela permet de visualiser d'un coup d'oeil votre regularite.
+        </p>
+        <p className="font-semibold text-gray-900">Statistiques mensuelles</p>
+        <p>
+          Pour chaque mois, vous retrouvez le detail de vos seances validees avec :
+        </p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Objectif atteint</strong> : repartition entre Oui, Partiel et Non</li>
+          <li><strong>Sensations</strong> : repartition entre Excellentes, Bonnes et Mauvaises</li>
+        </ul>
+        <p>
+          Ces donnees proviennent de vos validations de seances et vous aident a suivre
+          votre progression dans le temps.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'historique',
+    title: 'Historique des seances',
+    content: (
+      <>
+        <p>
+          La page Historique liste toutes vos seances passees avec leur statut :
+          Fait, Manque ou En attente. Vous pouvez rechercher une seance par mot-cle
+          et voir si un retour ou une photo est attache a chaque seance.
+        </p>
+      </>
+    ),
+  },
+  {
     id: 'annuaire',
     title: 'Annuaire',
     content: (
@@ -240,10 +322,30 @@ const athleteSections: Section[] = [
           Vous pouvez modifier votre prenom, nom, adresse email, numero de telephone
           et photo de profil. Ces informations sont visibles par les autres membres du club.
         </p>
-        <p className="font-semibold text-gray-900">Connexion Strava</p>
+        <p className="font-semibold text-gray-900">Date de naissance et categorie FFA</p>
         <p>
-          Si vous utilisez Strava, vous pouvez renseigner le lien vers votre profil Strava.
-          Les autres membres pourront alors acceder a votre profil Strava depuis l'annuaire.
+          En renseignant votre date de naissance, l'application calcule automatiquement
+          votre categorie FFA (Espoir, Senior, Master, etc.). Cette information apparait
+          sur votre fiche dans l'annuaire.
+        </p>
+        <p className="font-semibold text-gray-900">Profil public</p>
+        <p>
+          Un interrupteur vous permet de rendre votre profil public ou prive. Quand il est
+          public, les autres membres du club peuvent voir votre VMA, votre telephone
+          et vos informations Strava. Quand il est prive, seul le coach y a acces.
+        </p>
+        <p className="font-semibold text-gray-900">Seances personnelles</p>
+        <p>
+          Depuis la section "Seances personnelles" de votre profil, vous pouvez creer
+          vos propres seances d'entrainement (course, velo, marche, renforcement, etc.)
+          en dehors du planning du coach. Ces seances sont privees et n'apparaissent que
+          pour vous.
+        </p>
+        <p className="font-semibold text-gray-900">Strava</p>
+        <p>
+          Une section dediee Strava est disponible dans votre profil (apres le Palmares).
+          Elle regroupe trois actions : Synchroniser vos activites, consulter vos seances Strava,
+          et gerer votre connexion. Voir la section "Strava" ci-dessous pour plus de details.
         </p>
         <p className="font-semibold text-gray-900">Mot de passe</p>
         <p>
@@ -254,6 +356,59 @@ const athleteSections: Section[] = [
         <p>
           Gerez vos preferences de notifications push. Vous pouvez activer ou desactiver
           les notifications pour les nouvelles seances, les rappels, et les mises a jour du club.
+        </p>
+        <p className="font-semibold text-gray-900">Supprimer son compte</p>
+        <p>
+          En bas de votre profil, une option permet de supprimer definitivement votre compte.
+          Cette action est irreversible. Un questionnaire de depart vous sera propose pour
+          nous aider a ameliorer l'application. Vous devrez confirmer en tapant "SUPPRIMER".
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'strava',
+    title: 'Strava',
+    content: (
+      <>
+        <p>
+          L'application peut se connecter a votre compte Strava pour synchroniser automatiquement
+          vos activites sportives (marche nordique, course a pied, etc.).
+        </p>
+        <p className="font-semibold text-gray-900">Connecter son compte</p>
+        <p>
+          Depuis votre profil, descendez jusqu'a la section Strava (apres le Palmares) et cliquez
+          sur "Connecter Strava". Vous serez redirige vers Strava pour autoriser l'acces.
+          L'application accede uniquement a vos activites et votre profil en lecture.
+          Elle ne peut rien modifier sur votre compte Strava.
+        </p>
+        <p className="font-semibold text-gray-900">Les 3 boutons</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>Synchroniser</strong> : recupere vos dernieres activites depuis Strava.
+            Utile si vous venez de finir une seance et voulez la voir tout de suite.</li>
+          <li><strong>Mes seances</strong> : affiche toutes vos activites Strava.
+            Les activites non associees proposent deux actions : les associer a une seance
+            existante du coach, ou creer une seance personnelle automatiquement liee.</li>
+          <li><strong>Deconnecter</strong> : supprime le lien entre votre compte Strava et l'app.
+            Vos seances restent intactes mais les donnees Strava ne seront plus visibles.</li>
+        </ul>
+        <p className="font-semibold text-gray-900">Synchronisation automatique</p>
+        <p>
+          Vos activites Strava sont synchronisees automatiquement tous les jours a 6h du matin.
+          Vos sorties de la veille seront donc disponibles le lendemain sans rien faire.
+          Vous pouvez aussi forcer une synchro manuelle a tout moment avec le bouton Synchroniser.
+        </p>
+        <p className="font-semibold text-gray-900">Associer une activite a une seance</p>
+        <p>
+          L'association est toujours manuelle : c'est vous qui choisissez quelle activite Strava
+          correspond a quelle seance du coach. L'application propose les seances proches en date
+          (+/- 4 jours) pour faciliter le choix. Une fois associee, les donnees reelles (distance,
+          temps, FC, cadence, calories) apparaissent dans le detail de la seance.
+        </p>
+        <p className="font-semibold text-gray-900">Stats sur la page d'accueil</p>
+        <p>
+          Quand votre compte est connecte, un bloc orange s'affiche sur la page d'accueil avec
+          vos stats annuelles (sorties, km, heures, D+), vos stats cumulees et votre allure moyenne.
         </p>
       </>
     ),
@@ -303,8 +458,15 @@ const coachSections: Section[] = [
         </p>
         <p className="font-semibold text-gray-900">Alertes d'inactivite</p>
         <p>
-          Le dashboard signale les athletes qui n'ont pas participe a une seance depuis
-          un certain temps. Cela vous permet de reprendre contact avec eux et de maintenir
+          Le dashboard signale les athletes inactifs avec trois niveaux de severite :
+        </p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li><strong>+45 jours</strong> (rouge) : athlete a risque de decrochage</li>
+          <li><strong>+20 jours</strong> (orange) : a relancer</li>
+          <li><strong>+7 jours</strong> (jaune) : a surveiller</li>
+        </ul>
+        <p>
+          Cela vous permet de reprendre contact avec eux et de maintenir
           la dynamique du groupe.
         </p>
         <p className="font-semibold text-gray-900">Retours athletes</p>
@@ -328,8 +490,8 @@ const coachSections: Section[] = [
         <p className="font-semibold text-gray-900">Creer une seance</p>
         <p>
           Cliquez sur "Nouvelle seance" pour creer un entrainement. Renseignez la date,
-          le titre, et le groupe concerne. Vous pouvez ensuite ajouter des blocs
-          d'entrainement.
+          le titre, le groupe concerne et optionnellement un lieu avec un lien de localisation
+          (Google Maps, etc.). Vous pouvez ensuite ajouter des blocs d'entrainement.
         </p>
         <p className="font-semibold text-gray-900">Blocs d'entrainement</p>
         <p>
@@ -394,7 +556,9 @@ const coachSections: Section[] = [
         <p className="font-semibold text-gray-900">Creer une preparation</p>
         <p>
           Depuis l'onglet "Prep. Specifiques" des parametres, creez une nouvelle preparation
-          en indiquant son nom et sa description. Exemple : "Preparation Marathon de Narbonne 2025".
+          en indiquant son nom, sa description et la date de l'evenement. Un compte a rebours
+          (J-X) s'affiche automatiquement pour visualiser le temps restant avant l'echeance.
+          Exemple : "Preparation Marathon de Narbonne 2025".
         </p>
         <p className="font-semibold text-gray-900">Inscrire des athletes</p>
         <p>
@@ -452,8 +616,9 @@ const coachSections: Section[] = [
         <p className="font-semibold text-gray-900">VMA et licence</p>
         <p>
           Depuis la fiche de chaque athlete, vous pouvez mettre a jour sa VMA (apres un test
-          par exemple) et son numero de licence FFA. La mise a jour de la VMA recalcule
-          automatiquement toutes les allures de l'athlete.
+          par exemple) et son numero de licence FFA. Lors de la mise a jour de la VMA, vous pouvez
+          indiquer un motif (test piste, estimation, etc.) qui sera enregistre dans l'historique.
+          La modification recalcule automatiquement toutes les allures de l'athlete.
         </p>
         <p className="font-semibold text-gray-900">Partager les identifiants</p>
         <p>
