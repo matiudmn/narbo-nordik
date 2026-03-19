@@ -2,6 +2,7 @@ import { getISOWeek } from 'date-fns';
 import type { PaceCalculation, AllureZone, AllureZoneConfig, RacePaceConfig, SessionBlock, Session, Group, SpecificPreparation } from '../types';
 
 export const DEFAULT_ALLURE_ZONES: Record<AllureZone, AllureZoneConfig> = {
+  aer:  { label: 'AER',  pctMinByLevel: [50, 50, 50, 50, 50],    pctMaxByLevel: [60, 60, 60, 60, 60],    color: '#06b6d4' },
   ef:   { label: 'EF',   pctMinByLevel: [55, 60, 60, 60, 60],    pctMaxByLevel: [65, 70, 70, 70, 70],    color: '#3b82f6' },
   sv1:  { label: 'SV1',  pctMinByLevel: [72, 75, 75, 77, 79],    pctMaxByLevel: [78, 81, 81, 83, 85],    color: '#22c55e' },
   sv2:  { label: 'SV2',  pctMinByLevel: [80, 82, 84, 85, 86],    pctMaxByLevel: [86, 88, 90, 91, 92],    color: '#8b5cf6' },
@@ -126,6 +127,7 @@ export function getVmaLevelIndex(vma: number): number {
 }
 
 export const DEFAULT_RACE_PACES: Record<string, RacePaceConfig> = {
+  aer:  { label: 'AER',  pctByLevel: [55, 55, 55, 55, 55],      color: '#06b6d4', description: 'Echauffement / Recuperation' },
   ef:   { label: 'EF',   pctByLevel: [60, 65, 65, 65, 65],      color: '#3b82f6', description: 'Endurance fondamentale' },
   sv1:  { label: 'SV1',  pctByLevel: [75, 78, 78, 80, 82],      color: '#22c55e', description: 'Seuil ventilatoire 1' },
   sv2:  { label: 'SV2',  pctByLevel: [83, 85, 87, 88, 89],      color: '#8b5cf6', description: 'Seuil ventilatoire 2' },
