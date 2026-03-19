@@ -16,12 +16,12 @@ export default function AlluresTab() {
       const rp = clubSettings.race_paces;
       const hasValidPaces = rp && Object.keys(rp).length > 0
         && Object.values(rp).every(z => Array.isArray(z.pctByLevel));
-      setRacePaces(hasValidPaces ? rp : DEFAULT_RACE_PACES);
+      setRacePaces(hasValidPaces ? { ...DEFAULT_RACE_PACES, ...rp } : DEFAULT_RACE_PACES);
 
       const az = clubSettings.allure_zones;
       const hasValidZones = az && Object.keys(az).length > 0
         && Object.values(az).every(z => Array.isArray(z.pctMinByLevel) && Array.isArray(z.pctMaxByLevel));
-      setAllureZones(hasValidZones ? az : DEFAULT_ALLURE_ZONES);
+      setAllureZones(hasValidZones ? { ...DEFAULT_ALLURE_ZONES, ...az } : DEFAULT_ALLURE_ZONES);
     } else {
       setRacePaces(DEFAULT_RACE_PACES);
       setAllureZones(DEFAULT_ALLURE_ZONES);
