@@ -17,7 +17,7 @@ export default function Header() {
   return (
     <>
       {isImpersonating && effectiveUser && (
-        <div className="fixed top-0 left-0 right-0 bg-yellow-400 text-yellow-900 z-[60] h-8 flex items-center justify-center text-xs font-bold gap-2">
+        <div className="fixed top-0 left-0 right-0 lg:left-60 bg-yellow-400 text-yellow-900 z-[60] h-8 flex items-center justify-center text-xs font-bold gap-2">
           <span>Vue en tant que {effectiveUser.firstname} {effectiveUser.lastname}</span>
           <button
             onClick={handleStopImpersonating}
@@ -28,9 +28,9 @@ export default function Header() {
           </button>
         </div>
       )}
-      <header className={`fixed left-0 right-0 bg-primary text-white z-50 ${isImpersonating ? 'top-8' : 'top-0'}`}>
+      <header className={`fixed left-0 right-0 lg:left-60 bg-primary text-white z-50 ${isImpersonating ? 'top-8' : 'top-0'}`}>
         <div className="flex items-center justify-between h-14 px-4 max-w-5xl mx-auto">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 lg:hidden">
             <button onClick={() => navigate('/')} className="flex-shrink-0">
               <img src="/logo-club.png" alt="Narbo Nordik Club" className="h-10 w-10 rounded-full" />
             </button>

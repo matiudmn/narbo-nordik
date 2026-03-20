@@ -123,6 +123,8 @@ export default function Dashboard() {
         <ChevronRight size={16} className="text-gray-300" />
       </Link>
 
+      {/* Inactivity + Feedback side by side on desktop */}
+      <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
       {/* Inactivity alerts */}
       {inactivityAlerts.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-100 p-4">
@@ -213,6 +215,7 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      </div>{/* end alerts+feedback grid */}
     </div>
   );
 }

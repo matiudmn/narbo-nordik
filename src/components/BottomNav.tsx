@@ -13,7 +13,7 @@ export default function BottomNav() {
 
   if (isCoach) {
     return (
-      <nav aria-label="Navigation principale" className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pb-[env(safe-area-inset-bottom)] z-50">
+      <nav aria-label="Navigation principale" className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pb-[env(safe-area-inset-bottom)] z-50 lg:hidden">
         <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
           <NavLink to="/" end className={linkClass}>
             <House size={22} />
@@ -45,7 +45,7 @@ export default function BottomNav() {
   }
 
   return (
-    <nav aria-label="Navigation principale" className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pb-[env(safe-area-inset-bottom)] z-50">
+    <nav aria-label="Navigation principale" className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pb-[env(safe-area-inset-bottom)] z-50 lg:hidden">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
         <NavLink to="/" end className={linkClass}>
           <House size={22} />

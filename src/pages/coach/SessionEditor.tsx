@@ -576,7 +576,7 @@ export default function SessionEditor() {
       {weekSessions.length === 0 ? (
         <p className="text-center text-gray-400 py-8">Aucune seance cette semaine</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
           {weekSessions.map(session => {
             const group = groups.find(g => g.id === session.group_id);
             const prep = preparations.find(p => p.id === session.preparation_id);

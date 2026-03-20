@@ -222,7 +222,7 @@ export default function Suivi() {
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
           {currentList.map(({ session, validation, athlete }) => {
             const TypeIcon = SESSION_TYPE_ICON[session.session_type];
             return (

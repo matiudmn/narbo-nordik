@@ -258,7 +258,7 @@ export default function ClubProfile() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-white rounded-xl border-l-4 border-accent p-3 shadow-sm">
           <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Effectif</p>
           <p className="text-2xl font-extrabold text-gray-900 mt-1">
@@ -330,7 +330,7 @@ export default function ClubProfile() {
             <Trophy size={18} className="text-amber-500" />
             Palmares Collectif
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
             {palmares.slice(0, 5).map((race, idx) => (
               <div
                 key={race.id}
@@ -389,8 +389,9 @@ export default function ClubProfile() {
       <section>
         <h2 className="text-base font-bold text-gray-900 mb-3">Repartition & Distribution</h2>
 
+        <div className="lg:grid lg:grid-cols-2 lg:gap-4">
         {/* Group donut */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-3">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-3 lg:mb-0">
           <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Repartition par Groupe</h3>
           <div className="h-[220px]">
             <Doughnut data={donutData} options={donutOptions} />
@@ -398,7 +399,7 @@ export default function ClubProfile() {
         </div>
 
         {/* VMA Histogram */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-3">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-3 lg:mb-0">
           <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Distribution VMA par Tranche</h3>
           <div className="h-[220px]">
             <Bar data={histogramData} options={histogramOptions} />
@@ -407,6 +408,7 @@ export default function ClubProfile() {
             Repartition des {stats.count} coureurs par tranche de 1 km/h
           </p>
         </div>
+        </div>{/* end charts grid */}
 
         {/* Box plot */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">

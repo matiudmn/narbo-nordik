@@ -161,6 +161,8 @@ export default function Home() {
 
   return (
     <div className="py-4 space-y-4">
+      {/* Top section: VMA + Assiduite + Strava side by side on desktop */}
+      <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
       {/* VMA + Evolution */}
       {user.vma && (
         <div className="bg-white rounded-xl border border-gray-100 p-4">
@@ -196,7 +198,7 @@ export default function Home() {
             <Gauge size={18} className="text-accent" />
             Mes Allures
           </h2>
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-4 lg:grid-cols-5 gap-1.5">
             {(() => {
               const levelIdx = getVmaLevelIndex(user.vma!);
               return Object.entries(racePaces).map(([key, zone]) => {
@@ -343,6 +345,8 @@ export default function Home() {
         </div>
       )}
 
+      </div>{/* end top grid */}
+
       {/* Demande preparation specifique */}
       {!isCoach && (
         <button
@@ -355,9 +359,9 @@ export default function Home() {
       )}
 
       {showPrepRequest && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40" onClick={resetPrepForm} role="dialog" aria-modal="true" aria-labelledby="prep-dialog-title">
+        <div className="fixed inset-0 z-[60] flex items-end lg:items-center justify-center bg-black/40" onClick={resetPrepForm} role="dialog" aria-modal="true" aria-labelledby="prep-dialog-title">
           <div
-            className="bg-white w-full max-w-lg rounded-t-2xl flex flex-col max-h-[85vh] animate-slide-up"
+            className="bg-white w-full max-w-lg rounded-t-2xl lg:rounded-2xl flex flex-col max-h-[85vh] animate-slide-up"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 pb-3 flex-shrink-0">
@@ -467,7 +471,7 @@ export default function Home() {
             <p className="text-sm text-gray-400 mt-1">Les seances planifiees apparaitront ici</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
             {filteredSessions.map(session => {
               const sessionDate = new Date(session.date);
               const sessionPast = isPast(sessionDate);

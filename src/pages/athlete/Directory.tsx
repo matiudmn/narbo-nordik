@@ -323,7 +323,7 @@ export default function Directory() {
         <span className="text-xs text-gray-400 font-medium">{sorted.length} membre{sorted.length > 1 ? 's' : ''}</span>
       </div>
 
-      <div className="relative mb-4">
+      <div className="relative mb-4 lg:max-w-md">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
@@ -335,7 +335,7 @@ export default function Directory() {
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
         {sorted.map(member => (
           <MemberCard
             key={member.id}
