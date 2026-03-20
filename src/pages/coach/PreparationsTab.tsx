@@ -13,7 +13,7 @@ export default function PreparationsTab() {
   const [newDesc, setNewDesc] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const allMembers = useMemo(() => users.filter(u => u.role === 'athlete'), [users]);
+  const allMembers = useMemo(() => users.filter(u => u.role === 'athlete' || u.role === 'coach'), [users]);
 
   const getPrepMembers = (prepId: string) => {
     const memberIds = userPreparations.filter(up => up.preparation_id === prepId).map(up => up.user_id);
@@ -152,9 +152,9 @@ export default function PreparationsTab() {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-500 focus:outline-none"
                     defaultValue=""
                   >
-                    <option value="">+ Inscrire un athlete...</option>
+                    <option value="">+ Inscrire un membre...</option>
                     {unassigned.map(a => (
-                      <option key={a.id} value={a.id}>{a.firstname} {a.lastname}</option>
+                      <option key={a.id} value={a.id}>{a.firstname} {a.lastname}{a.role === 'coach' ? ' (Coach)' : ''}</option>
                     ))}
                   </select>
                 )}
