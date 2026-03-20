@@ -12,7 +12,7 @@ export default function Layout() {
       <Sidebar />
       <div className="lg:ml-60">
         <Header />
-        <main className={`${isImpersonating ? 'pt-[5.5rem]' : 'pt-14'} pb-20 lg:pb-8 px-4 lg:px-8 max-w-5xl mx-auto`}>
+        <main className={`${isImpersonating ? 'pt-[5.5rem]' : 'pt-14'} lg:pt-4 ${isImpersonating ? 'lg:pt-12' : ''} pb-20 lg:pb-8 px-4 lg:px-8 max-w-6xl mx-auto`}>
           <Outlet />
         </main>
       </div>

@@ -161,8 +161,8 @@ export default function Home() {
 
   return (
     <div className="py-4 space-y-4">
-      {/* Top section: VMA + Assiduite + Strava side by side on desktop */}
-      <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
+      {/* Top section: cards side by side on desktop */}
+      <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
       {/* VMA + Evolution */}
       {user.vma && (
         <div className="bg-white rounded-xl border border-gray-100 p-4">
