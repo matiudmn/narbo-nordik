@@ -4,7 +4,7 @@ import { fr } from 'date-fns/locale';
 import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile, Heart, Activity, Link2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
-import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode } from '../../lib/calculations';
+import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode, getAllureZones } from '../../lib/calculations';
 import { useState, useRef, useEffect } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
 import { supabase } from '../../lib/supabase';
@@ -14,7 +14,8 @@ export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { sessions, validations, validateSession, updateValidation, groups, userPreparations, sessionNordiks, toggleSessionNordik } = useData();
+  const { sessions, validations, validateSession, updateValidation, groups, userPreparations, sessionNordiks, toggleSessionNordik, clubSettings } = useData();
+  const allureZones = getAllureZones(clubSettings?.allure_zones);
 
   const session = sessions.find(s => s.id === id);
   const validation = validations.find(v => v.session_id === id && v.user_id === user?.id);
@@ -246,15 +247,15 @@ export default function SessionDetail() {
                 Programme
               </h2>
               <span className="text-xs text-gray-400">
-                {session.blocks.some(b => b.distance_meters) ? '~' : ''}{formatSeconds(calculateSessionTotalSeconds(session.blocks, user?.vma || undefined))} au total
+                {session.blocks.some(b => b.distance_meters) ? '~' : ''}{formatSeconds(calculateSessionTotalSeconds(session.blocks, user?.vma || undefined, allureZones))} au total
               </span>
             </div>
             <div className="space-y-2">
               {session.blocks.map(block => {
-                const zone = ALLURE_ZONES[block.allure];
+                const zone = allureZones[block.allure] || ALLURE_ZONES[block.allure];
                 const blockType = BLOCK_TYPES[block.type];
-                const pace = user?.vma ? calculateBlockPace(user.vma, block.allure) : null;
-                const blockDur = formatSeconds(calculateBlockTotalSeconds(block, user?.vma || undefined));
+                const pace = user?.vma ? calculateBlockPace(user.vma, block.allure, allureZones) : null;
+                const blockDur = formatSeconds(calculateBlockTotalSeconds(block, user?.vma || undefined, allureZones));
 
                 return (
                   <div key={block.id} className="flex items-center gap-3 bg-white rounded-lg p-3">
@@ -267,7 +268,7 @@ export default function SessionDetail() {
                         </span>
                       </div>
                       <p className="text-sm font-medium text-gray-900 mt-0.5">
-                        {formatBlockSummary(block)}
+                        {formatBlockSummary(block, allureZones)}
                         <span className="text-gray-400 font-normal ml-2">({blockDur})</span>
                       </p>
                       {pace && (

@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
-  calculateBlockPace, formatBlockSummary, estimateBlockEffortSeconds, formatSeconds,
+  calculateBlockPace, formatBlockSummary, estimateBlockEffortSeconds, formatSeconds, getAllureZones,
 } from '../lib/calculations';
 import type { SessionBlock, AllureZone, BlockType, Session, ObjectiveReached, Sensations } from '../types';
 
@@ -49,7 +49,7 @@ function DurationInput({ value, onChange, label }: { value: number; onChange: (v
 }
 
 const BlockCard = memo(function BlockCard({
-  block, index, total, onUpdate, onDelete, onMove, previewVma,
+  block, index, total, onUpdate, onDelete, onMove, previewVma, zones,
 }: {
   block: SessionBlock;
   index: number;
@@ -58,12 +58,13 @@ const BlockCard = memo(function BlockCard({
   onDelete: () => void;
   onMove: (dir: -1 | 1) => void;
   previewVma: number | null;
+  zones?: Record<string, import('../types').AllureZoneConfig>;
 }) {
-  const zone = ALLURE_ZONES[block.allure];
-  const pace = previewVma ? calculateBlockPace(previewVma, block.allure) : null;
+  const zone = (zones || ALLURE_ZONES)[block.allure] || ALLURE_ZONES[block.allure];
+  const pace = previewVma ? calculateBlockPace(previewVma, block.allure, zones) : null;
   const isDistance = block.distance_meters !== null && block.distance_meters !== undefined;
   const isRestDistance = block.rest_distance_meters !== null && block.rest_distance_meters !== undefined && block.rest_distance_meters > 0;
-  const estimatedTime = isDistance && previewVma ? formatSeconds(estimateBlockEffortSeconds(block, previewVma)) : null;
+  const estimatedTime = isDistance && previewVma ? formatSeconds(estimateBlockEffortSeconds(block, previewVma, zones)) : null;
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 space-y-2">
@@ -142,7 +143,7 @@ const BlockCard = memo(function BlockCard({
 
       <div className="flex items-center justify-between pt-1 border-t border-gray-50">
         <span className="text-xs text-gray-500">
-          {formatBlockSummary(block)}
+          {formatBlockSummary(block, zones)}
           {estimatedTime && <span className="text-gray-400 ml-1">(~{estimatedTime}/rep)</span>}
         </span>
         {pace && (
@@ -176,7 +177,8 @@ function getActivityFromSession(s: Session): ActivityType {
 
 export default function PersonalSessionForm({ onClose, editSession }: Props) {
   const { user } = useAuth();
-  const { addSession, updateSession, validateSession } = useData();
+  const { addSession, updateSession, validateSession, clubSettings } = useData();
+  const allureZones = getAllureZones(clubSettings?.allure_zones);
 
   const editActivity = editSession ? getActivityFromSession(editSession) : null;
 
@@ -366,6 +368,7 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
               onDelete={() => deleteBlock(block.id)}
               onMove={dir => moveBlock(block.id, dir)}
               previewVma={previewVma}
+              zones={allureZones}
             />
           ))}
           <button onClick={addBlock}

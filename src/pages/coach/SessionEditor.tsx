@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
-  calculateBlockPace, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, estimateBlockEffortSeconds, getSessionCode,
+  calculateBlockPace, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, estimateBlockEffortSeconds, getSessionCode, getAllureZones,
 } from '../../lib/calculations';
 import type { SessionBlock, AllureZone, BlockType, SessionType, TerrainOption } from '../../types';
 
@@ -75,7 +75,7 @@ function DurationInput({ value, onChange, label }: { value: number; onChange: (v
 }
 
 const BlockCard = memo(function BlockCard({
-  block, index, total, onUpdate, onDelete, onMove, previewVma,
+  block, index, total, onUpdate, onDelete, onMove, previewVma, zones,
 }: {
   block: SessionBlock;
   index: number;
@@ -84,12 +84,13 @@ const BlockCard = memo(function BlockCard({
   onDelete: () => void;
   onMove: (dir: -1 | 1) => void;
   previewVma: number | null;
+  zones?: Record<string, import('../../types').AllureZoneConfig>;
 }) {
-  const zone = ALLURE_ZONES[block.allure];
-  const pace = previewVma ? calculateBlockPace(previewVma, block.allure) : null;
+  const zone = (zones || ALLURE_ZONES)[block.allure] || ALLURE_ZONES[block.allure];
+  const pace = previewVma ? calculateBlockPace(previewVma, block.allure, zones) : null;
   const isDistance = block.distance_meters !== null && block.distance_meters !== undefined;
   const isRestDistance = block.rest_distance_meters !== null && block.rest_distance_meters !== undefined && block.rest_distance_meters > 0;
-  const estimatedTime = isDistance && previewVma ? formatSeconds(estimateBlockEffortSeconds(block, previewVma)) : null;
+  const estimatedTime = isDistance && previewVma ? formatSeconds(estimateBlockEffortSeconds(block, previewVma, zones)) : null;
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 space-y-2">
@@ -213,7 +214,7 @@ const BlockCard = memo(function BlockCard({
       {/* Summary + preview */}
       <div className="flex items-center justify-between pt-1 border-t border-gray-50">
         <span className="text-xs text-gray-500">
-          {formatBlockSummary(block)}
+          {formatBlockSummary(block, zones)}
           {estimatedTime && <span className="text-gray-400 ml-1">(~{estimatedTime}/rep)</span>}
         </span>
         {pace && (
@@ -228,7 +229,8 @@ const BlockCard = memo(function BlockCard({
 
 export default function SessionEditor() {
   const { user } = useAuth();
-  const { sessions, groups, users, preparations, addSession, updateSession, deleteSession } = useData();
+  const { sessions, groups, users, preparations, addSession, updateSession, deleteSession, clubSettings } = useData();
+  const allureZones = getAllureZones(clubSettings?.allure_zones);
   const [weekOffset, setWeekOffset] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
@@ -367,7 +369,7 @@ export default function SessionEditor() {
   };
 
   const hasDistanceBlocks = blocks.some(b => b.distance_meters);
-  const totalSeconds = calculateSessionTotalSeconds(blocks, previewUser?.vma || undefined);
+  const totalSeconds = calculateSessionTotalSeconds(blocks, previewUser?.vma || undefined, allureZones);
 
   return (
     <div className="py-4">
@@ -498,6 +500,7 @@ export default function SessionEditor() {
                       onDelete={() => deleteBlock(idx)}
                       onMove={dir => moveBlock(idx, dir)}
                       previewVma={previewUser?.vma || null}
+                      zones={allureZones}
                     />
                     {idx < blocks.length - 1 && (
                       <button
@@ -603,10 +606,10 @@ export default function SessionEditor() {
                     {session.blocks.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {session.blocks.map(b => {
-                          const z = ALLURE_ZONES[b.allure];
+                          const z = allureZones[b.allure] || ALLURE_ZONES[b.allure];
                           return (
                             <span key={b.id} className="text-xs px-1.5 py-0.5 rounded font-medium text-white" style={{ backgroundColor: z.color }}>
-                              {formatBlockSummary(b)}
+                              {formatBlockSummary(b, allureZones)}
                             </span>
                           );
                         })}
