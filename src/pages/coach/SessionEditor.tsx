@@ -579,36 +579,36 @@ export default function SessionEditor() {
       {weekSessions.length === 0 ? (
         <p className="text-center text-gray-400 py-8">Aucune seance cette semaine</p>
       ) : (
-        <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+        <div className="space-y-3 max-w-3xl mx-auto">
           {weekSessions.map(session => {
             const group = groups.find(g => g.id === session.group_id);
             const prep = preparations.find(p => p.id === session.preparation_id);
+            const borderColor = prep ? 'border-l-amber-400' : session.group_id ? 'border-l-blue-400' : 'border-l-gray-300';
             return (
-              <div key={session.id} className={`rounded-xl border border-gray-100 p-4 ${prep ? 'bg-amber-50' : session.group_id ? 'bg-blue-50' : 'bg-white'}`}>
-                <div className="flex items-start justify-between">
+              <div key={session.id} className={`rounded-xl border border-gray-100 bg-white p-4 border-l-4 ${borderColor} shadow-sm hover:shadow-md transition-shadow`}>
+                <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-medium ${prep ? 'text-amber-600' : 'text-gray-500'}`}>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${prep ? 'bg-amber-100 text-amber-700' : session.group_id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
                         {prep?.name || group?.name || 'Tous'}
                       </span>
+                      <h3 className="font-semibold text-gray-900">
+                        {session.title}
+                        <span className="text-xs font-normal text-gray-400 ml-1.5">{getSessionCode(session, sessions)}</span>
+                      </h3>
                     </div>
-                    <h3 className="font-semibold text-gray-900">
-                      {session.title}
-                      <span className="text-xs font-normal text-gray-400 ml-1.5">{getSessionCode(session, sessions)}</span>
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {format(new Date(session.date), 'EEEE d MMM - HH:mm', { locale: fr })}
-                    </p>
-                    {session.location && (
-                      <p className="text-sm text-gray-400 mt-0.5">{session.location}</p>
-                    )}
-                    {/* Compact block summary */}
+                    <div className="flex items-center gap-4 mt-1.5 text-sm text-gray-500">
+                      <span>{format(new Date(session.date), 'EEEE d MMM - HH:mm', { locale: fr })}</span>
+                      {session.location && (
+                        <span className="text-gray-400">{session.location}</span>
+                      )}
+                    </div>
                     {session.blocks.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
+                      <div className="flex flex-wrap gap-1.5 mt-2.5">
                         {session.blocks.map(b => {
                           const z = allureZones[b.allure] || ALLURE_ZONES[b.allure];
                           return (
-                            <span key={b.id} className="text-xs px-1.5 py-0.5 rounded font-medium text-white" style={{ backgroundColor: z.color }}>
+                            <span key={b.id} className="text-xs px-2 py-0.5 rounded-full font-medium text-white" style={{ backgroundColor: z.color }}>
                               {formatBlockSummary(b, allureZones)}
                             </span>
                           );
@@ -616,10 +616,10 @@ export default function SessionEditor() {
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col gap-1 flex-shrink-0">
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
                     <button
                       onClick={() => loadSessionIntoForm(session, true)}
-                      className="p-1.5 text-gray-300 hover:text-primary transition-colors"
+                      className="p-2 text-gray-300 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors"
                       title="Modifier"
                     >
                       <Pencil size={16} />
@@ -630,32 +630,32 @@ export default function SessionEditor() {
                         setDuplicatedId(session.id);
                         setTimeout(() => setDuplicatedId(null), 2000);
                       }}
-                      className={`p-1.5 transition-colors ${duplicatedId === session.id ? 'text-accent' : 'text-gray-300 hover:text-accent'}`}
+                      className={`p-2 rounded-lg transition-colors ${duplicatedId === session.id ? 'text-accent bg-accent/10' : 'text-gray-300 hover:text-accent hover:bg-gray-50'}`}
                       title="Dupliquer"
                     >
                       <Copy size={16} />
                     </button>
                     <button
                       onClick={() => setConfirmDeleteId(session.id)}
-                      className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                      className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       title="Supprimer"
                     >
                       <Trash2 size={16} />
                     </button>
                   </div>
-                  {duplicatedId === session.id && (
-                    <p className="text-xs text-accent mt-1">Seance copiee dans le formulaire ci-dessus</p>
-                  )}
-                  {confirmDeleteId === session.id && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
-                      <p className="text-sm text-red-700 mb-2">Supprimer la seance "{session.title}" ?</p>
-                      <div className="flex gap-2">
-                        <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-600">Annuler</button>
-                        <button onClick={() => { deleteSession(session.id); setConfirmDeleteId(null); }} className="flex-1 py-1.5 text-sm bg-red-500 text-white rounded-lg font-medium">Supprimer</button>
-                      </div>
-                    </div>
-                  )}
                 </div>
+                {duplicatedId === session.id && (
+                  <p className="text-xs text-accent mt-2">Seance copiee dans le formulaire ci-dessus</p>
+                )}
+                {confirmDeleteId === session.id && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-red-700 mb-2">Supprimer la seance "{session.title}" ?</p>
+                    <div className="flex gap-2">
+                      <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">Annuler</button>
+                      <button onClick={() => { deleteSession(session.id); setConfirmDeleteId(null); }} className="flex-1 py-1.5 text-sm bg-red-500 text-white rounded-lg font-medium hover:bg-red-600">Supprimer</button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
