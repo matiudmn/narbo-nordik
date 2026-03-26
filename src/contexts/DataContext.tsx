@@ -74,9 +74,9 @@ const DEFAULT_NOTIF_PREFS: NotificationPreferences = {
 function normalizeUser(u: Record<string, unknown>): User {
   return {
     ...u,
-    vma_history: (u.vma_history as User['vma_history']) || [],
-    photo_url: (u.photo_url as string) || null,
-    notification_preferences: (u.notification_preferences as NotificationPreferences) || DEFAULT_NOTIF_PREFS,
+    vma_history: (u.vma_history as User['vma_history']) ?? [],
+    photo_url: (u.photo_url as string) ?? null,
+    notification_preferences: (u.notification_preferences as NotificationPreferences) ?? DEFAULT_NOTIF_PREFS,
   } as User;
 }
 
@@ -115,10 +115,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (u.data) setUsers(u.data.map(normalizeUser));
     if (p.data) setPreparations(p.data);
     if (up.data) setUserPreparations(up.data);
-    try {
-      const cs = await supabase.from('club_settings').select('*').limit(1).single();
-      if (cs.data) setClubSettings(cs.data as ClubSettings);
-    } catch { /* table may not exist yet */ }
+    const cs = await supabase.from('club_settings').select('*').limit(1).maybeSingle();
+    if (cs.data) setClubSettings(cs.data as ClubSettings);
+    else if (cs.error && cs.error.code !== 'PGRST116') console.error('club_settings fetch error:', cs.error.message);
   }, []);
 
   const refreshAll = useCallback(async () => {
@@ -226,7 +225,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateValidation = useCallback(async (validationId: string, updates: { feedback?: string; objective_reached?: ObjectiveReached | null; sensations?: Sensations | null }, file?: File) => {
-    const existing = validations.find(v => v.id === validationId);
+    const { data: existing } = await supabase.from('session_validations').select('*').eq('id', validationId).single();
     if (!existing) return;
 
     let attachmentPath = existing.attachment_path;
@@ -258,7 +257,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!error && data) {
       setValidations(prev => prev.map(v => v.id === validationId ? data : v));
     }
-  }, [validations]);
+  }, []);
 
   // --- Race Results ---
 
@@ -347,7 +346,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // --- Nordiks ---
 
   const toggleNordik = useCallback(async (raceId: string, userId: string) => {
-    const existing = raceNordiks.find(n => n.race_id === raceId && n.user_id === userId);
+    const { data: existing } = await supabase.from('race_nordiks').select('*').eq('race_id', raceId).eq('user_id', userId).maybeSingle();
     if (existing) {
       const { error } = await supabase.from('race_nordiks').delete().eq('id', existing.id);
       if (!error) setRaceNordiks(prev => prev.filter(n => n.id !== existing.id));
@@ -355,10 +354,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase.from('race_nordiks').insert({ race_id: raceId, user_id: userId }).select().single();
       if (!error && data) setRaceNordiks(prev => [...prev, data]);
     }
-  }, [raceNordiks]);
+  }, []);
 
   const toggleSessionNordik = useCallback(async (sessionId: string, userId: string) => {
-    const existing = sessionNordiks.find(n => n.session_id === sessionId && n.user_id === userId);
+    const { data: existing } = await supabase.from('session_nordiks').select('*').eq('session_id', sessionId).eq('user_id', userId).maybeSingle();
     if (existing) {
       const { error } = await supabase.from('session_nordiks').delete().eq('id', existing.id);
       if (!error) setSessionNordiks(prev => prev.filter(n => n.id !== existing.id));
@@ -366,20 +365,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase.from('session_nordiks').insert({ session_id: sessionId, user_id: userId }).select().single();
       if (!error && data) {
         setSessionNordiks(prev => [...prev, data]);
-        // Send in-app notification to the session creator
-        const session = sessions.find(s => s.id === sessionId);
-        const coach = users.find(u => u.id === userId);
-        if (session && coach && session.created_by !== userId) {
-          await supabase.from('notifications').insert({
+        const [{ data: session }, { data: actor }] = await Promise.all([
+          supabase.from('sessions').select('created_by, title').eq('id', sessionId).single(),
+          supabase.from('users').select('firstname').eq('id', userId).single(),
+        ]);
+        if (session && actor && session.created_by !== userId) {
+          const { error: notifError } = await supabase.from('notifications').insert({
             user_id: session.created_by,
             type: 'system',
             title: 'Nordik !',
-            body: `${coach.firstname} a aime ta seance "${session.title}"`,
+            body: `${actor.firstname} a aime ta seance "${session.title}"`,
           });
+          if (notifError) console.error('Notification error:', notifError.message);
         }
       }
     }
-  }, [sessionNordiks, sessions, users]);
+  }, []);
 
   // --- Users ---
 

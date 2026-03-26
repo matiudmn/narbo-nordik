@@ -6,7 +6,7 @@ import { MapPin, ChevronLeft, ChevronRight, Check, Clock, AlertCircle, TrendingU
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { useStrava } from '../hooks/useStrava';
-import { ALLURE_ZONES, formatBlockSummary, getRacePaces, calculateRacePace, getVmaLevelIndex, VMA_LEVELS, getSessionCode, getAllureZones } from '../lib/calculations';
+import { formatBlockSummary, getRacePaces, calculateRacePace, getVmaLevelIndex, VMA_LEVELS, getSessionCode, getAllureZones } from '../lib/calculations';
 import { getSeasonRange } from '../lib/date-utils';
 import { PageSkeleton } from '../components/Skeleton';
 
@@ -526,7 +526,7 @@ export default function Home() {
                     {session.blocks.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {session.blocks.map(b => {
-                          const z = allureZones[b.allure] || ALLURE_ZONES[b.allure];
+                          const z = allureZones[b.allure];
                           return (
                             <span key={b.id} className="text-[10px] px-1.5 py-0.5 rounded font-medium text-white" style={{ backgroundColor: z.color }}>
                               {formatBlockSummary(b, allureZones)}

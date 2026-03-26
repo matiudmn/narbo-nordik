@@ -113,6 +113,7 @@ export default function SessionDetail() {
       return;
     }
     setAttachedFile(file);
+    if (filePreview) URL.revokeObjectURL(filePreview);
     if (file.type.startsWith('image/')) {
       setFilePreview(URL.createObjectURL(file));
     } else {
