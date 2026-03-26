@@ -46,9 +46,11 @@ export default function Home() {
     const mEnd = endOfMonth(now);
     const { start: sStart, end: sEnd } = getSeasonRange();
 
+    const hasPrep = userPrepIds.length > 0;
     const userSessions = sessions.filter(s => {
       if (s.is_personal) return s.created_by === user.id;
       if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
+      if (hasPrep) return false;
       if (!s.group_id) return true;
       return s.group_id === user.group_id;
     });

@@ -64,9 +64,11 @@ export default function AthleteDetail() {
     const mEnd = endOfMonth(now);
     const { start: sStart, end: sEnd } = getSeasonRange();
 
+    const hasPrep = userPrepIds.length > 0;
     const memberSessions = sessions.filter(s => {
       if (s.is_personal) return s.created_by === member.id;
       if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
+      if (hasPrep) return false;
       if (!s.group_id) return true;
       return s.group_id === member.group_id;
     });

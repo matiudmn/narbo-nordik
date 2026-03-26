@@ -50,10 +50,19 @@ export default function AthletesTab() {
   }, [users, debouncedSearch, isSuperAdmin]);
 
   const getAttendanceRate = (userId: string) => {
-    const totalSessions = sessions.length;
-    if (totalSessions === 0) return 0;
-    const done = validations.filter(v => v.user_id === userId && v.status === 'done').length;
-    return Math.round((done / totalSessions) * 100);
+    const prepIds = userPreparations.filter(up => up.user_id === userId).map(up => up.preparation_id);
+    const hasPrep = prepIds.length > 0;
+    const user = users.find(u => u.id === userId);
+    const eligible = sessions.filter(s => {
+      if (s.is_personal) return s.created_by === userId;
+      if (s.preparation_id) return prepIds.includes(s.preparation_id);
+      if (hasPrep) return false;
+      if (!s.group_id) return true;
+      return s.group_id === user?.group_id;
+    });
+    if (eligible.length === 0) return 0;
+    const done = validations.filter(v => v.user_id === userId && v.status === 'done' && eligible.some(s => s.id === v.session_id)).length;
+    return Math.round((done / eligible.length) * 100);
   };
 
   const handleVmaEdit = (userId: string) => {
