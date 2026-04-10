@@ -19,8 +19,9 @@ serve(async () => {
     // Fetch sessions from last week
     const { data: sessions } = await supabase
       .from('sessions')
-      .select('id, title, date')
+      .select('id, title, date, group_id, preparation_id, is_personal, created_by')
       .gte('date', weekAgoISO)
+      .lt('date', now.toISOString())
       .order('date', { ascending: true });
 
     // Fetch race results from last week
@@ -32,13 +33,12 @@ serve(async () => {
 
     // Fetch upcoming sessions (next 7 days)
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const todayISO = now.toISOString().split('T')[0];
-    const nextWeekISO = nextWeek.toISOString().split('T')[0];
+    const nextWeekISO = nextWeek.toISOString();
 
     const { data: upcoming } = await supabase
       .from('sessions')
-      .select('id, title, date')
-      .gte('date', todayISO)
+      .select('id, title, date, group_id, preparation_id, is_personal, created_by')
+      .gte('date', now.toISOString())
       .lte('date', nextWeekISO)
       .order('date', { ascending: true });
 
@@ -50,11 +50,23 @@ serve(async () => {
     // Fetch all users with weekly_digest email enabled
     const { data: users } = await supabase
       .from('users')
-      .select('id, email, firstname, notification_preferences')
+      .select('id, email, firstname, group_id, notification_preferences')
       .eq('role', 'athlete');
 
     if (!users || users.length === 0) {
       return new Response(JSON.stringify({ sent: 0, reason: 'no users' }), { status: 200 });
+    }
+
+    // Fetch all user_preparations to filter sessions per athlete
+    const { data: userPreps } = await supabase
+      .from('user_preparations')
+      .select('user_id, preparation_id');
+
+    const prepsByUser = new Map<string, string[]>();
+    for (const up of userPreps || []) {
+      const arr = prepsByUser.get(up.user_id) || [];
+      arr.push(up.preparation_id);
+      prepsByUser.set(up.user_id, arr);
     }
 
     // Fetch user names for race results
@@ -66,23 +78,12 @@ serve(async () => {
 
     const userMap = new Map((raceUsers || []).map(u => [u.id, u]));
 
-    // Fetch validations for participation stats
+    // Fetch validations for participation stats (per user)
     const sessionIds = (sessions || []).map(s => s.id);
     const { data: validations } = await supabase
       .from('session_validations')
-      .select('session_id, status')
+      .select('session_id, user_id, status')
       .in('session_id', sessionIds.length > 0 ? sessionIds : ['_none_']);
-
-    const doneCount = (validations || []).filter(v => v.status === 'done').length;
-
-    // Build digest content
-    const sessionsHtml = (sessions && sessions.length > 0)
-      ? `<h3 style="margin:16px 0 8px;color:#111827;font-size:15px;">Seances de la semaine</h3>
-         <ul style="margin:0;padding:0 0 0 16px;color:#4b5563;font-size:14px;line-height:1.8;">
-           ${sessions.map(s => `<li><strong>${s.title}</strong> — ${formatDate(s.date)}</li>`).join('')}
-         </ul>
-         <p style="margin:8px 0 0;color:#6b7280;font-size:13px;">${doneCount} validation${doneCount > 1 ? 's' : ''} enregistree${doneCount > 1 ? 's' : ''}</p>`
-      : '';
 
     const racesHtml = (races && races.length > 0)
       ? `<h3 style="margin:16px 0 8px;color:#111827;font-size:15px;">Courses de la semaine</h3>
@@ -95,14 +96,19 @@ serve(async () => {
          </ul>`
       : '';
 
-    const upcomingHtml = (upcoming && upcoming.length > 0)
-      ? `<h3 style="margin:16px 0 8px;color:#111827;font-size:15px;">A venir cette semaine</h3>
-         <ul style="margin:0;padding:0 0 0 16px;color:#4b5563;font-size:14px;line-height:1.8;">
-           ${upcoming.map(s => `<li><strong>${s.title}</strong> — ${formatDate(s.date)}</li>`).join('')}
-         </ul>`
-      : '';
-
     const subject = `Digest Narbo Nordik — Semaine du ${formatDate(weekAgoISO)}`;
+
+    const filterForUser = (list: typeof sessions, userId: string, groupId: string | null) => {
+      const userPrepIds = prepsByUser.get(userId) || [];
+      const hasPrep = userPrepIds.length > 0;
+      return (list || []).filter(s => {
+        if (s.is_personal) return s.created_by === userId;
+        if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
+        if (hasPrep) return false;
+        if (!s.group_id) return true;
+        return s.group_id === groupId;
+      });
+    };
 
     let sentCount = 0;
 
@@ -111,6 +117,31 @@ serve(async () => {
       const prefs = user.notification_preferences || {};
       if (prefs.weekly_digest?.email === false) continue;
       if (!user.email) continue;
+
+      const userSessions = filterForUser(sessions, user.id, user.group_id);
+      const userUpcoming = filterForUser(upcoming, user.id, user.group_id);
+      const userSessionIds = new Set(userSessions.map(s => s.id));
+      const userDoneCount = (validations || []).filter(
+        v => v.user_id === user.id && v.status === 'done' && userSessionIds.has(v.session_id)
+      ).length;
+
+      // Skip users with nothing to report
+      if (userSessions.length === 0 && userUpcoming.length === 0 && (!races || races.length === 0)) continue;
+
+      const sessionsHtml = userSessions.length > 0
+        ? `<h3 style="margin:16px 0 8px;color:#111827;font-size:15px;">Séances de la semaine</h3>
+           <ul style="margin:0;padding:0 0 0 16px;color:#4b5563;font-size:14px;line-height:1.8;">
+             ${userSessions.map(s => `<li><strong>${s.title}</strong> — ${formatDate(s.date)}</li>`).join('')}
+           </ul>
+           <p style="margin:8px 0 0;color:#6b7280;font-size:13px;">${userDoneCount} séance${userDoneCount > 1 ? 's' : ''} validée${userDoneCount > 1 ? 's' : ''}</p>`
+        : '';
+
+      const upcomingHtml = userUpcoming.length > 0
+        ? `<h3 style="margin:16px 0 8px;color:#111827;font-size:15px;">À venir cette semaine</h3>
+           <ul style="margin:0;padding:0 0 0 16px;color:#4b5563;font-size:14px;line-height:1.8;">
+             ${userUpcoming.map(s => `<li><strong>${s.title}</strong> — ${formatDate(s.date)}</li>`).join('')}
+           </ul>`
+        : '';
 
       const html = buildDigestHtml(user.firstname, sessionsHtml, racesHtml, upcomingHtml);
 
@@ -141,9 +172,10 @@ serve(async () => {
 });
 
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
   const days = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
-  const months = ['jan.', 'fev.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'aout', 'sept.', 'oct.', 'nov.', 'dec.'];
+  const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
   return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
 }
 
@@ -169,7 +201,7 @@ function buildDigestHtml(firstname: string, sessionsHtml: string, racesHtml: str
     </div>
     <div style="padding:24px;">
       <p style="margin:0 0 16px;color:#374151;font-size:15px;">Salut ${firstname},</p>
-      <p style="margin:0 0 8px;color:#4b5563;font-size:14px;">Voici le resume de la semaine au club.</p>
+      <p style="margin:0 0 8px;color:#4b5563;font-size:14px;">Voici le résumé de ta semaine au club.</p>
       ${sessionsHtml}
       ${racesHtml}
       ${upcomingHtml}
