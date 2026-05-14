@@ -2,23 +2,38 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isWithinInterval, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Activity, Mountain, Timer } from 'lucide-react';
+import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Activity, Mountain, Timer, Check } from 'lucide-react';
 import { Calendar } from 'lucide-react';
-import { StatusBadge, EmptyState, Button } from '../components/ui';
+import { StatusBadge, EmptyState, Button, useToast } from '../components/ui';
 import { StravaWordmark, PoweredByStrava } from '../components/strava';
+import { QuickSurveySheet } from '../components/athlete/QuickSurveySheet';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { useStrava } from '../hooks/useStrava';
 import { formatBlockSummary, getRacePaces, calculateRacePace, getVmaLevelIndex, VMA_LEVELS, getSessionCode, getAllureZones } from '../lib/calculations';
 import { getSeasonRange } from '../lib/date-utils';
 import { PageSkeleton } from '../components/Skeleton';
+import { celebrate, haptic } from '../lib/motion';
+import type { ObjectiveReached, Sensations } from '../types';
 
 export default function Home() {
   const { user } = useAuth();
-  const { sessions, validations, groups, preparations, userPreparations, clubSettings, loading } = useData();
+  const { sessions, validations, groups, preparations, userPreparations, clubSettings, loading, validateSession, updateValidation } = useData();
+  const toast = useToast();
   const racePaces = getRacePaces(clubSettings?.race_paces);
   const allureZones = getAllureZones(clubSettings?.allure_zones);
   const [weekOffset, setWeekOffset] = useState(0);
+
+  // Quick-validate state
+  const [surveySheet, setSurveySheet] = useState<{
+    sessionId: string;
+    validationId: string;
+    title: string;
+    objective: ObjectiveReached | null;
+    sensations: Sensations | null;
+  } | null>(null);
+  const [quickValidatingId, setQuickValidatingId] = useState<string | null>(null);
+  const [savingSurvey, setSavingSurvey] = useState(false);
 
   const isCoach = user?.role === 'coach';
   const strava = useStrava();
@@ -157,6 +172,48 @@ export default function Home() {
     setPrepComments('');
     setPrepCopied(false);
     setShowPrepRequest(false);
+  };
+
+  // Validation 1-tap depuis la carte de séance Home
+  const handleQuickValidate = async (sessionId: string, sessionTitle: string) => {
+    if (!user) return;
+    setQuickValidatingId(sessionId);
+    haptic('success');
+    const result = await validateSession(sessionId, user.id, 'done');
+    setQuickValidatingId(null);
+    if ('error' in result) {
+      toast.error("Impossible d'enregistrer la validation. Réessaie.");
+      return;
+    }
+    toast.success('Séance dans la boîte 💪');
+    celebrate('subtle');
+    // Mini-sondage différé 2s (laisse l'utilisateur voir le toast)
+    window.setTimeout(() => {
+      setSurveySheet({
+        sessionId,
+        validationId: result.id,
+        title: sessionTitle,
+        objective: null,
+        sensations: null,
+      });
+    }, 1800);
+  };
+
+  const handleSaveSurvey = async () => {
+    if (!surveySheet) return;
+    setSavingSurvey(true);
+    try {
+      await updateValidation(surveySheet.validationId, {
+        objective_reached: surveySheet.objective,
+        sensations: surveySheet.sensations,
+      });
+      toast.success('Ressenti enregistré, merci !');
+      setSurveySheet(null);
+    } catch {
+      toast.error("Impossible d'enregistrer ton ressenti.");
+    } finally {
+      setSavingSurvey(false);
+    }
   };
 
   return (
@@ -542,11 +599,29 @@ export default function Home() {
                     {session.blocks.length === 0 && session.target_distance && session.vma_percent_min && (
                       <div className="mt-3 bg-primary/5 rounded-lg px-3 py-2 text-sm">
                         <span className="text-primary font-medium">{session.target_distance}m</span>
-                        <span className="text-gray-400 mx-1">a</span>
+                        <span className="text-gray-400 mx-1">à</span>
                         <span className="text-primary font-medium">
                           {session.vma_percent_min}-{session.vma_percent_max}% VMA
                         </span>
                       </div>
+                    )}
+
+                    {/* Quick-validate 1-tap : visible quand séance passée et non validée */}
+                    {sessionPast && !validation && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleQuickValidate(session.id, session.title);
+                        }}
+                        disabled={quickValidatingId === session.id}
+                        aria-label={`J'ai fait la séance ${session.title}`}
+                        className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-light transition-colors disabled:opacity-60"
+                      >
+                        <Check size={16} aria-hidden="true" />
+                        {quickValidatingId === session.id ? 'Validation…' : "J'ai fait ma séance"}
+                      </button>
                     )}
                   </div>
                 </Link>
@@ -555,6 +630,19 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* QuickSurveySheet — déclenchée 1.8s après une validation 1-tap */}
+      <QuickSurveySheet
+        open={surveySheet !== null}
+        sessionTitle={surveySheet?.title ?? ''}
+        objective={surveySheet?.objective ?? null}
+        sensations={surveySheet?.sensations ?? null}
+        onObjectiveChange={(v) => setSurveySheet((s) => (s ? { ...s, objective: v } : s))}
+        onSensationsChange={(v) => setSurveySheet((s) => (s ? { ...s, sensations: v } : s))}
+        onSave={handleSaveSurvey}
+        onClose={() => setSurveySheet(null)}
+        loading={savingSurvey}
+      />
     </div>
   );
 }

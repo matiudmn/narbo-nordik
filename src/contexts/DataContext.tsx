@@ -22,7 +22,7 @@ interface DataContextType {
   addSession: (session: Omit<Session, 'id' | 'created_at'>) => Promise<{ id: string } | { error: string }>;
   updateSession: (id: string, updates: Partial<Session>) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
-  validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File, objectiveReached?: ObjectiveReached, sensations?: Sensations) => Promise<void>;
+  validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File, objectiveReached?: ObjectiveReached, sensations?: Sensations) => Promise<{ id: string } | { error: string }>;
   updateValidation: (validationId: string, updates: { feedback?: string; objective_reached?: ObjectiveReached | null; sensations?: Sensations | null }, file?: File) => Promise<void>;
   addRaceResult: (result: Omit<RaceResult, 'id' | 'created_at'>) => Promise<void>;
   updateRaceResult: (id: string, updates: Partial<Omit<RaceResult, 'id' | 'created_at'>>) => Promise<void>;
@@ -188,7 +188,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         .upload(filePath, file, { cacheControl: '3600', upsert: false });
       if (uploadError) {
         console.error('Upload error:', uploadError.message);
-        return;
+        return { error: uploadError.message };
       }
       attachmentPath = filePath;
       attachmentType = file.type;
@@ -211,17 +211,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
       { onConflict: 'session_id,user_id' }
     ).select().single();
 
-    if (!error && data) {
-      setValidations(prev => {
-        const idx = prev.findIndex(v => v.session_id === sessionId && v.user_id === userId);
-        if (idx >= 0) {
-          const next = [...prev];
-          next[idx] = data;
-          return next;
-        }
-        return [...prev, data];
-      });
+    if (error || !data) {
+      console.error('Validation error:', error?.message);
+      return { error: error?.message ?? 'Unknown error' };
     }
+
+    setValidations(prev => {
+      const idx = prev.findIndex(v => v.session_id === sessionId && v.user_id === userId);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = data;
+        return next;
+      }
+      return [...prev, data];
+    });
+    return { id: data.id };
   }, []);
 
   const updateValidation = useCallback(async (validationId: string, updates: { feedback?: string; objective_reached?: ObjectiveReached | null; sensations?: Sensations | null }, file?: File) => {
