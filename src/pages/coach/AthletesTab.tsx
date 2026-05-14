@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Check, X, Search, Share2, Copy, Loader2, Eye, UserPlus } from 'lucide-react';
+import { Plus, Trash2, Check, X, Search, Share2, Copy, Eye, UserPlus } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
+import { Button } from '../../components/ui';
 import type { Role } from '../../types';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 
@@ -145,13 +146,14 @@ export default function AthletesTab() {
     <div className="space-y-3">
       {/* Add button */}
       <div className="flex justify-end">
-        <button
+        <Button
+          variant="accent"
+          size="sm"
+          leftIcon={showAdd ? <X size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
           onClick={() => setShowAdd(!showAdd)}
-          className="flex items-center gap-1 bg-accent text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-accent-light transition-colors"
         >
-          {showAdd ? <X size={16} /> : <Plus size={16} />}
-          {showAdd ? 'Fermer' : 'Ajouter'}
-        </button>
+          {showAdd ? 'Fermer' : 'Ajouter un athlète'}
+        </Button>
       </div>
 
       {/* Add form */}
@@ -189,15 +191,16 @@ export default function AthletesTab() {
               className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
-          {addError && <p className="text-red-500 text-sm">{addError}</p>}
-          <button
+          {addError && <p className="text-danger text-sm">{addError}</p>}
+          <Button
+            variant="primary"
+            fullWidth
+            loading={addingAthlete}
+            disabled={!newFirstname || !newLastname || !newEmail}
             onClick={handleAddAthlete}
-            disabled={!newFirstname || !newLastname || !newEmail || addingAthlete}
-            className="w-full bg-primary text-white font-semibold py-2.5 rounded-lg disabled:opacity-40 flex items-center justify-center gap-2"
           >
-            {addingAthlete && <Loader2 size={16} className="animate-spin" />}
-            {addingAthlete ? 'Creation en cours...' : 'Ajouter l\'athlete'}
-          </button>
+            {addingAthlete ? 'Création du compte…' : "Ajouter l'athlète"}
+          </Button>
         </div>
       )}
 
@@ -377,7 +380,7 @@ export default function AthletesTab() {
                   )}
                 </div>
                 <div className="flex-1 flex items-center gap-2">
-                  <span className="text-xs text-gray-500">Assiduite</span>
+                  <span className="text-xs text-gray-500">Assiduité</span>
                   <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-[80px]">
                     <div
                       className={`h-full rounded-full ${rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-red-400'}`}

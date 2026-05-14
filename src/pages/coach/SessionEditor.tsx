@@ -3,7 +3,7 @@ import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, ChevronUp, ChevronDown, Zap, Clock, Ruler, Pencil, Copy, Calendar } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { EmptyState } from '../../components/ui';
+import { EmptyState, Button } from '../../components/ui';
 import { useData } from '../../contexts/DataContext';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
@@ -552,13 +552,14 @@ export default function SessionEditor() {
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
 
-          <button
-            onClick={handleSubmit}
+          <Button
+            variant="primary"
+            fullWidth
             disabled={!title || !date}
-            className="w-full bg-primary text-white font-semibold py-2.5 rounded-lg disabled:opacity-40 hover:bg-primary-light transition-colors"
+            onClick={handleSubmit}
           >
-            {editingSessionId ? 'Enregistrer les modifications' : 'Publier la seance'}
-          </button>
+            {editingSessionId ? 'Enregistrer les modifications' : 'Publier la séance au club'}
+          </Button>
         </div>
       )}
 

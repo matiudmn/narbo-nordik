@@ -4,7 +4,7 @@ import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isW
 import { fr } from 'date-fns/locale';
 import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Activity, Mountain, Timer } from 'lucide-react';
 import { Calendar } from 'lucide-react';
-import { StatusBadge, EmptyState } from '../components/ui';
+import { StatusBadge, EmptyState, Button } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { useStrava } from '../hooks/useStrava';
@@ -133,7 +133,7 @@ export default function Home() {
   const rateColor = (rate: number) => rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-red-400';
 
   const prepMessage = prepRaceName && prepRaceDate && prepRaceDistance && prepFitness
-    ? `Hello coach !\nJe m'inscris sur ${prepRaceName} qui aura lieu le ${format(new Date(prepRaceDate), 'd MMMM yyyy', { locale: fr })} sur ${prepRaceDistance}.\nMon etat de forme est ${prepFitness.toLowerCase()}.\n${prepComments ? prepComments + '\n' : ''}Pourrais-tu me faire un plan specifique ?\nSi cela est opportun bien sur.\nMerci pour ton retour,\nBises,\n${user.firstname}`
+    ? `Hello coach !\nJe m'inscris sur ${prepRaceName} qui aura lieu le ${format(new Date(prepRaceDate), 'd MMMM yyyy', { locale: fr })} sur ${prepRaceDistance}.\nMon état de forme est ${prepFitness.toLowerCase()}.\n${prepComments ? prepComments + '\n' : ''}Pourrais-tu me faire un plan spécifique ?\nSi cela est opportun bien sûr.\nMerci pour ton retour,\nBises,\n${user.firstname}`
     : '';
 
   const handleCopyPrep = async () => {
@@ -346,15 +346,18 @@ export default function Home() {
 
       </div>{/* end top grid */}
 
-      {/* Demande preparation specifique */}
+      {/* Demande préparation spécifique */}
       {!isCoach && (
-        <button
+        <Button
+          variant="secondary"
+          size="lg"
+          fullWidth
+          leftIcon={<CalendarPlus size={18} aria-hidden="true" />}
           onClick={() => setShowPrepRequest(true)}
-          className="w-full flex items-center justify-center gap-2 bg-white rounded-xl border border-gray-100 p-4 text-primary font-semibold hover:border-primary/30 transition-colors"
+          className="text-primary"
         >
-          <CalendarPlus size={18} />
-          Demander une preparation specifique
-        </button>
+          Préparer ta prochaine course
+        </Button>
       )}
 
       {showPrepRequest && (
@@ -364,7 +367,7 @@ export default function Home() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 pb-3 flex-shrink-0">
-              <h2 id="prep-dialog-title" className="font-bold text-gray-900">Demande de preparation</h2>
+              <h2 id="prep-dialog-title" className="font-bold text-gray-900">Demande de préparation</h2>
               <button onClick={resetPrepForm} className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 rounded-lg transition-colors" aria-label="Fermer">
                 <X size={20} />
               </button>
@@ -389,7 +392,7 @@ export default function Home() {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Etat de forme actuel *</label>
+                <label className="text-xs text-gray-500">État de forme actuel *</label>
                 <div className="flex gap-2 mt-1">
                   {(['Excellent', 'Bon', 'Mauvais'] as const).map(val => (
                     <button key={val} type="button" onClick={() => setPrepFitness(prepFitness === val ? '' : val)}
@@ -408,13 +411,13 @@ export default function Home() {
               <div>
                 <label className="text-xs text-gray-500">Commentaires (facultatif)</label>
                 <textarea value={prepComments} onChange={e => setPrepComments(e.target.value)} rows={2}
-                  placeholder="Informations supplementaires..."
+                  placeholder="Informations supplémentaires…"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
               </div>
 
               {prepMessage && (
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 mb-2 font-medium">Apercu du message :</p>
+                  <p className="text-xs text-gray-500 mb-2 font-medium">Aperçu du message :</p>
                   <p className="text-sm text-gray-700 whitespace-pre-line">{prepMessage}</p>
                 </div>
               )}
@@ -443,7 +446,7 @@ export default function Home() {
             <ChevronLeft size={20} />
           </button>
           <div className="text-center">
-            <h2 className="text-lg font-bold text-gray-900">Mes Seances</h2>
+            <h2 className="text-lg font-bold text-gray-900">Ta semaine d'entraînement</h2>
             <p className="text-sm text-gray-500">
               {format(weekStart, 'd MMM', { locale: fr })} - {format(weekEnd, 'd MMM yyyy', { locale: fr })}
               {weekOffset === 0 && <span className="ml-1 text-accent font-medium">(cette semaine)</span>}

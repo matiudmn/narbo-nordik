@@ -100,7 +100,7 @@ export default function Dashboard() {
             </div>
           </div>
           <p className="text-2xl font-bold text-accent">{stats.sessionsThisWeek}</p>
-          <p className="text-xs text-gray-500 mt-0.5">Seances cette semaine</p>
+          <p className="text-xs text-gray-500 mt-0.5">Séances cette semaine</p>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">

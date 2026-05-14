@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, Trash2, Check, X, UserMinus, Calendar, Target } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
-import { EmptyState } from '../../components/ui';
+import { EmptyState, Button } from '../../components/ui';
 import Avatar from '../../components/Avatar';
 
 export default function PreparationsTab() {
@@ -46,9 +46,16 @@ export default function PreparationsTab() {
     <div className="space-y-4">
       {/* Add button */}
       {!showAdd ? (
-        <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 text-sm font-medium text-primary">
-          <Plus size={16} /> Nouvelle préparation
-        </button>
+        <div className="flex justify-end">
+          <Button
+            variant="accent"
+            size="sm"
+            leftIcon={<Plus size={16} aria-hidden="true" />}
+            onClick={() => setShowAdd(true)}
+          >
+            Nouvelle préparation
+          </Button>
+        </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
           <input
@@ -70,7 +77,7 @@ export default function PreparationsTab() {
           />
           <div className="flex gap-2">
             <button onClick={() => setShowAdd(false)} className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600">Annuler</button>
-            <button onClick={handleAdd} className="flex-1 py-2 bg-accent text-white rounded-lg text-sm font-medium">Creer</button>
+            <button onClick={handleAdd} className="flex-1 py-2 bg-accent text-white rounded-lg text-sm font-medium">Créer</button>
           </div>
         </div>
       )}

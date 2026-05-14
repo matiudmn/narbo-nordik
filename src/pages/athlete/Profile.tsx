@@ -1243,7 +1243,7 @@ export default function Profile() {
         icon={<Lock size={18} className="text-primary" />}
       >
         <div className="space-y-3">
-          <p className="text-sm text-gray-500">Modifier votre mot de passe</p>
+          <p className="text-sm text-gray-500">Modifier ton mot de passe</p>
           <input
             type="password"
             placeholder="Nouveau mot de passe"

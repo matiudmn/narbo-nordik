@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Button } from '../components/ui';
 
 export default function Login() {
   const { login, signup, resetPassword } = useAuth();
@@ -19,14 +19,14 @@ export default function Login() {
     setLoading(true);
     const err = await login(email, password);
     setLoading(false);
-    if (err) setError('Email ou mot de passe incorrect');
+    if (err) setError('Email ou mot de passe incorrect. Réessaie ou réinitialise ton mot de passe.');
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caracteres');
+      setError('Ton mot de passe doit faire au moins 6 caractères.');
       return;
     }
     setLoading(true);
@@ -38,7 +38,7 @@ export default function Login() {
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setError('Entrez votre email');
+      setError('Entre ton email pour recevoir le lien.');
       return;
     }
     setError('');
@@ -58,6 +58,9 @@ export default function Login() {
     setResetSent(false);
   };
 
+  const inputClass =
+    'w-full px-4 py-3 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20';
+
   return (
     <div className="min-h-screen bg-primary flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
@@ -70,124 +73,120 @@ export default function Login() {
         <div className="bg-white rounded-2xl p-6 shadow-xl">
           {mode === 'reset' ? (
             <>
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Mot de passe oublie</h2>
+              <h2 className="text-lg font-bold text-neutral-900 mb-4">Mot de passe oublié</h2>
               {resetSent ? (
                 <div className="text-center py-4">
-                  <p className="text-sm text-green-600 mb-4">
-                    Un email de reinitialisation a ete envoye a {email}
+                  <p className="text-sm text-success-600 mb-4">
+                    Un email de réinitialisation a été envoyé à {email}.
                   </p>
                   <button
                     onClick={() => switchMode('login')}
                     className="text-sm text-primary font-medium"
                   >
-                    Retour a la connexion
+                    Retour à la connexion
                   </button>
                 </div>
               ) : (
                 <form onSubmit={handleReset} className="space-y-3">
-                  <p className="text-sm text-gray-500 mb-2">
-                    Entrez votre email pour recevoir un lien de reinitialisation.
+                  <p className="text-sm text-neutral-500 mb-2">
+                    Entre ton email pour recevoir un lien de réinitialisation.
                   </p>
                   <input
-                    type="email" placeholder="Email"
+                    type="email" placeholder="Email" autoComplete="email"
                     value={email} onChange={e => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className={inputClass}
                   />
-                  {error && <p className="text-red-500 text-sm">{error}</p>}
-                  <button
-                    type="submit" disabled={loading}
-                    className="w-full bg-accent text-white font-semibold py-3 rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {loading && <Loader2 size={16} className="animate-spin" />}
-                    Envoyer
-                  </button>
-                  <button
+                  {error && <p className="text-danger text-sm">{error}</p>}
+                  <Button type="submit" variant="accent" size="lg" fullWidth loading={loading}>
+                    Envoyer le lien
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    fullWidth
                     onClick={() => switchMode('login')}
-                    className="w-full text-sm text-gray-500 hover:text-gray-700"
                   >
                     Retour
-                  </button>
+                  </Button>
                 </form>
               )}
             </>
           ) : mode === 'signup' ? (
             <>
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Creer un compte</h2>
+              <h2 className="text-lg font-bold text-neutral-900 mb-4">Créer mon compte</h2>
               <form onSubmit={handleSignup} className="space-y-3">
                 <div className="flex gap-2">
                   <input
-                    type="text" placeholder="Prenom" required
+                    type="text" placeholder="Prénom" required autoComplete="given-name"
                     value={firstname} onChange={e => setFirstname(e.target.value)}
-                    className="w-1/2 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className={`w-1/2 ${inputClass.replace('w-full ', '')}`}
                   />
                   <input
-                    type="text" placeholder="Nom" required
+                    type="text" placeholder="Nom" required autoComplete="family-name"
                     value={lastname} onChange={e => setLastname(e.target.value)}
-                    className="w-1/2 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className={`w-1/2 ${inputClass.replace('w-full ', '')}`}
                   />
                 </div>
                 <input
-                  type="email" placeholder="Email" required
+                  type="email" placeholder="Email" required autoComplete="email"
                   value={email} onChange={e => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className={inputClass}
                 />
                 <input
-                  type="password" placeholder="Mot de passe (min. 6 car.)" required
+                  type="password" placeholder="Mot de passe (min. 6 car.)" required autoComplete="new-password"
                   value={password} onChange={e => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className={inputClass}
                 />
-                {error && <p className="text-red-500 text-sm">{error}</p>}
-                <button
-                  type="submit" disabled={loading || !firstname || !lastname}
-                  className="w-full bg-accent text-white font-semibold py-3 rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                {error && <p className="text-danger text-sm">{error}</p>}
+                <Button
+                  type="submit"
+                  variant="accent"
+                  size="lg"
+                  fullWidth
+                  loading={loading}
+                  disabled={!firstname || !lastname}
                 >
-                  {loading && <Loader2 size={16} className="animate-spin" />}
                   S'inscrire
-                </button>
+                </Button>
               </form>
               <button
                 onClick={() => switchMode('login')}
-                className="mt-4 w-full text-sm text-gray-400 hover:text-gray-600 text-center"
+                className="mt-4 w-full text-sm text-neutral-400 hover:text-neutral-600 text-center"
               >
-                Deja un compte ? Se connecter
+                Déjà inscrit·e ? Connecte-toi
               </button>
             </>
           ) : (
             <>
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Connexion</h2>
+              <h2 className="text-lg font-bold text-neutral-900 mb-4">Connexion</h2>
               <form onSubmit={handleLogin} className="space-y-3">
                 <input
-                  type="email" placeholder="Email"
+                  type="email" placeholder="Email" autoComplete="email"
                   value={email} onChange={e => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className={inputClass}
                 />
                 <input
-                  type="password" placeholder="Mot de passe"
+                  type="password" placeholder="Mot de passe" autoComplete="current-password"
                   value={password} onChange={e => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className={inputClass}
                 />
-                {error && <p className="text-red-500 text-sm">{error}</p>}
-                <button
-                  type="submit" disabled={loading}
-                  className="w-full bg-accent text-white font-semibold py-3 rounded-xl hover:bg-accent-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {loading && <Loader2 size={16} className="animate-spin" />}
+                {error && <p className="text-danger text-sm">{error}</p>}
+                <Button type="submit" variant="accent" size="lg" fullWidth loading={loading}>
                   Se connecter
-                </button>
+                </Button>
               </form>
               <div className="mt-4 space-y-2">
                 <button
                   onClick={() => switchMode('reset')}
-                  className="w-full text-sm text-gray-400 hover:text-gray-600 text-center"
+                  className="w-full text-sm text-neutral-400 hover:text-neutral-600 text-center"
                 >
-                  Mot de passe oublie ?
+                  Mot de passe oublié ?
                 </button>
                 <button
                   onClick={() => switchMode('signup')}
                   className="w-full text-sm text-primary font-medium hover:text-primary-light text-center"
                 >
-                  Rejoindre le club
+                  Rejoindre Narbo Nordik
                 </button>
               </div>
             </>

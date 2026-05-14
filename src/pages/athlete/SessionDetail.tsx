@@ -8,7 +8,7 @@ import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculat
 import { useState, useRef, useEffect } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
 import { supabase } from '../../lib/supabase';
-import { useToast } from '../../components/ui';
+import { useToast, Button } from '../../components/ui';
 import type { ObjectiveReached, Sensations, StravaActivity } from '../../types';
 
 export default function SessionDetail() {
@@ -133,7 +133,7 @@ export default function SessionDetail() {
   if (!session) {
     return (
       <div className="py-8 text-center">
-        <p className="text-gray-500">Seance introuvable</p>
+        <p className="text-gray-500">Séance introuvable</p>
         <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium">Retour</button>
       </div>
     );
@@ -393,7 +393,7 @@ export default function SessionDetail() {
             <div className="bg-success/10 rounded-xl p-4">
               <div className="text-center">
                 <Check size={24} className="mx-auto mb-1 text-success" />
-                <p className="font-semibold text-success">Seance validee !</p>
+                <p className="font-semibold text-success">Séance validée !</p>
               </div>
               {(validation.objective_reached || validation.sensations) && (
                 <div className="flex justify-center gap-4 mt-3">
@@ -453,16 +453,19 @@ export default function SessionDetail() {
           ) : (
             <>
               {!showValidation && !isEditing ? (
-                <button
+                <Button
+                  variant="accent"
+                  size="lg"
+                  fullWidth
                   onClick={() => setShowValidation(true)}
-                  className="w-full bg-accent hover:bg-accent-light text-white font-semibold py-3.5 rounded-xl transition-colors text-lg"
+                  className="text-lg py-3.5 h-auto"
                 >
-                  Valider la seance
-                </button>
+                  J'ai fait ma séance
+                </Button>
               ) : (
                 <div className="space-y-3">
                   {isEditing && (
-                    <p className="text-sm font-medium text-gray-500">Modifier votre validation</p>
+                    <p className="text-sm font-medium text-gray-500">Modifier ta validation</p>
                   )}
                   {/* Mini-survey */}
                   <div className="bg-gray-50 rounded-xl p-3 space-y-3">
