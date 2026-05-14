@@ -9,6 +9,7 @@ import { useState, useRef, useEffect } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
 import { supabase } from '../../lib/supabase';
 import { useToast, Button } from '../../components/ui';
+import { StravaWordmark, PoweredByStrava } from '../../components/strava';
 import type { ObjectiveReached, Sensations, StravaActivity } from '../../types';
 
 export default function SessionDetail() {
@@ -580,9 +581,10 @@ export default function SessionDetail() {
         {/* Strava matching */}
         {(matchedActivity || stravaActivities.length > 0) && (
           <div className="p-4 border-t border-gray-100">
-            <h3 className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase mb-3">
-              <Activity size={14} className="text-[#FC4C02]" />
-              Donnees Strava
+            <h3 className="flex items-center gap-2 mb-3">
+              <Activity size={14} className="text-[#FC4C02]" aria-hidden="true" />
+              <span className="text-xs font-bold text-gray-500 uppercase">Données</span>
+              <StravaWordmark height={12} variant="orange" />
             </h3>
 
             {matchedActivity ? (
@@ -684,6 +686,9 @@ export default function SessionDetail() {
                 })}
               </div>
             )}
+            <div className="mt-3 flex justify-end">
+              <PoweredByStrava />
+            </div>
           </div>
         )}
       </div>

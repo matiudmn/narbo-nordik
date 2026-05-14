@@ -12,6 +12,7 @@ import Avatar from '../../components/Avatar';
 import YearlyHeatmap from '../../components/YearlyHeatmap';
 import ExpandableText from '../../components/ExpandableText';
 import { useStrava } from '../../hooks/useStrava';
+import { StravaWordmark, PoweredByStrava } from '../../components/strava';
 
 export default function AthleteDetail() {
   const { id } = useParams<{ id: string }>();
@@ -303,10 +304,10 @@ export default function AthleteDetail() {
             className="w-full flex items-center justify-between p-4"
           >
             <div className="flex items-center gap-2">
-              <Activity size={16} className="text-[#FC4C02]" />
-              <span className="text-xs font-bold text-gray-500 uppercase">Strava</span>
+              <Activity size={16} className="text-[#FC4C02]" aria-hidden="true" />
+              <StravaWordmark height={12} variant="orange" />
               <span className="inline-flex items-center px-1.5 py-0.5 bg-green-50 text-green-700 text-[10px] font-medium rounded-full">
-                Connecte
+                Connecté
               </span>
             </div>
             <ChevronDown size={16} className={`text-gray-400 transition-transform ${stravaOpen ? 'rotate-180' : ''}`} />
@@ -410,8 +411,12 @@ export default function AthleteDetail() {
               )}
 
               {!strava.athleteStats && !strava.error && (
-                <p className="text-xs text-gray-400 text-center py-2">Chargement...</p>
+                <p className="text-xs text-gray-400 text-center py-2">Chargement…</p>
               )}
+
+              <div className="flex justify-end pt-1 border-t border-neutral-100">
+                <PoweredByStrava />
+              </div>
             </div>
           )}
         </div>

@@ -5,6 +5,7 @@ import { fr } from 'date-fns/locale';
 import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Activity, Mountain, Timer } from 'lucide-react';
 import { Calendar } from 'lucide-react';
 import { StatusBadge, EmptyState, Button } from '../components/ui';
+import { StravaWordmark, PoweredByStrava } from '../components/strava';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { useStrava } from '../hooks/useStrava';
@@ -255,9 +256,9 @@ export default function Home() {
       {/* Strava stats */}
       {strava.connected && strava.athleteStats && (
         <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <h2 className="flex items-center gap-2 font-bold text-gray-900 mb-3">
-            <Activity size={18} className="text-[#FC4C02]" />
-            Strava
+          <h2 className="flex items-center gap-2 mb-3">
+            <Activity size={18} className="text-[#FC4C02]" aria-hidden="true" />
+            <StravaWordmark height={18} variant="orange" />
           </h2>
 
           {/* YTD stats */}
@@ -341,6 +342,10 @@ export default function Home() {
               )}
             </div>
           )}
+
+          <div className="mt-3 pt-3 border-t border-neutral-100 flex justify-end">
+            <PoweredByStrava />
+          </div>
         </div>
       )}
 

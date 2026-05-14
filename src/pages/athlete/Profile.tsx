@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity, RefreshCw, Unlink, ExternalLink, Link2 } from 'lucide-react';
+import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity, RefreshCw, Unlink, Link2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import NordikButton from '../../components/NordikButton';
@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabase';
 import ExpandableText from '../../components/ExpandableText';
 import { useStrava } from '../../hooks/useStrava';
 import { useToast } from '../../components/ui';
+import { PoweredByStrava, ConnectWithStravaButton } from '../../components/strava';
 import type { RaceType, NotificationPreferences, Session, StravaActivity } from '../../types';
 
 function Accordion({ title, icon, children, defaultOpen = false, badge, action }: {
@@ -912,12 +913,15 @@ export default function Profile() {
         title="Strava"
         icon={<Activity size={18} className="text-[#FC4C02]" />}
         badge={strava.connected
-          ? <span className="text-xs bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Connecte</span>
+          ? <span className="text-xs bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Connecté</span>
           : undefined
         }
       >
         {strava.connected ? (
           <div className="space-y-4">
+            <div className="flex justify-end">
+              <PoweredByStrava />
+            </div>
             {/* Action buttons - square cards */}
             <div className="grid grid-cols-3 gap-3">
               <button
@@ -1125,19 +1129,18 @@ export default function Profile() {
             )}
           </div>
         ) : stravaAuthUrl ? (
-          <div className="text-center py-6">
-            <Activity size={40} className="text-[#FC4C02]/30 mx-auto mb-3" />
-            <p className="text-sm text-gray-600 mb-4">Connecte ton compte Strava pour synchroniser tes activites et enrichir tes seances.</p>
-            <a
-              href={stravaAuthUrl}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#FC4C02] text-white text-sm font-medium rounded-xl hover:bg-[#e04400] transition-colors"
-            >
-              <ExternalLink size={16} />
-              Connecter Strava
-            </a>
+          <div className="flex flex-col items-center text-center py-6">
+            <Activity size={40} className="text-[#FC4C02]/30 mb-3" aria-hidden="true" />
+            <p className="text-sm text-gray-600 mb-4">
+              Connecte ton compte Strava pour synchroniser tes activités et les associer à tes séances planifiées.
+            </p>
+            <ConnectWithStravaButton href={stravaAuthUrl} />
+            <p className="text-[10px] text-gray-400 mt-3 max-w-xs">
+              Tu autorises Narbo Nordik à lire tes activités et statistiques Strava. Tu peux te déconnecter à tout moment.
+            </p>
           </div>
         ) : (
-          <p className="text-sm text-gray-400 text-center py-4">Integration Strava non configuree</p>
+          <p className="text-sm text-gray-400 text-center py-4">Intégration Strava non configurée</p>
         )}
       </Accordion>
 
