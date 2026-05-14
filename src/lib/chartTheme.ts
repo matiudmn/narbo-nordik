@@ -13,32 +13,37 @@ export function applyChartTheme() {
   if (applied) return;
   applied = true;
 
-  defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif";
-  defaults.font.size = 12;
-  defaults.color = '#475569'; // neutral-600
+  // Chaque set wrappé pour éviter de crasher tout l'init si une propriété
+  // a changé entre versions Chart.js. Best-effort.
+  const safe = (fn: () => void) => {
+    try { fn(); } catch (e) { console.warn('[chartTheme]', e); }
+  };
 
-  // Tooltip — dark
-  defaults.plugins.tooltip.backgroundColor = 'rgb(15 23 42 / 0.95)'; // neutral-900
-  defaults.plugins.tooltip.titleColor = '#ffffff';
-  defaults.plugins.tooltip.bodyColor = '#cbd5e1'; // neutral-300
-  defaults.plugins.tooltip.borderColor = 'transparent';
-  defaults.plugins.tooltip.padding = 10;
-  defaults.plugins.tooltip.cornerRadius = 8;
-  defaults.plugins.tooltip.titleFont = { weight: 'bold' as const, size: 13, family: defaults.font.family as string };
-  defaults.plugins.tooltip.bodyFont = { size: 12, family: defaults.font.family as string };
+  safe(() => { defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif"; });
+  safe(() => { defaults.font.size = 12; });
+  safe(() => { defaults.color = '#475569'; });
 
-  // Legend
-  defaults.plugins.legend.labels.usePointStyle = true;
-  defaults.plugins.legend.labels.padding = 12;
-  defaults.plugins.legend.labels.boxWidth = 8;
-  defaults.plugins.legend.labels.boxHeight = 8;
+  safe(() => {
+    if (defaults.plugins?.tooltip) {
+      defaults.plugins.tooltip.backgroundColor = 'rgb(15 23 42 / 0.95)';
+      defaults.plugins.tooltip.titleColor = '#ffffff';
+      defaults.plugins.tooltip.bodyColor = '#cbd5e1';
+      defaults.plugins.tooltip.padding = 10;
+      defaults.plugins.tooltip.cornerRadius = 8;
+    }
+  });
 
-  // Grid color
-  defaults.borderColor = '#e2e8f0'; // neutral-200
+  safe(() => {
+    if (defaults.plugins?.legend?.labels) {
+      defaults.plugins.legend.labels.usePointStyle = true;
+      defaults.plugins.legend.labels.padding = 12;
+      defaults.plugins.legend.labels.boxWidth = 8;
+      defaults.plugins.legend.labels.boxHeight = 8;
+    }
+  });
 
-  // Sane defaults responsive
-  defaults.responsive = true;
-  defaults.maintainAspectRatio = false;
+  safe(() => { defaults.responsive = true; });
+  safe(() => { defaults.maintainAspectRatio = false; });
 }
 
 /** Palette utilitaire — pour les développeurs qui composent des charts manuellement */
