@@ -16,6 +16,7 @@ import {
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { useData } from '../contexts/DataContext';
 import { SUPER_ADMIN_EMAIL } from '../lib/constants';
+import { MetricTile } from '../components/ui';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
@@ -257,33 +258,12 @@ export default function ClubProfile() {
         </p>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs harmonisés avec Dashboard coach */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border-l-4 border-accent p-3 shadow-sm">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Effectif</p>
-          <p className="text-2xl font-extrabold text-gray-900 mt-1">
-            {stats.count}<span className="text-sm text-gray-400 font-medium ml-1">coureurs</span>
-          </p>
-        </div>
-        <div className="bg-white rounded-xl border-l-4 border-emerald-500 p-3 shadow-sm">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Participation</p>
-          <p className="text-2xl font-extrabold text-emerald-600 mt-1">
-            {participationRate.rate}<span className="text-sm text-emerald-400 font-medium ml-1">%</span>
-          </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">4 dernieres semaines</p>
-        </div>
-        <div className="bg-white rounded-xl border-l-4 border-rose-500 p-3 shadow-sm">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">VMA Moyenne</p>
-          <p className="text-2xl font-extrabold text-rose-500 mt-1">
-            {stats.avg}<span className="text-sm text-rose-300 font-medium ml-1">km/h</span>
-          </p>
-        </div>
-        <div className="bg-white rounded-xl border-l-4 border-violet-500 p-3 shadow-sm">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Plafond VMA</p>
-          <p className="text-2xl font-extrabold text-violet-600 mt-1">
-            {stats.max}<span className="text-sm text-violet-300 font-medium ml-1">km/h</span>
-          </p>
-        </div>
+        <MetricTile valueDisplay={stats.count} unit="coureurs" label="Effectif" tone="primary" icon={<Users size={20} aria-hidden="true" />} />
+        <MetricTile valueDisplay={participationRate.rate} unit="%" label="Participation 4 sem." tone="success" />
+        <MetricTile valueDisplay={stats.avg} unit="km/h" label="VMA moyenne" tone="danger" />
+        <MetricTile valueDisplay={stats.max} unit="km/h" label="Plafond VMA" tone="info" />
       </div>
 
       {/* Group filter cards */}
