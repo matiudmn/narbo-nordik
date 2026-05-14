@@ -18,7 +18,10 @@
   --color-accent-light: #8DD8ED;
   --color-accent-dark: #4ABDD9;
 
-  /* Surfaces */
+  /* Surfaces étagées (au-delà du --color-surface plat) */
+  --color-bg-base: #fafbfc;       /* fond global */
+  --color-bg-elevated: #ffffff;   /* cards */
+  --color-bg-sunken: #f1f4f8;     /* zones encastrées (header sticky, drawer) */
   --color-surface: #f8fafc;
   --color-surface-dark: #f1f5f9;
 
@@ -66,37 +69,112 @@
   --color-info-600: #2563eb;
   --color-info-700: #1d4ed8;
 
-  /* External brand colors (à n'utiliser que pour ces marques) */
+  /* Brand externes (à réserver à ces marques) */
   --color-strava: #FC4C02;
   --color-whatsapp: #25D366;
 
+  /* Palette par type de séance (8 types) — scan visuel rapide */
+  --color-session-entrainement: #3b5bd9;
+  --color-session-entrainement-tint: #eef4ff;
+  --color-session-course: #dc4a1e;
+  --color-session-course-tint: #fff1ed;
+  --color-session-sortie-longue: #16a34a;
+  --color-session-sortie-longue-tint: #f0fbf4;
+  --color-session-recuperation: #64748b;
+  --color-session-recuperation-tint: #f3f8fc;
+  --color-session-velo: #b45309;
+  --color-session-velo-tint: #fef9e7;
+  --color-session-marche: #7c3aed;
+  --color-session-marche-tint: #f5f3ff;
+  --color-session-renfo: #be185d;
+  --color-session-renfo-tint: #fef2f8;
+  --color-session-aer: #0e7490;
+  --color-session-aer-tint: #ecfeff;
+
   /* Typography scale */
-  --text-display: 2rem;     /* 32px */
-  --text-h1: 1.5rem;        /* 24px */
-  --text-h2: 1.25rem;       /* 20px */
-  --text-h3: 1.125rem;      /* 18px */
-  --text-body: 0.875rem;    /* 14px */
-  --text-caption: 0.75rem;  /* 12px */
+  --text-stat-xl: clamp(2.5rem, 6vw, 4rem);    /* 40-64px, display chiffres XL */
+  --text-stat-lg: clamp(1.75rem, 4vw, 2.5rem); /* 28-40px */
+  --text-h1: 1.75rem;        /* 28px - page title */
+  --text-h2: 1.25rem;        /* 20px - section title */
+  --text-h3: 1rem;           /* 16px - card title */
+  --text-body: 0.9375rem;    /* 15px - texte principal */
+  --text-body-sm: 0.875rem;  /* 14px - secondaire */
+  --text-caption: 0.75rem;   /* 12px - meta, dates */
+  --text-micro: 0.6875rem;   /* 11px - labels uppercase */
 
   /* Radii */
-  --radius-sm: 0.375rem;
+  --radius-sm: 0.5rem;       /* 8px — badges, chips, inputs petits */
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
+  --radius-xl: 1rem;         /* 16px — cards hero, modals */
   --radius-2xl: 1.25rem;
 
-  /* Shadows */
+  /* Shadows étagées (discrètes, pas flat) */
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 1px rgb(15 23 42 / 0.02);
+  --shadow-card-hover: 0 4px 12px rgb(15 23 42 / 0.06), 0 2px 4px rgb(15 23 42 / 0.04);
+  --shadow-pop: 0 12px 32px rgb(15 23 42 / 0.12), 0 4px 12px rgb(15 23 42 / 0.06);
+  --shadow-takeover: 0 24px 48px rgb(15 23 42 / 0.2);
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+
+  /* Transitions globales */
+  --transition-base: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 320ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Fonts */
+  --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-stat: 'Anton', 'Space Grotesk', system-ui, sans-serif;
 }
+
+/* ============================================================
+   Gradients signature — usage parcimonieux : hero, takeover
+   ============================================================ */
+
+:root {
+  --gradient-night: linear-gradient(135deg, #000000 0%, #0f172a 60%, #1e293b 100%);
+  --gradient-hero: linear-gradient(135deg, #000000 0%, #0a1626 50%, #0d2a3a 100%);
+  --gradient-cyan-glow: radial-gradient(ellipse at top left, rgba(108, 203, 230, 0.18), transparent 60%);
+  --gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--color-surface);
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-base);
+  color: var(--color-neutral-800);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular nums sur tout ce qui est chiffré */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Labels uppercase espacés */
+.label-micro {
+  font-size: var(--text-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Fonts display (à appliquer où on veut Space Grotesk) */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Fonts stat XL (Anton — chiffres de stats uniquement) */
+.font-stat {
+  font-family: var(--font-stat);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ============================================================
@@ -123,16 +201,36 @@ body {
   to { transform: scale(1); opacity: 1; }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+}
+
 .animate-slide-up { animation: slide-up 0.3s ease-out; }
 .animate-slide-down { animation: slide-down 0.3s ease-out; }
 .animate-fade-in { animation: fade-in 0.2s ease-out; }
 .animate-scale-in { animation: scale-in 0.2s ease-out; }
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+.animate-pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .animate-slide-up,
   .animate-slide-down,
   .animate-fade-in,
   .animate-scale-in,
+  .animate-shimmer,
+  .animate-pulse-dot,
   .animate-spin,
   .animate-pulse {
     animation: none !important;
@@ -148,7 +246,7 @@ body {
 
 :focus-visible {
   outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline-offset: 3px;
   border-radius: 4px;
 }
 
@@ -165,3 +263,11 @@ body {
   position: absolute;
   inset: -6px;
 }
+
+/* ============================================================
+   PWA — safe areas iOS
+   ============================================================ */
+
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-x { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
