@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity, RefreshCw, Unlink, Link2 } from 'lucide-react';
@@ -16,6 +16,8 @@ import ExpandableText from '../../components/ExpandableText';
 import { useStrava } from '../../hooks/useStrava';
 import { useToast } from '../../components/ui';
 import { PoweredByStrava, ConnectWithStravaButton } from '../../components/strava';
+import { ProfileTabs } from '../../components/athlete/ProfileTabs';
+import type { ProfileTab } from '../../components/athlete/ProfileTabs';
 import type { RaceType, NotificationPreferences, Session, StravaActivity } from '../../types';
 
 function Accordion({ title, icon, children, defaultOpen = false, badge, action }: {
@@ -48,8 +50,20 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
   );
 }
 
+const VALID_TABS = ['infos', 'sessions', 'strava', 'account'] as const;
+
 export default function Profile() {
   const { user, refreshUser } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab') ?? 'infos';
+  const tab: ProfileTab = (VALID_TABS as readonly string[]).includes(rawTab)
+    ? (rawTab as ProfileTab)
+    : 'infos';
+  const setTab = (next: ProfileTab) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('tab', next);
+    setSearchParams(params, { replace: true });
+  };
   const { sessions, raceResults, addRaceResult, updateRaceResult, deleteRaceResult, deleteSession, addSession, validateSession, groups, users, validations, preparations, userPreparations, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
   const toast = useToast();
@@ -411,6 +425,12 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* Tabs sticky — découpe en 4 sections */}
+      <ProfileTabs current={tab} onChange={setTab} />
+
+      {/* === TAB: INFOS === */}
+      {tab === 'infos' && (
+      <>
       {/* Informations personnelles */}
       <Accordion
         title="Informations"
@@ -717,10 +737,15 @@ export default function Profile() {
           </div>
         </div>
       </Accordion>
+      </>
+      )}
 
+      {/* === TAB: SÉANCES (perso + palmarès) === */}
+      {tab === 'sessions' && (
+      <>
       {/* Seances personnelles */}
       <Accordion
-        title="Seances personnelles"
+        title="Séances personnelles"
         icon={<Activity size={18} className="text-primary" />}
         defaultOpen={false}
         badge={personalSessions.length > 0 ? <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">{personalSessions.length}</span> : undefined}
@@ -779,9 +804,9 @@ export default function Profile() {
         )}
       </Accordion>
 
-      {/* Palmares */}
+      {/* Palmarès */}
       <Accordion
-        title="Palmares"
+        title="Palmarès"
         icon={<Trophy size={18} className="text-accent" />}
         defaultOpen={false}
         badge={userRaces.length > 0 ? <span className="text-xs bg-accent/10 text-accent px-1.5 py-0.5 rounded-full font-medium">{userRaces.length}</span> : undefined}
@@ -907,7 +932,12 @@ export default function Profile() {
           </div>
         )}
       </Accordion>
+      </>
+      )}
 
+      {/* === TAB: STRAVA === */}
+      {tab === 'strava' && (
+      <>
       {/* Strava */}
       <Accordion
         title="Strava"
@@ -1143,7 +1173,12 @@ export default function Profile() {
           <p className="text-sm text-gray-400 text-center py-4">Intégration Strava non configurée</p>
         )}
       </Accordion>
+      </>
+      )}
 
+      {/* === TAB: COMPTE (notifs + sécurité + données) === */}
+      {tab === 'account' && (
+      <>
       {/* Notifications */}
       <Accordion
         title="Notifications"
@@ -1313,10 +1348,12 @@ export default function Profile() {
             <span>Supprimer mon compte et mes donnees</span>
           </button>
           <p className="text-xs text-gray-400">
-            Conforme RGPD. Vos donnees sont stockees de maniere securisee.
+            Conforme RGPD. Tes données sont stockées de manière sécurisée.
           </p>
         </div>
       </Accordion>
+      </>
+      )}
 
       {/* Delete account modal */}
       {showDeleteModal && (
