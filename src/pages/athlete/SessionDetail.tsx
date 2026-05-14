@@ -10,6 +10,7 @@ import { getAttachmentUrl } from '../../lib/storage';
 import { supabase } from '../../lib/supabase';
 import { useToast, Button } from '../../components/ui';
 import { StravaWordmark, PoweredByStrava } from '../../components/strava';
+import { motion, DUR, EASE } from '../../lib/motion';
 import type { ObjectiveReached, Sensations, StravaActivity } from '../../types';
 
 export default function SessionDetail() {
@@ -393,8 +394,15 @@ export default function SessionDetail() {
           })() : validation?.status === 'done' && !isEditing ? (
             <div className="bg-success/10 rounded-xl p-4">
               <div className="text-center">
-                <Check size={24} className="mx-auto mb-1 text-success" />
-                <p className="font-semibold text-success">Séance validée !</p>
+                <motion.div
+                  initial={{ scale: 0, rotate: -20, opacity: 0 }}
+                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                  transition={{ duration: DUR.slow, ease: EASE.bounce }}
+                  className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-success-100 mb-2"
+                >
+                  <Check size={28} strokeWidth={3} className="text-success-700" aria-hidden="true" />
+                </motion.div>
+                <p className="font-semibold text-success-700">Séance validée !</p>
               </div>
               {(validation.objective_reached || validation.sensations) && (
                 <div className="flex justify-center gap-4 mt-3">
