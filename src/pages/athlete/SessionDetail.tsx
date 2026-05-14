@@ -8,6 +8,7 @@ import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculat
 import { useState, useRef, useEffect } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../../components/ui';
 import type { ObjectiveReached, Sensations, StravaActivity } from '../../types';
 
 export default function SessionDetail() {
@@ -15,6 +16,7 @@ export default function SessionDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { sessions, validations, validateSession, updateValidation, groups, userPreparations, sessionNordiks, toggleSessionNordik, clubSettings } = useData();
+  const toast = useToast();
   const allureZones = getAllureZones(clubSettings?.allure_zones);
 
   const session = sessions.find(s => s.id === id);
@@ -105,11 +107,11 @@ export default function SessionDetail() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      alert('Format non supporte. Utilise JPG, PNG, WebP, HEIC ou PDF.');
+      toast.error('Format non supporté. Utilise JPG, PNG, WebP, HEIC ou PDF.');
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
-      alert('Fichier trop volumineux (max 5 Mo).');
+      toast.error('Fichier trop volumineux (max 5 Mo).');
       return;
     }
     setAttachedFile(file);

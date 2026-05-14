@@ -14,6 +14,7 @@ import Avatar from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
 import ExpandableText from '../../components/ExpandableText';
 import { useStrava } from '../../hooks/useStrava';
+import { useToast } from '../../components/ui';
 import type { RaceType, NotificationPreferences, Session, StravaActivity } from '../../types';
 
 function Accordion({ title, icon, children, defaultOpen = false, badge, action }: {
@@ -50,6 +51,7 @@ export default function Profile() {
   const { user, refreshUser } = useAuth();
   const { sessions, raceResults, addRaceResult, updateRaceResult, deleteRaceResult, deleteSession, addSession, validateSession, groups, users, validations, preparations, userPreparations, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateUserGroup, updateUserVma, updateNotificationPreferences } = useData();
   const { permission, requestPermission, notificationsEnabled, setNotificationsEnabled } = useNotifications();
+  const toast = useToast();
   const [showAddRace, setShowAddRace] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -136,7 +138,7 @@ export default function Profile() {
     });
     if (error) {
       console.error('Match error:', error);
-      alert(`Erreur lors de l'association : ${error.message}`);
+      toast.error(`Erreur lors de l'association : ${error.message}`);
     } else {
       setAllStravaActivities(prev => prev.map(a => a.id === act.id ? { ...a, matched_session_id: sessionId, match_status: 'manual' } : a));
     }
@@ -193,8 +195,9 @@ export default function Profile() {
       });
       if (error) {
         console.error('Auto-match error:', error);
-        alert(`Seance creee mais erreur lors de l'association automatique : ${error.message}`);
+        toast.warning(`Séance créée mais erreur d'association automatique : ${error.message}`);
       } else {
+        toast.success('Séance créée et associée à ton activité Strava');
         setAllStravaActivities(prev => prev.map(a => a.id === act.id ? { ...a, matched_session_id: result.id, match_status: 'manual' } : a));
       }
     }
@@ -921,10 +924,10 @@ export default function Profile() {
                 onClick={async () => {
                   const count = await strava.syncActivities();
                   if (count > 0) {
-                    alert(`${count} activite(s) synchronisee(s)`);
+                    toast.success(`${count} activité${count > 1 ? 's' : ''} synchronisée${count > 1 ? 's' : ''}`);
                     await loadStravaActivities();
                   } else {
-                    alert('Aucune nouvelle activite');
+                    toast.info('Aucune nouvelle activité');
                   }
                 }}
                 disabled={strava.loading}

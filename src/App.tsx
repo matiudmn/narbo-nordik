@@ -8,6 +8,7 @@ import OfflineIndicator from './components/OfflineIndicator';
 import ConsentBanner from './components/ConsentBanner';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { InAppNotificationProvider } from './contexts/InAppNotificationContext';
+import { ToastProvider } from './components/ui';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import SessionDetail from './pages/athlete/SessionDetail';
@@ -78,18 +79,20 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <DataProvider>
-          <InAppNotificationProvider>
-            <NotificationProvider>
-              <OfflineIndicator />
-              <AppRoutes />
-              <InstallPrompt />
-              <ConsentBanner />
-            </NotificationProvider>
-          </InAppNotificationProvider>
-        </DataProvider>
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <DataProvider>
+            <InAppNotificationProvider>
+              <NotificationProvider>
+                <OfflineIndicator />
+                <AppRoutes />
+                <InstallPrompt />
+                <ConsentBanner />
+              </NotificationProvider>
+            </InAppNotificationProvider>
+          </DataProvider>
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }
