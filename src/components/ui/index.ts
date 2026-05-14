@@ -45,3 +45,6 @@ export { DataDivider } from './DataDivider';
 export { AvatarStack } from './AvatarStack';
 
 export { AlluresBar } from './AlluresBar';
+
+export { Glossary } from './Glossary';
+export type { GlossaryTerm } from './Glossary';
