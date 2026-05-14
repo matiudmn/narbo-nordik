@@ -1,8 +1,9 @@
 import { useState, useMemo, memo } from 'react';
 import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, ChevronUp, ChevronDown, Zap, Clock, Ruler, Pencil, Copy } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, ChevronUp, ChevronDown, Zap, Clock, Ruler, Pencil, Copy, Calendar } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { EmptyState } from '../../components/ui';
 import { useData } from '../../contexts/DataContext';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
@@ -577,7 +578,11 @@ export default function SessionEditor() {
 
       {/* Sessions list */}
       {weekSessions.length === 0 ? (
-        <p className="text-center text-gray-400 py-8">Aucune seance cette semaine</p>
+        <EmptyState
+          icon={<Calendar size={28} />}
+          title="Aucune séance cette semaine"
+          description="Ajoute une première séance ou duplique celle de la semaine précédente."
+        />
       ) : (
         <div className="space-y-3 max-w-3xl mx-auto">
           {weekSessions.map(session => {
@@ -645,14 +650,14 @@ export default function SessionEditor() {
                   </div>
                 </div>
                 {duplicatedId === session.id && (
-                  <p className="text-xs text-accent mt-2">Seance copiee dans le formulaire ci-dessus</p>
+                  <p className="text-xs text-accent mt-2">Séance copiée dans le formulaire ci-dessus.</p>
                 )}
                 {confirmDeleteId === session.id && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
-                    <p className="text-sm text-red-700 mb-2">Supprimer la seance "{session.title}" ?</p>
+                  <div className="bg-danger-50 border border-danger-100 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-danger-700 mb-2">Supprimer la séance "{session.title}" ?</p>
                     <div className="flex gap-2">
-                      <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">Annuler</button>
-                      <button onClick={() => { deleteSession(session.id); setConfirmDeleteId(null); }} className="flex-1 py-1.5 text-sm bg-red-500 text-white rounded-lg font-medium hover:bg-red-600">Supprimer</button>
+                      <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-1.5 text-sm border border-neutral-200 rounded-lg text-neutral-600 hover:bg-neutral-50">Annuler</button>
+                      <button onClick={() => { deleteSession(session.id); setConfirmDeleteId(null); }} className="flex-1 py-1.5 text-sm bg-danger text-white rounded-lg font-medium hover:bg-danger-600">Supprimer</button>
                     </div>
                   </div>
                 )}

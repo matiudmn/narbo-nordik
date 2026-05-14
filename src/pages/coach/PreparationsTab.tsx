@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, Trash2, Check, X, UserMinus, Calendar, Target } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
+import { EmptyState } from '../../components/ui';
 import Avatar from '../../components/Avatar';
 
 export default function PreparationsTab() {
@@ -76,10 +77,11 @@ export default function PreparationsTab() {
 
       {/* Preparations list */}
       {preparations.length === 0 ? (
-        <div className="text-center py-8 text-gray-400">
-          <Target size={32} className="mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Aucune preparation specifique</p>
-        </div>
+        <EmptyState
+          icon={<Target size={28} />}
+          title="Aucune préparation spécifique"
+          description="Crée une préparation pour suivre les athlètes engagés sur une course objectif."
+        />
       ) : (
         <div className="space-y-4">
           {preparations.map(prep => {

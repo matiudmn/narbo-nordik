@@ -179,7 +179,7 @@ export default function Dashboard() {
         </h2>
 
         {recentFeedback.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">Aucun retour pour le moment</p>
+          <p className="text-sm text-gray-400 text-center py-4">Aucun retour pour le moment.</p>
         ) : (
           <div className="space-y-3">
             {recentFeedback.map(item => (

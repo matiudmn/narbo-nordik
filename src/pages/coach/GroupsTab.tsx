@@ -114,15 +114,15 @@ export default function GroupsTab() {
             </div>
 
             {isConfirmingDelete && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-                <p className="text-sm text-red-700 mb-2">
+              <div className="bg-danger-50 border border-danger-100 rounded-lg p-3 mb-3">
+                <p className="text-sm text-danger-700 mb-2">
                   Supprimer le groupe "{group.name}" ?
                   {groupMembers.length > 0 && ` Les ${groupMembers.length} membre(s) seront sans groupe.`}
-                  {sessionCount > 0 && ` Les ${sessionCount} seance(s) deviendront "Tous groupes".`}
+                  {sessionCount > 0 && ` Les ${sessionCount} séance(s) deviendront "Tous groupes".`}
                 </p>
                 <div className="flex gap-2">
-                  <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-600">Annuler</button>
-                  <button onClick={() => handleDelete(group.id)} className="flex-1 py-1.5 text-sm bg-red-500 text-white rounded-lg font-medium">Supprimer</button>
+                  <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-1.5 text-sm border border-neutral-200 rounded-lg text-neutral-600 hover:bg-neutral-50">Annuler</button>
+                  <button onClick={() => handleDelete(group.id)} className="flex-1 py-1.5 text-sm bg-danger text-white rounded-lg font-medium hover:bg-danger-600">Supprimer</button>
                 </div>
               </div>
             )}
@@ -151,7 +151,7 @@ export default function GroupsTab() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-400 text-center py-2">Aucun membre dans ce groupe</p>
+              <p className="text-sm text-gray-400 text-center py-2">Aucun membre dans ce groupe.</p>
             )}
 
             {unassigned.length > 0 && (

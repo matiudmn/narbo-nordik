@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react';
+import { Check, X as XIcon, Clock, Calendar } from 'lucide-react';
 
 export type BadgeTone =
   | 'neutral'
@@ -69,23 +70,38 @@ export function Badge({
 
 export type SessionStatus = 'done' | 'missed' | 'pending' | 'upcoming';
 
-const statusConfig: Record<SessionStatus, { label: string; tone: BadgeTone }> = {
-  done: { label: 'Validée', tone: 'success' },
-  missed: { label: 'Ratée', tone: 'danger' },
-  pending: { label: 'À valider', tone: 'warning' },
-  upcoming: { label: 'À venir', tone: 'info' },
+const statusConfig: Record<
+  SessionStatus,
+  { label: string; tone: BadgeTone; Icon: typeof Check }
+> = {
+  done: { label: 'Validée', tone: 'success', Icon: Check },
+  missed: { label: 'Ratée', tone: 'danger', Icon: XIcon },
+  pending: { label: 'À valider', tone: 'warning', Icon: Clock },
+  upcoming: { label: 'À venir', tone: 'info', Icon: Calendar },
 };
 
 interface StatusBadgeProps {
   status: SessionStatus;
   size?: BadgeSize;
+  withIcon?: boolean;
   className?: string;
 }
 
-export function StatusBadge({ status, size = 'sm', className = '' }: StatusBadgeProps) {
+export function StatusBadge({
+  status,
+  size = 'sm',
+  withIcon = false,
+  className = '',
+}: StatusBadgeProps) {
   const config = statusConfig[status];
+  const iconSize = size === 'sm' ? 12 : 14;
   return (
-    <Badge tone={config.tone} size={size} className={className}>
+    <Badge
+      tone={config.tone}
+      size={size}
+      icon={withIcon ? <config.Icon size={iconSize} aria-hidden="true" /> : undefined}
+      className={className}
+    >
       {config.label}
     </Badge>
   );

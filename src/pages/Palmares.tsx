@@ -5,6 +5,7 @@ import { fr } from 'date-fns/locale';
 import { ArrowLeft, Trophy, Medal, Pencil, Plus, X, Star, Trash2 } from 'lucide-react';
 import NordikButton from '../components/NordikButton';
 import ExpandableText from '../components/ExpandableText';
+import { EmptyState } from '../components/ui';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SUPER_ADMIN_EMAIL } from '../lib/constants';
@@ -220,7 +221,11 @@ export default function Palmares() {
       )}
 
       {palmares.length === 0 ? (
-        <p className="text-center text-gray-400 py-12">Aucun resultat enregistre</p>
+        <EmptyState
+          icon={<Trophy size={28} />}
+          title="Aucun résultat pour l'instant"
+          description="Tes prochaines courses apparaîtront ici. Ajoute ta dernière perf pour démarrer le palmarès !"
+        />
       ) : (
         <div className="space-y-2">
           {palmares.map((race, idx) => (
@@ -319,11 +324,11 @@ export default function Palmares() {
                     )}
                   </div>
                   {confirmDeleteId === race.id && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-2">
-                      <p className="text-sm text-red-700 mb-2">Supprimer ce résultat de "{race.race_name}" ?</p>
+                    <div className="bg-danger-50 border border-danger-100 rounded-lg p-3 mt-2">
+                      <p className="text-sm text-danger-700 mb-2">Supprimer ce résultat de "{race.race_name}" ?</p>
                       <div className="flex gap-2">
-                        <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-600">Annuler</button>
-                        <button onClick={() => { deleteRaceResult(race.id); setConfirmDeleteId(null); }} className="flex-1 py-1.5 text-sm bg-red-500 text-white rounded-lg font-medium">Supprimer</button>
+                        <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-1.5 text-sm border border-neutral-200 rounded-lg text-neutral-600 hover:bg-neutral-50">Annuler</button>
+                        <button onClick={() => { deleteRaceResult(race.id); setConfirmDeleteId(null); }} className="flex-1 py-1.5 text-sm bg-danger text-white rounded-lg font-medium hover:bg-danger-600">Supprimer</button>
                       </div>
                     </div>
                   )}

@@ -312,18 +312,19 @@ export default function AthletesTab() {
                     </button>
                   )}
                   {confirmDeleteId === athlete.id ? (
-                    <div className="flex gap-1">
-                      <button onClick={() => handleDelete(athlete.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                    <div className="flex gap-1" role="group" aria-label="Confirmer la suppression">
+                      <button onClick={() => handleDelete(athlete.id)} aria-label="Confirmer la suppression" className="p-2 text-danger hover:bg-danger-50 rounded-lg">
                         <Check size={16} />
                       </button>
-                      <button onClick={() => setConfirmDeleteId(null)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg">
+                      <button onClick={() => setConfirmDeleteId(null)} aria-label="Annuler" className="p-2 text-neutral-400 hover:bg-neutral-100 rounded-lg">
                         <X size={16} />
                       </button>
                     </div>
                   ) : (
                     <button
                       onClick={() => setConfirmDeleteId(athlete.id)}
-                      className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                      aria-label="Supprimer l'athlète"
+                      className="p-2 text-neutral-300 hover:text-danger transition-colors"
                     >
                       <Trash2 size={16} />
                     </button>

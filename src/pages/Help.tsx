@@ -104,8 +104,8 @@ const athleteSections: Section[] = [
         </p>
         <p className="font-semibold text-gray-900">Valider sa participation</p>
         <p>
-          Apres la seance, vous pouvez indiquer si vous etiez present ("Fait") ou absent
-          ("Manque"). Cette validation alimente votre taux d'assiduite.
+          Après la séance, tu peux indiquer si tu étais présent·e ("Validée") ou absent·e
+          ("Ratée"). Cette validation alimente ton taux d'assiduité.
         </p>
         <p className="font-semibold text-gray-900">Objectif atteint et sensations</p>
         <p>

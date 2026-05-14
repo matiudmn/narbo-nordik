@@ -1,8 +1,9 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Gauge } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { EmptyState } from '../components/ui';
 import { useData } from '../contexts/DataContext';
 
 export default function VmaHistory() {
@@ -48,9 +49,11 @@ export default function VmaHistory() {
       )}
 
       {history.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-400">Aucun historique</p>
-        </div>
+        <EmptyState
+          icon={<Gauge size={28} />}
+          title="Aucun test VMA pour l'instant"
+          description="L'évolution de ta VMA apparaîtra ici après ton premier test piste."
+        />
       ) : (
         <div className="space-y-2">
           {history.map((entry, idx) => {

@@ -2,11 +2,13 @@ import { useMemo } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, Check, X, Clock, Paperclip, Dumbbell, Mountain, Battery, Bike, Footprints, Trophy } from 'lucide-react';
+import { ArrowLeft, Paperclip, Dumbbell, Mountain, Battery, Bike, Footprints, Trophy } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { getSessionCode } from '../lib/calculations';
+import { StatusBadge, EmptyState } from '../components/ui';
 import type { SessionType } from '../types';
+import type { SessionStatus } from '../components/ui';
 
 const SESSION_TYPE_INFO: Record<SessionType, { label: string; icon: typeof Dumbbell }> = {
   entrainement: { label: 'Entraînement', icon: Dumbbell },
@@ -17,12 +19,6 @@ const SESSION_TYPE_INFO: Record<SessionType, { label: string; icon: typeof Dumbb
   marche: { label: 'Marche', icon: Footprints },
   renfo: { label: 'Renfo', icon: Dumbbell },
 };
-
-const STATUS_BADGES = {
-  done: { label: 'Fait', bg: 'bg-green-100', text: 'text-green-700', icon: Check },
-  missed: { label: 'Manque', bg: 'bg-red-100', text: 'text-red-700', icon: X },
-  pending: { label: 'En attente', bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock },
-} as const;
 
 export default function TrainingHistory() {
   const [searchParams] = useSearchParams();
@@ -80,23 +76,23 @@ export default function TrainingHistory() {
       </button>
 
       <h1 className="text-lg font-bold text-gray-900 mb-1">
-        Historique des seances
+        Historique des séances
       </h1>
       {!isOwnProfile && (
         <p className="text-sm text-gray-500 mb-4">{targetUser.firstname} {targetUser.lastname}</p>
       )}
 
       {targetSessions.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-400">Aucune seance</p>
-        </div>
+        <EmptyState
+          icon={<Dumbbell size={28} />}
+          title="Aucune séance pour l'instant"
+          description="Les séances passées s'afficheront ici dès qu'elles auront été validées."
+        />
       ) : (
         <div className="space-y-2">
           {targetSessions.map(session => {
             const validation = getValidation(session.id);
-            const status = validation?.status || 'pending';
-            const badge = STATUS_BADGES[status];
-            const BadgeIcon = badge.icon;
+            const status = (validation?.status || 'pending') as SessionStatus;
             const typeInfo = SESSION_TYPE_INFO[session.session_type];
             const TypeIcon = typeInfo.icon;
 
@@ -122,10 +118,7 @@ export default function TrainingHistory() {
                       </div>
                     </div>
                   </div>
-                  <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${badge.bg} ${badge.text}`}>
-                    <BadgeIcon size={12} />
-                    {badge.label}
-                  </span>
+                  <StatusBadge status={status} withIcon className="flex-shrink-0" />
                 </div>
                 {validation?.feedback && (
                   <p className="text-sm text-gray-500 italic mt-2">"{validation.feedback}"</p>

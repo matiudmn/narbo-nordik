@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, Phone, ExternalLink, Shield, Cake, ChevronDown, Gauge, Target, Trophy, History, User as UserIcon } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { EmptyState } from '../../components/ui';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
@@ -349,11 +350,11 @@ export default function Directory() {
       </div>
 
       {sorted.length === 0 && (
-        <div className="text-center py-12">
-          <Search size={40} className="mx-auto mb-3 text-gray-300" />
-          <p className="font-medium text-gray-500">Aucun membre trouve</p>
-          <p className="text-sm text-gray-400 mt-1">Essayez avec un autre nom</p>
-        </div>
+        <EmptyState
+          icon={<Search size={28} />}
+          title="Aucun membre trouvé"
+          description="Essaie avec un autre prénom ou nom."
+        />
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bell, CalendarPlus, Trophy, TrendingUp, Mail, Info, CheckCheck } from 'lucide-react';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
+import { EmptyState } from '../components/ui';
 import type { AppNotification } from '../types';
 
 function getNotifIcon(type: AppNotification['type']) {
@@ -96,10 +97,11 @@ export default function Notifications() {
       </div>
 
       {notifications.length === 0 ? (
-        <div className="text-center py-12">
-          <Bell size={40} className="text-gray-200 mx-auto mb-3" />
-          <p className="text-sm text-gray-400">Aucune notification</p>
-        </div>
+        <EmptyState
+          icon={<Bell size={28} />}
+          title="Tout est calme"
+          description="Tu seras notifié·e dès qu'une séance arrive ou qu'un athlète interagit avec toi."
+        />
       ) : (
         <div className="space-y-4">
           {grouped.map(group => (

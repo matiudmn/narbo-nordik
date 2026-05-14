@@ -740,7 +740,7 @@ export default function Profile() {
         )}
 
         {personalSessions.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">Aucune seance personnelle</p>
+          <p className="text-sm text-gray-400 text-center py-4">Aucune séance perso ajoutée pour l'instant.</p>
         ) : (
           <div className="space-y-2">
             {personalSessions.map(s => {
@@ -864,7 +864,7 @@ export default function Profile() {
 
         {/* Race list */}
         {userRaces.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">Aucune course enregistree</p>
+          <p className="text-sm text-gray-400 text-center py-4">Aucune course enregistrée pour l'instant.</p>
         ) : (
           <div className="space-y-2">
             {userRaces.map(race => (

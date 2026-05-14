@@ -2,7 +2,9 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isWithinInterval, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MapPin, ChevronLeft, ChevronRight, Check, Clock, AlertCircle, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Activity, Mountain, Timer } from 'lucide-react';
+import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Activity, Mountain, Timer } from 'lucide-react';
+import { Calendar } from 'lucide-react';
+import { StatusBadge, EmptyState } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { useStrava } from '../hooks/useStrava';
@@ -105,15 +107,9 @@ export default function Home() {
     const validation = getValidation(session.id);
     const sessionPast = isPast(new Date(session.date));
 
-    if (validation?.status === 'done') {
-      return <span className="flex items-center gap-1 text-xs font-medium text-success bg-success/10 px-2 py-0.5 rounded-full"><Check size={12} /> Fait</span>;
-    }
-    if (validation?.status === 'missed') {
-      return <span className="flex items-center gap-1 text-xs font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full"><AlertCircle size={12} /> Manque</span>;
-    }
-    if (sessionPast) {
-      return <span className="flex items-center gap-1 text-xs font-medium text-warning bg-warning/10 px-2 py-0.5 rounded-full"><Clock size={12} /> En attente</span>;
-    }
+    if (validation?.status === 'done') return <StatusBadge status="done" withIcon />;
+    if (validation?.status === 'missed') return <StatusBadge status="missed" withIcon />;
+    if (sessionPast) return <StatusBadge status="pending" withIcon />;
     return null;
   };
 
@@ -468,11 +464,11 @@ export default function Home() {
         )}
 
         {filteredSessions.length === 0 ? (
-          <div className="text-center py-12">
-            <CalendarIcon size={48} className="mx-auto mb-3 text-gray-300" />
-            <p className="font-medium text-gray-500">Aucune seance cette semaine</p>
-            <p className="text-sm text-gray-400 mt-1">Les seances planifiees apparaitront ici</p>
-          </div>
+          <EmptyState
+            icon={<Calendar size={28} />}
+            title="Rien de prévu cette semaine"
+            description="Ton coach publiera bientôt le programme. Profites-en pour une sortie libre !"
+          />
         ) : (
           <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
             {filteredSessions.map(session => {
@@ -555,10 +551,3 @@ export default function Home() {
   );
 }
 
-function CalendarIcon({ size, className }: { size: number; className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
-    </svg>
-  );
-}
