@@ -65,4 +65,22 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // Split heavy libs into their own chunks so the initial bundle
+        // stays under control. Chart.js is only used on a few pages —
+        // lazy loaded via React.lazy in App.tsx anyway, but vendor
+        // chunking lets the browser cache it independently.
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'chart-vendor': ['chart.js', 'react-chartjs-2'],
+          'motion-vendor': ['motion'],
+          'supabase-vendor': ['@supabase/supabase-js'],
+          'date-vendor': ['date-fns'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
+  },
 })
