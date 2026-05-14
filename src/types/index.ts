@@ -79,6 +79,22 @@ export interface SpecificPreparation {
   created_at: string;
 }
 
+export type TemplateCategory = 'vma' | 'seuil' | 'endurance' | 'sortie_longue' | 'recup' | 'autre';
+
+export interface SessionTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  category: TemplateCategory;
+  session_type: SessionType;
+  terrain_options: TerrainOption[];
+  blocks: SessionBlock[];
+  is_seed: boolean;
+  created_by: string | null;
+  usage_count: number;
+  created_at: string;
+}
+
 export interface UserPreparation {
   id: string;
   user_id: string;

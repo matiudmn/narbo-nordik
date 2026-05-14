@@ -5,6 +5,10 @@ import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, ChevronUp, ChevronDown
 import { useAuth } from '../../contexts/AuthContext';
 import { EmptyState, Button, useToast } from '../../components/ui';
 import { useSessionAutosave } from '../../hooks/useSessionAutosave';
+import { SessionSourceModal } from '../../components/coach/SessionSourceModal';
+import { saveTemplate, CATEGORY_LABELS } from '../../lib/sessionTemplates';
+import type { InstantiatedTemplate } from '../../lib/sessionTemplates';
+import type { TemplateCategory } from '../../types';
 import { useData } from '../../contexts/DataContext';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
@@ -235,6 +239,8 @@ export default function SessionEditor() {
   const allureZones = getAllureZones(clubSettings?.allure_zones);
   const [weekOffset, setWeekOffset] = useState(0);
   const [showForm, setShowForm] = useState(false);
+  const [showSourceModal, setShowSourceModal] = useState(false);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -287,6 +293,82 @@ export default function SessionEditor() {
     setSessionType('entrainement'); setTerrainOptions([]);
     setDescription(''); setBlocks([]); setPreviewUserId(null);
     setEditingSessionId(null);
+    setPreparationId('');
+  };
+
+  // Sessions de la semaine précédente (pour duplication via SessionSourceModal)
+  const lastWeekSessions = useMemo(() => {
+    const prevStart = startOfWeek(addWeeks(new Date(), weekOffset - 1), { weekStartsOn: 1 });
+    const prevEnd = endOfWeek(addWeeks(new Date(), weekOffset - 1), { weekStartsOn: 1 });
+    return sessions
+      .filter((s) => {
+        if (s.is_personal) return false;
+        const d = new Date(s.date);
+        return d >= prevStart && d <= prevEnd;
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map((s) => ({
+        id: s.id,
+        title: s.title,
+        date: s.date,
+        blocks: s.blocks,
+        session_type: s.session_type,
+        terrain_options: s.terrain_options ?? [],
+        description: s.description,
+      }));
+  }, [sessions, weekOffset]);
+
+  const applyInstantiated = (draft: InstantiatedTemplate) => {
+    setTitle(draft.title);
+    setSessionType(draft.session_type);
+    setTerrainOptions(draft.terrain_options);
+    setDescription(draft.description ?? '');
+    setBlocks(draft.blocks);
+    setDate('');
+    setGroupId('');
+    setPreparationId('');
+    setPreviewUserId(null);
+    setEditingSessionId(null);
+    setShowForm(true);
+    toast.success(`Séance pré-remplie depuis « ${draft.title} ». Ajuste la date et publie.`);
+  };
+
+  // "Enregistrer comme template" depuis le form en cours
+  const [tplName, setTplName] = useState('');
+  const [tplCategory, setTplCategory] = useState<TemplateCategory>('vma');
+  const [tplDescription, setTplDescription] = useState('');
+  const [savingTpl, setSavingTpl] = useState(false);
+
+  const openSaveTemplate = () => {
+    if (blocks.length === 0) {
+      toast.error('Ajoute au moins un bloc avant de sauvegarder en template.');
+      return;
+    }
+    setTplName(title || '');
+    setTplDescription(description || '');
+    setTplCategory('vma');
+    setShowSaveTemplate(true);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!user || !tplName.trim()) return;
+    setSavingTpl(true);
+    const id = await saveTemplate({
+      name: tplName.trim(),
+      description: tplDescription.trim() || null,
+      category: tplCategory,
+      session_type: sessionType,
+      terrain_options: terrainOptions,
+      blocks,
+      created_by: user.id,
+    });
+    setSavingTpl(false);
+    if (id) {
+      toast.success('Template enregistré dans la bibliothèque.');
+      setShowSaveTemplate(false);
+    } else {
+      toast.error('Impossible de sauvegarder le template.');
+    }
   };
 
   const handleSubmit = () => {
@@ -394,13 +476,29 @@ export default function SessionEditor() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg font-bold text-gray-900">Planning</h1>
         <button
-          onClick={() => { setShowForm(!showForm); resetForm(); }}
+          onClick={() => {
+            if (showForm) {
+              setShowForm(false);
+              resetForm();
+            } else {
+              setShowSourceModal(true);
+            }
+          }}
           className="flex items-center gap-1 bg-accent text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-accent-light transition-colors"
         >
           {showForm ? <X size={16} /> : <Plus size={16} />}
           {showForm ? 'Fermer' : 'Nouvelle séance'}
         </button>
       </div>
+
+      {/* Modal source — Template / Semaine S-1 / Vide */}
+      <SessionSourceModal
+        open={showSourceModal}
+        onClose={() => setShowSourceModal(false)}
+        onPickInstantiated={(draft) => applyInstantiated(draft)}
+        onPickBlank={() => { resetForm(); setShowForm(true); }}
+        lastWeekSessions={lastWeekSessions}
+      />
 
       {/* Banner brouillon récupéré */}
       {pendingDraft && !showForm && (
@@ -614,14 +712,97 @@ export default function SessionEditor() {
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
 
-          <Button
-            variant="primary"
-            fullWidth
-            disabled={!title || !date}
-            onClick={handleSubmit}
+          <div className="space-y-2">
+            <Button
+              variant="primary"
+              fullWidth
+              disabled={!title || !date}
+              onClick={handleSubmit}
+            >
+              {editingSessionId ? 'Enregistrer les modifications' : 'Publier la séance au club'}
+            </Button>
+            {!editingSessionId && blocks.length > 0 && (
+              <button
+                type="button"
+                onClick={openSaveTemplate}
+                className="w-full text-sm text-neutral-500 hover:text-neutral-800 underline-offset-2 hover:underline"
+              >
+                Enregistrer aussi comme template
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal "Enregistrer comme template" */}
+      {showSaveTemplate && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-end lg:items-center justify-center p-0 lg:p-4 animate-fade-in"
+          onClick={() => !savingTpl && setShowSaveTemplate(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="save-tpl-title"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full lg:max-w-md bg-white rounded-t-2xl lg:rounded-2xl shadow-pop animate-slide-up lg:animate-scale-in p-6 space-y-4"
           >
-            {editingSessionId ? 'Enregistrer les modifications' : 'Publier la séance au club'}
-          </Button>
+            <h2 id="save-tpl-title" className="text-base font-semibold text-neutral-900">
+              Enregistrer comme template
+            </h2>
+            <p className="text-xs text-neutral-500">
+              Ce template sera ajouté à la bibliothèque du club et réutilisable par tous les coachs.
+            </p>
+            <div className="space-y-2">
+              <label htmlFor="tpl-name" className="text-xs font-semibold text-neutral-700 block">Nom *</label>
+              <input
+                id="tpl-name"
+                type="text"
+                value={tplName}
+                onChange={(e) => setTplName(e.target.value)}
+                placeholder="Ex : VMA 10×400m"
+                className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="tpl-category" className="text-xs font-semibold text-neutral-700 block">Catégorie</label>
+              <select
+                id="tpl-category"
+                value={tplCategory}
+                onChange={(e) => setTplCategory(e.target.value as TemplateCategory)}
+                className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              >
+                {(Object.keys(CATEGORY_LABELS) as TemplateCategory[]).map((c) => (
+                  <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="tpl-desc" className="text-xs font-semibold text-neutral-700 block">Description (optionnel)</label>
+              <textarea
+                id="tpl-desc"
+                value={tplDescription}
+                onChange={(e) => setTplDescription(e.target.value)}
+                rows={2}
+                placeholder="Échauffement 15' · 10×400m VMA r=90'' · Retour 10'"
+                className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent resize-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="secondary" fullWidth onClick={() => setShowSaveTemplate(false)} disabled={savingTpl}>
+                Annuler
+              </Button>
+              <Button
+                variant="accent"
+                fullWidth
+                loading={savingTpl}
+                disabled={!tplName.trim()}
+                onClick={handleSaveTemplate}
+              >
+                Enregistrer le template
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
