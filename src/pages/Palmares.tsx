@@ -174,6 +174,38 @@ export default function Palmares() {
 
   const canEdit = (raceUserId: string) => raceUserId === user?.id || isCoach;
 
+  // Mes records personnels par distance standard
+  const personalRecords = useMemo(() => {
+    if (!user) return [];
+    const myRaces = raceResults.filter((r) => r.user_id === user.id);
+    if (myRaces.length === 0) return [];
+
+    const buckets = [
+      { label: '10 km', target: 10, tol: 0.6 },
+      { label: 'Semi', target: 21.1, tol: 0.8 },
+      { label: 'Marathon', target: 42.2, tol: 1.2 },
+    ];
+
+    const toSeconds = (duration: string): number => {
+      const parts = duration.split(':').map(Number);
+      if (parts.length !== 3) return Infinity;
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    };
+
+    const records: { label: string; race: typeof myRaces[0] }[] = [];
+    for (const b of buckets) {
+      const matches = myRaces.filter(
+        (r) => Math.abs(r.distance_km - b.target) <= b.tol
+      );
+      if (matches.length === 0) continue;
+      const pb = matches.reduce((best, r) =>
+        toSeconds(r.time_duration) < toSeconds(best.time_duration) ? r : best
+      );
+      records.push({ label: b.label, race: pb });
+    }
+    return records;
+  }, [raceResults, user]);
+
   return (
     <div className="py-4">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-500 hover:text-gray-900 mb-4">
@@ -181,10 +213,37 @@ export default function Palmares() {
         <span className="text-sm">Retour</span>
       </button>
 
+      {/* Hero "Mes records" — seulement si l'utilisateur courant a au moins un PB matché */}
+      {personalRecords.length > 0 && (
+        <div className="mb-5">
+          <p className="label-micro text-neutral-400 mb-2">Mes records personnels</p>
+          <div className="grid grid-cols-3 gap-2">
+            {personalRecords.map(({ label, race }) => (
+              <div
+                key={label}
+                className="bg-gradient-to-br from-amber-50 to-white rounded-xl border border-amber-100 p-3 text-center shadow-card"
+                title={`${race.race_name} · ${format(new Date(race.date), 'd MMM yyyy', { locale: fr })}`}
+              >
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Trophy size={12} className="text-amber-500" aria-hidden="true" />
+                  <span className="label-micro text-amber-700">{label}</span>
+                </div>
+                <p className="font-stat text-lg text-neutral-900 leading-none tabular">
+                  {formatDuration(race.time_duration)}
+                </p>
+                <p className="text-[10px] text-neutral-400 mt-1 truncate">
+                  {format(new Date(race.date), 'MMM yyyy', { locale: fr })}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
           <Trophy size={22} className="text-amber-500" />
-          Palmares Collectif
+          Palmarès du club
         </h1>
         {isCoach && (
           <button
