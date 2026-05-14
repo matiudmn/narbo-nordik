@@ -3,7 +3,8 @@ import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, ChevronUp, ChevronDown, Zap, Clock, Ruler, Pencil, Copy, Calendar } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { EmptyState, Button } from '../../components/ui';
+import { EmptyState, Button, useToast } from '../../components/ui';
+import { useSessionAutosave } from '../../hooks/useSessionAutosave';
 import { useData } from '../../contexts/DataContext';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
@@ -250,6 +251,20 @@ export default function SessionEditor() {
   const [description, setDescription] = useState('');
   const [blocks, setBlocks] = useState<SessionBlock[]>([]);
 
+  const toast = useToast();
+
+  // Autosave : ne s'applique qu'aux créations (pas aux éditions, pour ne pas
+  // écraser une session existante par accident en cas de refresh).
+  const draftSnapshot = useMemo(
+    () => ({ title, date, groupId, preparationId, sessionType, terrainOptions, location, description, blocks }),
+    [title, date, groupId, preparationId, sessionType, terrainOptions, location, description, blocks]
+  );
+  const autosaveKey = editingSessionId ?? 'new';
+  const { pendingDraft, dismissPendingDraft, clearDraft, savedAt } = useSessionAutosave(
+    draftSnapshot,
+    { userId: user?.id, key: autosaveKey }
+  );
+
   const weekStart = startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 });
 
@@ -307,6 +322,7 @@ export default function SessionEditor() {
         blocks,
       });
     }
+    clearDraft();
     resetForm();
     setShowForm(false);
   };
@@ -382,14 +398,60 @@ export default function SessionEditor() {
           className="flex items-center gap-1 bg-accent text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-accent-light transition-colors"
         >
           {showForm ? <X size={16} /> : <Plus size={16} />}
-          {showForm ? 'Fermer' : 'Nouvelle seance'}
+          {showForm ? 'Fermer' : 'Nouvelle séance'}
         </button>
       </div>
+
+      {/* Banner brouillon récupéré */}
+      {pendingDraft && !showForm && (
+        <div className="bg-info-50 border border-info-100 rounded-xl p-4 mb-3 flex items-start gap-3">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-info-700">Brouillon de séance récupéré</p>
+            <p className="text-xs text-info-600 mt-0.5">
+              {pendingDraft.title ? `« ${pendingDraft.title} »` : 'Séance sans titre'} en cours de saisie.
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => {
+                if (pendingDraft.title) setTitle(pendingDraft.title);
+                if (pendingDraft.date) setDate(pendingDraft.date);
+                if (pendingDraft.groupId) setGroupId(pendingDraft.groupId);
+                if (pendingDraft.preparationId) setPreparationId(pendingDraft.preparationId);
+                if (pendingDraft.sessionType) setSessionType(pendingDraft.sessionType);
+                if (pendingDraft.terrainOptions) setTerrainOptions(pendingDraft.terrainOptions);
+                if (pendingDraft.location) setLocation(pendingDraft.location);
+                if (pendingDraft.description) setDescription(pendingDraft.description);
+                if (pendingDraft.blocks) setBlocks(pendingDraft.blocks);
+                dismissPendingDraft();
+                setShowForm(true);
+                toast.success('Brouillon restauré');
+              }}
+              className="px-3 py-1.5 bg-info text-white text-xs font-medium rounded-lg hover:bg-info-600 transition-colors"
+            >
+              Restaurer
+            </button>
+            <button
+              onClick={() => { dismissPendingDraft(); clearDraft(); }}
+              className="px-3 py-1.5 border border-info-200 text-info-700 text-xs font-medium rounded-lg hover:bg-info-50 transition-colors"
+            >
+              Ignorer
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Creation form */}
       {showForm && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4 space-y-3">
-          <h2 className="font-bold text-gray-900">{editingSessionId ? 'Modifier la seance' : 'Creer une seance'}</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-bold text-gray-900">{editingSessionId ? 'Modifier la séance' : 'Créer une séance'}</h2>
+            {savedAt && !editingSessionId && (
+              <span className="text-[10px] text-success-600 font-medium tabular">
+                ✓ Enregistré
+              </span>
+            )}
+          </div>
 
           <input
             type="text" placeholder="Titre (ex: Fractionne court)"
