@@ -7,6 +7,7 @@ import { Calendar } from 'lucide-react';
 import { StatusBadge, EmptyState, Button, useToast } from '../components/ui';
 import { StravaWordmark, PoweredByStrava } from '../components/strava';
 import { QuickSurveySheet } from '../components/athlete/QuickSurveySheet';
+import { VmaRecordCelebration } from '../components/athlete/VmaRecordCelebration';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { useStrava } from '../hooks/useStrava';
@@ -24,6 +25,9 @@ export default function Home() {
   const allureZones = getAllureZones(clubSettings?.allure_zones);
   const [weekOffset, setWeekOffset] = useState(0);
 
+  // VMA record celebration state
+  const [vmaCelebration, setVmaCelebration] = useState<{ previous: number; current: number } | null>(null);
+
   // Quick-validate state
   const [surveySheet, setSurveySheet] = useState<{
     sessionId: string;
@@ -37,6 +41,29 @@ export default function Home() {
 
   const isCoach = user?.role === 'coach';
   const strava = useStrava();
+
+  // Détecte un record VMA non encore célébré (athlète uniquement)
+  useEffect(() => {
+    if (!user || isCoach) return;
+    const history = user.vma_history ?? [];
+    if (history.length < 2) return;
+    const sorted = [...history].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    const latest = sorted[sorted.length - 1];
+    const previousValues = sorted.slice(0, -1).map((e) => e.vma);
+    const previousMax = Math.max(...previousValues);
+    if (latest.vma <= previousMax) return;
+
+    const seenKey = `vma_record_seen:${user.id}:${latest.date}`;
+    try {
+      if (window.localStorage.getItem(seenKey)) return;
+      window.localStorage.setItem(seenKey, '1');
+    } catch {
+      return;
+    }
+    setVmaCelebration({ previous: previousMax, current: latest.vma });
+  }, [user, isCoach]);
 
   useEffect(() => {
     strava.checkConnection();
@@ -642,6 +669,14 @@ export default function Home() {
         onSave={handleSaveSurvey}
         onClose={() => setSurveySheet(null)}
         loading={savingSurvey}
+      />
+
+      {/* VMA Record celebration — wow moment quand le coach update la VMA */}
+      <VmaRecordCelebration
+        open={vmaCelebration !== null}
+        previousVma={vmaCelebration?.previous ?? 0}
+        newVma={vmaCelebration?.current ?? 0}
+        onClose={() => setVmaCelebration(null)}
       />
     </div>
   );
