@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Check, Target, Smile, Dumbbell, Mountain, Ba
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { getSessionCode } from '../../lib/calculations';
+import { filterSessionsForAthlete } from '../../lib/athleteSessions';
 import Avatar from '../../components/Avatar';
 import YearlyHeatmap from '../../components/YearlyHeatmap';
 import type { HeatmapSession } from '../../components/YearlyHeatmap';
@@ -40,12 +41,8 @@ export default function Suivi() {
   const completedSessions = useMemo(() => {
     if (!user) return [];
 
-    const userSessions = sessions.filter(s => {
-      if (s.is_personal) return s.created_by === user.id;
-      if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
-      if (!s.group_id) return true;
-      return s.group_id === user.group_id;
-    });
+    // Règle de priorité prépa active : on masque les séances de groupe quand l'athlète a une prépa
+    const userSessions = filterSessionsForAthlete(user, sessions, userPrepIds).map(f => f.session);
 
     return userSessions
       .filter(s => {
@@ -106,12 +103,8 @@ export default function Suivi() {
         .filter(v => v.user_id === user.id && v.status === 'done')
         .map(v => v.session_id)
     );
-    const userSessions = sessions.filter(s => {
-      if (s.is_personal) return s.created_by === user.id;
-      if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
-      if (!s.group_id) return true;
-      return s.group_id === user.group_id;
-    });
+    // Règle de priorité prépa active appliquée aussi pour le heatmap
+    const userSessions = filterSessionsForAthlete(user, sessions, userPrepIds).map(f => f.session);
     return userSessions
       .filter(s => doneSessionIds.has(s.id) || new Date(s.date) <= today)
       .map(s => ({

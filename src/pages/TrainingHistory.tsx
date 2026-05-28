@@ -6,6 +6,7 @@ import { ArrowLeft, Paperclip, Dumbbell, Mountain, Battery, Bike, Footprints, Tr
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { getSessionCode } from '../lib/calculations';
+import { filterSessionsForAthlete } from '../lib/athleteSessions';
 import { StatusBadge, EmptyState } from '../components/ui';
 import type { SessionType } from '../types';
 import type { SessionStatus } from '../components/ui';
@@ -55,15 +56,11 @@ export default function TrainingHistory() {
   );
 
   const targetSessions = useMemo(() => {
-    return sessions
-      .filter(s => {
-        if (s.is_personal) return s.created_by === targetUser.id;
-        if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
-        if (!s.group_id) return true;
-        return s.group_id === targetUser.group_id;
-      })
+    // Règle de priorité prépa active : si l'athlète a une prépa, ses séances de groupe sont masquées.
+    return filterSessionsForAthlete(targetUser, sessions, userPrepIds)
+      .map(f => f.session)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [sessions, targetUser.group_id, userPrepIds]);
+  }, [sessions, targetUser, userPrepIds]);
 
   const getValidation = (sessionId: string) =>
     validations.find(v => v.session_id === sessionId && v.user_id === targetUser.id);

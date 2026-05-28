@@ -9,6 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
 import { getRacePaces, calculateRacePace, getVmaLevelIndex } from '../../lib/calculations';
+import { filterSessionsForAthlete } from '../../lib/athleteSessions';
 import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
 import { getSeasonRange } from '../../lib/date-utils';
@@ -37,12 +38,8 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
     const mEnd = endOfMonth(now);
     const { start: sStart, end: sEnd } = getSeasonRange();
 
-    const memberSessions = sessions.filter(s => {
-      if (s.is_personal) return s.created_by === member.id;
-      if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
-      if (!s.group_id) return true;
-      return s.group_id === member.group_id;
-    });
+    // Règle de priorité prépa active centralisée (cf. lib/athleteSessions)
+    const memberSessions = filterSessionsForAthlete(member, sessions, userPrepIds).map(f => f.session);
 
     const doneSessionIds = new Set(
       validations
