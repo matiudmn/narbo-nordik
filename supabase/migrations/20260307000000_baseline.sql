@@ -28,6 +28,14 @@
 -- functions déployées, extensions pg_net / pg_cron. Ils sont optionnels : l'appli
 -- fonctionne sans eux (seuls les emails / purges automatiques sont désactivés).
 --
+-- VÉRIFIÉ vs PROD (06/2026) via les advisors Supabase : 15 tables, FKs, index,
+-- fonctions et 46 policies recoupés. 4 dérives « dashboard » (absentes de TOUT
+-- fichier) détectées et régularisées ici : policy d'inscription `users`,
+-- renommage de la policy d'insert `notifications`, et `exit_feedbacks` (insert).
+-- Détails + points de sécurité : supabase/MIGRATIONS.md. (Diff colonne-par-colonne
+-- non récupérable — execute_sql / list_tables non autorisés en session ; recoupé
+-- via src/types/index.ts + le comportement réel de l'app.)
+--
 -- IDEMPOTENT : sûr à ré-exécuter (IF NOT EXISTS / CREATE OR REPLACE /
 -- DROP POLICY IF EXISTS). Sur la base de PROD EXISTANTE : NE PAS l'exécuter,
 -- la marquer comme déjà appliquée afin que le CLI ne tente pas de la rejouer :
@@ -236,6 +244,13 @@ CREATE POLICY "Users can read all profiles" ON users
 DROP POLICY IF EXISTS "Users can update their own profile" ON users;
 CREATE POLICY "Users can update their own profile" ON users
   FOR UPDATE TO authenticated USING (auth.uid() = id);
+-- Inscription : un utilisateur crée sa PROPRE ligne profil (AuthContext.signup,
+-- insert { id: auth.uid(), ... }). Présent en prod mais ABSENT de l'ancien
+-- supabase-schema.sql (ajouté via dashboard) — sans cette policy, l'inscription
+-- échoue sur une base reconstruite. Dérive régularisée.
+DROP POLICY IF EXISTS "Users can insert their own profile" ON users;
+CREATE POLICY "Users can insert their own profile" ON users
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
 DROP POLICY IF EXISTS "Coaches can update any user" ON users;
 CREATE POLICY "Coaches can update any user" ON users
   FOR UPDATE TO authenticated
@@ -343,9 +358,18 @@ DROP POLICY IF EXISTS "Users can delete own session nordiks" ON session_nordiks;
 CREATE POLICY "Users can delete own session nordiks" ON session_nordiks
   FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
--- Policies : exit_feedbacks (insert anonyme, lecture coach)
+-- Policies : exit_feedbacks (enquête ANONYME de suppression de compte).
+-- Dérive prod (constatée via advisors) :
+--  * INSERT renommée "Users can insert their own feedback" — reflétée ici (effet
+--    identique : l'app insère {reason, comment} SANS user_id ⇒ WITH CHECK (true)).
+--  * SELECT renommée "Users can read their own feedback" — définition live NON
+--    récupérable (execute_sql non autorisé). La table étant anonyme (pas de
+--    user_id) et les motifs de départ sensibles, on CONSERVE une lecture
+--    restreinte aux coachs (choix sûr). À VÉRIFIER en prod : si la définition
+--    live est permissive, ces retours sont sur-exposés (cf. MIGRATIONS.md § sécu).
 DROP POLICY IF EXISTS "Authenticated users can insert exit feedbacks" ON exit_feedbacks;
-CREATE POLICY "Authenticated users can insert exit feedbacks" ON exit_feedbacks
+DROP POLICY IF EXISTS "Users can insert their own feedback" ON exit_feedbacks;
+CREATE POLICY "Users can insert their own feedback" ON exit_feedbacks
   FOR INSERT TO authenticated WITH CHECK (true);
 DROP POLICY IF EXISTS "Coaches can read exit feedbacks" ON exit_feedbacks;
 CREATE POLICY "Coaches can read exit feedbacks" ON exit_feedbacks
@@ -359,8 +383,14 @@ CREATE POLICY "Users see own notifications" ON notifications
 DROP POLICY IF EXISTS "Users mark own as read" ON notifications;
 CREATE POLICY "Users mark own as read" ON notifications
   FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+-- Dérive prod : renommée "System can insert notifications" -> "Authenticated can
+-- insert notifications" (même effet). WITH CHECK (true) est VOULU : le client
+-- insère des notifs pour d'AUTRES users (ex. nordik -> notif au propriétaire de
+-- la séance, DataContext addSessionNordik). Signalé « permissif » par le linter
+-- (rls_policy_always_true) — laissé tel quel par design ; cf. MIGRATIONS.md § sécu.
 DROP POLICY IF EXISTS "System can insert notifications" ON notifications;
-CREATE POLICY "System can insert notifications" ON notifications
+DROP POLICY IF EXISTS "Authenticated can insert notifications" ON notifications;
+CREATE POLICY "Authenticated can insert notifications" ON notifications
   FOR INSERT WITH CHECK (true);
 
 -- ----------------------------------------------------------------------------

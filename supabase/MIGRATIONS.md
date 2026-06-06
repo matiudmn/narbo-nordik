@@ -53,6 +53,7 @@ désormais l'historique réel et reconstruit la base complète.
 | 11 | `20260317220000_strava_match_functions.sql` | RPC match/unmatch |
 | 12 | `20260317230000_strava_cron.sql` | extensions + cron sync Strava |
 | 13 | `20260514120000_session_templates.sql` | table `session_templates` + 10 seeds |
+| 14 | `20260606120000_notifications_email_and_crons.sql` | infra emails + crons (phase3/4/6) portée **sans secret** (GUC) |
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 
@@ -85,19 +86,57 @@ une **branche jetable** (DB neuve, données de prod NON copiées) :
   pour diff), ou
 - Via CLI : `supabase db reset` sur une instance de test.
 
-> ⚠️ Au moment de cette régularisation, le diff direct contre le schéma réel
-> (`list_tables` / `list_migrations`) n'a **pas pu être exécuté** (l'appel MCP
-> de lecture projet exigeait une approbation non accordée dans la session). Le
-> baseline reflète donc l'**historique des fichiers SQL** du repo, pas un dump
-> live. À confirmer par un rebuild de branche avant usage en prod.
+> **État de la vérification (06/2026).** Les outils MCP de lecture de **données**
+> projet (`list_tables`, `list_migrations`, `execute_sql`, `generate_typescript_types`)
+> sont restés **bloqués** (approbation non accordée). En revanche les **advisors**
+> Supabase (`get_advisors` sécurité + perf) étaient accessibles et ont permis de
+> recouper le live : **15 tables, 4 FKs, 6 index, fonctions et 46 policies**
+> confirmés conformes au baseline + migrations. Le diff **colonne-par-colonne**
+> et les **définitions exactes des policies** restent non récupérables par MCP —
+> recoupés via `src/types/index.ts` + le comportement de l'app. **Validation
+> finale recommandée** (gratuite, locale) : `supabase db reset` sur une instance
+> de test, qui prouve que `baseline → migrations` reconstruit sans erreur.
 
-## Reste à faire (hors périmètre de cette régularisation)
+## Dérives « dashboard » détectées via advisors et régularisées
 
-L'**infra emails** (`notify_email_on_insert` + crons digests, fichiers racine
-`phase3`/`phase6`) et le **cron de purge des préparations** (`phase4`) ne sont
-**pas** dans la lignée canonique : ils contiennent des URLs/secrets propres à
-l'environnement de prod (clé `service_role` en dur). Recommandation : les
-porter en migration CLI en suivant le modèle **sans secret** déjà utilisé par
-`20260317230000_strava_cron.sql` (`current_setting('app.settings.…')`) plutôt
-que de réintroduire des secrets en clair. L'appli fonctionne sans (seuls les
-emails / purges automatiques sont désactivés).
+Quatre policies présentes en prod mais dans **aucun** fichier SQL (ni racine, ni
+CLI) — confirmant l'hypothèse de l'audit. Régularisées dans le baseline :
+
+| Table | Constat live | Traitement dans le baseline |
+|---|---|---|
+| `users` | policy INSERT `Users can insert their own profile` (nécessaire à l'inscription) | **Ajoutée** : `WITH CHECK (auth.uid() = id)` (déduit de `AuthContext.signup`) |
+| `notifications` | `System can insert notifications` renommée `Authenticated can insert notifications` | **Nom aligné** (effet identique `WITH CHECK (true)`, voulu — cf. ci-dessous) |
+| `exit_feedbacks` | INSERT renommée `Users can insert their own feedback` | **Nom aligné** (`WITH CHECK (true)` ; table anonyme, l'app insère `{reason, comment}`) |
+| `exit_feedbacks` | SELECT renommée `Users can read their own feedback` | **Conservé coach-only** (définition live inconnue ; voir sécurité) |
+
+## Points de sécurité à trancher (advisors)
+
+Relevés par `get_advisors(security)` — **non modifiés** ici (hors périmètre ou
+by-design), à arbitrer :
+
+- **`exit_feedbacks` SELECT** : prod expose une policy `Users can read their own
+  feedback` de définition inconnue. La table est **anonyme** (pas de `user_id`) ;
+  si le `USING` live est permissif, les motifs de départ sont **sur-exposés**.
+  → dumper la définition (requête ci-dessous) et confirmer une lecture coach-only.
+- **`notifications` INSERT `WITH CHECK (true)`** : permissif, mais **voulu** — le
+  client insère des notifs pour d'autres users (nordik → propriétaire de séance).
+  Durcir nécessiterait de revoir cette logique.
+- **Fonctions `SECURITY DEFINER` exposées** à `anon`/`authenticated` :
+  `increment_template_usage`, `match_strava_activity`, `unmatch_strava_activity`.
+  Les RPC Strava vérifient `auth.uid()` ; `increment_template_usage` a aussi un
+  `search_path` mutable. → `set search_path = ''` et/ou `revoke execute from anon`.
+- **Bucket public `session-attachments`** avec SELECT large (listing possible).
+
+> Dump des définitions exactes (à exécuter dans le SQL Editor si besoin de
+> réconcilier au mot près) :
+> ```sql
+> select tablename, policyname, cmd, roles, qual, with_check
+> from pg_policies where schemaname in ('public','storage') order by 1,2;
+> ```
+
+## Fait : infra emails / crons (régularisée sans secret)
+
+Portée dans `20260606120000_notifications_email_and_crons.sql` (modèle GUC de
+`strava_cron`, pas de `service_role` en clair). Les anciens `phase3/4/6` racine
+restent comme archive. L'appli fonctionne sans (emails/purges inactifs tant que
+`app.settings.supabase_url` / `app.settings.service_role_key` ne sont pas définis).
