@@ -34,15 +34,21 @@ npm run preview   # Preview du build
 src/               → Code source React
 public/            → Assets statiques
 supabase/          → Configuration Supabase
-supabase-schema.sql           → Schéma initial de la DB
-supabase-migration-*.sql      → Migrations successives (phase2 à phase6)
+supabase/migrations/          → Migrations CLI (SOURCE DE VÉRITÉ, voir supabase/MIGRATIONS.md)
+supabase/functions/           → Edge Functions
+supabase-schema.sql           → Schéma d'origine (DÉPRÉCIÉ, consolidé dans le baseline)
+supabase-migration-*.sql      → Anciennes migrations racine (DÉPRÉCIÉES)
 dist/              → Build de production
 ```
 
 ## Base de données
-- Schéma principal : `supabase-schema.sql`
-- Migrations appliquées séquentiellement : phase2, phase3, phase4, phase5, phase6
-- Migrations spécifiques : restrict-notifications, session-nordiks
+- **Source de vérité : `supabase/migrations/`** (migrations CLI Supabase horodatées).
+  `supabase db reset` reconstruit toute la base depuis zéro. Voir **`supabase/MIGRATIONS.md`**.
+- Le baseline `supabase/migrations/20260307000000_baseline.sql` capture l'état pré-CLI
+  (consolide l'ancien `supabase-schema.sql` + phase2/4/5 + session-nordiks + restrict-notifications).
+- Les fichiers SQL **à la racine** (`supabase-schema.sql`, `supabase-migration-phase*.sql`,
+  `-session-nordiks`, `-restrict-notifications`) sont **historiques/dépréciés** : ne plus s'y fier.
+- Toute nouvelle modif de schéma : ajouter un fichier dans `supabase/migrations/` (jamais à la racine).
 
 ## Documents
 - `Guide-Athlete-NarboNordik.docx` — Guide utilisateur athlète

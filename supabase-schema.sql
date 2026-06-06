@@ -1,5 +1,15 @@
 -- Narbo Nordik Club - Supabase Schema
--- Run this in the Supabase SQL Editor to create the database
+-- ============================================================================
+-- ⚠️ DÉPRÉCIÉ — NE PLUS EXÉCUTER POUR (RE)CRÉER LA BASE.
+-- Ce fichier ne décrit que l'état d'ORIGINE et est INCOMPLET (il manque
+-- is_personal, session_type à 7 valeurs, club_settings, strava, templates,
+-- champs d'enquête, RLS perso, etc.). L'exécuter seul crée une base obsolète
+-- qui casse l'appli.
+-- Source de vérité : supabase/migrations/ (cf. supabase/MIGRATIONS.md).
+-- Reconstruction depuis zéro : `supabase db reset`.
+-- Conservé uniquement comme référence historique ; consolidé dans
+-- supabase/migrations/20260307000000_baseline.sql.
+-- ============================================================================
 
 -- Groups table
 CREATE TABLE groups (
