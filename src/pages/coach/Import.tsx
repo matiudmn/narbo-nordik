@@ -131,7 +131,11 @@ export default function Import() {
   const planned = useMemo(() => {
     return result.sessions.map(s => {
       const groupId = s.groupId || defaultGroupId || null;
-      const title = s.subType || (s.day ? `${s.day} — séance` : 'Séance importée');
+      // Titre : le sous-type s'il existe (format canonique), sinon le 1er
+      // segment du contenu (avant le 1er "|"), tronqué. Évite les titres
+      // génériques "Lundi — séance" pour les formats matrice/simple.
+      const firstSegment = s.contentText.split('|')[0].trim().slice(0, 60);
+      const title = s.subType || firstSegment || 'Séance importée';
       const content = s.contentText.trim();
       const isDuplicate = sessions.some(
         ex =>
@@ -439,7 +443,8 @@ export default function Import() {
                             )}
                           </div>
                           <span className="text-xs text-gray-500 font-mono">
-                            {s.day ? `${s.day} ` : ''}{s.dateRaw}
+                            {/* Évite "Lundi lundi 25 mai" : on n'ajoute le jour que si dateRaw ne le contient pas déjà */}
+                            {s.day && !s.dateRaw.toLowerCase().startsWith(s.day.toLowerCase()) ? `${s.day} ` : ''}{s.dateRaw}
                           </span>
                         </div>
                         <ContentBlocks content={s.contentText} />
@@ -545,7 +550,7 @@ export default function Import() {
             <span className="font-mono font-bold text-accent text-2xl mr-1">
               {toCreateCount}
             </span>
-            séance{toCreateCount > 1 ? 's' : ''} seront créées
+            {toCreateCount > 1 ? 'séances seront créées' : 'séance sera créée'}
             <span className="text-white/60 text-sm ml-2">· texte du coach préservé tel quel</span>
           </div>
         </div>
@@ -572,7 +577,7 @@ export default function Import() {
             ) : (
               <>
                 <Check size={16} />
-                Créer les {toCreateCount} séances
+                {toCreateCount > 1 ? `Créer les ${toCreateCount} séances` : 'Créer la séance'}
               </>
             )}
           </button>

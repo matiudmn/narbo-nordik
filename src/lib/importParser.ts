@@ -92,7 +92,7 @@ export interface ParseResult {
  */
 export function classifyMacroType(typeOrSubType: string, content: string): MacroType {
   const s = (typeOrSubType + ' ' + content).toLowerCase();
-  if (/\bvma\b|fraction|fartlek/.test(s)) return 'vma';
+  if (/\bvma\b|fraction|fartlek|piste|\d+\s*x\s*\d+\s*m/.test(s)) return 'vma';
   if (/seuil|\bsv1\b|\bsv2\b|tempo/.test(s)) return 'seuil';
   if (/côte|cote|montée|grimpe|moujan|mortitude/.test(s)) return 'cotes';
   if (/sortie longue|\bsl\b|long run|sortie nature|vallonn/.test(s)) return 'sl';
@@ -170,19 +170,21 @@ function buildIsoDate(year: number, month: number, day: number): string | null {
   if (month < 1 || month > 12) return null;
   if (day < 1 || day > 31) return null;
   if (year < 2000 || year > 2100) return null;
-  const iso = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  // Roundtrip : new Date corrige silencieusement les dates impossibles
-  // (31/02 → 03/03). On vérifie que la date reconstruite correspond exactement.
-  const dt = new Date(`${iso}T00:00:00`);
+  // Roundtrip via le constructeur numérique (heure LOCALE, pas de parsing de
+  // string) : new Date corrige silencieusement les dates impossibles
+  // (31/02 → 03/03). On compare avec les getters locaux pour rester cohérent
+  // et éviter tout décalage de fuseau horaire (un new Date("...T00:00:00")
+  // suivi de getUTCDate faisait échouer les dates d'hiver en UTC+1).
+  const dt = new Date(year, month - 1, day);
   if (
     Number.isNaN(dt.getTime()) ||
-    dt.getUTCFullYear() !== year ||
-    dt.getUTCMonth() + 1 !== month ||
-    dt.getUTCDate() !== day
+    dt.getFullYear() !== year ||
+    dt.getMonth() + 1 !== month ||
+    dt.getDate() !== day
   ) {
     return null;
   }
-  return iso;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
 /**
