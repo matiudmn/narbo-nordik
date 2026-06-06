@@ -1,6 +1,6 @@
 import { useState, useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Phone, ExternalLink, Shield, Cake, ChevronDown, Gauge, Target, Trophy, History, User as UserIcon } from 'lucide-react';
+import { Search, Phone, Shield, Cake, ChevronDown, Gauge, Target, Trophy, History, User as UserIcon } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { EmptyState } from '../../components/ui';
@@ -254,18 +254,6 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
                 onClick={e => e.stopPropagation()}
               >
                 <Phone size={18} />
-              </a>
-            )}
-            {member.strava_id && (
-              <a
-                href={member.strava_id}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg transition-colors"
-                title="Strava"
-                onClick={e => e.stopPropagation()}
-              >
-                <ExternalLink size={18} />
               </a>
             )}
             <ChevronDown

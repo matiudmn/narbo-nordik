@@ -1,7 +1,7 @@
-import { User as UserIcon, Trophy, Activity, Settings } from 'lucide-react';
+import { User as UserIcon, Trophy, Settings } from 'lucide-react';
 import { motion, SPRING } from '../../lib/motion';
 
-export type ProfileTab = 'infos' | 'sessions' | 'strava' | 'account';
+export type ProfileTab = 'infos' | 'sessions' | 'account';
 
 interface ProfileTabsProps {
   current: ProfileTab;
@@ -11,13 +11,12 @@ interface ProfileTabsProps {
 const tabs: { id: ProfileTab; label: string; icon: typeof UserIcon }[] = [
   { id: 'infos', label: 'Infos', icon: UserIcon },
   { id: 'sessions', label: 'Séances', icon: Trophy },
-  { id: 'strava', label: 'Strava', icon: Activity },
   { id: 'account', label: 'Compte', icon: Settings },
 ];
 
 /**
  * Navigation par tabs sticky pour la page Profile éclatée.
- * 4 onglets : Infos / Séances (+ palmarès) / Strava / Compte (notifs, sécu, RGPD).
+ * 3 onglets : Infos / Séances (+ palmarès) / Compte (notifs, sécu, RGPD).
  *
  * Underline animée via layoutId — l'œil suit le tab actif.
  */

@@ -36,7 +36,6 @@ export interface User {
   vma_history: VmaEntry[];
   group_id: string | null;
   phone: string | null;
-  strava_id: string | null;
   birth_date: string | null;
   license_number: string | null;
   photo_url: string | null;
@@ -216,61 +215,4 @@ export interface ClubSettings {
   allure_zones: Record<string, AllureZoneConfig>;
   updated_at: string;
   updated_by: string | null;
-}
-
-// --- Strava ---
-
-export interface StravaConnectionStatus {
-  strava_athlete_id: number;
-  scope_granted: string;
-  connected_at: string;
-  is_active: boolean;
-}
-
-export interface StravaActivity {
-  id: string;
-  user_id: string;
-  strava_activity_id: number;
-  sport_type: string;
-  name: string | null;
-  distance_meters: number | null;
-  moving_time_seconds: number | null;
-  elapsed_time_seconds: number | null;
-  average_speed: number | null;
-  max_speed: number | null;
-  average_heartrate: number | null;
-  max_heartrate: number | null;
-  average_cadence: number | null;
-  total_elevation_gain: number | null;
-  suffer_score: number | null;
-  calories: number | null;
-  device_name: string | null;
-  start_date: string;
-  start_date_local: string;
-  matched_session_id: string | null;
-  match_status: 'auto_matched' | 'manual' | 'unmatched';
-  created_at: string;
-}
-
-export interface StravaAthleteStats {
-  recent_run_totals: StravaRunTotals;
-  ytd_run_totals: StravaRunTotals;
-  all_run_totals: StravaRunTotals;
-  recent_ride_totals?: StravaRunTotals;
-  ytd_ride_totals?: StravaRunTotals;
-  all_ride_totals?: StravaRunTotals;
-}
-
-export interface StravaRunTotals {
-  count: number;
-  distance: number;
-  moving_time: number;
-  elapsed_time?: number;
-  elevation_gain: number;
-  achievement_count?: number;
-}
-
-export interface StravaHeartRateZone {
-  min: number;
-  max: number;
 }

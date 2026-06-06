@@ -98,7 +98,6 @@ export default function AthletesTab() {
       vma: newVma ? parseFloat(newVma) : null,
       group_id: newGroup || null,
       phone: null,
-      strava_id: null,
       is_public: false,
     });
     setAddingAthlete(false);
