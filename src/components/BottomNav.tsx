@@ -17,7 +17,7 @@ export default function BottomNav() {
         <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
           <NavLink to="/" end className={linkClass}>
             <House size={22} />
-            <span>Home</span>
+            <span>Mon entraîn.</span>
           </NavLink>
           <NavLink to="/coach" end className={linkClass}>
             <LayoutDashboard size={22} />

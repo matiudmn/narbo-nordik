@@ -15,7 +15,7 @@ export default function Sidebar() {
     }`;
 
   const coachLinks = [
-    { to: '/', label: 'Home', icon: House, end: true },
+    { to: '/', label: 'Mon entraînement', icon: House, end: true },
     { to: '/coach', label: 'Suivi', icon: LayoutDashboard, end: true },
     { to: '/club', label: 'Club', icon: BarChart3 },
     { to: '/coach/sessions', label: 'Planning', icon: ClipboardList },
