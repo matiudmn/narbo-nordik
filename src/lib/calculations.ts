@@ -100,9 +100,9 @@ export function formatDistance(meters: number): string {
 /** Allure "m:ss" par km à partir de mètres + secondes. null si données absentes/invalides. */
 export function pacePerKm(distanceM: number | null | undefined, durationS: number | null | undefined): string | null {
   if (!distanceM || !durationS || distanceM <= 0 || durationS <= 0) return null;
-  const secPerKm = durationS / (distanceM / 1000);
-  const m = Math.floor(secPerKm / 60);
-  const s = Math.round(secPerKm % 60);
+  const total = Math.round(durationS / (distanceM / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 

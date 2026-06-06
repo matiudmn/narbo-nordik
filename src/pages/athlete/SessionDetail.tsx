@@ -101,33 +101,39 @@ export default function SessionDetail() {
     ? calculatePaces(user.vma, session.vma_percent_min, session.vma_percent_max, session.target_distance)
     : null;
 
-  const handleValidate = () => {
-    if (user) {
-      validateSession(session.id, user.id, 'done', feedback || undefined, attachedFile || undefined, objectiveReached || undefined, sensations || undefined, buildMetrics());
-      setShowValidation(false);
-      setFeedback('');
-      setObjectiveReached(null);
-      setSensations(null);
-      resetMetrics();
-      removeFile();
+  const handleValidate = async () => {
+    if (!user) return;
+    const res = await validateSession(session.id, user.id, 'done', feedback || undefined, attachedFile || undefined, objectiveReached || undefined, sensations || undefined, buildMetrics());
+    if ('error' in res) {
+      toast.error("Échec de l'enregistrement. Vérifie tes chiffres.");
+      return;
     }
+    setShowValidation(false);
+    setFeedback('');
+    setObjectiveReached(null);
+    setSensations(null);
+    resetMetrics();
+    removeFile();
   };
 
-  const handleEditSave = () => {
-    if (validation) {
-      updateValidation(validation.id, {
-        feedback: feedback || undefined,
-        objective_reached: objectiveReached,
-        sensations: sensations,
-        metrics: buildMetrics(),
-      }, attachedFile || undefined);
-      setIsEditing(false);
-      setFeedback('');
-      setObjectiveReached(null);
-      setSensations(null);
-      resetMetrics();
-      removeFile();
+  const handleEditSave = async () => {
+    if (!validation) return;
+    const res = await updateValidation(validation.id, {
+      feedback: feedback || undefined,
+      objective_reached: objectiveReached,
+      sensations: sensations,
+      metrics: buildMetrics(true),
+    }, attachedFile || undefined);
+    if (res?.error) {
+      toast.error('Échec de la mise à jour. Vérifie tes chiffres.');
+      return;
     }
+    setIsEditing(false);
+    setFeedback('');
+    setObjectiveReached(null);
+    setSensations(null);
+    resetMetrics();
+    removeFile();
   };
 
   const startEditing = () => {
@@ -148,18 +154,22 @@ export default function SessionDetail() {
     const n = parseFloat(s.replace(',', '.'));
     return Number.isFinite(n) ? n : null;
   };
-  const buildMetrics = (): SessionMetricsInput | undefined => {
+  const buildMetrics = (forEdit = false): SessionMetricsInput | undefined => {
     const km = parseNum(distanceKm);
     const min = parseNum(durationMin);
     const elev = parseNum(elevationM);
     const hr = parseNum(avgHrV);
-    if (km == null && min == null && elev == null && hr == null) return undefined;
+    const hasAny = km != null || min != null || elev != null || hr != null;
+    // Création : aucune métrique saisie -> on n'envoie rien.
+    // Édition : on renvoie toujours l'objet (les null effacent les champs gérés),
+    // sans toucher aux champs non gérés par l'UI (max_hr, avg_cadence).
+    if (!hasAny && !forEdit) return undefined;
     return {
       distance_m: km != null ? Math.round(km * 1000) : null,
       duration_s: min != null ? Math.round(min * 60) : null,
       elevation_m: elev != null ? Math.round(elev) : null,
       avg_hr: hr != null ? Math.round(hr) : null,
-      metrics_source: 'manual',
+      metrics_source: hasAny ? 'manual' : null,
     };
   };
   const resetMetrics = () => {

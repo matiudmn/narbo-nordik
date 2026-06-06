@@ -108,10 +108,10 @@ export default function Home() {
       .sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [preparations, userPrepIds, user]);
 
-  // Prochain objectif : le plus proche à venir, sinon le plus récent passé.
+  // Prochain objectif : le plus proche à venir (ou du jour). Une prépa déjà passée
+  // ne doit pas afficher un "J+N" indéfini, donc on n'affiche pas les objectifs passés.
   const nextObjective = useMemo(() => {
-    const upcoming = prepObjectives.filter(o => o.daysUntil >= 0);
-    return upcoming[0] ?? prepObjectives[prepObjectives.length - 1] ?? null;
+    return prepObjectives.find(o => o.daysUntil >= 0) ?? null;
   }, [prepObjectives]);
 
   // --- Attendance stats ---
