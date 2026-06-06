@@ -20,6 +20,7 @@ interface DataContextType {
   userPreparations: UserPreparation[];
   loading: boolean;
   addSession: (session: Omit<Session, 'id' | 'created_at'>) => Promise<{ id: string } | { error: string }>;
+  addSessionsBulk: (sessions: Omit<Session, 'id' | 'created_at'>[]) => Promise<{ created: number } | { error: string }>;
   updateSession: (id: string, updates: Partial<Session>) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
   validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File, objectiveReached?: ObjectiveReached, sensations?: Sensations) => Promise<{ id: string } | { error: string }>;
@@ -155,6 +156,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (data) {
       setSessions(prev => [...prev, { ...data, blocks: data.blocks || [] }].sort((a, b) => a.date.localeCompare(b.date)));
       return { id: data.id };
+    }
+    return { error: 'Aucune donnee retournee par Supabase' };
+  }, []);
+
+  /**
+   * Insertion groupée atomique (import en lot). Un seul appel Supabase :
+   * soit toutes les séances sont créées, soit aucune (pas d'état partiel
+   * comme avec une boucle d'inserts unitaires). Le state local est mis à
+   * jour en une fois.
+   */
+  const addSessionsBulk = useCallback(async (rows: Omit<Session, 'id' | 'created_at'>[]): Promise<{ created: number } | { error: string }> => {
+    if (rows.length === 0) return { created: 0 };
+    const { data, error } = await supabase.from('sessions').insert(rows).select();
+    if (error) {
+      console.error('addSessionsBulk error:', error.message, error.details, error.code, error.hint);
+      return { error: `${error.message}${error.hint ? ' (' + error.hint + ')' : ''}${error.code ? ' [' + error.code + ']' : ''}` };
+    }
+    if (data) {
+      const normalized = data.map(d => ({ ...d, blocks: d.blocks || [] }));
+      setSessions(prev => [...prev, ...normalized].sort((a, b) => a.date.localeCompare(b.date)));
+      return { created: data.length };
     }
     return { error: 'Aucune donnee retournee par Supabase' };
   }, []);
@@ -569,7 +591,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   return (
     <DataContext.Provider value={{
       sessions, validations, raceResults, raceNordiks, sessionNordiks, groups, users, preparations, userPreparations, clubSettings, loading,
-      addSession, updateSession, deleteSession, validateSession, updateValidation,
+      addSession, addSessionsBulk, updateSession, deleteSession, validateSession, updateValidation,
       addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto,
       addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
       addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, refreshAll,

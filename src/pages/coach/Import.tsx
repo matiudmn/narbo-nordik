@@ -75,7 +75,7 @@ function ContentBlocks({ content }: { content: string }) {
 export default function Import() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { groups, addSession } = useData();
+  const { groups, sessions, addSessionsBulk } = useData();
   const toast = useToast();
 
   const [format, setFormat] = useState<ImportFormat>('canonical');
@@ -84,7 +84,8 @@ export default function Import() {
   const [defaultGroupId, setDefaultGroupId] = useState<string>('');
   const [parseTimeMs, setParseTimeMs] = useState<number>(0);
   const [importing, setImporting] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  // Que faire des séances qui semblent déjà exister : les ignorer (défaut) ou les créer quand même.
+  const [onDuplicate, setOnDuplicate] = useState<'skip' | 'create'>('skip');
 
   // Reparse à chaque changement
   const result: ParseResult = useMemo(() => {
@@ -125,85 +126,75 @@ export default function Import() {
     return Object.entries(byWeek);
   }, [result.sessions]);
 
+  // Résolution finale (groupe, titre) + détection de doublon pour chaque séance parsée.
+  // Doublon = même jour + même groupe + même contenu qu'une séance déjà en base.
+  const planned = useMemo(() => {
+    return result.sessions.map(s => {
+      const groupId = s.groupId || defaultGroupId || null;
+      const title = s.subType || (s.day ? `${s.day} — séance` : 'Séance importée');
+      const content = s.contentText.trim();
+      const isDuplicate = sessions.some(
+        ex =>
+          !ex.is_personal &&
+          ex.date.substring(0, 10) === s.date &&
+          (ex.group_id ?? null) === groupId &&
+          (ex.description ?? '').trim() === content
+      );
+      return { parsed: s, groupId, title, isDuplicate };
+    });
+  }, [result.sessions, defaultGroupId, sessions]);
+
+  const duplicateCount = planned.filter(p => p.isDuplicate).length;
+  const toCreateCount = onDuplicate === 'skip' ? planned.length - duplicateCount : planned.length;
+
   // Validation : peut-on créer ?
   const needsDefaultGroup = result.sessions.some(s => s.targetType !== 'group');
   const canImport =
     user?.role === 'coach' &&
-    result.sessions.length > 0 &&
+    toCreateCount > 0 &&
     result.errors.length === 0 &&
     (!needsDefaultGroup || !!defaultGroupId);
 
   async function handleImport() {
     if (!user || !canImport || importing) return;
     setImporting(true);
-    setProgress({ done: 0, total: result.sessions.length });
 
-    let success = 0;
-    let failed = 0;
-    const errors: string[] = [];
+    // Filtre les doublons selon le choix du coach, puis construit les payloads.
+    const toCreate = onDuplicate === 'skip' ? planned.filter(p => !p.isDuplicate) : planned;
+    const skipped = planned.length - toCreate.length;
+
+    const rows = toCreate.map(p => ({
+      date: new Date(`${p.parsed.date}T18:30:00`).toISOString(),
+      title: p.title,
+      session_type: 'entrainement' as const,
+      terrain_options: [],
+      location: null,
+      location_url: null,
+      description: p.parsed.contentText,
+      group_id: p.groupId,
+      preparation_id: null,
+      target_distance: null,
+      vma_percent_min: null,
+      vma_percent_max: null,
+      blocks: [],
+      is_personal: false,
+      created_by: user.id,
+    }));
 
     try {
-      for (let i = 0; i < result.sessions.length; i++) {
-        const s = result.sessions[i];
-        // `|| null` et non `??` : defaultGroupId peut être '' (chaîne vide)
-        const groupId = s.groupId || defaultGroupId || null;
-        const title = s.subType || (s.day ? `${s.day} — séance` : 'Séance importée');
-
-        // La date est déjà validée par parseDateRaw, mais on protège quand même
-        // la création pour qu'une seule ligne fautive n'interrompe pas tout le lot.
-        let isoDate: string;
-        try {
-          isoDate = new Date(`${s.date}T18:30:00`).toISOString();
-        } catch {
-          failed++;
-          errors.push(`Ligne ${s.lineNumber} : date invalide (${s.dateRaw})`);
-          setProgress({ done: i + 1, total: result.sessions.length });
-          continue;
-        }
-
-        const payload = {
-          date: isoDate,
-          title,
-          session_type: 'entrainement' as const,
-          terrain_options: [],
-          location: null,
-          location_url: null,
-          description: s.contentText,
-          group_id: groupId,
-          preparation_id: null,
-          target_distance: null,
-          vma_percent_min: null,
-          vma_percent_max: null,
-          blocks: [],
-          is_personal: false,
-          created_by: user.id,
-        };
-
-        try {
-          const res = await addSession(payload);
-          if ('error' in res) {
-            failed++;
-            errors.push(`Ligne ${s.lineNumber} : ${res.error}`);
-          } else {
-            success++;
-          }
-        } catch (e) {
-          failed++;
-          errors.push(`Ligne ${s.lineNumber} : ${e instanceof Error ? e.message : 'erreur inattendue'}`);
-        }
-        setProgress({ done: i + 1, total: result.sessions.length });
+      // Insertion atomique : tout ou rien, pas d'état partiel ni de doublons à mi-parcours.
+      const res = await addSessionsBulk(rows);
+      if ('error' in res) {
+        toast.error(`Import échoué : ${res.error}`);
+        return;
       }
+      const suffix = skipped > 0 ? ` · ${skipped} doublon${skipped > 1 ? 's' : ''} ignoré${skipped > 1 ? 's' : ''}` : '';
+      toast.success(`${res.created} séances créées${suffix} · retrouve-les dans le planning`);
+      navigate('/coach');
+    } catch (e) {
+      toast.error(`Import échoué : ${e instanceof Error ? e.message : 'erreur inattendue'}`);
     } finally {
       setImporting(false);
-      setProgress(null);
-    }
-
-    if (failed === 0) {
-      toast.success(`${success} séances créées · retrouve-les dans le planning`);
-      navigate('/coach');
-    } else {
-      const detail = errors.slice(0, 2).join(' · ') + (errors.length > 2 ? '…' : '');
-      toast.error(`${success} créées, ${failed} échecs · ${detail}`);
     }
   }
 
@@ -503,24 +494,62 @@ export default function Import() {
         </div>
       )}
 
+      {/* DOUBLONS */}
+      {duplicateCount > 0 && (
+        <div className="bg-warning-50 border border-warning-100 rounded-lg p-4 mt-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={18} className="text-warning-700 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-warning-700">
+                {duplicateCount} séance{duplicateCount > 1 ? 's' : ''} semble{duplicateCount > 1 ? 'nt' : ''} déjà exister
+              </div>
+              <p className="text-xs text-gray-600 mt-1">
+                Même date, même groupe et même contenu qu'une séance déjà en base. Évite de créer des doublons.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="radio"
+                    name="onDuplicate"
+                    checked={onDuplicate === 'skip'}
+                    onChange={() => setOnDuplicate('skip')}
+                    style={{ accentColor: 'var(--color-warning)' }}
+                  />
+                  <span className="text-gray-700">
+                    Ignorer les doublons <span className="text-gray-400">(créer {planned.length - duplicateCount} nouvelle{planned.length - duplicateCount > 1 ? 's' : ''})</span>
+                  </span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="radio"
+                    name="onDuplicate"
+                    checked={onDuplicate === 'create'}
+                    onChange={() => setOnDuplicate('create')}
+                    style={{ accentColor: 'var(--color-warning)' }}
+                  />
+                  <span className="text-gray-700">
+                    Importer quand même <span className="text-gray-400">(créer les {planned.length})</span>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CTA BAR */}
       <div className="bg-gray-900 text-white rounded-xl p-4 mt-4 flex items-center justify-between gap-3 flex-wrap sticky bottom-2 shadow-lg">
         <div>
           <div className="text-xs uppercase tracking-wider text-accent font-semibold mb-1">Prêt à créer</div>
           <div className="text-base">
             <span className="font-mono font-bold text-accent text-2xl mr-1">
-              {result.sessions.length}
+              {toCreateCount}
             </span>
-            séance{result.sessions.length > 1 ? 's' : ''} seront créées
+            séance{toCreateCount > 1 ? 's' : ''} seront créées
             <span className="text-white/60 text-sm ml-2">· texte du coach préservé tel quel</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {progress && (
-            <div className="text-sm text-white/80 font-mono">
-              {progress.done}/{progress.total}
-            </div>
-          )}
           <button
             type="button"
             onClick={() => navigate('/coach')}
@@ -543,7 +572,7 @@ export default function Import() {
             ) : (
               <>
                 <Check size={16} />
-                Créer les {result.sessions.length} séances
+                Créer les {toCreateCount} séances
               </>
             )}
           </button>
