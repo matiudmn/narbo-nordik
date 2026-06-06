@@ -221,6 +221,8 @@ export interface ClubSettings {
   id: string;
   race_paces: Record<string, RacePaceConfig>;
   allure_zones: Record<string, AllureZoneConfig>;
+  featured_validation_id: string | null;
+  featured_at: string | null;
   updated_at: string;
   updated_by: string | null;
 }

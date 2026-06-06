@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isWithinInterval, isPast, differenceInCalendarDays, differenceInCalendarWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Check, Flag } from 'lucide-react';
+import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Check, Flag, Star } from 'lucide-react';
 import { Calendar } from 'lucide-react';
 import { StatusBadge, EmptyState, Button, useToast, StreakFlame } from '../components/ui';
 import { QuickSurveySheet } from '../components/athlete/QuickSurveySheet';
@@ -19,7 +19,7 @@ import type { ObjectiveReached, Sensations } from '../types';
 
 export default function Home() {
   const { user } = useAuth();
-  const { sessions, validations, groups, preparations, userPreparations, clubSettings, loading, validateSession, updateValidation } = useData();
+  const { sessions, validations, users, groups, preparations, userPreparations, clubSettings, loading, validateSession, updateValidation } = useData();
   const toast = useToast();
   const racePaces = getRacePaces(clubSettings?.race_paces);
   const allureZones = getAllureZones(clubSettings?.allure_zones);
@@ -158,6 +158,19 @@ export default function Home() {
       .map(d => new Date(d));
     return computeWeeklyStreak(doneDates, new Date());
   }, [user, sessions, validations]);
+
+  // Coup de coeur du coach : validation mise en avant au niveau club.
+  const featured = useMemo(() => {
+    const fid = clubSettings?.featured_validation_id;
+    if (!fid) return null;
+    const v = validations.find(x => x.id === fid);
+    if (!v) return null;
+    return {
+      v,
+      athlete: users.find(u => u.id === v.user_id) ?? null,
+      sess: sessions.find(s => s.id === v.session_id) ?? null,
+    };
+  }, [clubSettings, validations, users, sessions]);
 
   // --- Weekly sessions ---
   const weekStart = startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 });
@@ -510,6 +523,25 @@ export default function Home() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Coup de coeur du coach */}
+      {featured && (
+        <div className="bg-warning-50 rounded-xl border border-warning-100 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="flex items-center justify-center w-7 h-7 rounded-full bg-warning-100 flex-shrink-0">
+              <Star size={15} className="text-warning-700" fill="currentColor" aria-hidden="true" />
+            </span>
+            <h2 className="font-bold text-gray-900">Coup de coeur du coach</h2>
+          </div>
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">{featured.athlete?.firstname ?? 'Un athlète'}</span>
+            {featured.sess?.title && <span className="text-gray-500"> — {featured.sess.title}</span>}
+          </p>
+          {featured.v.feedback && (
+            <p className="text-sm text-gray-600 italic mt-1">« {featured.v.feedback} »</p>
+          )}
         </div>
       )}
 
