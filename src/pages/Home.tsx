@@ -608,7 +608,7 @@ export default function Home() {
             description="Ton coach publiera bientôt le programme. Profites-en pour une sortie libre !"
           />
         ) : (
-          <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+          <div className="space-y-3">
             {filteredSessions.map(session => {
               const sessionDate = new Date(session.date);
               const sessionPast = isPast(sessionDate);
