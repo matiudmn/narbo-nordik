@@ -1,13 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile, Heart, Activity } from 'lucide-react';
+import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile, Heart, Activity, Sparkles } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode, getAllureZones, pacePerKm } from '../../lib/calculations';
 import { useState, useRef } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
 import { useToast, Button } from '../../components/ui';
+import { supabase } from '../../lib/supabase';
 import { motion, DUR, EASE } from '../../lib/motion';
 import type { ObjectiveReached, Sensations, SessionMetricsInput } from '../../types';
 
@@ -35,6 +36,10 @@ export default function SessionDetail() {
   const [elevationM, setElevationM] = useState('');
   const [avgHrV, setAvgHrV] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const ocrInputRef = useRef<HTMLInputElement>(null);
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrError, setOcrError] = useState<string | null>(null);
+  const [ocrFilled, setOcrFilled] = useState(false);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'];
@@ -169,7 +174,7 @@ export default function SessionDetail() {
       duration_s: min != null ? Math.round(min * 60) : null,
       elevation_m: elev != null ? Math.round(elev) : null,
       avg_hr: hr != null ? Math.round(hr) : null,
-      metrics_source: hasAny ? 'manual' : null,
+      metrics_source: hasAny ? (ocrFilled ? 'ocr' : 'manual') : null,
     };
   };
   const resetMetrics = () => {
@@ -177,6 +182,42 @@ export default function SessionDetail() {
     setDurationMin('');
     setElevationM('');
     setAvgHrV('');
+    setOcrFilled(false);
+  };
+
+  const handleOcrFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Choisis une image (capture de ta montre ou de Strava).'); return; }
+    if (file.size > MAX_FILE_SIZE) { toast.error('Image trop volumineuse (max 5 Mo).'); return; }
+    setOcrLoading(true);
+    setOcrError(null);
+    try {
+      const dataUri = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('read'));
+        reader.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke('ai-ocr', { body: { image: dataUri } });
+      if (error || data?.error || !data?.metrics) {
+        setOcrError('Lecture impossible. Saisis tes chiffres à la main.');
+        return;
+      }
+      const m = data.metrics;
+      let any = false;
+      if (m.distance_m != null) { setDistanceKm(String(m.distance_m / 1000)); any = true; }
+      if (m.duration_s != null) { setDurationMin(String(Math.round(m.duration_s / 60))); any = true; }
+      if (m.elevation_m != null) { setElevationM(String(m.elevation_m)); any = true; }
+      if (m.avg_hr != null) { setAvgHrV(String(m.avg_hr)); any = true; }
+      if (any) { setOcrFilled(true); toast.success("Chiffres détectés, vérifie-les avant d'enregistrer."); }
+      else { setOcrError('Aucun chiffre détecté. Saisis-les à la main.'); }
+    } catch {
+      setOcrError('Lecture impossible. Saisis tes chiffres à la main.');
+    } finally {
+      setOcrLoading(false);
+    }
   };
   const km = parseNum(distanceKm);
   const min = parseNum(durationMin);
@@ -538,6 +579,19 @@ export default function SessionDetail() {
                       <Activity size={14} className="text-primary" />
                       Mes chiffres (optionnel)
                     </label>
+                    <div>
+                      <input ref={ocrInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleOcrFile} />
+                      <button
+                        type="button"
+                        onClick={() => ocrInputRef.current?.click()}
+                        disabled={ocrLoading}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-dark hover:text-accent disabled:opacity-60 transition-colors"
+                      >
+                        <Sparkles size={13} aria-hidden="true" />
+                        {ocrLoading ? 'Lecture de la capture…' : 'Importer une capture (remplir par IA)'}
+                      </button>
+                      {ocrError && <p className="text-[11px] text-danger-600 mt-1">{ocrError}</p>}
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <label className="block">
                         <span className="block text-[11px] text-gray-400 mb-1">Distance (km)</span>
