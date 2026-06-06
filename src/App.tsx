@@ -22,6 +22,8 @@ const ClubProfile = lazy(() => import('./pages/ClubProfile'));
 const Dashboard = lazy(() => import('./pages/coach/Dashboard'));
 const SessionEditor = lazy(() => import('./pages/coach/SessionEditor'));
 const Settings = lazy(() => import('./pages/coach/Settings'));
+const Import = lazy(() => import('./pages/coach/Import'));
+const QuickAddSession = lazy(() => import('./pages/coach/QuickAddSession'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const Palmares = lazy(() => import('./pages/Palmares'));
 const VmaHistory = lazy(() => import('./pages/VmaHistory'));
@@ -66,6 +68,8 @@ function AppRoutes() {
           {/* Coach routes */}
           <Route path="/coach" element={isCoach ? <Dashboard /> : <Navigate to="/" />} />
           <Route path="/coach/sessions" element={isCoach ? <SessionEditor /> : <Navigate to="/" />} />
+          <Route path="/coach/import" element={isCoach ? <Import /> : <Navigate to="/" />} />
+          <Route path="/coach/nouvelle-seance" element={isCoach ? <QuickAddSession /> : <Navigate to="/" />} />
           <Route path="/coach/settings" element={isCoach ? <Settings /> : <Navigate to="/" />} />
 
           {/* Default redirect */}

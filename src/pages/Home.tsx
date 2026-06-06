@@ -13,6 +13,7 @@ import { useData } from '../contexts/DataContext';
 import { useStrava } from '../hooks/useStrava';
 import { formatBlockSummary, getRacePaces, calculateRacePace, getVmaLevelIndex, VMA_LEVELS, getSessionCode, getAllureZones } from '../lib/calculations';
 import { getSeasonRange } from '../lib/date-utils';
+import { filterSessionsForAthlete } from '../lib/athleteSessions';
 import { PageSkeleton } from '../components/Skeleton';
 import { celebrate, haptic } from '../lib/motion';
 import type { ObjectiveReached, Sensations } from '../types';
@@ -38,6 +39,20 @@ export default function Home() {
   } | null>(null);
   const [quickValidatingId, setQuickValidatingId] = useState<string | null>(null);
   const [savingSurvey, setSavingSurvey] = useState(false);
+
+  // Toggle "Voir aussi le programme du groupe" (persisté en localStorage par athlète)
+  // Visible uniquement si l'athlète a une prépa active.
+  const [showGroupBesidesPrep, setShowGroupBesidesPrep] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const stored = window.localStorage.getItem('nn:showGroupBesidesPrep');
+    return stored === 'true';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('nn:showGroupBesidesPrep', String(showGroupBesidesPrep));
+    }
+  }, [showGroupBesidesPrep]);
 
   const isCoach = user?.role === 'coach';
   const strava = useStrava();
@@ -91,14 +106,9 @@ export default function Home() {
     const mEnd = endOfMonth(now);
     const { start: sStart, end: sEnd } = getSeasonRange();
 
-    const hasPrep = userPrepIds.length > 0;
-    const userSessions = sessions.filter(s => {
-      if (s.is_personal) return s.created_by === user.id;
-      if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
-      if (hasPrep) return false;
-      if (!s.group_id) return true;
-      return s.group_id === user.group_id;
-    });
+    // Pour le calcul d'assiduité, on garde la règle stricte (sans toggle) :
+    // si l'athlète a une prépa active, on ne compte que les séances de la prépa.
+    const userSessions = filterSessionsForAthlete(user, sessions, userPrepIds).map(f => f.session);
 
     const calc = (start: Date, end: Date) => {
       const periodSessions = userSessions.filter(s =>
@@ -122,18 +132,32 @@ export default function Home() {
   const weekStart = startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 });
   const weekEnd = endOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 });
 
-  const filteredSessions = useMemo(() => {
-    return sessions
-      .filter(s => {
-        const sessionDate = new Date(s.date);
-        if (sessionDate < weekStart || sessionDate > weekEnd) return false;
-        if (s.is_personal) return s.created_by === user?.id;
-        if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
-        if (!s.group_id) return true;
-        return s.group_id === user?.group_id;
+  // Vue hebdo : applique la règle de priorité prépa, avec respect du toggle utilisateur.
+  // Retourne FilteredSession pour conserver l'info "isSecondary" (utilisé pour le style dégradé).
+  const filteredWeekItems = useMemo(() => {
+    if (!user) return [];
+    return filterSessionsForAthlete(user, sessions, userPrepIds, { includeGroupSessions: showGroupBesidesPrep })
+      .filter(f => {
+        const d = new Date(f.session.date);
+        return d >= weekStart && d <= weekEnd;
       })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [sessions, user?.group_id, weekStart, weekEnd, userPrepIds]);
+      .sort((a, b) => new Date(a.session.date).getTime() - new Date(b.session.date).getTime());
+  }, [sessions, user, weekStart, weekEnd, userPrepIds, showGroupBesidesPrep]);
+
+  // Backward-compat : la plupart du JSX existant itère sur filteredSessions (Session[]).
+  // On conserve cet alias pour minimiser le diff côté rendu.
+  const filteredSessions = useMemo(
+    () => filteredWeekItems.map(f => f.session),
+    [filteredWeekItems]
+  );
+
+  // Lookup rapide isSecondary par session.id pour le style dégradé côté JSX.
+  const secondaryIds = useMemo(
+    () => new Set(filteredWeekItems.filter(f => f.isSecondary).map(f => f.session.id)),
+    [filteredWeekItems]
+  );
+
+  const hasActivePrep = userPrepIds.length > 0;
 
   const getValidation = (sessionId: string) =>
     validations.find(v => v.session_id === sessionId && v.user_id === user?.id);
@@ -555,6 +579,28 @@ export default function Home() {
           </button>
         )}
 
+        {!isCoach && hasActivePrep && (
+          <div className="mb-3 flex items-center justify-between gap-3 px-3 py-2 bg-warning-50 border border-warning-100 rounded-lg text-xs">
+            <div className="flex items-center gap-2 text-warning-700">
+              <Target size={14} />
+              <span>
+                <span className="font-semibold">Prépa spécifique active.</span>{' '}
+                <span>Tu vois uniquement tes séances de prépa.</span>
+              </span>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
+              <input
+                type="checkbox"
+                checked={showGroupBesidesPrep}
+                onChange={e => setShowGroupBesidesPrep(e.target.checked)}
+                className="w-4 h-4"
+                style={{ accentColor: 'var(--color-warning)' }}
+              />
+              <span className="text-warning-700 font-medium">Voir aussi le groupe</span>
+            </label>
+          </div>
+        )}
+
         {filteredSessions.length === 0 ? (
           <EmptyState
             icon={<Calendar size={28} />}
@@ -567,6 +613,7 @@ export default function Home() {
               const sessionDate = new Date(session.date);
               const sessionPast = isPast(sessionDate);
               const validation = getValidation(session.id);
+              const isSecondary = secondaryIds.has(session.id);
 
               return (
                 <Link
@@ -578,7 +625,10 @@ export default function Home() {
                     sessionPast && !validation ? 'border-l-4 border-l-warning' : ''
                   } ${validation?.status === 'done' ? 'border-l-4 border-l-success' : ''} ${
                     !sessionPast && !validation ? 'opacity-90' : ''
+                  } ${
+                    isSecondary ? 'opacity-60 saturate-50 border-dashed' : ''
                   }`}
+                  title={isSecondary ? 'Programme du groupe (pas prioritaire car tu as une prépa active)' : undefined}
                 >
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">

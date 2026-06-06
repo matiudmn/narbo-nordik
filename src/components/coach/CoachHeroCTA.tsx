@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Plus, Copy } from 'lucide-react';
+import { Plus, Copy, Upload } from 'lucide-react';
 
 interface CoachHeroCTAProps {
   /** Si défini, "Dupliquer la semaine passée" est cliquable et appelle ce handler */
@@ -19,7 +19,7 @@ export function CoachHeroCTA({ onDuplicateLastWeek, lastWeekSessionCount }: Coac
   return (
     <div className="space-y-2">
       <Link
-        to="/coach/sessions"
+        to="/coach/nouvelle-seance"
         className="group flex items-center justify-between gap-3 bg-primary text-white rounded-xl p-4 hover:bg-primary-light transition-colors shadow-card hover:shadow-card-hover"
       >
         <div className="flex items-center gap-3">
@@ -28,10 +28,26 @@ export function CoachHeroCTA({ onDuplicateLastWeek, lastWeekSessionCount }: Coac
           </div>
           <div>
             <p className="text-base font-semibold">Nouvelle séance</p>
-            <p className="text-xs text-white/60">Publie le programme du club</p>
+            <p className="text-xs text-white/60">Saisie rapide d'une séance</p>
           </div>
         </div>
         <span className="text-white/40 group-hover:text-white/80 transition-colors" aria-hidden="true">→</span>
+      </Link>
+
+      <Link
+        to="/coach/import"
+        className="group flex items-center justify-between gap-3 rounded-xl border border-neutral-200 p-3 hover:bg-neutral-50 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-accent/15 flex items-center justify-center">
+            <Upload size={16} className="text-primary" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-neutral-800">Importer un plan Excel</p>
+            <p className="text-xs text-neutral-500">Colle ton tableau, l'app crée les séances</p>
+          </div>
+        </div>
+        <span className="text-neutral-300 group-hover:text-neutral-500 transition-colors" aria-hidden="true">→</span>
       </Link>
 
       <button

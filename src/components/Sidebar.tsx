@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3, ClipboardCheck, Bell, MessageCircle, HelpCircle, LogOut } from 'lucide-react';
+import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3, ClipboardCheck, Bell, MessageCircle, HelpCircle, LogOut, Upload } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
 import Avatar from './Avatar';
@@ -19,6 +19,7 @@ export default function Sidebar() {
     { to: '/coach', label: 'Suivi', icon: LayoutDashboard, end: true },
     { to: '/club', label: 'Club', icon: BarChart3 },
     { to: '/coach/sessions', label: 'Planning', icon: ClipboardList },
+    { to: '/coach/import', label: 'Import Excel', icon: Upload },
     { to: '/directory', label: 'Athletes', icon: Users },
     { to: '/profile', label: 'Profil', icon: User },
   ];

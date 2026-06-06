@@ -8,6 +8,7 @@ import Avatar from '../../components/Avatar';
 import { Button } from '../../components/ui';
 import type { Role } from '../../types';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
+import { filterSessionsForAthlete, getUserPrepIds } from '../../lib/athleteSessions';
 
 export default function AthletesTab() {
   const { users, groups, validations, sessions, preparations, userPreparations, updateUserVma, updateUserLicense, updateUserGroup, addUser, deleteUser } = useData();
@@ -51,16 +52,11 @@ export default function AthletesTab() {
   }, [users, debouncedSearch, isSuperAdmin]);
 
   const getAttendanceRate = (userId: string) => {
-    const prepIds = userPreparations.filter(up => up.user_id === userId).map(up => up.preparation_id);
-    const hasPrep = prepIds.length > 0;
-    const user = users.find(u => u.id === userId);
-    const eligible = sessions.filter(s => {
-      if (s.is_personal) return s.created_by === userId;
-      if (s.preparation_id) return prepIds.includes(s.preparation_id);
-      if (hasPrep) return false;
-      if (!s.group_id) return true;
-      return s.group_id === user?.group_id;
-    });
+    const member = users.find(u => u.id === userId);
+    if (!member) return 0;
+    // Règle de priorité prépa active centralisée (cf. lib/athleteSessions, fix bug Amandine)
+    const prepIds = getUserPrepIds(userId, userPreparations);
+    const eligible = filterSessionsForAthlete(member, sessions, prepIds).map(f => f.session);
     if (eligible.length === 0) return 0;
     const done = validations.filter(v => v.user_id === userId && v.status === 'done' && eligible.some(s => s.id === v.session_id)).length;
     return Math.round((done / eligible.length) * 100);

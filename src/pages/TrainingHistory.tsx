@@ -6,6 +6,7 @@ import { ArrowLeft, Paperclip, Dumbbell } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { getSessionCode } from '../lib/calculations';
+import { filterSessionsForAthlete } from '../lib/athleteSessions';
 import { StatusBadge, EmptyState, SessionTypeBadge, DataDivider } from '../components/ui';
 import type { SessionStatus } from '../components/ui';
 
@@ -54,15 +55,12 @@ export default function TrainingHistory() {
   );
 
   const allSessions = useMemo(() => {
-    return sessions
-      .filter((s) => {
-        if (s.is_personal) return s.created_by === targetUser.id;
-        if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
-        if (!s.group_id) return true;
-        return s.group_id === targetUser.group_id;
-      })
+    // Règle de priorité prépa active (fix Amandine) + séances globales toujours
+    // visibles, via la lib centralisée athleteSessions.
+    return filterSessionsForAthlete(targetUser, sessions, userPrepIds)
+      .map((f) => f.session)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [sessions, targetUser.group_id, userPrepIds, targetUser.id]);
+  }, [sessions, targetUser, userPrepIds]);
 
   const getValidation = (sessionId: string) =>
     validations.find((v) => v.session_id === sessionId && v.user_id === targetUser.id);

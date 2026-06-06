@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
 import { getRacePaces, calculateRacePace, getVmaLevelIndex } from '../../lib/calculations';
 import { getSeasonRange } from '../../lib/date-utils';
+import { filterSessionsForAthlete } from '../../lib/athleteSessions';
 import Avatar from '../../components/Avatar';
 import YearlyHeatmap from '../../components/YearlyHeatmap';
 import ExpandableText from '../../components/ExpandableText';
@@ -65,14 +66,8 @@ export default function AthleteDetail() {
     const mEnd = endOfMonth(now);
     const { start: sStart, end: sEnd } = getSeasonRange();
 
-    const hasPrep = userPrepIds.length > 0;
-    const memberSessions = sessions.filter(s => {
-      if (s.is_personal) return s.created_by === member.id;
-      if (s.preparation_id) return userPrepIds.includes(s.preparation_id);
-      if (hasPrep) return false;
-      if (!s.group_id) return true;
-      return s.group_id === member.group_id;
-    });
+    // Règle de priorité prépa active centralisée (cf. lib/athleteSessions)
+    const memberSessions = filterSessionsForAthlete(member, sessions, userPrepIds).map(f => f.session);
 
     const doneSessionIds = new Set(
       validations
@@ -112,13 +107,10 @@ export default function AthleteDetail() {
     const memberPrepIds = userPreparations
       .filter(up => up.user_id === member.id)
       .map(up => up.preparation_id);
-    return sessions
-      .filter(s => {
-        if (s.is_personal) return false;
-        if (s.preparation_id) return memberPrepIds.includes(s.preparation_id);
-        if (!s.group_id) return true;
-        return s.group_id === member.group_id;
-      })
+    // Le heatmap exclut les séances perso (vue club-side coach) mais applique la règle prépa
+    return filterSessionsForAthlete(member, sessions, memberPrepIds)
+      .map(f => f.session)
+      .filter(s => !s.is_personal)
       .filter(s => doneSessionIds.has(s.id) || new Date(s.date) <= today)
       .map(s => ({
         date: s.date,
