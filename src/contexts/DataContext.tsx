@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import type { Session, SessionValidation, RaceResult, RaceNordik, SessionNordik, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation, ObjectiveReached, Sensations, SessionMetricsInput, ClubSettings, RacePaceConfig, AllureZoneConfig } from '../types';
+import type { Session, SessionValidation, RaceResult, RaceNordik, SessionNordik, ValidationReaction, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation, ObjectiveReached, Sensations, SessionMetricsInput, ClubSettings, RacePaceConfig, AllureZoneConfig } from '../types';
 import { supabase, createEphemeralClient } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -14,6 +14,7 @@ interface DataContextType {
   raceResults: RaceResult[];
   raceNordiks: RaceNordik[];
   sessionNordiks: SessionNordik[];
+  validationReactions: ValidationReaction[];
   groups: Group[];
   users: User[];
   preparations: SpecificPreparation[];
@@ -30,6 +31,7 @@ interface DataContextType {
   deleteRaceResult: (id: string) => Promise<void>;
   toggleNordik: (raceId: string, userId: string) => Promise<void>;
   toggleSessionNordik: (sessionId: string, userId: string) => Promise<void>;
+  toggleValidationReaction: (validationId: string, emoji: string, authorId: string) => Promise<void>;
   updateUserVma: (userId: string, vma: number, reason?: string) => Promise<void>;
   updateUserPublic: (userId: string, isPublic: boolean) => Promise<void>;
   updateUserPhone: (userId: string, phone: string | null) => Promise<void>;
@@ -87,6 +89,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [raceResults, setRaceResults] = useState<RaceResult[]>([]);
   const [raceNordiks, setRaceNordiks] = useState<RaceNordik[]>([]);
   const [sessionNordiks, setSessionNordiks] = useState<SessionNordik[]>([]);
+  const [validationReactions, setValidationReactions] = useState<ValidationReaction[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [preparations, setPreparations] = useState<SpecificPreparation[]>([]);
@@ -95,7 +98,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
-    const [s, v, rr, rn, sn, g, u, p, up] = await Promise.all([
+    const [s, v, rr, rn, sn, g, u, p, up, vr] = await Promise.all([
       supabase.from('sessions').select('*').order('date'),
       supabase.from('session_validations').select('*'),
       supabase.from('race_results').select('*'),
@@ -105,6 +108,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       supabase.from('users').select('*'),
       supabase.from('specific_preparations').select('*').order('event_date'),
       supabase.from('user_preparations').select('*'),
+      supabase.from('validation_reactions').select('*'),
     ]);
     if (s.data) setSessions(s.data.map(d => ({ ...d, blocks: d.blocks || [] })));
     if (v.data) setValidations(v.data);
@@ -115,6 +119,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (u.data) setUsers(u.data.map(normalizeUser));
     if (p.data) setPreparations(p.data);
     if (up.data) setUserPreparations(up.data);
+    if (vr.data) setValidationReactions(vr.data);
     const cs = await supabase.from('club_settings').select('*').limit(1).maybeSingle();
     if (cs.data) setClubSettings(cs.data as ClubSettings);
     else if (cs.error && cs.error.code !== 'PGRST116') console.error('club_settings fetch error:', cs.error.message);
@@ -139,6 +144,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setUsers([]);
       setPreparations([]);
       setUserPreparations([]);
+      setValidationReactions([]);
       setClubSettings(null);
       setLoading(false);
     }
@@ -425,6 +431,35 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const toggleValidationReaction = useCallback(async (validationId: string, emoji: string, authorId: string) => {
+    const { data: existing } = await supabase.from('validation_reactions')
+      .select('*').eq('validation_id', validationId).eq('author_id', authorId).eq('emoji', emoji).maybeSingle();
+    if (existing) {
+      const { error } = await supabase.from('validation_reactions').delete().eq('id', existing.id);
+      if (!error) setValidationReactions(prev => prev.filter(r => r.id !== existing.id));
+    } else {
+      const { data, error } = await supabase.from('validation_reactions').insert({ validation_id: validationId, author_id: authorId, emoji }).select().single();
+      if (!error && data) {
+        setValidationReactions(prev => [...prev, data]);
+        // Notifier le propriétaire du compte-rendu (sauf s'il réagit au sien).
+        const { data: val } = await supabase.from('session_validations').select('user_id, session_id').eq('id', validationId).single();
+        if (val && val.user_id !== authorId) {
+          const [{ data: sess }, { data: actor }] = await Promise.all([
+            supabase.from('sessions').select('title').eq('id', val.session_id).single(),
+            supabase.from('users').select('firstname').eq('id', authorId).single(),
+          ]);
+          const { error: notifError } = await supabase.from('notifications').insert({
+            user_id: val.user_id,
+            type: 'system',
+            title: 'Réaction !',
+            body: `${actor?.firstname ?? 'Quelqu un'} a réagi ${emoji} à ton compte-rendu${sess?.title ? ` "${sess.title}"` : ''}`,
+          });
+          if (notifError) console.error('Notification error:', notifError.message);
+        }
+      }
+    }
+  }, []);
+
   // --- Users ---
 
   const patchUser = useCallback(async (userId: string, updates: Partial<User>) => {
@@ -602,9 +637,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   return (
     <DataContext.Provider value={{
-      sessions, validations, raceResults, raceNordiks, sessionNordiks, groups, users, preparations, userPreparations, clubSettings, loading,
+      sessions, validations, raceResults, raceNordiks, sessionNordiks, validationReactions, groups, users, preparations, userPreparations, clubSettings, loading,
       addSession, addSessionsBulk, updateSession, deleteSession, validateSession, updateValidation,
-      addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto,
+      addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, toggleValidationReaction, updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto,
       addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
       addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, refreshAll,
     }}>

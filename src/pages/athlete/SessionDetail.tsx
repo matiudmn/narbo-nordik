@@ -15,7 +15,7 @@ export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { sessions, validations, validateSession, updateValidation, groups, userPreparations, sessionNordiks, toggleSessionNordik, clubSettings } = useData();
+  const { sessions, validations, validateSession, updateValidation, groups, userPreparations, sessionNordiks, toggleSessionNordik, validationReactions, clubSettings } = useData();
   const toast = useToast();
   const allureZones = getAllureZones(clubSettings?.allure_zones);
 
@@ -446,6 +446,19 @@ export default function SessionDetail() {
                     <Paperclip size={14} />
                     Voir la piece jointe
                   </a>
+                </div>
+              )}
+              {validationReactions.filter(r => r.validation_id === validation?.id).length > 0 && (
+                <div className="flex flex-wrap justify-center gap-1.5 mt-3">
+                  {Array.from(new Set(validationReactions.filter(r => r.validation_id === validation?.id).map(r => r.emoji))).map(emoji => {
+                    const count = validationReactions.filter(r => r.validation_id === validation?.id && r.emoji === emoji).length;
+                    return (
+                      <span key={emoji} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-sm">
+                        <span aria-hidden="true">{emoji}</span>
+                        {count > 1 && <span className="text-xs font-medium text-gray-600">{count}</span>}
+                      </span>
+                    );
+                  })}
                 </div>
               )}
               <div className="text-center mt-3">

@@ -152,6 +152,14 @@ export interface RaceNordik {
   created_at: string;
 }
 
+export interface ValidationReaction {
+  id: string;
+  validation_id: string;
+  author_id: string;
+  emoji: string;
+  created_at: string;
+}
+
 export interface SessionNordik {
   id: string;
   session_id: string;
