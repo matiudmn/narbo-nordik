@@ -35,6 +35,7 @@ export default function Home() {
     title: string;
     objective: ObjectiveReached | null;
     sensations: Sensations | null;
+    punchline: string;
   } | null>(null);
   const [quickValidatingId, setQuickValidatingId] = useState<string | null>(null);
   const [savingSurvey, setSavingSurvey] = useState(false);
@@ -295,6 +296,7 @@ export default function Home() {
         title: sessionTitle,
         objective: null,
         sensations: null,
+        punchline: '',
       });
     }, 1800);
   };
@@ -303,10 +305,15 @@ export default function Home() {
     if (!surveySheet) return;
     setSavingSurvey(true);
     try {
-      await updateValidation(surveySheet.validationId, {
+      const res = await updateValidation(surveySheet.validationId, {
         objective_reached: surveySheet.objective,
         sensations: surveySheet.sensations,
+        feedback: surveySheet.punchline.trim() || undefined,
       });
+      if (res?.error) {
+        toast.error("Impossible d'enregistrer ton ressenti.");
+        return;
+      }
       toast.success('Ressenti enregistré, merci !');
       setSurveySheet(null);
     } catch {
@@ -728,6 +735,8 @@ export default function Home() {
         sensations={surveySheet?.sensations ?? null}
         onObjectiveChange={(v) => setSurveySheet((s) => (s ? { ...s, objective: v } : s))}
         onSensationsChange={(v) => setSurveySheet((s) => (s ? { ...s, sensations: v } : s))}
+        punchline={surveySheet?.punchline ?? ''}
+        onPunchlineChange={(v) => setSurveySheet((s) => (s ? { ...s, punchline: v } : s))}
         onSave={handleSaveSurvey}
         onClose={() => setSurveySheet(null)}
         loading={savingSurvey}

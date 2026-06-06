@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence, VARIANTS } from '../../lib/motion';
-import { X, Target, Smile } from 'lucide-react';
+import { X, Target, Smile, MessageCircle } from 'lucide-react';
 import { Button } from '../ui';
 import type { ObjectiveReached, Sensations } from '../../types';
 
@@ -13,6 +13,9 @@ interface QuickSurveySheetProps {
   sensations: Sensations | null;
   onObjectiveChange: (v: ObjectiveReached) => void;
   onSensationsChange: (v: Sensations) => void;
+  /** Mot libre court (la "punchline") pour le coach. Stocké dans feedback. */
+  punchline: string;
+  onPunchlineChange: (v: string) => void;
   onSave: () => void;
   onClose: () => void;
   loading?: boolean;
@@ -30,6 +33,14 @@ const SENSATIONS_OPTIONS: { value: Sensations; label: string; emoji: string }[] 
   { value: 'mauvaises', label: 'Mauvaises', emoji: '😓' },
 ];
 
+const PUNCHLINE_SUGGESTIONS = [
+  "J'ai tout donné",
+  "Les jambes ont dit non",
+  "Facile aujourd'hui",
+  "Dans le dur mais fier",
+  "Vivement la prochaine",
+];
+
 /**
  * Bottom sheet déclenché 2s après une validation 1-tap depuis Home.
  * Sondage optionnel : objectif atteint + sensations. Bouton "Plus tard"
@@ -42,6 +53,8 @@ export function QuickSurveySheet({
   sensations,
   onObjectiveChange,
   onSensationsChange,
+  punchline,
+  onPunchlineChange,
   onSave,
   onClose,
   loading = false,
@@ -162,6 +175,34 @@ export function QuickSurveySheet({
                   })}
                 </div>
               </div>
+
+              {/* Punchline (optionnel) — remonte au coach */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageCircle size={14} className="text-neutral-400" aria-hidden="true" />
+                  <span className="label-micro text-neutral-500">Ton mot sur la séance (optionnel)</span>
+                </div>
+                <input
+                  type="text"
+                  value={punchline}
+                  onChange={(e) => onPunchlineChange(e.target.value)}
+                  maxLength={100}
+                  placeholder="Lâche ta punchline..."
+                  className="w-full border border-neutral-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {PUNCHLINE_SUGGESTIONS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => onPunchlineChange(s)}
+                      className="text-xs px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-600 hover:bg-accent/15 hover:text-accent-dark transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="px-6 pb-6 pt-2 flex flex-col gap-2">
@@ -170,7 +211,7 @@ export function QuickSurveySheet({
                 size="md"
                 fullWidth
                 loading={loading}
-                disabled={!objective && !sensations}
+                disabled={!objective && !sensations && !punchline.trim()}
                 onClick={onSave}
               >
                 Enregistrer mon ressenti
