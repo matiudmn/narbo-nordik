@@ -553,12 +553,12 @@ export default function Home() {
         )}
 
         {!isCoach && hasActivePrep && (
-          <div className="mb-3 flex items-center justify-between gap-3 px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg text-xs">
-            <div className="flex items-center gap-2 text-amber-900">
+          <div className="mb-3 flex items-center justify-between gap-3 px-3 py-2 bg-warning-50 border border-warning-100 rounded-lg text-xs">
+            <div className="flex items-center gap-2 text-warning-700">
               <Target size={14} />
               <span>
                 <span className="font-semibold">Prépa spécifique active.</span>{' '}
-                <span className="text-amber-800">Tu vois uniquement tes séances de prépa.</span>
+                <span>Tu vois uniquement tes séances de prépa.</span>
               </span>
             </div>
             <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
@@ -566,9 +566,10 @@ export default function Home() {
                 type="checkbox"
                 checked={showGroupBesidesPrep}
                 onChange={e => setShowGroupBesidesPrep(e.target.checked)}
-                className="accent-amber-500 w-4 h-4"
+                className="w-4 h-4"
+                style={{ accentColor: 'var(--color-warning)' }}
               />
-              <span className="text-amber-900 font-medium">Voir aussi le groupe</span>
+              <span className="text-warning-700 font-medium">Voir aussi le groupe</span>
             </label>
           </div>
         )}

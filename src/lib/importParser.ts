@@ -161,13 +161,38 @@ const MONTH_FR: Record<string, number> = {
 };
 
 /**
+ * Construit une date ISO YYYY-MM-DD en validant que le jour/mois existent
+ * réellement dans le calendrier. Renvoie null si la date est impossible
+ * (ex: 31/02, 32/13, 00/00) pour éviter qu'une coquille du coach crée une
+ * séance à une date absurde ou fasse planter l'insertion.
+ */
+function buildIsoDate(year: number, month: number, day: number): string | null {
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31) return null;
+  if (year < 2000 || year > 2100) return null;
+  const iso = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  // Roundtrip : new Date corrige silencieusement les dates impossibles
+  // (31/02 → 03/03). On vérifie que la date reconstruite correspond exactement.
+  const dt = new Date(`${iso}T00:00:00`);
+  if (
+    Number.isNaN(dt.getTime()) ||
+    dt.getUTCFullYear() !== year ||
+    dt.getUTCMonth() + 1 !== month ||
+    dt.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return iso;
+}
+
+/**
  * Parse une date "raw" en YYYY-MM-DD. Supporte :
  *  - "14/01" (DD/MM, année = `defaultYear`)
  *  - "14/01/2026" (DD/MM/YYYY)
  *  - "2025-12-15" (déjà ISO)
  *  - "lundi 25 mai 2026" (texte français)
  *  - "25 mai 2026"
- * Renvoie null si non parsable.
+ * Renvoie null si non parsable OU si la date n'existe pas au calendrier.
  */
 export function parseDateRaw(raw: string, defaultYear: number): string | null {
   const trimmed = raw.trim();
@@ -175,41 +200,37 @@ export function parseDateRaw(raw: string, defaultYear: number): string | null {
 
   // Déjà ISO ?
   const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) return trimmed;
+  if (isoMatch) {
+    return buildIsoDate(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]));
+  }
 
   // DD/MM/YYYY
   const dmyMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (dmyMatch) {
-    const [, d, m, y] = dmyMatch;
-    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    return buildIsoDate(Number(dmyMatch[3]), Number(dmyMatch[2]), Number(dmyMatch[1]));
   }
 
   // DD/MM (sans année) → utiliser defaultYear
   const dmMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})$/);
   if (dmMatch) {
-    const [, d, m] = dmMatch;
-    return `${defaultYear}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    return buildIsoDate(defaultYear, Number(dmMatch[2]), Number(dmMatch[1]));
   }
 
   // "lundi 25 mai 2026" ou "25 mai 2026"
-  const frMatch = trimmed.match(
-    /(\d{1,2})\s+([a-zéûôîâàèùç]+)\s+(\d{4})/i
-  );
+  const frMatch = trimmed.match(/(\d{1,2})\s+([a-zéûôîâàèùç]+)\s+(\d{4})/i);
   if (frMatch) {
-    const [, d, monthName, y] = frMatch;
-    const month = MONTH_FR[monthName.toLowerCase()];
+    const month = MONTH_FR[frMatch[2].toLowerCase()];
     if (month) {
-      return `${y}-${String(month).padStart(2, '0')}-${d.padStart(2, '0')}`;
+      return buildIsoDate(Number(frMatch[3]), month, Number(frMatch[1]));
     }
   }
 
   // "25 mai" sans année → defaultYear
   const dmTextMatch = trimmed.match(/(\d{1,2})\s+([a-zéûôîâàèùç]+)$/i);
   if (dmTextMatch) {
-    const [, d, monthName] = dmTextMatch;
-    const month = MONTH_FR[monthName.toLowerCase()];
+    const month = MONTH_FR[dmTextMatch[2].toLowerCase()];
     if (month) {
-      return `${defaultYear}-${String(month).padStart(2, '0')}-${d.padStart(2, '0')}`;
+      return buildIsoDate(defaultYear, month, Number(dmTextMatch[1]));
     }
   }
 
@@ -244,23 +265,41 @@ function normalizeGroupName(name: string): string {
     .replace(/[̀-ͯ]/g, ''); // strip accents
 }
 
+export interface GroupMatch {
+  groupId: string | null;
+  /** 'exact' | 'approx' | 'none'. 'approx' doit être signalé au coach. */
+  confidence: 'exact' | 'approx' | 'none';
+}
+
 /**
  * Résout un nom de groupe vers un group.id. Matching tolérant aux accents
  * et au préfixe "GR" / "GROUPE".
+ *
+ * Renvoie la confiance du match : 'exact' (sûr), 'approx' (résolu par
+ * inclusion partielle, à vérifier par le coach), 'none' (non trouvé).
+ * Le match approximatif est volontairement signalé plutôt que silencieux
+ * pour éviter d'assigner des séances au mauvais groupe (ex: "Essentiel"
+ * vs "Essentiel +").
  */
-export function resolveGroupId(rawName: string, groups: Group[]): string | null {
+export function resolveGroup(rawName: string, groups: Group[]): GroupMatch {
   const target = normalizeGroupName(rawName);
-  if (!target) return null;
-  // Matching exact d'abord
-  let found = groups.find(g => normalizeGroupName(g.name) === target);
-  if (found) return found.id;
-  // Matching partiel : le nom du groupe contient la cible ou inversement
-  found = groups.find(
+  if (!target) return { groupId: null, confidence: 'none' };
+
+  // 1. Match exact prioritaire
+  const exact = groups.find(g => normalizeGroupName(g.name) === target);
+  if (exact) return { groupId: exact.id, confidence: 'exact' };
+
+  // 2. Match partiel : signalé comme approximatif
+  const partial = groups.filter(
     g =>
       normalizeGroupName(g.name).includes(target) ||
       target.includes(normalizeGroupName(g.name))
   );
-  return found ? found.id : null;
+  if (partial.length === 1) {
+    return { groupId: partial[0].id, confidence: 'approx' };
+  }
+  // Ambigu (plusieurs candidats) ou aucun → non résolu
+  return { groupId: null, confidence: partial.length > 1 ? 'approx' : 'none' };
 }
 
 /* ---------- Parsing par format ---------- */
@@ -290,7 +329,9 @@ function parseCanonical(lines: string[], opts: ParseOpts): ParseResult {
     }
     const [week, dateRaw, day, subType, ...contentParts] = cols;
     const content = (contentParts.join('\t') || '').trim();
-    if (isIgnorableContent(content) && isIgnorableContent(subType)) {
+    // Une séance sans contenu détaillé est ignorée, même si un type est
+    // renseigné (évite les séances fantômes avec description vide).
+    if (isIgnorableContent(content)) {
       skipped++;
       continue;
     }
@@ -359,22 +400,29 @@ function parseMatrix(lines: string[], opts: ParseOpts): ParseResult {
         skipped++;
         continue;
       }
-      const groupId = resolveGroupId(groupName, opts.groups);
-      if (!groupId) {
+      const match = resolveGroup(groupName, opts.groups);
+      if (match.confidence === 'none') {
         warnings.push({
           lineNumber: i + 1,
           message: `Groupe "${groupName}" non trouvé dans la liste du club`,
         });
+      } else if (match.confidence === 'approx') {
+        warnings.push({
+          lineNumber: i + 1,
+          message: `Groupe "${groupName}" résolu par approximation — vérifie l'assignation`,
+        });
       }
+      // Normalise le marqueur de semaine : "21" → "S21", "S21" reste "S21"
+      const weekLabel = week ? (/^s/i.test(week) ? week.toUpperCase() : `S${week}`) : undefined;
       sessions.push({
         lineNumber: i + 1,
-        week: week ? `S${week}` : undefined,
+        week: weekLabel,
         date,
         dateRaw,
         day: extractDayName(dateRaw),
         targetType: 'group',
         targetGroupName: groupName,
-        groupId,
+        groupId: match.groupId,
         contentText: content,
         macroType: classifyMacroType('', content),
         format: 'matrix',
@@ -493,14 +541,20 @@ export function parseImport(
 
 /* ---------- Constantes de présentation ---------- */
 
-/** Métadonnées par macro-type pour l'affichage. */
-export const MACRO_META: Record<MacroType, { label: string; color: string; bgClass: string; textClass: string }> = {
-  vma:    { label: 'VMA',              color: '#EF4444', bgClass: 'bg-red-50',    textClass: 'text-red-700' },
-  seuil:  { label: 'Seuil',            color: '#F59E0B', bgClass: 'bg-amber-50',  textClass: 'text-amber-700' },
-  cotes:  { label: 'Côtes',            color: '#92400E', bgClass: 'bg-orange-50', textClass: 'text-orange-800' },
-  sl:     { label: 'Sortie longue',    color: '#10B981', bgClass: 'bg-emerald-50', textClass: 'text-emerald-700' },
-  spe:    { label: 'Spécifique',       color: '#3B82F6', bgClass: 'bg-blue-50',   textClass: 'text-blue-700' },
-  recup:  { label: 'Récup / Affûtage', color: '#737373', bgClass: 'bg-gray-100',  textClass: 'text-gray-700' },
-  course: { label: 'Course / Test',    color: '#EAB308', bgClass: 'bg-yellow-50', textClass: 'text-yellow-800' },
-  other:  { label: 'Autre',            color: '#A3A3A3', bgClass: 'bg-gray-50',   textClass: 'text-gray-600' },
+/**
+ * Métadonnées par macro-type pour l'affichage.
+ * Toutes les couleurs passent par les tokens sémantiques du design system
+ * (cf. src/index.css) via custom properties CSS, jamais de hex ni de classe
+ * Tailwind brute (règle CLAUDE.md). `color` = trait/bordure plein,
+ * `tint` = fond clair, `ink` = texte sur tint. Appliqués en style inline.
+ */
+export const MACRO_META: Record<MacroType, { label: string; color: string; tint: string; ink: string }> = {
+  vma:    { label: 'VMA',              color: 'var(--color-danger)',         tint: 'var(--color-danger-50)',          ink: 'var(--color-danger-700)' },
+  seuil:  { label: 'Seuil',            color: 'var(--color-warning)',        tint: 'var(--color-warning-50)',         ink: 'var(--color-warning-700)' },
+  cotes:  { label: 'Côtes',            color: 'var(--color-session-velo)',   tint: 'var(--color-session-velo-tint)',  ink: 'var(--color-session-velo)' },
+  sl:     { label: 'Sortie longue',    color: 'var(--color-success)',        tint: 'var(--color-success-50)',         ink: 'var(--color-success-700)' },
+  spe:    { label: 'Spécifique',       color: 'var(--color-info)',           tint: 'var(--color-info-50)',            ink: 'var(--color-info-700)' },
+  recup:  { label: 'Récup / Affûtage', color: 'var(--color-neutral-500)',    tint: 'var(--color-neutral-100)',        ink: 'var(--color-neutral-700)' },
+  course: { label: 'Course / Test',    color: 'var(--color-session-course)', tint: 'var(--color-session-course-tint)', ink: 'var(--color-session-course)' },
+  other:  { label: 'Autre',            color: 'var(--color-neutral-400)',    tint: 'var(--color-neutral-50)',         ink: 'var(--color-neutral-600)' },
 };

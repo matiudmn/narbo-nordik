@@ -47,11 +47,9 @@ const SAMPLES: Record<ImportFormat, string> = {
   unknown: '',
 };
 
-function escapeText(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
+const SAMPLE_VALUES = Object.values(SAMPLES);
 
-/** Rend le contenu d'une séance, splittant sur `|` si présent. */
+/** Rend le contenu d'une séance, splittant sur `|` si présent. React échappe le texte automatiquement. */
 function ContentBlocks({ content }: { content: string }) {
   if (!content.includes('|')) {
     return <div className="text-sm text-gray-700 leading-snug">{content}</div>;
@@ -67,7 +65,7 @@ function ContentBlocks({ content }: { content: string }) {
           <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-900 text-white text-xs font-bold flex-shrink-0">
             {i + 1}
           </span>
-          <span dangerouslySetInnerHTML={{ __html: escapeText(p) }} />
+          <span>{p}</span>
         </div>
       ))}
     </div>
@@ -91,23 +89,19 @@ export default function Import() {
   // Reparse à chaque changement
   const result: ParseResult = useMemo(() => {
     const start = performance.now();
-    const r = parseImport(paste, {
-      defaultYear,
-      groups,
-      forceFormat: format,
-    });
+    const r = parseImport(paste, { defaultYear, groups, forceFormat: format });
     setParseTimeMs(Math.round((performance.now() - start) * 10) / 10);
     return r;
   }, [paste, defaultYear, groups, format]);
 
-  // Si le format change : charger l'échantillon correspondant
+  // Au changement de format : recharge l'échantillon correspondant, mais
+  // seulement si la zone est vide ou contient un échantillon non modifié
+  // (on ne veut pas écraser un vrai tableau collé par le coach).
   useEffect(() => {
-    if (SAMPLES[format] && paste === SAMPLES.canonical || paste === SAMPLES.matrix || paste === SAMPLES.simple) {
-      // ne change l'échantillon que si on est sur un échantillon non modifié
-      if (paste === '' || Object.values(SAMPLES).includes(paste)) {
-        setPaste(SAMPLES[format]);
-      }
+    if (paste === '' || SAMPLE_VALUES.includes(paste)) {
+      setPaste(SAMPLES[format]);
     }
+    // `paste` lu mais hors deps : volontaire, on ne réagit qu'au changement de format.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [format]);
 
@@ -148,42 +142,61 @@ export default function Import() {
     let failed = 0;
     const errors: string[] = [];
 
-    for (let i = 0; i < result.sessions.length; i++) {
-      const s = result.sessions[i];
-      const groupId = s.groupId ?? defaultGroupId ?? null;
-      const title = s.subType || (s.day ? `${s.day} — séance` : 'Séance importée');
-      const date = new Date(`${s.date}T18:30:00`).toISOString();
+    try {
+      for (let i = 0; i < result.sessions.length; i++) {
+        const s = result.sessions[i];
+        // `|| null` et non `??` : defaultGroupId peut être '' (chaîne vide)
+        const groupId = s.groupId || defaultGroupId || null;
+        const title = s.subType || (s.day ? `${s.day} — séance` : 'Séance importée');
 
-      const payload = {
-        date,
-        title,
-        session_type: 'entrainement' as const,
-        terrain_options: [],
-        location: null,
-        location_url: null,
-        description: s.contentText,
-        group_id: groupId,
-        preparation_id: null,
-        target_distance: null,
-        vma_percent_min: null,
-        vma_percent_max: null,
-        blocks: [],
-        is_personal: false,
-        created_by: user.id,
-      };
+        // La date est déjà validée par parseDateRaw, mais on protège quand même
+        // la création pour qu'une seule ligne fautive n'interrompe pas tout le lot.
+        let isoDate: string;
+        try {
+          isoDate = new Date(`${s.date}T18:30:00`).toISOString();
+        } catch {
+          failed++;
+          errors.push(`Ligne ${s.lineNumber} : date invalide (${s.dateRaw})`);
+          setProgress({ done: i + 1, total: result.sessions.length });
+          continue;
+        }
 
-      const res = await addSession(payload);
-      if ('error' in res) {
-        failed++;
-        errors.push(`Ligne ${s.lineNumber} : ${res.error}`);
-      } else {
-        success++;
+        const payload = {
+          date: isoDate,
+          title,
+          session_type: 'entrainement' as const,
+          terrain_options: [],
+          location: null,
+          location_url: null,
+          description: s.contentText,
+          group_id: groupId,
+          preparation_id: null,
+          target_distance: null,
+          vma_percent_min: null,
+          vma_percent_max: null,
+          blocks: [],
+          is_personal: false,
+          created_by: user.id,
+        };
+
+        try {
+          const res = await addSession(payload);
+          if ('error' in res) {
+            failed++;
+            errors.push(`Ligne ${s.lineNumber} : ${res.error}`);
+          } else {
+            success++;
+          }
+        } catch (e) {
+          failed++;
+          errors.push(`Ligne ${s.lineNumber} : ${e instanceof Error ? e.message : 'erreur inattendue'}`);
+        }
+        setProgress({ done: i + 1, total: result.sessions.length });
       }
-      setProgress({ done: i + 1, total: result.sessions.length });
+    } finally {
+      setImporting(false);
+      setProgress(null);
     }
-
-    setImporting(false);
-    setProgress(null);
 
     if (failed === 0) {
       toast.success(`${success} séances créées · retrouve-les dans le planning`);
@@ -273,7 +286,7 @@ export default function Import() {
               ))}
             </select>
             {!defaultGroupId && (
-              <span className="text-xs text-amber-700">requis pour ce format</span>
+              <span className="text-xs text-warning-700">requis pour ce format</span>
             )}
           </div>
         )}
@@ -285,7 +298,7 @@ export default function Import() {
       {/* DETECTION BAR */}
       <div className="bg-white border border-gray-200 rounded-lg p-3 mb-4 flex items-center gap-4 flex-wrap text-sm">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-gray-500 font-semibold">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-success-500 animate-pulse" />
           Détection
         </div>
         <div>
@@ -294,7 +307,7 @@ export default function Import() {
         </div>
         <div>
           <span className="text-gray-500">Séances</span>{' '}
-          <span className="font-semibold text-emerald-700 text-base">{result.sessions.length}</span>
+          <span className="font-semibold text-success-700 text-base">{result.sessions.length}</span>
         </div>
         <div>
           <span className="text-gray-500">Ignorées</span>{' '}
@@ -302,12 +315,12 @@ export default function Import() {
         </div>
         {result.errors.length > 0 && (
           <div>
-            <span className="text-red-500 font-semibold">{result.errors.length} erreur{result.errors.length > 1 ? 's' : ''}</span>
+            <span className="text-danger-600 font-semibold">{result.errors.length} erreur{result.errors.length > 1 ? 's' : ''}</span>
           </div>
         )}
         {result.warnings.length > 0 && (
           <div>
-            <span className="text-amber-600 font-semibold">{result.warnings.length} avertissement{result.warnings.length > 1 ? 's' : ''}</span>
+            <span className="text-warning-600 font-semibold">{result.warnings.length} avertissement{result.warnings.length > 1 ? 's' : ''}</span>
           </div>
         )}
       </div>
@@ -330,7 +343,7 @@ export default function Import() {
               <button
                 type="button"
                 onClick={() => setPaste('')}
-                className="text-xs text-gray-400 hover:text-red-500"
+                className="text-xs text-gray-400 hover:text-danger-500"
               >
                 Vider
               </button>
@@ -363,29 +376,29 @@ export default function Import() {
 
             {/* Errors */}
             {result.errors.length > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
-                <div className="flex items-center gap-2 text-red-700 font-semibold text-sm">
+              <div className="bg-danger-50 border border-danger-100 rounded-lg p-3 space-y-1">
+                <div className="flex items-center gap-2 text-danger-700 font-semibold text-sm">
                   <AlertTriangle size={14} /> Erreurs de parsing
                 </div>
                 {result.errors.slice(0, 5).map((e, i) => (
-                  <div key={i} className="text-xs text-red-700">
+                  <div key={i} className="text-xs text-danger-700">
                     Ligne {e.lineNumber} : {e.message}
                   </div>
                 ))}
                 {result.errors.length > 5 && (
-                  <div className="text-xs text-red-700">… et {result.errors.length - 5} autres</div>
+                  <div className="text-xs text-danger-700">… et {result.errors.length - 5} autres</div>
                 )}
               </div>
             )}
 
             {/* Warnings */}
             {result.warnings.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
-                <div className="flex items-center gap-2 text-amber-700 font-semibold text-sm">
+              <div className="bg-warning-50 border border-warning-100 rounded-lg p-3 space-y-1">
+                <div className="flex items-center gap-2 text-warning-700 font-semibold text-sm">
                   <Info size={14} /> Avertissements
                 </div>
                 {result.warnings.slice(0, 5).map((w, i) => (
-                  <div key={i} className="text-xs text-amber-700">
+                  <div key={i} className="text-xs text-warning-700">
                     {w.lineNumber > 0 ? `Ligne ${w.lineNumber} : ` : ''}{w.message}
                   </div>
                 ))}
@@ -418,7 +431,10 @@ export default function Import() {
                       >
                         <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`${macro.bgClass} ${macro.textClass} px-2 py-0.5 rounded text-xs font-semibold`}>
+                            <span
+                              className="px-2 py-0.5 rounded text-xs font-semibold"
+                              style={{ background: macro.tint, color: macro.ink }}
+                            >
                               {macro.label}
                             </span>
                             {s.subType && (
@@ -427,7 +443,7 @@ export default function Import() {
                             {s.targetGroupName && (
                               <span className="text-xs text-gray-600 bg-white border border-gray-200 px-1.5 py-0.5 rounded">
                                 {s.targetGroupName}
-                                {!s.groupId && <span className="text-amber-600"> ✗</span>}
+                                {!s.groupId && <span className="text-warning-600"> ✗</span>}
                               </span>
                             )}
                           </div>
@@ -459,7 +475,8 @@ export default function Import() {
               return (
                 <div
                   key={k}
-                  className={`${meta.bgClass} ${meta.textClass} px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-2`}
+                  className="px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-2"
+                  style={{ background: meta.tint, color: meta.ink }}
                 >
                   <span className="w-2 h-2 rounded-full" style={{ background: meta.color }} />
                   {meta.label}
@@ -500,7 +517,7 @@ export default function Import() {
         </div>
         <div className="flex items-center gap-2">
           {progress && (
-            <div className="text-sm text-white/80 mono font-mono">
+            <div className="text-sm text-white/80 font-mono">
               {progress.done}/{progress.total}
             </div>
           )}

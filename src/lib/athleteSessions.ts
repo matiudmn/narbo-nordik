@@ -128,19 +128,6 @@ export function filterSessionsForAthlete(
 }
 
 /**
- * Convenience : retourne uniquement les sessions filtrées (sans métadonnées),
- * pour les cas où on veut juste remplacer un .filter() existant.
- */
-export function getSessionsForAthlete(
-  user: MinimalUser,
-  sessions: Session[],
-  userPrepIds: string[],
-  opts?: AthleteSessionFilterOpts
-): Session[] {
-  return filterSessionsForAthlete(user, sessions, userPrepIds, opts).map(f => f.session);
-}
-
-/**
  * Helper pour extraire les preparation_id auxquels appartient un athlète,
  * à partir du tableau global userPreparations.
  */
@@ -151,15 +138,4 @@ export function getUserPrepIds(
   return userPreparations
     .filter(up => up.user_id === userId)
     .map(up => up.preparation_id);
-}
-
-/**
- * Indique si l'athlète a au moins une préparation active.
- * Utile pour conditionner l'affichage du toggle "Voir aussi le groupe".
- */
-export function hasActivePreparation(
-  userId: string,
-  userPreparations: UserPreparation[]
-): boolean {
-  return getUserPrepIds(userId, userPreparations).length > 0;
 }
