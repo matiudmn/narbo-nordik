@@ -54,31 +54,27 @@ describe('filterSessionsForAthlete — avec préparation active (fix Amandine)',
     session({ id: 'grp', group_id: 'g1' }),                  // séance groupe → masquée
     session({ id: 'prep', preparation_id: 'p1' }),           // séance de SA prépa → visible
     session({ id: 'prep-autre', preparation_id: 'p2' }),     // prépa non souscrite → masquée
-    session({ id: 'global', group_id: null }),               // globale → toujours visible
+    session({ id: 'global', group_id: null }),               // globale → masquée en prépa (option b)
     session({ id: 'perso', is_personal: true, created_by: 'u1' }),
   ];
 
-  it('masque les séances de groupe, montre la prépa + les globales + persos', () => {
+  it('masque tout le général (groupe ET globales), montre la prépa + persos', () => {
+    // Décision David 06/2026 : la prépa est exclusive, le général disparaît.
     const r = filterSessionsForAthlete(ATHLETE, sessions, prepIds);
     const ids = r.map(f => f.session.id);
-    expect(ids).toContain('prep');     // sa prépa
-    expect(ids).toContain('global');   // globale toujours visible
-    expect(ids).toContain('perso');    // sa perso
-    expect(ids).not.toContain('grp');  // groupe masqué (le fix)
+    expect(ids).toContain('prep');        // sa prépa
+    expect(ids).toContain('perso');       // sa perso
+    expect(ids).not.toContain('grp');     // groupe masqué
+    expect(ids).not.toContain('global');  // globale masquée aussi (option b)
     expect(ids).not.toContain('prep-autre'); // prépa d'un autre athlète
   });
 
-  it('la séance globale n\'est jamais marquée secondaire, même en prépa', () => {
-    const r = filterSessionsForAthlete(ATHLETE, sessions, prepIds);
-    const global = r.find(f => f.session.id === 'global');
-    expect(global?.isSecondary).toBe(false);
-  });
-
-  it('avec includeGroupSessions, le groupe réapparaît mais en secondaire', () => {
+  it('avec includeGroupSessions, groupe ET globales réapparaissent en secondaire', () => {
     const r = filterSessionsForAthlete(ATHLETE, sessions, prepIds, { includeGroupSessions: true });
     const grp = r.find(f => f.session.id === 'grp');
-    expect(grp).toBeDefined();
+    const global = r.find(f => f.session.id === 'global');
     expect(grp?.isSecondary).toBe(true);
+    expect(global?.isSecondary).toBe(true);
   });
 });
 
