@@ -8,6 +8,11 @@
  * est activé (auquel cas elles sont marquées comme secondaires pour
  * permettre un style dégradé côté UI).
  *
+ * Exception (communication transverse) : les séances GLOBALES (group_id null,
+ * sans prépa) restent TOUJOURS visibles et jamais dégradées, même pour un
+ * athlète en prépa active. La règle de masquage ne concerne que les séances
+ * rattachées à un groupe.
+ *
  * Avant ce fix, plusieurs vues répétaient le même filtre sans cette règle
  * (Home weekly, Suivi, TrainingHistory, Directory, AthleteDetail) et un
  * athlète en prépa voyait DEUX séances par jour, ce qui causait confusion
@@ -95,9 +100,24 @@ export function filterSessionsForAthlete(
       continue;
     }
 
-    // 3. Séances groupe (ou globales sans group_id)
-    const matchesGroup = !s.group_id || s.group_id === user.group_id;
-    if (!matchesGroup) continue;
+    // 3. Séances GLOBALES (group_id null) : communication club transverse
+    //    (ex. « Sortie exceptionnelle dimanche, tout le monde »). Toujours
+    //    visibles et jamais dégradées, même pour un athlète en prépa active :
+    //    la règle de priorité prépa ne concerne que les séances de groupe.
+    if (!s.group_id) {
+      out.push({
+        session: s,
+        fromPreparation: false,
+        fromGroup: true,
+        fromPersonal: false,
+        isSecondary: false,
+      });
+      continue;
+    }
+
+    // 4. Séances de GROUPE club : uniquement le groupe de l'athlète,
+    //    soumises à la règle de priorité prépa.
+    if (s.group_id !== user.group_id) continue;
 
     if (hasActivePrep) {
       // RÈGLE DE PRIORITÉ : prépa active → on masque le programme groupe
@@ -111,7 +131,7 @@ export function filterSessionsForAthlete(
           isSecondary: true,
         });
       }
-      // sinon : skip silencieux (c'est le fix)
+      // sinon : skip silencieux (c'est le fix Amandine)
     } else {
       // Pas de prépa active → séance groupe affichée normalement
       out.push({
