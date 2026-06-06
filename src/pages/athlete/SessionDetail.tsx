@@ -35,6 +35,8 @@ export default function SessionDetail() {
   const [durationMin, setDurationMin] = useState('');
   const [elevationM, setElevationM] = useState('');
   const [avgHrV, setAvgHrV] = useState('');
+  const [maxHrV, setMaxHrV] = useState('');
+  const [rpeV, setRpeV] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ocrInputRef = useRef<HTMLInputElement>(null);
   const [ocrLoading, setOcrLoading] = useState(false);
@@ -150,6 +152,8 @@ export default function SessionDetail() {
       setDurationMin(validation.duration_s != null ? String(Math.round(validation.duration_s / 60)) : '');
       setElevationM(validation.elevation_m != null ? String(validation.elevation_m) : '');
       setAvgHrV(validation.avg_hr != null ? String(validation.avg_hr) : '');
+      setMaxHrV(validation.max_hr != null ? String(validation.max_hr) : '');
+      setRpeV(validation.rpe != null ? String(validation.rpe) : '');
       setIsEditing(true);
     }
   };
@@ -164,16 +168,20 @@ export default function SessionDetail() {
     const min = parseNum(durationMin);
     const elev = parseNum(elevationM);
     const hr = parseNum(avgHrV);
-    const hasAny = km != null || min != null || elev != null || hr != null;
+    const hrMax = parseNum(maxHrV);
+    const rpe = parseNum(rpeV);
+    const hasAny = km != null || min != null || elev != null || hr != null || hrMax != null || rpe != null;
     // Création : aucune métrique saisie -> on n'envoie rien.
     // Édition : on renvoie toujours l'objet (les null effacent les champs gérés),
-    // sans toucher aux champs non gérés par l'UI (max_hr, avg_cadence).
+    // sans toucher aux champs non gérés par l'UI (avg_cadence).
     if (!hasAny && !forEdit) return undefined;
     return {
       distance_m: km != null ? Math.round(km * 1000) : null,
       duration_s: min != null ? Math.round(min * 60) : null,
       elevation_m: elev != null ? Math.round(elev) : null,
       avg_hr: hr != null ? Math.round(hr) : null,
+      max_hr: hrMax != null ? Math.round(hrMax) : null,
+      rpe: rpe != null ? Math.max(1, Math.min(10, Math.round(rpe))) : null,
       metrics_source: hasAny ? (ocrFilled ? 'ocr' : 'manual') : null,
     };
   };
@@ -182,6 +190,8 @@ export default function SessionDetail() {
     setDurationMin('');
     setElevationM('');
     setAvgHrV('');
+    setMaxHrV('');
+    setRpeV('');
     setOcrFilled(false);
   };
 
@@ -211,6 +221,7 @@ export default function SessionDetail() {
       if (m.duration_s != null) { setDurationMin(String(Math.round(m.duration_s / 60))); any = true; }
       if (m.elevation_m != null) { setElevationM(String(m.elevation_m)); any = true; }
       if (m.avg_hr != null) { setAvgHrV(String(m.avg_hr)); any = true; }
+      if (m.max_hr != null) { setMaxHrV(String(m.max_hr)); any = true; }
       if (any) { setOcrFilled(true); toast.success("Chiffres détectés, vérifie-les avant d'enregistrer."); }
       else { setOcrError('Aucun chiffre détecté. Saisis-les à la main.'); }
     } catch {
@@ -454,7 +465,7 @@ export default function SessionDetail() {
                   )}
                 </div>
               )}
-              {(validation.distance_m != null || validation.duration_s != null || validation.elevation_m != null || validation.avg_hr != null) && (
+              {(validation.distance_m != null || validation.duration_s != null || validation.elevation_m != null || validation.avg_hr != null || validation.max_hr != null || validation.rpe != null) && (
                 <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3 text-sm">
                   {validation.distance_m != null && (
                     <span className="text-gray-600"><span className="font-semibold text-gray-900">{(validation.distance_m / 1000).toFixed(1)}</span> km</span>
@@ -470,6 +481,12 @@ export default function SessionDetail() {
                   )}
                   {validation.avg_hr != null && (
                     <span className="text-gray-600"><span className="font-semibold text-gray-900">{validation.avg_hr}</span> bpm</span>
+                  )}
+                  {validation.max_hr != null && (
+                    <span className="text-gray-600">max <span className="font-semibold text-gray-900">{validation.max_hr}</span></span>
+                  )}
+                  {validation.rpe != null && (
+                    <span className="text-gray-600">RPE <span className="font-semibold text-gray-900">{validation.rpe}</span>/10</span>
                   )}
                 </div>
               )}
@@ -595,22 +612,32 @@ export default function SessionDetail() {
                     <div className="grid grid-cols-2 gap-2">
                       <label className="block">
                         <span className="block text-[11px] text-gray-400 mb-1">Distance (km)</span>
-                        <input inputMode="decimal" value={distanceKm} onChange={e => setDistanceKm(e.target.value)} placeholder="8"
+                        <input inputMode="decimal" value={distanceKm} onChange={e => { setDistanceKm(e.target.value); setOcrFilled(false); }} placeholder="8"
                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                       </label>
                       <label className="block">
                         <span className="block text-[11px] text-gray-400 mb-1">Durée (min)</span>
-                        <input inputMode="numeric" value={durationMin} onChange={e => setDurationMin(e.target.value)} placeholder="45"
+                        <input inputMode="numeric" value={durationMin} onChange={e => { setDurationMin(e.target.value); setOcrFilled(false); }} placeholder="45"
                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                       </label>
                       <label className="block">
                         <span className="block text-[11px] text-gray-400 mb-1">D+ (m)</span>
-                        <input inputMode="numeric" value={elevationM} onChange={e => setElevationM(e.target.value)} placeholder="120"
+                        <input inputMode="numeric" value={elevationM} onChange={e => { setElevationM(e.target.value); setOcrFilled(false); }} placeholder="120"
                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                       </label>
                       <label className="block">
                         <span className="block text-[11px] text-gray-400 mb-1">FC moy (bpm)</span>
-                        <input inputMode="numeric" value={avgHrV} onChange={e => setAvgHrV(e.target.value)} placeholder="148"
+                        <input inputMode="numeric" value={avgHrV} onChange={e => { setAvgHrV(e.target.value); setOcrFilled(false); }} placeholder="148"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                      </label>
+                      <label className="block">
+                        <span className="block text-[11px] text-gray-400 mb-1">FC max (bpm)</span>
+                        <input inputMode="numeric" value={maxHrV} onChange={e => { setMaxHrV(e.target.value); setOcrFilled(false); }} placeholder="172"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                      </label>
+                      <label className="block">
+                        <span className="block text-[11px] text-gray-400 mb-1">Ressenti (/10)</span>
+                        <input inputMode="numeric" value={rpeV} onChange={e => { setRpeV(e.target.value); setOcrFilled(false); }} placeholder="6"
                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                       </label>
                     </div>

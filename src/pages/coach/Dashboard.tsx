@@ -34,7 +34,7 @@ const REACTIONS = ['👏', '🔥', '💪', '🎯'];
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { sessions, validations, users, validationReactions, toggleValidationReaction, clubSettings, setFeaturedValidation } = useData();
+  const { sessions, validations, users, groups, validationReactions, toggleValidationReaction, clubSettings, setFeaturedValidation } = useData();
 
   const members = useMemo(() => users.filter(u => u.email !== SUPER_ADMIN_EMAIL && u.role !== 'coach'), [users]);
 
@@ -84,21 +84,29 @@ export default function Dashboard() {
     const weekSessionIds = new Set(
       sessions.filter(s => !s.is_personal && isThisWeek(new Date(s.date), { weekStartsOn: 1 })).map(s => s.id)
     );
+    const firstNameCounts = members.reduce<Record<string, number>>((acc, m) => { acc[m.firstname] = (acc[m.firstname] || 0) + 1; return acc; }, {});
     const week = members.map(m => {
       const vs = validations.filter(v => v.user_id === m.id && v.status === 'done' && weekSessionIds.has(v.session_id));
       const sensations = { excellentes: 0, bonnes: 0, mauvaises: 0 };
-      vs.forEach(v => { if (v.sensations) sensations[v.sensations]++; });
+      const objectif = { oui: 0, partiel: 0, non: 0 };
+      vs.forEach(v => {
+        if (v.sensations) sensations[v.sensations]++;
+        if (v.objective_reached) objectif[v.objective_reached]++;
+      });
       return {
-        prenom: m.firstname,
+        // Nom de famille seulement si le prénom est partagé par plusieurs athletes (désambiguïsation pour le coach).
+        nom: firstNameCounts[m.firstname] > 1 ? `${m.firstname} ${m.lastname}` : m.firstname,
+        groupe: m.group_id ? (groups.find(g => g.id === m.group_id)?.name ?? null) : null,
         faites: vs.length,
+        objectif,
         sensations,
-        retours: vs.map(v => v.feedback).filter(Boolean).slice(0, 2),
+        retours: vs.map(v => v.feedback).filter(Boolean).slice(0, 5),
       };
     });
     try {
       const { data, error } = await supabase.functions.invoke('ai-coach-summary', { body: { week } });
       if (error || data?.error) setAiError("Le résumé n'a pas pu être généré. Réessaie dans un instant.");
-      else setAiSummary((data?.summary ?? '').replace(/\*\*/g, ''));
+      else setAiSummary((data?.summary ?? '').replace(/\*\*/g, '').replace(/^#{1,6}\s*/gm, ''));
     } catch {
       setAiError("Le résumé n'a pas pu être généré. Réessaie dans un instant.");
     } finally {

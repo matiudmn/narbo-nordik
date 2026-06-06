@@ -119,6 +119,7 @@ export interface SessionValidation {
   max_hr: number | null;
   avg_cadence: number | null;
   metrics_source: MetricsSource | null;
+  rpe: number | null;
   created_at: string;
 }
 
@@ -130,6 +131,7 @@ export interface SessionMetricsInput {
   max_hr?: number | null;
   avg_cadence?: number | null;
   metrics_source?: MetricsSource | null;
+  rpe?: number | null;
 }
 
 export interface RaceResult {
