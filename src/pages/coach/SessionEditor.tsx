@@ -1,4 +1,5 @@
 import { useState, useMemo, memo } from 'react';
+import { Link } from 'react-router-dom';
 import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, ChevronUp, ChevronDown, Zap, Clock, Ruler, Pencil, Copy, Calendar } from 'lucide-react';
@@ -581,6 +582,11 @@ export default function SessionEditor() {
               {preparations.length > 0 && <option disabled>───── Prep. specifiques ─────</option>}
               {preparations.map(p => <option key={p.id} value={`prep:${p.id}`}>{p.name}</option>)}
             </select>
+          </div>
+          <div className="flex justify-end -mt-1">
+            <Link to="/coach/settings?tab=preparations" className="text-xs text-primary hover:underline flex items-center gap-1">
+              <Plus size={12} /> Créer une prépa spécifique
+            </Link>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
