@@ -84,14 +84,22 @@ export default function Notifications() {
   return (
     <div className="py-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-gray-900">Notifications</h1>
+        <h1 className="text-lg font-bold text-gray-900">
+          Notifications
+          {unreadCount > 0 && (
+            <span className="ml-2 text-xs font-medium bg-accent/15 text-accent-dark px-2 py-0.5 rounded-full tabular">
+              {unreadCount} non lue{unreadCount > 1 ? 's' : ''}
+            </span>
+          )}
+        </h1>
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="flex items-center gap-1.5 text-sm text-primary font-medium"
+            className="flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
+            aria-label="Marquer toutes les notifications comme lues"
           >
-            <CheckCheck size={16} />
-            Tout lire
+            <CheckCheck size={16} aria-hidden="true" />
+            Tout marquer comme lu
           </button>
         )}
       </div>

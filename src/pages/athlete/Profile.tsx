@@ -52,6 +52,15 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
 
 const VALID_TABS = ['infos', 'sessions', 'strava', 'account'] as const;
 
+/**
+ * NOTE: file is large (1400+ lines) because state and handlers are
+ * intricately shared between tabs (Strava activities are surfaced in
+ * both Sessions and Strava tabs, photo upload spans Infos and header,
+ * etc.). Phase 1 (tabs via ?tab=) already delivered the UX win. A
+ * physical split into src/pages/athlete/profile/{Infos,Sessions,Strava,
+ * Account}.tsx would require a state machine refactor — defer until a
+ * concrete feature needs it.
+ */
 export default function Profile() {
   const { user, refreshUser } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
