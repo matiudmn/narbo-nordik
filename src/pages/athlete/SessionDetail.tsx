@@ -4,14 +4,14 @@ import { fr } from 'date-fns/locale';
 import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile, Heart, Activity, Link2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
-import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode, getAllureZones } from '../../lib/calculations';
+import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode, getAllureZones, pacePerKm } from '../../lib/calculations';
 import { useState, useRef, useEffect } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
 import { supabase } from '../../lib/supabase';
 import { useToast, Button } from '../../components/ui';
 import { StravaWordmark, PoweredByStrava } from '../../components/strava';
 import { motion, DUR, EASE } from '../../lib/motion';
-import type { ObjectiveReached, Sensations, StravaActivity } from '../../types';
+import type { ObjectiveReached, Sensations, StravaActivity, SessionMetricsInput } from '../../types';
 
 export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +32,10 @@ export default function SessionDetail() {
   const [sensations, setSensations] = useState<Sensations | null>(null);
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [distanceKm, setDistanceKm] = useState('');
+  const [durationMin, setDurationMin] = useState('');
+  const [elevationM, setElevationM] = useState('');
+  const [avgHrV, setAvgHrV] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Strava matching
@@ -169,11 +173,12 @@ export default function SessionDetail() {
 
   const handleValidate = () => {
     if (user) {
-      validateSession(session.id, user.id, 'done', feedback || undefined, attachedFile || undefined, objectiveReached || undefined, sensations || undefined);
+      validateSession(session.id, user.id, 'done', feedback || undefined, attachedFile || undefined, objectiveReached || undefined, sensations || undefined, buildMetrics());
       setShowValidation(false);
       setFeedback('');
       setObjectiveReached(null);
       setSensations(null);
+      resetMetrics();
       removeFile();
     }
   };
@@ -184,11 +189,13 @@ export default function SessionDetail() {
         feedback: feedback || undefined,
         objective_reached: objectiveReached,
         sensations: sensations,
+        metrics: buildMetrics(),
       }, attachedFile || undefined);
       setIsEditing(false);
       setFeedback('');
       setObjectiveReached(null);
       setSensations(null);
+      resetMetrics();
       removeFile();
     }
   };
@@ -198,9 +205,42 @@ export default function SessionDetail() {
       setFeedback(validation.feedback || '');
       setObjectiveReached(validation.objective_reached || null);
       setSensations(validation.sensations || null);
+      setDistanceKm(validation.distance_m != null ? String(validation.distance_m / 1000) : '');
+      setDurationMin(validation.duration_s != null ? String(Math.round(validation.duration_s / 60)) : '');
+      setElevationM(validation.elevation_m != null ? String(validation.elevation_m) : '');
+      setAvgHrV(validation.avg_hr != null ? String(validation.avg_hr) : '');
       setIsEditing(true);
     }
   };
+
+  const parseNum = (s: string): number | null => {
+    if (!s.trim()) return null;
+    const n = parseFloat(s.replace(',', '.'));
+    return Number.isFinite(n) ? n : null;
+  };
+  const buildMetrics = (): SessionMetricsInput | undefined => {
+    const km = parseNum(distanceKm);
+    const min = parseNum(durationMin);
+    const elev = parseNum(elevationM);
+    const hr = parseNum(avgHrV);
+    if (km == null && min == null && elev == null && hr == null) return undefined;
+    return {
+      distance_m: km != null ? Math.round(km * 1000) : null,
+      duration_s: min != null ? Math.round(min * 60) : null,
+      elevation_m: elev != null ? Math.round(elev) : null,
+      avg_hr: hr != null ? Math.round(hr) : null,
+      metrics_source: 'manual',
+    };
+  };
+  const resetMetrics = () => {
+    setDistanceKm('');
+    setDurationMin('');
+    setElevationM('');
+    setAvgHrV('');
+  };
+  const km = parseNum(distanceKm);
+  const min = parseNum(durationMin);
+  const livePace = pacePerKm(km != null ? Math.round(km * 1000) : null, min != null ? Math.round(min * 60) : null);
 
   return (
     <div className="py-4">
@@ -433,6 +473,25 @@ export default function SessionDetail() {
                   )}
                 </div>
               )}
+              {(validation.distance_m != null || validation.duration_s != null || validation.elevation_m != null || validation.avg_hr != null) && (
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3 text-sm">
+                  {validation.distance_m != null && (
+                    <span className="text-gray-600"><span className="font-semibold text-gray-900">{(validation.distance_m / 1000).toFixed(1)}</span> km</span>
+                  )}
+                  {validation.duration_s != null && (
+                    <span className="font-semibold text-gray-900">{formatSeconds(validation.duration_s)}</span>
+                  )}
+                  {pacePerKm(validation.distance_m, validation.duration_s) && (
+                    <span className="text-gray-600"><span className="font-semibold text-gray-900">{pacePerKm(validation.distance_m, validation.duration_s)}</span> /km</span>
+                  )}
+                  {validation.elevation_m != null && (
+                    <span className="text-gray-600"><span className="font-semibold text-gray-900">{validation.elevation_m}</span> m D+</span>
+                  )}
+                  {validation.avg_hr != null && (
+                    <span className="text-gray-600"><span className="font-semibold text-gray-900">{validation.avg_hr}</span> bpm</span>
+                  )}
+                </div>
+              )}
               {validation.feedback && (
                 <p className="text-sm text-gray-600 mt-3 italic text-center">"{validation.feedback}"</p>
               )}
@@ -520,6 +579,39 @@ export default function SessionDetail() {
                     </div>
                   </div>
 
+                  {/* Métriques saisies (optionnel), remplacement de Strava */}
+                  <div className="bg-gray-50 rounded-xl p-3 space-y-3">
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase">
+                      <Activity size={14} className="text-primary" />
+                      Mes chiffres (optionnel)
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="block">
+                        <span className="block text-[11px] text-gray-400 mb-1">Distance (km)</span>
+                        <input inputMode="decimal" value={distanceKm} onChange={e => setDistanceKm(e.target.value)} placeholder="8"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                      </label>
+                      <label className="block">
+                        <span className="block text-[11px] text-gray-400 mb-1">Durée (min)</span>
+                        <input inputMode="numeric" value={durationMin} onChange={e => setDurationMin(e.target.value)} placeholder="45"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                      </label>
+                      <label className="block">
+                        <span className="block text-[11px] text-gray-400 mb-1">D+ (m)</span>
+                        <input inputMode="numeric" value={elevationM} onChange={e => setElevationM(e.target.value)} placeholder="120"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                      </label>
+                      <label className="block">
+                        <span className="block text-[11px] text-gray-400 mb-1">FC moy (bpm)</span>
+                        <input inputMode="numeric" value={avgHrV} onChange={e => setAvgHrV(e.target.value)} placeholder="148"
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                      </label>
+                    </div>
+                    {livePace && (
+                      <p className="text-xs text-gray-500">Allure estimée : <span className="font-semibold text-accent-dark">{livePace} /km</span></p>
+                    )}
+                  </div>
+
                   <textarea
                     value={feedback}
                     onChange={e => setFeedback(e.target.value)}
@@ -567,6 +659,7 @@ export default function SessionDetail() {
                         setObjectiveReached(null);
                         setSensations(null);
                         setFeedback('');
+                        resetMetrics();
                         removeFile();
                       }}
                       className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium"

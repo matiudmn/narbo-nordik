@@ -101,6 +101,8 @@ export interface UserPreparation {
   preparation_id: string;
 }
 
+export type MetricsSource = 'manual' | 'ocr' | 'watch';
+
 export interface SessionValidation {
   id: string;
   session_id: string;
@@ -111,7 +113,24 @@ export interface SessionValidation {
   attachment_type: string | null;
   objective_reached: ObjectiveReached | null;
   sensations: Sensations | null;
+  distance_m: number | null;
+  duration_s: number | null;
+  elevation_m: number | null;
+  avg_hr: number | null;
+  max_hr: number | null;
+  avg_cadence: number | null;
+  metrics_source: MetricsSource | null;
   created_at: string;
+}
+
+export interface SessionMetricsInput {
+  distance_m?: number | null;
+  duration_s?: number | null;
+  elevation_m?: number | null;
+  avg_hr?: number | null;
+  max_hr?: number | null;
+  avg_cadence?: number | null;
+  metrics_source?: MetricsSource | null;
 }
 
 export interface RaceResult {
