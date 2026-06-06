@@ -42,6 +42,9 @@ serve(async (req) => {
   if (!image || typeof image !== 'string' || !image.startsWith('data:image/')) {
     return json({ error: 'Image manquante ou invalide (data URI attendu).' }, 400);
   }
+  if (image.length > 7_000_000) {
+    return json({ error: 'Image trop volumineuse.' }, 413);
+  }
 
   try {
     const r = await fetch(`${AI_BASE_URL}/chat/completions`, {
@@ -65,8 +68,8 @@ serve(async (req) => {
       }),
     });
     if (!r.ok) {
-      const detail = (await r.text()).slice(0, 300);
-      return json({ error: `Fournisseur IA: HTTP ${r.status}`, detail }, 502);
+      console.error('ai-ocr provider error', r.status, (await r.text()).slice(0, 300));
+      return json({ error: 'Fournisseur IA indisponible.' }, 502);
     }
     const data = await r.json();
     const content = data?.choices?.[0]?.message?.content ?? '{}';

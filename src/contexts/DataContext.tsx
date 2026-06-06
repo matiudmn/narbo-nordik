@@ -238,6 +238,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       max_hr: metrics?.max_hr ?? null,
       avg_cadence: metrics?.avg_cadence ?? null,
       metrics_source: metrics?.metrics_source ?? null,
+      rpe: metrics?.rpe ?? null,
       created_at: new Date().toISOString(),
     };
 
