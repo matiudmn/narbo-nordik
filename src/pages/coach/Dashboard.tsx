@@ -12,6 +12,21 @@ import { computeRiskScores, topRiskAthletes } from '../../lib/risk';
 import { CoachHeroCTA } from '../../components/coach/CoachHeroCTA';
 import { RiskScoreCard } from '../../components/coach/RiskScoreCard';
 import { KpiTrioCard } from '../../components/shared/KpiTrioCard';
+import { Badge } from '../../components/ui';
+import type { BadgeTone } from '../../components/ui';
+import type { ObjectiveReached, Sensations } from '../../types';
+
+const OBJECTIVE_META: Record<ObjectiveReached, { label: string; tone: BadgeTone }> = {
+  oui: { label: 'Objectif atteint', tone: 'success' },
+  partiel: { label: 'Objectif partiel', tone: 'warning' },
+  non: { label: 'Objectif non atteint', tone: 'danger' },
+};
+
+const SENSATION_META: Record<Sensations, { label: string; tone: BadgeTone }> = {
+  excellentes: { label: 'Sensations excellentes', tone: 'success' },
+  bonnes: { label: 'Bonnes sensations', tone: 'info' },
+  mauvaises: { label: 'Sensations difficiles', tone: 'danger' },
+};
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -41,7 +56,7 @@ export default function Dashboard() {
   const recentFeedback = useMemo(() => {
     return validations
       .filter(v => {
-        if (!v.feedback && !v.attachment_path) return false;
+        if (!v.feedback && !v.attachment_path && !v.objective_reached && !v.sensations) return false;
         const s = sessions.find(s => s.id === v.session_id);
         if (!s || s.is_personal) return false;
         return true;
@@ -157,6 +172,20 @@ export default function Dashboard() {
                       <span className="text-neutral-400 ml-1">{getSessionCode(item.session, sessions)}</span>
                     )}
                   </p>
+                  {(item.objective_reached || item.sensations) && (
+                    <div className="flex flex-wrap gap-1 mb-1">
+                      {item.objective_reached && (
+                        <Badge tone={OBJECTIVE_META[item.objective_reached].tone}>
+                          {OBJECTIVE_META[item.objective_reached].label}
+                        </Badge>
+                      )}
+                      {item.sensations && (
+                        <Badge tone={SENSATION_META[item.sensations].tone}>
+                          {SENSATION_META[item.sensations].label}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
                   {item.feedback && <p className="text-sm text-neutral-700 italic">« {item.feedback} »</p>}
                   {item.attachment_path && (
                     <a

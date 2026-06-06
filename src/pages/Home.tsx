@@ -4,7 +4,7 @@ import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isW
 import { fr } from 'date-fns/locale';
 import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Activity, Mountain, Timer, Check, Flag } from 'lucide-react';
 import { Calendar } from 'lucide-react';
-import { StatusBadge, EmptyState, Button, useToast } from '../components/ui';
+import { StatusBadge, EmptyState, Button, useToast, StreakFlame } from '../components/ui';
 import { StravaWordmark, PoweredByStrava } from '../components/strava';
 import { QuickSurveySheet } from '../components/athlete/QuickSurveySheet';
 import { VmaRecordCelebration } from '../components/athlete/VmaRecordCelebration';
@@ -14,6 +14,7 @@ import { useStrava } from '../hooks/useStrava';
 import { formatBlockSummary, getRacePaces, calculateRacePace, getVmaLevelIndex, VMA_LEVELS, getSessionCode, getAllureZones } from '../lib/calculations';
 import { getSeasonRange } from '../lib/date-utils';
 import { filterSessionsForAthlete } from '../lib/athleteSessions';
+import { computeWeeklyStreak } from '../lib/streak';
 import { PageSkeleton } from '../components/Skeleton';
 import { celebrate, haptic } from '../lib/motion';
 import type { ObjectiveReached, Sensations } from '../types';
@@ -158,6 +159,17 @@ export default function Home() {
       season: calc(sStart, sEnd),
     };
   }, [user, sessions, validations, userPrepIds]);
+
+  // Série d'assiduité hebdomadaire (régularité), affichée dans le bloc Assiduité.
+  const weeklyStreak = useMemo(() => {
+    if (!user) return 0;
+    const doneDates = validations
+      .filter(v => v.user_id === user.id && v.status === 'done')
+      .map(v => sessions.find(s => s.id === v.session_id)?.date)
+      .filter((d): d is string => Boolean(d))
+      .map(d => new Date(d));
+    return computeWeeklyStreak(doneDates, new Date());
+  }, [user, sessions, validations]);
 
   // --- Weekly sessions ---
   const weekStart = startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 });
@@ -390,6 +402,7 @@ export default function Home() {
         <h2 className="flex items-center gap-2 font-bold text-gray-900 mb-3">
           <Target size={18} className="text-primary" />
           Assiduité
+          <StreakFlame weeks={weeklyStreak} size="sm" className="ml-auto" />
         </h2>
         <div className="grid grid-cols-3 gap-3">
           {([
