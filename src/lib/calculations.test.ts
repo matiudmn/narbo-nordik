@@ -20,4 +20,9 @@ describe('pacePerKm', () => {
     // 8200 m en 2440 s -> 297.56 s/km -> 4:58
     expect(pacePerKm(8200, 2440)).toBe('4:58');
   });
+
+  it("n'affiche jamais 60 secondes (arrondi à la minute)", () => {
+    // 3000 m en 1079 s -> 359.67 s/km -> 6:00 (et non 5:60)
+    expect(pacePerKm(3000, 1079)).toBe('6:00');
+  });
 });

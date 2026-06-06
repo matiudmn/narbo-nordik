@@ -24,7 +24,7 @@ interface DataContextType {
   updateSession: (id: string, updates: Partial<Session>) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
   validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File, objectiveReached?: ObjectiveReached, sensations?: Sensations, metrics?: SessionMetricsInput) => Promise<{ id: string } | { error: string }>;
-  updateValidation: (validationId: string, updates: { feedback?: string; objective_reached?: ObjectiveReached | null; sensations?: Sensations | null; metrics?: SessionMetricsInput }, file?: File) => Promise<void>;
+  updateValidation: (validationId: string, updates: { feedback?: string; objective_reached?: ObjectiveReached | null; sensations?: Sensations | null; metrics?: SessionMetricsInput }, file?: File) => Promise<{ error?: string }>;
   addRaceResult: (result: Omit<RaceResult, 'id' | 'created_at'>) => Promise<void>;
   updateRaceResult: (id: string, updates: Partial<Omit<RaceResult, 'id' | 'created_at'>>) => Promise<void>;
   deleteRaceResult: (id: string) => Promise<void>;
@@ -256,9 +256,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return { id: data.id };
   }, []);
 
-  const updateValidation = useCallback(async (validationId: string, updates: { feedback?: string; objective_reached?: ObjectiveReached | null; sensations?: Sensations | null; metrics?: SessionMetricsInput }, file?: File) => {
+  const updateValidation = useCallback(async (validationId: string, updates: { feedback?: string; objective_reached?: ObjectiveReached | null; sensations?: Sensations | null; metrics?: SessionMetricsInput }, file?: File): Promise<{ error?: string }> => {
     const { data: existing } = await supabase.from('session_validations').select('*').eq('id', validationId).single();
-    if (!existing) return;
+    if (!existing) return { error: 'Validation introuvable' };
 
     let attachmentPath = existing.attachment_path;
     let attachmentType = existing.attachment_type;
@@ -271,11 +271,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
         .upload(filePath, file, { cacheControl: '3600', upsert: false });
       if (uploadError) {
         console.error('Upload error:', uploadError.message);
-        return;
+        return { error: uploadError.message };
       }
       attachmentPath = filePath;
       attachmentType = file.type;
     }
+
+    // Métriques : on ne met à jour que les clés explicitement fournies. Les valeurs
+    // null effacent le champ ; les clés absentes (ex. max_hr / avg_cadence, non gérés
+    // par l'UI de saisie) sont préservées (pas d'écrasement à null).
+    const metricsPatch = updates.metrics
+      ? Object.fromEntries(Object.entries(updates.metrics).filter(([, v]) => v !== undefined))
+      : {};
 
     const row = {
       feedback: updates.feedback ?? existing.feedback,
@@ -283,21 +290,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       sensations: updates.sensations !== undefined ? updates.sensations : existing.sensations,
       attachment_path: attachmentPath,
       attachment_type: attachmentType,
-      ...(updates.metrics ? {
-        distance_m: updates.metrics.distance_m ?? null,
-        duration_s: updates.metrics.duration_s ?? null,
-        elevation_m: updates.metrics.elevation_m ?? null,
-        avg_hr: updates.metrics.avg_hr ?? null,
-        max_hr: updates.metrics.max_hr ?? null,
-        avg_cadence: updates.metrics.avg_cadence ?? null,
-        metrics_source: updates.metrics.metrics_source ?? 'manual',
-      } : {}),
+      ...metricsPatch,
     };
 
     const { data, error } = await supabase.from('session_validations').update(row).eq('id', validationId).select().single();
-    if (!error && data) {
-      setValidations(prev => prev.map(v => v.id === validationId ? data : v));
+    if (error || !data) {
+      console.error('updateValidation error:', error?.message);
+      return { error: error?.message ?? 'Erreur inconnue' };
     }
+    setValidations(prev => prev.map(v => v.id === validationId ? data : v));
+    return {};
   }, []);
 
   // --- Race Results ---
