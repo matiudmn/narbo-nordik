@@ -1,12 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format, isThisWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { TrendingUp, Users, MessageSquare, CheckCircle, AlertTriangle, ChevronRight, Settings, Paperclip, FileText, Star } from 'lucide-react';
+import { TrendingUp, Users, MessageSquare, CheckCircle, AlertTriangle, ChevronRight, Settings, Paperclip, FileText, Star, Sparkles } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { getAttachmentUrl } from '../../lib/storage';
+import { supabase } from '../../lib/supabase';
 import { getSessionCode } from '../../lib/calculations';
 import { computeRiskScores, topRiskAthletes } from '../../lib/risk';
 import { CoachHeroCTA } from '../../components/coach/CoachHeroCTA';
@@ -73,6 +74,38 @@ export default function Dashboard() {
       });
   }, [validations, users, sessions]);
 
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const handleAiSummary = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    const weekSessionIds = new Set(
+      sessions.filter(s => !s.is_personal && isThisWeek(new Date(s.date), { weekStartsOn: 1 })).map(s => s.id)
+    );
+    const week = members.map(m => {
+      const vs = validations.filter(v => v.user_id === m.id && v.status === 'done' && weekSessionIds.has(v.session_id));
+      const sensations = { excellentes: 0, bonnes: 0, mauvaises: 0 };
+      vs.forEach(v => { if (v.sensations) sensations[v.sensations]++; });
+      return {
+        prenom: m.firstname,
+        faites: vs.length,
+        sensations,
+        retours: vs.map(v => v.feedback).filter(Boolean).slice(0, 2),
+      };
+    });
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-coach-summary', { body: { week } });
+      if (error || data?.error) setAiError("Le résumé n'a pas pu être généré. Réessaie dans un instant.");
+      else setAiSummary((data?.summary ?? '').replace(/\*\*/g, ''));
+    } catch {
+      setAiError("Le résumé n'a pas pu être généré. Réessaie dans un instant.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   return (
     <div className="py-4 space-y-4">
       {/* Header avec greeting */}
@@ -123,6 +156,29 @@ export default function Dashboard() {
         <span className="flex-1 text-sm font-medium text-neutral-900">Paramètres du club</span>
         <ChevronRight size={16} className="text-neutral-300" aria-hidden="true" />
       </Link>
+
+      {/* Résumé hebdo IA */}
+      <section className="bg-white rounded-xl border border-neutral-100 p-4" aria-labelledby="ai-heading">
+        <div className="flex items-center justify-between gap-3">
+          <h2 id="ai-heading" className="flex items-center gap-2 font-bold text-neutral-900">
+            <Sparkles size={18} className="text-accent" aria-hidden="true" />
+            Résumé de la semaine
+          </h2>
+          <button
+            type="button"
+            onClick={handleAiSummary}
+            disabled={aiLoading}
+            className="text-sm font-medium px-3 py-1.5 rounded-lg bg-accent text-white hover:bg-accent-light disabled:opacity-60 transition-colors flex-shrink-0"
+          >
+            {aiLoading ? 'Génération…' : aiSummary ? 'Régénérer' : 'Générer'}
+          </button>
+        </div>
+        {!aiSummary && !aiLoading && !aiError && (
+          <p className="text-sm text-neutral-400 mt-2">Une synthèse IA des retours de tes athletes cette semaine (qui décroche, qui est en forme, qui recontacter).</p>
+        )}
+        {aiError && <p className="text-sm text-danger-600 mt-2">{aiError}</p>}
+        {aiSummary && <p className="text-sm text-neutral-700 whitespace-pre-wrap mt-2">{aiSummary}</p>}
+      </section>
 
       {/* Score de risque + Feedback côte à côte sur desktop */}
       <div className="lg:grid lg:grid-cols-2 lg:gap-4 space-y-4 lg:space-y-0">
