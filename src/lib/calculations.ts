@@ -97,6 +97,15 @@ export function formatDistance(meters: number): string {
   return `${meters}m`;
 }
 
+/** Allure "m:ss" par km à partir de mètres + secondes. null si données absentes/invalides. */
+export function pacePerKm(distanceM: number | null | undefined, durationS: number | null | undefined): string | null {
+  if (!distanceM || !durationS || distanceM <= 0 || durationS <= 0) return null;
+  const secPerKm = durationS / (distanceM / 1000);
+  const m = Math.floor(secPerKm / 60);
+  const s = Math.round(secPerKm % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 export function formatBlockSummary(block: SessionBlock, zones?: Record<string, AllureZoneConfig>): string {
   const zone = (zones || ALLURE_ZONES)[block.allure] || ALLURE_ZONES[block.allure];
   const effort = block.distance_meters ? formatDistance(block.distance_meters) : formatSeconds(block.duration_seconds);
