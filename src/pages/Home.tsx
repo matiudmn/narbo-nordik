@@ -2,15 +2,13 @@ import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isWithinInterval, isPast, differenceInCalendarDays, differenceInCalendarWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Activity, Mountain, Timer, Check, Flag } from 'lucide-react';
+import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Check, Flag } from 'lucide-react';
 import { Calendar } from 'lucide-react';
 import { StatusBadge, EmptyState, Button, useToast, StreakFlame } from '../components/ui';
-import { StravaWordmark, PoweredByStrava } from '../components/strava';
 import { QuickSurveySheet } from '../components/athlete/QuickSurveySheet';
 import { VmaRecordCelebration } from '../components/athlete/VmaRecordCelebration';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { useStrava } from '../hooks/useStrava';
 import { formatBlockSummary, getRacePaces, calculateRacePace, getVmaLevelIndex, VMA_LEVELS, getSessionCode, getAllureZones } from '../lib/calculations';
 import { getSeasonRange } from '../lib/date-utils';
 import { filterSessionsForAthlete } from '../lib/athleteSessions';
@@ -56,7 +54,6 @@ export default function Home() {
   }, [showGroupBesidesPrep]);
 
   const isCoach = user?.role === 'coach';
-  const strava = useStrava();
 
   // Détecte un record VMA non encore célébré (athlète uniquement)
   useEffect(() => {
@@ -80,16 +77,6 @@ export default function Home() {
     }
     setVmaCelebration({ previous: previousMax, current: latest.vma });
   }, [user, isCoach]);
-
-  useEffect(() => {
-    strava.checkConnection();
-  }, [strava.checkConnection]);
-
-  useEffect(() => {
-    if (strava.connected && !strava.athleteStats) {
-      strava.fetchStats();
-    }
-  }, [strava.connected, strava.athleteStats, strava.fetchStats]);
 
   const userPrepIds = useMemo(() => {
     if (!user) return [];
@@ -423,102 +410,6 @@ export default function Home() {
           ))}
         </div>
       </div>
-
-      {/* Strava stats */}
-      {strava.connected && strava.athleteStats && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
-          <h2 className="flex items-center gap-2 mb-3">
-            <Activity size={18} className="text-[#FC4C02]" aria-hidden="true" />
-            <StravaWordmark height={18} variant="orange" />
-          </h2>
-
-          {/* YTD stats */}
-          <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Depuis janvier {new Date().getFullYear()}</p>
-          <div className="grid grid-cols-4 gap-2 mb-4">
-            <div className="bg-[#FC4C02]/5 rounded-xl p-2.5 text-center">
-              <p className="text-lg font-bold text-gray-900">{strava.athleteStats.ytd_run_totals?.count ?? 0}</p>
-              <p className="text-[10px] text-gray-400">Sorties</p>
-            </div>
-            <div className="bg-[#FC4C02]/5 rounded-xl p-2.5 text-center">
-              <p className="text-lg font-bold text-gray-900">
-                {strava.athleteStats.ytd_run_totals?.distance ? (strava.athleteStats.ytd_run_totals.distance / 1000).toFixed(0) : 0}
-              </p>
-              <p className="text-[10px] text-gray-400">km</p>
-            </div>
-            <div className="bg-[#FC4C02]/5 rounded-xl p-2.5 text-center">
-              <p className="text-lg font-bold text-gray-900">
-                {strava.athleteStats.ytd_run_totals?.moving_time ? Math.round(strava.athleteStats.ytd_run_totals.moving_time / 3600) : 0}
-              </p>
-              <p className="text-[10px] text-gray-400">heures</p>
-            </div>
-            <div className="bg-[#FC4C02]/5 rounded-xl p-2.5 text-center">
-              <p className="text-lg font-bold text-gray-900">
-                {strava.athleteStats.ytd_run_totals?.elevation_gain ? Math.round(strava.athleteStats.ytd_run_totals.elevation_gain) : 0}
-              </p>
-              <p className="text-[10px] text-gray-400">D+ m</p>
-            </div>
-          </div>
-
-          {/* All-time stats */}
-          <p className="text-[10px] font-bold text-gray-400 uppercase mb-2">Tout temps</p>
-          <div className="grid grid-cols-4 gap-2">
-            <div className="bg-gray-50 rounded-xl p-2.5 text-center">
-              <p className="text-lg font-bold text-gray-900">{strava.athleteStats.all_run_totals?.count ?? 0}</p>
-              <p className="text-[10px] text-gray-400">Sorties</p>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-2.5 text-center">
-              <p className="text-lg font-bold text-gray-900">
-                {strava.athleteStats.all_run_totals?.distance ? (strava.athleteStats.all_run_totals.distance / 1000).toFixed(0) : 0}
-              </p>
-              <p className="text-[10px] text-gray-400">km</p>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-2.5 text-center">
-              <p className="text-lg font-bold text-gray-900">
-                {strava.athleteStats.all_run_totals?.moving_time ? Math.round(strava.athleteStats.all_run_totals.moving_time / 3600) : 0}
-              </p>
-              <p className="text-[10px] text-gray-400">heures</p>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-2.5 text-center">
-              <p className="text-lg font-bold text-gray-900">
-                {strava.athleteStats.all_run_totals?.elevation_gain ? Math.round(strava.athleteStats.all_run_totals.elevation_gain) : 0}
-              </p>
-              <p className="text-[10px] text-gray-400">D+ m</p>
-            </div>
-          </div>
-
-          {/* Average pace YTD */}
-          {strava.athleteStats.ytd_run_totals?.distance > 0 && strava.athleteStats.ytd_run_totals?.moving_time > 0 && (
-            <div className="mt-3 flex items-center justify-center gap-4 text-sm text-gray-600">
-              <div className="flex items-center gap-1.5">
-                <Timer size={14} className="text-[#FC4C02]" />
-                <span>Allure moy. </span>
-                <span className="font-bold text-[#FC4C02]">
-                  {(() => {
-                    const paceSeconds = strava.athleteStats.ytd_run_totals.moving_time / (strava.athleteStats.ytd_run_totals.distance / 1000);
-                    const min = Math.floor(paceSeconds / 60);
-                    const sec = Math.round(paceSeconds % 60);
-                    return `${min}:${String(sec).padStart(2, '0')}`;
-                  })()}
-                  /km
-                </span>
-              </div>
-              {strava.athleteStats.ytd_run_totals?.elevation_gain > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <Mountain size={14} className="text-[#FC4C02]" />
-                  <span className="font-bold">
-                    {Math.round(strava.athleteStats.ytd_run_totals.elevation_gain)}
-                  </span>
-                  <span>m D+</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="mt-3 pt-3 border-t border-neutral-100 flex justify-end">
-            <PoweredByStrava />
-          </div>
-        </div>
-      )}
 
       </div>{/* end top grid */}
 

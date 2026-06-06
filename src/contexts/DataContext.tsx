@@ -33,7 +33,6 @@ interface DataContextType {
   updateUserVma: (userId: string, vma: number, reason?: string) => Promise<void>;
   updateUserPublic: (userId: string, isPublic: boolean) => Promise<void>;
   updateUserPhone: (userId: string, phone: string | null) => Promise<void>;
-  updateUserStrava: (userId: string, stravaId: string | null) => Promise<void>;
   updateUserLicense: (userId: string, licenseNumber: string | null) => Promise<void>;
   updateUserBirthDate: (userId: string, birthDate: string | null) => Promise<void>;
   updateUserPhoto: (userId: string, photoUrl: string | null) => Promise<void>;
@@ -450,10 +449,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await patchUser(userId, { phone });
   }, [patchUser]);
 
-  const updateUserStrava = useCallback(async (userId: string, stravaId: string | null) => {
-    await patchUser(userId, { strava_id: stravaId });
-  }, [patchUser]);
-
   const updateUserLicense = useCallback(async (userId: string, licenseNumber: string | null) => {
     await patchUser(userId, { license_number: licenseNumber });
   }, [patchUser]);
@@ -495,7 +490,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       vma_history: vmaHistory,
       group_id: userData.group_id,
       phone: userData.phone,
-      strava_id: userData.strava_id,
       is_public: userData.is_public,
     }).select().single();
 
@@ -608,7 +602,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     <DataContext.Provider value={{
       sessions, validations, raceResults, raceNordiks, sessionNordiks, groups, users, preparations, userPreparations, clubSettings, loading,
       addSession, addSessionsBulk, updateSession, deleteSession, validateSession, updateValidation,
-      addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserStrava, updateUserLicense, updateUserBirthDate, updateUserPhoto,
+      addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto,
       addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
       addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, refreshAll,
     }}>

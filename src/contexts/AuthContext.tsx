@@ -99,7 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       vma_history: [],
       group_id: null,
       phone: null,
-      strava_id: null,
       is_public: true,
     });
     if (insertError) return insertError.message;

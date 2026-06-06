@@ -1,17 +1,15 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile, Heart, Activity, Link2 } from 'lucide-react';
+import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile, Heart, Activity } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode, getAllureZones, pacePerKm } from '../../lib/calculations';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
-import { supabase } from '../../lib/supabase';
 import { useToast, Button } from '../../components/ui';
-import { StravaWordmark, PoweredByStrava } from '../../components/strava';
 import { motion, DUR, EASE } from '../../lib/motion';
-import type { ObjectiveReached, Sensations, StravaActivity, SessionMetricsInput } from '../../types';
+import type { ObjectiveReached, Sensations, SessionMetricsInput } from '../../types';
 
 export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
@@ -37,74 +35,6 @@ export default function SessionDetail() {
   const [elevationM, setElevationM] = useState('');
   const [avgHrV, setAvgHrV] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Strava matching
-  const [stravaActivities, setStravaActivities] = useState<StravaActivity[]>([]);
-  const [matchedActivity, setMatchedActivity] = useState<StravaActivity | null>(null);
-  const [stravaLoading, setStravaLoading] = useState(false);
-
-  useEffect(() => {
-    if (!session || !user) return;
-    const sessionDate = new Date(session.date);
-    const rangeStart = new Date(sessionDate);
-    rangeStart.setDate(rangeStart.getDate() - 4);
-    rangeStart.setHours(0, 0, 0, 0);
-    const rangeEnd = new Date(sessionDate);
-    rangeEnd.setDate(rangeEnd.getDate() + 4);
-    rangeEnd.setHours(23, 59, 59, 999);
-
-    // Check for already matched activity
-    supabase.from('strava_activities')
-      .select('*')
-      .eq('matched_session_id', session.id)
-      .eq('user_id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setMatchedActivity(data as StravaActivity);
-      });
-
-    // Fetch unmatched activities within +/- 4 days
-    supabase.from('strava_activities')
-      .select('*')
-      .eq('user_id', user.id)
-      .gte('start_date_local', rangeStart.toISOString())
-      .lte('start_date_local', rangeEnd.toISOString())
-      .is('matched_session_id', null)
-      .order('start_date_local', { ascending: true })
-      .then(({ data }) => {
-        if (data) setStravaActivities(data as StravaActivity[]);
-      });
-  }, [session?.id, user?.id]);
-
-  const handleMatchStrava = async (activity: StravaActivity) => {
-    setStravaLoading(true);
-    const { error } = await supabase.rpc('match_strava_activity', {
-      p_activity_id: activity.id,
-      p_session_id: session!.id,
-    });
-    if (error) {
-      console.error('Match error:', error);
-    } else {
-      setMatchedActivity(activity);
-      setStravaActivities(prev => prev.filter(a => a.id !== activity.id));
-    }
-    setStravaLoading(false);
-  };
-
-  const handleUnmatchStrava = async () => {
-    if (!matchedActivity) return;
-    setStravaLoading(true);
-    const { error } = await supabase.rpc('unmatch_strava_activity', {
-      p_activity_id: matchedActivity.id,
-    });
-    if (error) {
-      console.error('Unmatch error:', error);
-    } else {
-      setStravaActivities(prev => [...prev, matchedActivity]);
-      setMatchedActivity(null);
-    }
-    setStravaLoading(false);
-  };
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'];
@@ -579,7 +509,7 @@ export default function SessionDetail() {
                     </div>
                   </div>
 
-                  {/* Métriques saisies (optionnel), remplacement de Strava */}
+                  {/* Métriques saisies (optionnel) */}
                   <div className="bg-gray-50 rounded-xl p-3 space-y-3">
                     <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase">
                       <Activity size={14} className="text-primary" />
@@ -678,120 +608,6 @@ export default function SessionDetail() {
             </>
           )}
         </div>
-
-        {/* Strava matching */}
-        {(matchedActivity || stravaActivities.length > 0) && (
-          <div className="p-4 border-t border-gray-100">
-            <h3 className="flex items-center gap-2 mb-3">
-              <Activity size={14} className="text-[#FC4C02]" aria-hidden="true" />
-              <span className="text-xs font-bold text-gray-500 uppercase">Données</span>
-              <StravaWordmark height={12} variant="orange" />
-            </h3>
-
-            {matchedActivity ? (
-              <div className="bg-[#FC4C02]/5 border border-[#FC4C02]/20 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Link2 size={14} className="text-[#FC4C02]" />
-                    <span className="text-sm font-medium text-gray-900">{matchedActivity.name || matchedActivity.sport_type}</span>
-                  </div>
-                  <button
-                    onClick={handleUnmatchStrava}
-                    disabled={stravaLoading}
-                    className="text-[10px] text-gray-400 hover:text-red-500"
-                  >
-                    Dissocier
-                  </button>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  {matchedActivity.distance_meters && (
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-gray-900">{(matchedActivity.distance_meters / 1000).toFixed(1)}</p>
-                      <p className="text-[10px] text-gray-400">km</p>
-                    </div>
-                  )}
-                  {matchedActivity.moving_time_seconds && (
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-gray-900">{Math.floor(matchedActivity.moving_time_seconds / 60)}</p>
-                      <p className="text-[10px] text-gray-400">min</p>
-                    </div>
-                  )}
-                  {matchedActivity.average_speed && matchedActivity.average_speed > 0 && (
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-[#FC4C02]">
-                        {Math.floor(1000 / matchedActivity.average_speed / 60)}:{String(Math.round((1000 / matchedActivity.average_speed) % 60)).padStart(2, '0')}
-                      </p>
-                      <p className="text-[10px] text-gray-400">min/km</p>
-                    </div>
-                  )}
-                </div>
-                {(matchedActivity.average_heartrate || matchedActivity.total_elevation_gain) && (
-                  <div className="flex justify-center gap-6 mt-2 text-xs text-gray-500">
-                    {matchedActivity.average_heartrate && (
-                      <span>FC moy {Math.round(matchedActivity.average_heartrate)} bpm</span>
-                    )}
-                    {matchedActivity.max_heartrate && (
-                      <span>FC max {Math.round(matchedActivity.max_heartrate)} bpm</span>
-                    )}
-                    {matchedActivity.total_elevation_gain && matchedActivity.total_elevation_gain > 0 && (
-                      <span>D+ {Math.round(matchedActivity.total_elevation_gain)} m</span>
-                    )}
-                  </div>
-                )}
-                {(matchedActivity.average_cadence || matchedActivity.calories) && (
-                  <div className="flex justify-center gap-6 mt-1 text-xs text-gray-500">
-                    {matchedActivity.average_cadence && (
-                      <span>Cadence {Math.round(matchedActivity.average_cadence)} spm</span>
-                    )}
-                    {matchedActivity.calories && matchedActivity.calories > 0 && (
-                      <span>{matchedActivity.calories} kcal</span>
-                    )}
-                  </div>
-                )}
-                {matchedActivity.start_date_local && (
-                  <p className="text-[10px] text-gray-400 text-center mt-2">
-                    {format(new Date(matchedActivity.start_date_local), "d MMM yyyy 'a' HH:mm", { locale: fr })}
-                    {matchedActivity.device_name && <> - {matchedActivity.device_name}</>}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-xs text-gray-500 mb-2">Activites Strava proches de cette seance :</p>
-                {stravaActivities.map(act => {
-                  const distKm = act.distance_meters ? (act.distance_meters / 1000).toFixed(1) : null;
-                  const durationMin = act.moving_time_seconds ? Math.round(act.moving_time_seconds / 60) : null;
-                  const pace = act.average_speed && act.average_speed > 0
-                    ? `${Math.floor(1000 / act.average_speed / 60)}:${String(Math.round((1000 / act.average_speed) % 60)).padStart(2, '0')}`
-                    : null;
-                  return (
-                    <div key={act.id} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{act.name || act.sport_type}</p>
-                        <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
-                          {act.start_date_local && <span>{format(new Date(act.start_date_local), 'd MMM', { locale: fr })}</span>}
-                          {distKm && <span>{distKm} km</span>}
-                          {durationMin && <span>{durationMin} min</span>}
-                          {pace && <span className="text-[#FC4C02] font-medium">{pace}/km</span>}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleMatchStrava(act)}
-                        disabled={stravaLoading}
-                        className="px-3 py-1.5 bg-[#FC4C02] text-white text-xs font-medium rounded-lg hover:bg-[#e04400] transition-colors disabled:opacity-50"
-                      >
-                        Associer
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <div className="mt-3 flex justify-end">
-              <PoweredByStrava />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

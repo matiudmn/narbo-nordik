@@ -52,13 +52,6 @@ const athleteSections: Section[] = [
           Un indicateur affiche ton taux de présence aux séances sur la saison en cours.
           Il se met à jour automatiquement lorsque tu valides ta participation à une séance.
         </p>
-        <p className="font-semibold text-gray-900">Stats Strava</p>
-        <p>
-          Si ton compte Strava est connecté, un bloc orange affiche tes statistiques :
-          nombre de sorties, kilomètres, heures et dénivelé positif sur l'année en cours,
-          ainsi que tes stats cumulées depuis toujours et ton allure moyenne.
-          Ces données se mettent à jour automatiquement chaque jour.
-        </p>
         <p className="font-semibold text-gray-900">Séances de la semaine</p>
         <p>
           La partie principale liste les séances prévues pour la semaine en cours. Chaque carte
@@ -119,13 +112,11 @@ const athleteSections: Section[] = [
           comme coup de coeur. C'est un moyen simple de signaler au coach les séances que tu
           avez particulierement appreciees.
         </p>
-        <p className="font-semibold text-gray-900">Associer une activite Strava</p>
+        <p className="font-semibold text-gray-900">Mes chiffres</p>
         <p>
-          Si ton compte Strava est connecté, les activites Strava proches de la date de la séance
-          (+/- 4 jours) sont affichées en bas de la page. Tu peux associer manuellement
-          une activite a la séance pour l'enrichir avec tes données reelles : distance, temps,
-          fréquence cardiaque, cadence, calories, dénivelé et appareil utilisé.
-          Tu peux aussi dissocier une activite si tu tu es trompe.
+          Lors de la validation, tu peux saisir tes données réelles (distance, durée, dénivelé,
+          fréquence cardiaque moyenne). L'allure au kilomètre est calculée automatiquement.
+          Ces chiffres sont optionnels et visibles par le coach.
         </p>
         <p className="font-semibold text-gray-900">Retour et photo</p>
         <p>
@@ -331,8 +322,8 @@ const athleteSections: Section[] = [
         <p className="font-semibold text-gray-900">Profil public</p>
         <p>
           Un interrupteur tu permet de rendre ton profil public ou prive. Quand il est
-          public, les autres membres du club peuvent voir ta VMA, ton telephone
-          et tes informations Strava. Quand il est prive, seul le coach y a acces.
+          public, les autres membres du club peuvent voir ta VMA et ton telephone.
+          Quand il est prive, seul le coach y a acces.
         </p>
         <p className="font-semibold text-gray-900">Séances personnelles</p>
         <p>
@@ -340,12 +331,6 @@ const athleteSections: Section[] = [
           tes propres séances d'entrainement (course, vélo, marche, renforcement, etc.)
           en dehors du planning du coach. Ces séances sont privees et n'apparaissent que
           pour tu.
-        </p>
-        <p className="font-semibold text-gray-900">Strava</p>
-        <p>
-          Une section dédiée Strava est disponible dans ton profil (après le Palmares).
-          Elle regroupe trois actions : Synchroniser tes activites, consulter tes séances Strava,
-          et gérer ton connexion. Voir la section "Strava" ci-dessous pour plus de détails.
         </p>
         <p className="font-semibold text-gray-900">Mot de passe</p>
         <p>
@@ -362,53 +347,6 @@ const athleteSections: Section[] = [
           En bas de ton profil, une option permet de supprimer definitivement ton compte.
           Cette action est irreversible. Un questionnaire de depart tu sera propose pour
           nous aider à ameliorer l'application. Tu devrez confirmer en tapant "SUPPRIMER".
-        </p>
-      </>
-    ),
-  },
-  {
-    id: 'strava',
-    title: 'Strava',
-    content: (
-      <>
-        <p>
-          L'application peut se connecter a ton compte Strava pour synchroniser automatiquement
-          tes activites sportives (marche nordique, course a pied, etc.).
-        </p>
-        <p className="font-semibold text-gray-900">Connecter son compte</p>
-        <p>
-          Depuis ton profil, descendez jusqu'à la section Strava (après le Palmares) et cliquez
-          sur "Connecter Strava". Tu serez redirige vers Strava pour autoriser l'acces.
-          L'application accède uniquement a tes activites et ton profil en lecture.
-          Elle ne peut rien modifier sur ton compte Strava.
-        </p>
-        <p className="font-semibold text-gray-900">Les 3 boutons</p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>Synchroniser</strong> : recupere tes dernieres activites depuis Strava.
-            Utile si tu venez de finir une séance et voulez la voir tout de suite.</li>
-          <li><strong>Mes séances</strong> : affiche toutes tes activites Strava.
-            Les activites non associees proposent deux actions : les associer a une séance
-            existante du coach, ou créer une séance personnelle automatiquement liee.</li>
-          <li><strong>Déconnecter</strong> : supprime le lien entre ton compte Strava et l'app.
-            Tes séances restent intactes mais les données Strava ne seront plus visibles.</li>
-        </ul>
-        <p className="font-semibold text-gray-900">Synchronisation automatique</p>
-        <p>
-          Tes activites Strava sont synchronisees automatiquement tous les jours a 6h du matin.
-          Tes sorties de la veille seront donc disponibles le lendemain sans rien faire.
-          Tu peux aussi forcer une synchro manuelle à tout moment avec le bouton Synchroniser.
-        </p>
-        <p className="font-semibold text-gray-900">Associer une activite a une séance</p>
-        <p>
-          L'association est toujours manuelle : c'est tu qui choisissez quelle activite Strava
-          correspond a quelle séance du coach. L'application propose les séances proches en date
-          (+/- 4 jours) pour faciliter le choix. Une fois associee, les données reelles (distance,
-          temps, FC, cadence, calories) apparaissent dans le détail de la séance.
-        </p>
-        <p className="font-semibold text-gray-900">Stats sur la page d'accueil</p>
-        <p>
-          Quand ton compte est connecté, un bloc orange s'affiche sur la page d'accueil avec
-          tes stats annuelles (sorties, km, heures, D+), tes stats cumulées et ton allure moyenne.
         </p>
       </>
     ),
