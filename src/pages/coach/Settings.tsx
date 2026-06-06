@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { UsersRound, Users, Target, Gauge } from 'lucide-react';
 import GroupsTab from './GroupsTab';
 import PreparationsTab from './PreparationsTab';
@@ -7,8 +8,24 @@ import AlluresTab from './AlluresTab';
 
 type Tab = 'groups' | 'preparations' | 'athletes' | 'allures';
 
+const VALID_TABS: Tab[] = ['groups', 'preparations', 'athletes', 'allures'];
+
 export default function Settings() {
-  const [tab, setTab] = useState<Tab>('groups');
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Onglet initial depuis l'URL (?tab=preparations) pour permettre les
+  // deep-links depuis la sidebar et les liens contextuels.
+  const urlTab = searchParams.get('tab');
+  const initialTab: Tab = VALID_TABS.includes(urlTab as Tab) ? (urlTab as Tab) : 'groups';
+  const [tab, setTabState] = useState<Tab>(initialTab);
+
+  const setTab = (t: Tab) => {
+    setTabState(t);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', t);
+      return next;
+    }, { replace: true });
+  };
 
   return (
     <div className="py-4 space-y-4">
@@ -32,7 +49,7 @@ export default function Settings() {
           }`}
         >
           <Target size={14} />
-          Prep.
+          Prépas
         </button>
         <button
           onClick={() => setTab('athletes')}

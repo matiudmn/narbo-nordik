@@ -197,7 +197,16 @@ export default function QuickAddSession() {
               );
             })}
           </div>
-          <p className="text-xs text-gray-400 mt-2">{summary}</p>
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-gray-400">{summary}</p>
+            <button
+              type="button"
+              onClick={() => navigate('/coach/settings?tab=preparations')}
+              className="text-xs text-primary hover:underline whitespace-nowrap"
+            >
+              + Prépa spécifique
+            </button>
+          </div>
         </div>
 
         {/* TYPE */}
