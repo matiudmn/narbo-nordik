@@ -19,7 +19,7 @@ import type { ObjectiveReached, Sensations } from '../types';
 
 export default function Home() {
   const { user } = useAuth();
-  const { sessions, validations, users, groups, preparations, userPreparations, clubSettings, loading, validateSession, updateValidation } = useData();
+  const { sessions, validations, users, groups, preparations, userPreparations, clubSettings, loading, validateSession, updateValidation, setFeaturedValidation } = useData();
   const toast = useToast();
   const racePaces = getRacePaces(clubSettings?.race_paces);
   const allureZones = getAllureZones(clubSettings?.allure_zones);
@@ -534,6 +534,15 @@ export default function Home() {
               <Star size={15} className="text-warning-700" fill="currentColor" aria-hidden="true" />
             </span>
             <h2 className="font-bold text-gray-900">Coup de coeur du coach</h2>
+            {isCoach && (
+              <button
+                type="button"
+                onClick={() => setFeaturedValidation(null)}
+                className="ml-auto text-xs text-gray-400 hover:text-gray-700 transition-colors"
+              >
+                Retirer
+              </button>
+            )}
           </div>
           <p className="text-sm text-gray-700">
             <span className="font-semibold">{featured.athlete?.firstname ?? 'Un athlète'}</span>

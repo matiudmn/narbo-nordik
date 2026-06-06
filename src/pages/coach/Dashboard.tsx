@@ -212,7 +212,7 @@ export default function Dashboard() {
                             type="button"
                             onClick={() => toggleValidationReaction(item.id, emoji, user.id)}
                             aria-pressed={mine}
-                            aria-label={`Réagir ${emoji}`}
+                            aria-label={mine ? `Retirer ${emoji}` : `Réagir ${emoji}`}
                             className={[
                               'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm border transition-colors',
                               mine ? 'bg-accent/15 border-accent' : 'bg-neutral-50 border-neutral-200 hover:bg-neutral-100',

@@ -451,9 +451,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
           ]);
           const { error: notifError } = await supabase.from('notifications').insert({
             user_id: val.user_id,
-            type: 'system',
+            type: 'reaction',
             title: 'Réaction !',
-            body: `${actor?.firstname ?? 'Quelqu un'} a réagi ${emoji} à ton compte-rendu${sess?.title ? ` "${sess.title}"` : ''}`,
+            body: `${actor?.firstname ?? "Quelqu'un"} a réagi ${emoji} à ton compte-rendu${sess?.title ? ` "${sess.title}"` : ''}`,
           });
           if (notifError) console.error('Notification error:', notifError.message);
         }
@@ -637,21 +637,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [clubSettings, authUser?.id]);
 
   const setFeaturedValidation = useCallback(async (validationId: string | null) => {
+    // Une ligne club_settings est toujours seedée. On ne fait QUE de l'update :
+    // jamais d'insert partiel (qui créerait une 2e ligne aux allures vides).
+    if (!clubSettings) return;
     const featured_at = validationId ? new Date().toISOString() : null;
-    if (clubSettings) {
-      const { error } = await supabase.from('club_settings')
-        .update({ featured_validation_id: validationId, featured_at })
-        .eq('id', clubSettings.id);
-      if (!error) {
-        setClubSettings(prev => prev ? { ...prev, featured_validation_id: validationId, featured_at } : prev);
-      }
-    } else {
-      const { data, error } = await supabase.from('club_settings')
-        .insert({ featured_validation_id: validationId, featured_at, updated_by: authUser?.id })
-        .select().single();
-      if (!error && data) setClubSettings(data as ClubSettings);
+    const { error } = await supabase.from('club_settings')
+      .update({ featured_validation_id: validationId, featured_at })
+      .eq('id', clubSettings.id);
+    if (!error) {
+      setClubSettings(prev => prev ? { ...prev, featured_validation_id: validationId, featured_at } : prev);
     }
-  }, [clubSettings, authUser?.id]);
+  }, [clubSettings]);
 
   return (
     <DataContext.Provider value={{

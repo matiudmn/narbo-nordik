@@ -172,7 +172,7 @@ export interface SessionWithValidation extends Session {
   group?: Group;
 }
 
-export type NotificationType = 'new_session' | 'palmares' | 'vma_update' | 'weekly_digest' | 'system';
+export type NotificationType = 'new_session' | 'palmares' | 'vma_update' | 'weekly_digest' | 'system' | 'reaction';
 
 export interface NotificationPreferences {
   new_session: { in_app: boolean; email: boolean };
