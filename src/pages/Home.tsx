@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isWithinInterval, isPast } from 'date-fns';
+import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isWithinInterval, isPast, differenceInCalendarDays, differenceInCalendarWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Activity, Mountain, Timer, Check } from 'lucide-react';
+import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Activity, Mountain, Timer, Check, Flag } from 'lucide-react';
 import { Calendar } from 'lucide-react';
 import { StatusBadge, EmptyState, Button, useToast } from '../components/ui';
 import { StravaWordmark, PoweredByStrava } from '../components/strava';
@@ -95,6 +95,37 @@ export default function Home() {
     return userPreparations.filter(up => up.user_id === user.id).map(up => up.preparation_id);
   }, [user, userPreparations]);
 
+  // Objectifs datés des prépas actives de l'athlète (la "finalité" : jour de course).
+  // Remontée David 06/2026 : l'échéance n'apparaissait que dans Réglages → Prépas,
+  // jamais dans la vue semaine. On l'expose ici pour que l'athlète voie son objectif.
+  const prepObjectives = useMemo(() => {
+    if (!user) return [];
+    const today = new Date();
+    const parseDateOnly = (s: string) => {
+      const [y, m, d] = s.split('-').map(Number);
+      return new Date(y, (m || 1) - 1, d || 1);
+    };
+    return preparations
+      .filter(p => userPrepIds.includes(p.id) && p.event_date)
+      .map(p => {
+        const date = parseDateOnly(p.event_date);
+        return {
+          id: p.id,
+          name: p.name,
+          date,
+          daysUntil: differenceInCalendarDays(date, today),
+          weekOffsetTo: differenceInCalendarWeeks(date, today, { weekStartsOn: 1 }),
+        };
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [preparations, userPrepIds, user]);
+
+  // Prochain objectif : le plus proche à venir, sinon le plus récent passé.
+  const nextObjective = useMemo(() => {
+    const upcoming = prepObjectives.filter(o => o.daysUntil >= 0);
+    return upcoming[0] ?? prepObjectives[prepObjectives.length - 1] ?? null;
+  }, [prepObjectives]);
+
   // --- Attendance stats ---
   const attendanceStats = useMemo(() => {
     if (!user) return { week: 0, month: 0, season: 0 };
@@ -156,6 +187,25 @@ export default function Home() {
     () => new Set(filteredWeekItems.filter(f => f.isSecondary).map(f => f.session.id)),
     [filteredWeekItems]
   );
+
+  // Repère "jour J" : objectif(s) tombant dans la semaine affichée, intercalé(s)
+  // dans la grille même sans séance ce jour-là (le jour de course lui-même).
+  const weekObjectives = useMemo(
+    () => prepObjectives.filter(o => o.date >= weekStart && o.date <= weekEnd),
+    [prepObjectives, weekStart, weekEnd]
+  );
+
+  type WeekRenderItem =
+    | { kind: 'session'; date: Date; session: typeof filteredSessions[number] }
+    | { kind: 'objective'; date: Date; obj: typeof prepObjectives[number] };
+
+  const weekRenderItems = useMemo<WeekRenderItem[]>(() => {
+    const items: WeekRenderItem[] = filteredSessions.map(s => ({
+      kind: 'session', date: new Date(s.date), session: s,
+    }));
+    for (const o of weekObjectives) items.push({ kind: 'objective', date: o.date, obj: o });
+    return items.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [filteredSessions, weekObjectives]);
 
   const hasActivePrep = userPrepIds.length > 0;
 
@@ -579,29 +629,57 @@ export default function Home() {
           </button>
         )}
 
-        {!isCoach && hasActivePrep && (
-          <div className="mb-3 flex items-center justify-between gap-3 px-3 py-2 bg-warning-50 border border-warning-100 rounded-lg text-xs">
-            <div className="flex items-center gap-2 text-warning-700">
-              <Target size={14} />
-              <span>
-                <span className="font-semibold">Prépa spécifique active.</span>{' '}
-                <span>Tu vois uniquement tes séances de prépa.</span>
-              </span>
+        {hasActivePrep && (
+          <div className="mb-3 space-y-2">
+            {nextObjective && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (nextObjective.weekOffsetTo !== weekOffset) setWeekOffset(nextObjective.weekOffsetTo);
+                }}
+                title="Aller à la semaine de l'objectif"
+                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 bg-warning-50 border border-warning-100 rounded-xl text-left hover:bg-warning-100 transition-colors"
+              >
+                <span className="flex items-center gap-2.5 min-w-0">
+                  <span className="flex items-center justify-center w-8 h-8 rounded-full bg-warning-100 flex-shrink-0">
+                    <Flag size={16} className="text-warning-700" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[11px] uppercase tracking-wide font-semibold text-warning-600 leading-tight">Objectif de ta prépa</span>
+                    <span className="block text-sm font-bold text-warning-700 truncate">{nextObjective.name}</span>
+                  </span>
+                </span>
+                <span className="flex flex-col items-end flex-shrink-0">
+                  <span className="text-sm font-bold text-warning-700 capitalize">{format(nextObjective.date, 'EEE d MMM', { locale: fr })}</span>
+                  <span className="text-[11px] font-semibold text-warning-600">
+                    {nextObjective.daysUntil > 0 ? `J-${nextObjective.daysUntil}` : nextObjective.daysUntil === 0 ? 'Jour J' : `J+${-nextObjective.daysUntil}`}
+                  </span>
+                </span>
+              </button>
+            )}
+            <div className="flex items-center justify-between gap-3 px-3 py-2 bg-warning-50 border border-warning-100 rounded-lg text-xs">
+              <div className="flex items-center gap-2 text-warning-700">
+                <Target size={14} />
+                <span>
+                  <span className="font-semibold">Prépa spécifique active.</span>{' '}
+                  <span>Tu vois uniquement tes séances de prépa.</span>
+                </span>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
+                <input
+                  type="checkbox"
+                  checked={showGroupBesidesPrep}
+                  onChange={e => setShowGroupBesidesPrep(e.target.checked)}
+                  className="w-4 h-4"
+                  style={{ accentColor: 'var(--color-warning)' }}
+                />
+                <span className="text-warning-700 font-medium">Voir aussi le groupe</span>
+              </label>
             </div>
-            <label className="flex items-center gap-2 cursor-pointer flex-shrink-0">
-              <input
-                type="checkbox"
-                checked={showGroupBesidesPrep}
-                onChange={e => setShowGroupBesidesPrep(e.target.checked)}
-                className="w-4 h-4"
-                style={{ accentColor: 'var(--color-warning)' }}
-              />
-              <span className="text-warning-700 font-medium">Voir aussi le groupe</span>
-            </label>
           </div>
         )}
 
-        {filteredSessions.length === 0 ? (
+        {weekRenderItems.length === 0 ? (
           <EmptyState
             icon={<Calendar size={28} />}
             title="Rien de prévu cette semaine"
@@ -609,7 +687,37 @@ export default function Home() {
           />
         ) : (
           <div className="space-y-3">
-            {filteredSessions.map(session => {
+            {weekRenderItems.map(item => {
+              if (item.kind === 'objective') {
+                const obj = item.obj;
+                return (
+                  <div
+                    key={`obj-${obj.id}`}
+                    className="rounded-xl border-2 border-dashed border-warning-500 bg-warning-50 p-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-9 h-9 rounded-full bg-warning-100 flex-shrink-0">
+                        <Flag size={18} className="text-warning-700" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold uppercase tracking-wide text-warning-700">
+                            {obj.daysUntil === 0 ? 'Jour J' : 'Objectif'}
+                          </span>
+                          <span className="text-xs font-medium text-warning-600 capitalize">
+                            {format(obj.date, 'EEEE d MMM', { locale: fr })}
+                          </span>
+                        </div>
+                        <p className="font-bold text-gray-900 truncate">{obj.name}</p>
+                      </div>
+                      {obj.daysUntil > 0 && (
+                        <span className="flex-shrink-0 text-sm font-bold text-warning-700">J-{obj.daysUntil}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              const session = item.session;
               const sessionDate = new Date(session.date);
               const sessionPast = isPast(sessionDate);
               const validation = getValidation(session.id);
