@@ -28,33 +28,19 @@ export default function TrainingHistory() {
 
   const targetUserId = searchParams.get('user');
   const targetUser = targetUserId ? users.find((u) => u.id === targetUserId) : user;
-
-  if (!targetUser) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-gray-500">Utilisateur introuvable</p>
-        <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium">Retour</button>
-      </div>
-    );
-  }
-
   const isOwnProfile = !targetUserId || targetUserId === user?.id;
 
-  if (!isOwnProfile && user?.role !== 'coach') {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-gray-500">Accès non autorisé</p>
-        <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium">Retour</button>
-      </div>
-    );
-  }
-
+  // IMPORTANT : tous les hooks sont appelés AVANT tout early return, avec des
+  // gardes sur targetUser (peut être undefined). Sinon le nombre de hooks
+  // varie entre deux renders -> crash React "rendered fewer hooks than
+  // expected" (la page Historique plantait dans ce cas).
   const userPrepIds = useMemo(
-    () => userPreparations.filter((up) => up.user_id === targetUser.id).map((up) => up.preparation_id),
-    [userPreparations, targetUser.id]
+    () => (targetUser ? userPreparations.filter((up) => up.user_id === targetUser.id).map((up) => up.preparation_id) : []),
+    [userPreparations, targetUser]
   );
 
   const allSessions = useMemo(() => {
+    if (!targetUser) return [];
     // Règle de priorité prépa active (fix Amandine) + séances globales toujours
     // visibles, via la lib centralisée athleteSessions.
     return filterSessionsForAthlete(targetUser, sessions, userPrepIds)
@@ -63,7 +49,7 @@ export default function TrainingHistory() {
   }, [sessions, targetUser, userPrepIds]);
 
   const getValidation = (sessionId: string) =>
-    validations.find((v) => v.session_id === sessionId && v.user_id === targetUser.id);
+    validations.find((v) => v.session_id === sessionId && v.user_id === targetUser?.id);
 
   // Counts par filtre (pour afficher dans les pills)
   const counts = useMemo(() => {
@@ -77,7 +63,7 @@ export default function TrainingHistory() {
       if (v?.status === 'missed') missed++;
     });
     return { all: allSessions.length, done, missed, personal };
-  }, [allSessions, validations, targetUser.id]);
+  }, [allSessions, validations, targetUser?.id]);
 
   const filteredSessions = useMemo(() => {
     return allSessions.filter((s) => {
@@ -86,7 +72,7 @@ export default function TrainingHistory() {
       const v = getValidation(s.id);
       return v?.status === filter;
     });
-  }, [allSessions, filter, validations, targetUser.id]);
+  }, [allSessions, filter, validations, targetUser?.id]);
 
   // Groupement par mois
   const groupedByMonth = useMemo(() => {
@@ -103,7 +89,26 @@ export default function TrainingHistory() {
       if (v?.status === 'done') group.doneCount++;
     });
     return Array.from(map.entries()).map(([key, val]) => ({ key, ...val }));
-  }, [filteredSessions, validations, targetUser.id]);
+  }, [filteredSessions, validations, targetUser?.id]);
+
+  // Early returns APRÈS tous les hooks (cf. note plus haut sur l'ordre des hooks).
+  if (!targetUser) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-gray-500">Utilisateur introuvable</p>
+        <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium">Retour</button>
+      </div>
+    );
+  }
+
+  if (!isOwnProfile && user?.role !== 'coach') {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-gray-500">Accès non autorisé</p>
+        <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium">Retour</button>
+      </div>
+    );
+  }
 
   return (
     <div className="py-4">
