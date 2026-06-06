@@ -28,9 +28,12 @@ const SENSATION_META: Record<Sensations, { label: string; tone: BadgeTone }> = {
   mauvaises: { label: 'Sensations difficiles', tone: 'danger' },
 };
 
+// Set fermé de réactions positives (garde-fou : pas de pouce bas).
+const REACTIONS = ['👏', '🔥', '💪', '🎯'];
+
 export default function Dashboard() {
   const { user } = useAuth();
-  const { sessions, validations, users } = useData();
+  const { sessions, validations, users, validationReactions, toggleValidationReaction } = useData();
 
   const members = useMemo(() => users.filter(u => u.email !== SUPER_ADMIN_EMAIL && u.role !== 'coach'), [users]);
 
@@ -197,6 +200,30 @@ export default function Dashboard() {
                       {item.attachment_type?.startsWith('image/') ? <Paperclip size={12} aria-hidden="true" /> : <FileText size={12} aria-hidden="true" />}
                       {item.attachment_type?.startsWith('image/') ? 'Photo jointe' : 'PDF joint'}
                     </a>
+                  )}
+                  {user && (
+                    <div className="flex items-center gap-1.5 mt-2">
+                      {REACTIONS.map(emoji => {
+                        const count = validationReactions.filter(r => r.validation_id === item.id && r.emoji === emoji).length;
+                        const mine = validationReactions.some(r => r.validation_id === item.id && r.emoji === emoji && r.author_id === user.id);
+                        return (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => toggleValidationReaction(item.id, emoji, user.id)}
+                            aria-pressed={mine}
+                            aria-label={`Réagir ${emoji}`}
+                            className={[
+                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm border transition-colors',
+                              mine ? 'bg-accent/15 border-accent' : 'bg-neutral-50 border-neutral-200 hover:bg-neutral-100',
+                            ].join(' ')}
+                          >
+                            <span aria-hidden="true">{emoji}</span>
+                            {count > 0 && <span className="text-xs font-medium text-neutral-600">{count}</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               ))}
