@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { format, isThisWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { TrendingUp, Users, MessageSquare, CheckCircle, AlertTriangle, ChevronRight, Settings, Paperclip, FileText } from 'lucide-react';
+import { TrendingUp, Users, MessageSquare, CheckCircle, AlertTriangle, ChevronRight, Settings, Paperclip, FileText, Star } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
@@ -33,7 +33,7 @@ const REACTIONS = ['👏', '🔥', '💪', '🎯'];
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { sessions, validations, users, validationReactions, toggleValidationReaction } = useData();
+  const { sessions, validations, users, validationReactions, toggleValidationReaction, clubSettings, setFeaturedValidation } = useData();
 
   const members = useMemo(() => users.filter(u => u.email !== SUPER_ADMIN_EMAIL && u.role !== 'coach'), [users]);
 
@@ -223,6 +223,24 @@ export default function Dashboard() {
                           </button>
                         );
                       })}
+                      {(() => {
+                        const isFeatured = clubSettings?.featured_validation_id === item.id;
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => setFeaturedValidation(isFeatured ? null : item.id)}
+                            aria-pressed={isFeatured}
+                            title="Coup de coeur de la semaine"
+                            className={[
+                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ml-auto',
+                              isFeatured ? 'bg-warning-100 border-warning-500 text-warning-700' : 'bg-neutral-50 border-neutral-200 text-neutral-500 hover:bg-neutral-100',
+                            ].join(' ')}
+                          >
+                            <Star size={13} fill={isFeatured ? 'currentColor' : 'none'} aria-hidden="true" />
+                            Coup de coeur
+                          </button>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>

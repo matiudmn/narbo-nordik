@@ -52,6 +52,7 @@ interface DataContextType {
   removeUserFromPreparation: (userId: string, preparationId: string) => Promise<void>;
   clubSettings: ClubSettings | null;
   updateClubSettings: (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>) => Promise<void>;
+  setFeaturedValidation: (validationId: string | null) => Promise<void>;
   refreshAll: () => Promise<void>;
 }
 
@@ -635,13 +636,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [clubSettings, authUser?.id]);
 
+  const setFeaturedValidation = useCallback(async (validationId: string | null) => {
+    const featured_at = validationId ? new Date().toISOString() : null;
+    if (clubSettings) {
+      const { error } = await supabase.from('club_settings')
+        .update({ featured_validation_id: validationId, featured_at })
+        .eq('id', clubSettings.id);
+      if (!error) {
+        setClubSettings(prev => prev ? { ...prev, featured_validation_id: validationId, featured_at } : prev);
+      }
+    } else {
+      const { data, error } = await supabase.from('club_settings')
+        .insert({ featured_validation_id: validationId, featured_at, updated_by: authUser?.id })
+        .select().single();
+      if (!error && data) setClubSettings(data as ClubSettings);
+    }
+  }, [clubSettings, authUser?.id]);
+
   return (
     <DataContext.Provider value={{
       sessions, validations, raceResults, raceNordiks, sessionNordiks, validationReactions, groups, users, preparations, userPreparations, clubSettings, loading,
       addSession, addSessionsBulk, updateSession, deleteSession, validateSession, updateValidation,
       addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, toggleValidationReaction, updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto,
       addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
-      addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, refreshAll,
+      addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, setFeaturedValidation, refreshAll,
     }}>
       {children}
     </DataContext.Provider>
