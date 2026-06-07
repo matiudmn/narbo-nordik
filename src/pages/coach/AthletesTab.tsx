@@ -25,11 +25,7 @@ export default function AthletesTab() {
   // remount du composant pendant la transition de route) ; le param reste tant
   // que l'éditeur n'est pas ferme.
   const [editingVma, setEditingVma] = useState<string | null>(() => searchParams.get('edit'));
-  const [vmaValue, setVmaValue] = useState<string>(() => {
-    const id = searchParams.get('edit');
-    const t = id ? users.find(u => u.id === id) : null;
-    return t?.vma ? String(t.vma) : '';
-  });
+  const [vmaValue, setVmaValue] = useState('');
   const [vmaReason, setVmaReason] = useState('');
   const [editingLicense, setEditingLicense] = useState<string | null>(null);
   const [licenseValue, setLicenseValue] = useState('');
@@ -64,19 +60,23 @@ export default function AthletesTab() {
       );
   }, [users, debouncedSearch, isSuperAdmin]);
 
-  // Deep-link "Changer la VMA" : on scrolle vers la carte ciblee une fois
-  // qu'elle est rendue. L'ouverture de l'éditeur est geree a l'init du state
-  // (au-dessus), pas ici, pour survivre a un eventuel remount de la route.
-  const deepLinkScrolled = useRef(false);
+  // Deep-link "Changer la VMA" : l'ouverture de l'éditeur est geree a l'init du
+  // state (editingVma, au-dessus) pour survivre a un remount de route. Ici, une
+  // fois les donnees chargees ET la carte rendue, on pre-remplit la VMA actuelle
+  // et on scrolle vers la carte. Un seul passage (garde par ref), ce qui evite
+  // d'ecraser une saisie en cours.
+  const deepLinkHandled = useRef(false);
   useEffect(() => {
     const editId = searchParams.get('edit');
-    if (!editId || deepLinkScrolled.current) return;
-    if (!cardRefs.current[editId]) return;
-    deepLinkScrolled.current = true;
+    if (!editId || deepLinkHandled.current) return;
+    const target = users.find(u => u.id === editId);
+    if (!target || !cardRefs.current[editId]) return;
+    deepLinkHandled.current = true;
+    if (target.vma) setVmaValue(String(target.vma));
     requestAnimationFrame(() => {
       cardRefs.current[editId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
-  }, [searchParams, athletes]);
+  }, [searchParams, users, athletes]);
 
   // Ferme l'éditeur de VMA et retire le param deep-link s'il est present.
   const closeVmaEditor = () => {
