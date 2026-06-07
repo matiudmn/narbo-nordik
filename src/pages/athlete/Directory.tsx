@@ -10,6 +10,7 @@ import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
 import { getRacePaces, calculateRacePace, getVmaLevelIndex } from '../../lib/calculations';
 import { filterSessionsForAthlete } from '../../lib/athleteSessions';
+import { matchTokens } from '../../lib/search';
 import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
 import { getSeasonRange } from '../../lib/date-utils';
@@ -294,10 +295,7 @@ export default function Directory() {
   const sorted = useMemo(() => {
     let list = visibleUsers;
     if (debouncedSearch) {
-      const q = debouncedSearch.toLowerCase();
-      list = list.filter(u =>
-        u.firstname.toLowerCase().includes(q) || u.lastname.toLowerCase().includes(q)
-      );
+      list = list.filter(u => matchTokens(`${u.firstname} ${u.lastname}`, debouncedSearch));
     }
     return [...list].sort((a, b) => a.firstname.localeCompare(b.firstname, 'fr'));
   }, [visibleUsers, debouncedSearch]);

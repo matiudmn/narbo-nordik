@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Shield, X, Bell, MessageCircle, HelpCircle } from 'lucide-react';
+import { LogOut, Shield, X, Bell, MessageCircle, HelpCircle, Search } from 'lucide-react';
 import Avatar from './Avatar';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
+import { useGlobalSearch } from '../contexts/GlobalSearchContext';
 
 export default function Header() {
   const { user, effectiveUser, isSuperAdmin, isImpersonating, impersonate, logout } = useAuth();
   const { unreadCount } = useInAppNotifications();
+  const { open: openSearch } = useGlobalSearch();
   const navigate = useNavigate();
 
   const handleStopImpersonating = () => {
@@ -45,6 +47,13 @@ export default function Header() {
                 <Shield size={14} />
               </div>
             )}
+            <button
+              onClick={openSearch}
+              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+              aria-label="Rechercher"
+            >
+              <Search size={18} />
+            </button>
             <a
               href="https://chat.whatsapp.com/JwBh6hcJ7o00aBqonTAtD8?mode=hqctcli"
               target="_blank"
