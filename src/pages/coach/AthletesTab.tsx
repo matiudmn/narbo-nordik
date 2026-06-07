@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Trash2, Check, X, Search, Share2, Copy, Eye, UserPlus } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -8,12 +8,15 @@ import Avatar from '../../components/Avatar';
 import { Button } from '../../components/ui';
 import type { Role } from '../../types';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
+import { matchTokens } from '../../lib/search';
 import { filterSessionsForAthlete, getUserPrepIds } from '../../lib/athleteSessions';
 
 export default function AthletesTab() {
   const { users, groups, validations, sessions, preparations, userPreparations, updateUserVma, updateUserLicense, updateUserGroup, addUser, deleteUser } = useData();
   const { isSuperAdmin, impersonate } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 250);
   const [showAdd, setShowAdd] = useState(false);
@@ -38,18 +41,40 @@ export default function AthletesTab() {
     return users.filter(u => u.role === 'athlete' && !u.group_id && !u.vma);
   }, [users]);
 
+  // Tri alphabétique (demande coach David : retrouver vite un athlète pour
+  // changer une VMA) + recherche insensible aux accents (matchTokens).
   const athletes = useMemo(() => {
     return users
       .filter(u => {
         if (isSuperAdmin) return u.email !== SUPER_ADMIN_EMAIL;
         return u.role === 'athlete';
       })
-      .filter(u => {
-        if (!debouncedSearch) return true;
-        const q = debouncedSearch.toLowerCase();
-        return u.firstname.toLowerCase().includes(q) || u.lastname.toLowerCase().includes(q);
-      });
+      .filter(u => !debouncedSearch || matchTokens(`${u.firstname} ${u.lastname}`, debouncedSearch))
+      .sort((a, b) =>
+        a.firstname.localeCompare(b.firstname, 'fr', { sensitivity: 'base' }) ||
+        a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' })
+      );
   }, [users, debouncedSearch, isSuperAdmin]);
+
+  // Deep-link "Changer la VMA" depuis la recherche universelle :
+  // ?edit=<id> pré-ouvre l'éditeur de VMA et scrolle vers la carte.
+  useEffect(() => {
+    const editId = searchParams.get('edit');
+    if (!editId) return;
+    const target = users.find(u => u.id === editId);
+    if (!target) return;
+    setEditingVma(editId);
+    setVmaValue(target.vma ? String(target.vma) : '');
+    setVmaReason('');
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.delete('edit');
+      return next;
+    }, { replace: true });
+    requestAnimationFrame(() => {
+      cardRefs.current[editId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, [searchParams, users, setSearchParams]);
 
   const getAttendanceRate = (userId: string) => {
     const member = users.find(u => u.id === userId);
@@ -281,7 +306,11 @@ export default function AthletesTab() {
           const group = groups.find(g => g.id === athlete.group_id);
           const rate = getAttendanceRate(athlete.id);
           return (
-            <div key={athlete.id} className="bg-white rounded-xl border border-gray-100 p-4">
+            <div
+              key={athlete.id}
+              ref={el => { cardRefs.current[athlete.id] = el; }}
+              className="bg-white rounded-xl border border-gray-100 p-4"
+            >
               <div className="flex items-center gap-3">
                 <Avatar user={athlete} size="md" />
                 <div className="flex-1 min-w-0">

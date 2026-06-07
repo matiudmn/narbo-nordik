@@ -1,12 +1,14 @@
 import { NavLink } from 'react-router-dom';
-import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3, ClipboardCheck, Bell, MessageCircle, HelpCircle, LogOut, Upload, Target, Settings } from 'lucide-react';
+import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3, ClipboardCheck, Bell, MessageCircle, HelpCircle, LogOut, Upload, Target, Settings, Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
+import { useGlobalSearch } from '../contexts/GlobalSearchContext';
 import Avatar from './Avatar';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const { unreadCount } = useInAppNotifications();
+  const { open: openSearch } = useGlobalSearch();
   const isCoach = user?.role === 'coach';
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -49,8 +51,21 @@ export default function Sidebar() {
         </div>
       </div>
 
+      {/* Recherche universelle */}
+      <div className="px-3 pt-4">
+        <button
+          onClick={openSearch}
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-gray-500 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+          aria-label="Rechercher"
+        >
+          <Search size={16} className="flex-shrink-0" />
+          <span className="flex-1 text-left">Rechercher...</span>
+          <kbd className="flex-shrink-0 text-[10px] font-sans font-medium text-gray-400 bg-white border border-gray-200 rounded px-1.5 py-0.5">⌘K</kbd>
+        </button>
+      </div>
+
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
         {links.map(link => (
           <NavLink key={link.to} to={link.to} end={link.end} className={linkClass}>
             <link.icon size={18} />
