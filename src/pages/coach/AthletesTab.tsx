@@ -20,8 +20,16 @@ export default function AthletesTab() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 250);
   const [showAdd, setShowAdd] = useState(false);
-  const [editingVma, setEditingVma] = useState<string | null>(null);
-  const [vmaValue, setVmaValue] = useState('');
+  // L'éditeur de VMA peut être pré-ouvert par un deep-link (?edit=<id>) venant
+  // de la recherche universelle. On lit le param a l'init du state (robuste a un
+  // remount du composant pendant la transition de route) ; le param reste tant
+  // que l'éditeur n'est pas ferme.
+  const [editingVma, setEditingVma] = useState<string | null>(() => searchParams.get('edit'));
+  const [vmaValue, setVmaValue] = useState<string>(() => {
+    const id = searchParams.get('edit');
+    const t = id ? users.find(u => u.id === id) : null;
+    return t?.vma ? String(t.vma) : '';
+  });
   const [vmaReason, setVmaReason] = useState('');
   const [editingLicense, setEditingLicense] = useState<string | null>(null);
   const [licenseValue, setLicenseValue] = useState('');
@@ -56,25 +64,33 @@ export default function AthletesTab() {
       );
   }, [users, debouncedSearch, isSuperAdmin]);
 
-  // Deep-link "Changer la VMA" depuis la recherche universelle :
-  // ?edit=<id> pré-ouvre l'éditeur de VMA et scrolle vers la carte.
+  // Deep-link "Changer la VMA" : on scrolle vers la carte ciblee une fois
+  // qu'elle est rendue. L'ouverture de l'éditeur est geree a l'init du state
+  // (au-dessus), pas ici, pour survivre a un eventuel remount de la route.
+  const deepLinkScrolled = useRef(false);
   useEffect(() => {
     const editId = searchParams.get('edit');
-    if (!editId) return;
-    const target = users.find(u => u.id === editId);
-    if (!target) return;
-    setEditingVma(editId);
-    setVmaValue(target.vma ? String(target.vma) : '');
-    setVmaReason('');
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev);
-      next.delete('edit');
-      return next;
-    }, { replace: true });
+    if (!editId || deepLinkScrolled.current) return;
+    if (!cardRefs.current[editId]) return;
+    deepLinkScrolled.current = true;
     requestAnimationFrame(() => {
       cardRefs.current[editId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
-  }, [searchParams, users, setSearchParams]);
+  }, [searchParams, athletes]);
+
+  // Ferme l'éditeur de VMA et retire le param deep-link s'il est present.
+  const closeVmaEditor = () => {
+    setEditingVma(null);
+    setVmaValue('');
+    setVmaReason('');
+    if (searchParams.get('edit')) {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev);
+        next.delete('edit');
+        return next;
+      }, { replace: true });
+    }
+  };
 
   const getAttendanceRate = (userId: string) => {
     const member = users.find(u => u.id === userId);
@@ -91,9 +107,7 @@ export default function AthletesTab() {
     if (vmaValue && !isNaN(parseFloat(vmaValue))) {
       updateUserVma(userId, parseFloat(vmaValue), vmaReason.trim() || undefined);
     }
-    setEditingVma(null);
-    setVmaValue('');
-    setVmaReason('');
+    closeVmaEditor();
   };
 
   const handleLicenseEdit = (userId: string) => {
@@ -371,7 +385,7 @@ export default function AthletesTab() {
                         autoFocus
                       />
                       <button onClick={() => handleVmaEdit(athlete.id)} className="p-1 text-green-600 hover:text-green-700"><Check size={14} /></button>
-                      <button onClick={() => { setEditingVma(null); setVmaValue(''); setVmaReason(''); }} className="p-1 text-gray-400 hover:text-gray-600"><X size={14} /></button>
+                      <button onClick={closeVmaEditor} className="p-1 text-gray-400 hover:text-gray-600"><X size={14} /></button>
                     </div>
                   ) : (
                     <button
