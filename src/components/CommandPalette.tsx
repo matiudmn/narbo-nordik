@@ -29,6 +29,8 @@ const KIND_ICONS: Record<SearchKind, LucideIcon> = {
 
 const KIND_ORDER: SearchKind[] = ['athlete', 'session', 'validation', 'race', 'preparation', 'group', 'command'];
 
+const optId = (r: SearchResult) => `cmdk-opt-${r.kind}-${r.id}`;
+
 function group(results: SearchResult[]) {
   const sections: { kind: SearchKind; items: SearchResult[] }[] = [];
   const flat: SearchResult[] = [];
@@ -41,8 +43,9 @@ function group(results: SearchResult[]) {
   return { sections, flat };
 }
 
-function ResultRow({ result, selected, onActivate, onAction, onHover }: {
+function ResultRow({ result, optionId, selected, onActivate, onAction, onHover }: {
   result: SearchResult;
+  optionId: string;
   selected: boolean;
   onActivate: () => void;
   onAction: () => void;
@@ -55,7 +58,7 @@ function ResultRow({ result, selected, onActivate, onAction, onHover }: {
   const Icon = KIND_ICONS[result.kind];
 
   return (
-    <div ref={rowRef} className="flex items-stretch gap-1">
+    <div ref={rowRef} id={optionId} role="option" aria-selected={selected} className="flex items-stretch gap-1">
       <button
         type="button"
         onClick={onActivate}
@@ -96,13 +99,18 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const debounced = useDebounce(query, 180);
 
-  // Focus au montage + lock du scroll de la page.
+  // Focus au montage, restauration du focus au démontage, lock du scroll.
   useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     inputRef.current?.focus();
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+      previouslyFocused?.focus?.();
+    };
   }, []);
 
   // Toute frappe ramène en mode local (on abandonne un éventuel résultat IA).
@@ -144,6 +152,19 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
       e.preventDefault();
       if (flat[selectedIndex]) { activate(flat[selectedIndex]); return; }
       if (canAi && !aiMode) runAi(query);
+      return;
+    }
+    if (e.key === 'Tab' && panelRef.current) {
+      // Piège le focus dans la palette (dialog modal).
+      const focusables = panelRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
     }
   };
 
@@ -151,13 +172,15 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
   const showEmpty = !showInitial && displayed.length === 0 && ai.status !== 'loading';
 
   return (
-    <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="Recherche">
+    <motion.div
+      className="fixed inset-0 z-[80]"
+      role="dialog" aria-modal="true" aria-label="Recherche universelle"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+    >
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <motion.div
-        className="absolute inset-0 bg-black/50"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        onClick={onClose}
-      />
-      <motion.div
+        ref={panelRef}
         className="absolute inset-x-0 top-0 w-full bg-white shadow-xl flex flex-col max-h-[88vh] rounded-b-2xl lg:left-1/2 lg:-translate-x-1/2 lg:top-20 lg:max-w-xl lg:rounded-2xl lg:max-h-[72vh] pt-[env(safe-area-inset-top)]"
         initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
         transition={{ duration: 0.18 }}
@@ -173,13 +196,19 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
             onChange={e => setQuery(e.target.value)}
             placeholder="Rechercher un athlète, une séance, un palmarès..."
             aria-label="Rechercher"
+            maxLength={300}
+            role="combobox"
+            aria-expanded={flat.length > 0}
+            aria-controls="cmdk-listbox"
+            aria-activedescendant={flat[selectedIndex] ? optId(flat[selectedIndex]) : undefined}
+            aria-autocomplete="list"
             className="flex-1 py-4 text-sm bg-transparent focus:outline-none placeholder:text-gray-400"
           />
           <button
             type="button"
             onClick={onClose}
-            className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="Fermer"
+            className="flex-shrink-0 flex items-center justify-center w-11 h-11 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Fermer la recherche"
           >
             <X size={18} />
           </button>
@@ -199,7 +228,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
           </button>
         )}
         {ai.status === 'loading' && (
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 text-sm text-gray-500">
+          <div role="status" className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 text-sm text-gray-500">
             <Loader2 size={16} className="text-accent animate-spin flex-shrink-0" aria-hidden="true" />
             L'IA analyse ta demande...
           </div>
@@ -216,7 +245,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
           </div>
         )}
         {ai.status === 'error' && (
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 text-sm text-danger">
+          <div role="status" className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 text-sm text-danger">
             <span className="flex-1">Recherche IA indisponible.</span>
             <button type="button" onClick={clearAi} className="text-xs font-medium text-gray-500 hover:underline flex-shrink-0">
               Fermer
@@ -225,7 +254,10 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
         )}
 
         {/* Résultats */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-2">
+        <div id="cmdk-listbox" role="listbox" aria-label="Résultats" className="flex-1 overflow-y-auto overscroll-contain p-2">
+          <p className="sr-only" role="status" aria-live="polite">
+            {showInitial ? '' : ai.status === 'loading' ? 'Recherche IA en cours' : `${flat.length} résultat${flat.length > 1 ? 's' : ''}`}
+          </p>
           {showInitial && (
             <div className="px-3 py-8 text-center">
               <p className="text-sm text-gray-400">
@@ -246,8 +278,8 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
           )}
 
           {sections.map(section => (
-            <div key={section.kind} className="mb-1">
-              <p className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            <div key={section.kind} role="group" aria-label={KIND_LABELS[section.kind]} className="mb-1">
+              <p className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider" aria-hidden="true">
                 {KIND_LABELS[section.kind]}
               </p>
               {section.items.map(item => {
@@ -256,6 +288,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
                   <ResultRow
                     key={`${item.kind}:${item.id}`}
                     result={item}
+                    optionId={optId(item)}
                     selected={idx === selectedIndex}
                     onActivate={() => activate(item)}
                     onAction={() => doAction(item)}
@@ -274,6 +307,6 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
           <span>échap fermer</span>
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

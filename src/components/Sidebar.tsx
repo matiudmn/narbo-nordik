@@ -5,6 +5,10 @@ import { useInAppNotifications } from '../contexts/InAppNotificationContext';
 import { useGlobalSearch } from '../contexts/GlobalSearchContext';
 import Avatar from './Avatar';
 
+// Indice clavier adapté à la plateforme (Cmd sur Mac, Ctrl ailleurs).
+const SHORTCUT_HINT = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform)
+  ? '⌘K' : 'Ctrl K';
+
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const { unreadCount } = useInAppNotifications();
@@ -60,7 +64,7 @@ export default function Sidebar() {
         >
           <Search size={16} className="flex-shrink-0" />
           <span className="flex-1 text-left">Rechercher...</span>
-          <kbd className="flex-shrink-0 text-[10px] font-sans font-medium text-gray-400 bg-white border border-gray-200 rounded px-1.5 py-0.5">⌘K</kbd>
+          <kbd className="flex-shrink-0 text-[10px] font-sans font-medium text-gray-400 bg-white border border-gray-200 rounded px-1.5 py-0.5">{SHORTCUT_HINT}</kbd>
         </button>
       </div>
 

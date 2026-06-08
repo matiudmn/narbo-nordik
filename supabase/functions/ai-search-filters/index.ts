@@ -59,6 +59,10 @@ serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   if (!AI_API_KEY) return json({ error: 'IA non configurée (secret MISTRAL_API_KEY manquant).' }, 503);
 
+  // Garde de taille du corps, en amont du parse (défense en profondeur).
+  const contentLength = Number(req.headers.get('content-length') ?? 0);
+  if (contentLength > 2000) return json({ error: 'Corps trop volumineux.' }, 413);
+
   let query: unknown;
   let today: unknown;
   try {
