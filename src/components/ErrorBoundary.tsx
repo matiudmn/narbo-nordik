@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { isChunkLoadError, reloadForChunkError } from '../lib/chunkReload';
 
 interface Props {
   children: ReactNode;
@@ -7,6 +8,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  reloading: boolean;
 }
 
 /**
@@ -21,13 +23,22 @@ interface State {
  * getDerivedStateFromError / componentDidCatch.
  */
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false, error: null };
+  state: State = { hasError: false, error: null, reloading: false };
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { hasError: true, error, reloading: false };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    // Échec de chargement d'un chunk lazy : typiquement juste après un
+    // déploiement, quand le service worker référence encore d'anciens hash.
+    // On recharge une seule fois (garde anti-boucle dans reloadForChunkError)
+    // pour récupérer l'index.html à jour, au lieu d'afficher l'écran d'erreur.
+    // Filet de sécurité complémentaire au handler global 'vite:preloadError'.
+    if (isChunkLoadError(error) && reloadForChunkError()) {
+      this.setState({ reloading: true });
+      return;
+    }
     // Log local pour le debug. Un futur Sentry.captureException viendrait ici.
     console.error('ErrorBoundary a capturé une erreur :', error, info.componentStack);
   }
@@ -46,6 +57,19 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (!this.state.hasError) return this.props.children;
+
+    if (this.state.reloading) {
+      // Rechargement one-shot en cours (chunk obsolète après déploiement) :
+      // écran neutre transitoire, pas l'écran d'erreur.
+      return (
+        <div className="min-h-screen flex items-center justify-center px-6 bg-gray-50">
+          <div className="text-center">
+            <div className="text-4xl mb-3" aria-hidden="true">🔄</div>
+            <p className="text-sm text-gray-600">Mise à jour de l'application...</p>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="min-h-screen flex items-center justify-center px-6 bg-gray-50">
