@@ -294,6 +294,7 @@ export default function SessionEditor() {
   const [terrainOptions, setTerrainOptions] = useState<TerrainOption[]>([]);
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
+  const [sessionRpe, setSessionRpe] = useState('');
   const [blocks, setBlocks] = useState<SessionBlock[]>([]);
 
   const toast = useToast();
@@ -301,8 +302,8 @@ export default function SessionEditor() {
   // Autosave : ne s'applique qu'aux créations (pas aux éditions, pour ne pas
   // écraser une session existante par accident en cas de refresh).
   const draftSnapshot = useMemo(
-    () => ({ title, date, groupId, preparationId, sessionType, terrainOptions, location, description, blocks }),
-    [title, date, groupId, preparationId, sessionType, terrainOptions, location, description, blocks]
+    () => ({ title, date, groupId, preparationId, sessionType, terrainOptions, location, description, sessionRpe, blocks }),
+    [title, date, groupId, preparationId, sessionType, terrainOptions, location, description, sessionRpe, blocks]
   );
   const autosaveKey = editingSessionId ?? 'new';
   const { pendingDraft, dismissPendingDraft, clearDraft, savedAt } = useSessionAutosave(
@@ -330,7 +331,7 @@ export default function SessionEditor() {
   const resetForm = () => {
     setTitle(''); setDate(''); setGroupId(''); setLocation('');
     setSessionType('entrainement'); setTerrainOptions([]);
-    setDescription(''); setBlocks([]); setPreviewUserId(null);
+    setDescription(''); setSessionRpe(''); setBlocks([]); setPreviewUserId(null);
     setEditingSessionId(null);
     setPreparationId('');
   };
@@ -362,6 +363,7 @@ export default function SessionEditor() {
     setSessionType(draft.session_type);
     setTerrainOptions(draft.terrain_options);
     setDescription(draft.description ?? '');
+    setSessionRpe('');
     setBlocks(draft.blocks);
     setDate('');
     setGroupId('');
@@ -422,6 +424,7 @@ export default function SessionEditor() {
         preparation_id: preparationId || null,
         location: location || null,
         description: description || null,
+        session_rpe: sessionRpe ? parseInt(sessionRpe) : null,
         blocks,
       });
     } else {
@@ -435,6 +438,7 @@ export default function SessionEditor() {
         location: location || null,
         location_url: null,
         description: description || null,
+        session_rpe: sessionRpe ? parseInt(sessionRpe) : null,
         target_distance: null,
         vma_percent_min: null,
         vma_percent_max: null,
@@ -459,6 +463,7 @@ export default function SessionEditor() {
     setTerrainOptions(s.terrain_options || []);
     setLocation(s.location || '');
     setDescription(s.description || '');
+    setSessionRpe(s.session_rpe != null ? String(s.session_rpe) : '');
     setBlocks(s.blocks.map(b => ({ ...b, id: genBlockId() })));
     setPreviewUserId(null);
     if (isEdit) {
@@ -559,6 +564,7 @@ export default function SessionEditor() {
                 if (pendingDraft.terrainOptions) setTerrainOptions(pendingDraft.terrainOptions);
                 if (pendingDraft.location) setLocation(pendingDraft.location);
                 if (pendingDraft.description) setDescription(pendingDraft.description);
+                if (pendingDraft.sessionRpe) setSessionRpe(pendingDraft.sessionRpe);
                 if (pendingDraft.blocks) setBlocks(pendingDraft.blocks);
                 dismissPendingDraft();
                 setShowForm(true);
@@ -755,6 +761,22 @@ export default function SessionEditor() {
             value={description} onChange={e => setDescription(e.target.value)}
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
+
+          {/* RPE de seance (optionnel) : difficulte globale attendue, sensible au volume */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="session-rpe" className="text-sm text-gray-600 flex-1">
+              RPE de la séance <span className="text-gray-400">(optionnel, difficulté globale)</span>
+            </label>
+            <input
+              id="session-rpe"
+              type="number" min={1} max={10} inputMode="numeric"
+              value={sessionRpe}
+              onChange={e => { const v = e.target.value; setSessionRpe(v === '' ? '' : String(Math.min(10, Math.max(1, parseInt(v) || 1)))); }}
+              placeholder="-"
+              className="w-16 px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            <span className="text-xs text-gray-400">/10</span>
+          </div>
 
           <div className="space-y-2">
             <Button

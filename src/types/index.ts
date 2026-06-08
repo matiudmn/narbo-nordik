@@ -71,6 +71,9 @@ export interface Session {
   vma_percent_max: number | null;
   blocks: SessionBlock[];
   is_personal: boolean;
+  // RPE de seance (optionnel) : difficulte globale attendue, posee par le coach,
+  // sensible au volume. Distincte de l'effort de zone (PMA) et du RPE ressenti.
+  session_rpe?: number | null;
   created_by: string;
   created_at: string;
 }
