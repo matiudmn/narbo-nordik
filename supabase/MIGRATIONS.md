@@ -134,6 +134,52 @@ by-design), à arbitrer :
 > from pg_policies where schemaname in ('public','storage') order by 1,2;
 > ```
 
+## Confidentialité / RLS par persona — décisions 2026-06-08
+
+Nouvel audit : lecture ouverte (`SELECT USING (true)`) sur `users`, `sessions`,
+`session_validations`, `race_results`. Comme `DataContext.fetchAll` charge tout
+le club en mémoire avant de filtrer côté client (`lib/athleteSessions`,
+`lib/search.getScopedEntities`), tout membre authentifié peut lire l'intégralité
+de ces tables via un appel PostgREST direct. Le cloisonnement client est de
+l'UX, pas une frontière de sécurité.
+
+Périmètre arbitré. L'app est en **transparence club** (la plupart des pages de
+consultation, `/club`, `/palmares`, `/directory/:id`, `/session/:id`, sont
+partagées coach/athlète) :
+
+**Durci, fait.** Migration `20260608100000_sessions_personal_read_rls.sql` :
+lecture des **séances perso** (`sessions.is_personal = true`) limitée au créateur
+(`created_by = auth.uid()`) et aux coachs ; le programme club
+(`is_personal = false`) reste lisible par tous. Appliqué et vérifié en prod le
+2026-06-08 (simulation JWT : un athlète voit 0 séance perso d'autrui et tout le
+club ; un coach voit tout). 113 séances perso de 24 athlètes protégées, 173
+séances club inchangées. Aucun changement applicatif (le client filtrait déjà
+via `filterSessionsForAthlete`). Advisors sécurité : aucun nouvel avertissement.
+
+**Transparence club assumée, inchangé (voulu).**
+
+- `race_results` : palmarès public au club (page "Palmarès du club", ClubProfile,
+  fiches athlète). Pas de restriction en lecture.
+- `session_validations` : lecture club conservée. Le `status` alimente
+  l'assiduité affichée partout (Directory, ClubProfile, fiches) et le "Coup de
+  coeur". Le **contenu** (feedback, ressenti, métriques, pièce jointe) reste donc
+  techniquement lisible via API par tout membre.
+- `users` : nom, VMA, groupe, téléphone, date de naissance, historique VMA sont
+  club-visibles par design (Directory, fiches, contact WhatsApp).
+
+**Backlog confidentialité, non fait.**
+
+- *Palier 2, colonnes sensibles `users`* : `email`, `license_number`,
+  `notification_preferences`, `strava_id` sont chargés chez tout client
+  (`select('*')`) mais jamais montrés aux athlètes. Protection = niveau colonne
+  (vue ou table `user_private` en lecture soi+coach) + helper `public.is_coach()`
+  `SECURITY DEFINER` (sinon récursion RLS sur `users`). Impacte le client.
+- *Palier 3, contenu des validations* : déplacer feedback/ressenti/métriques/
+  pièce jointe dans une table restreinte (soi+coach), en gardant le `status`
+  lisible pour l'assiduité.
+- *`users.is_public`* : flag présent mais **appliqué nulle part** (ni UI ni DB) ;
+  à brancher si une vraie confidentialité de l'annuaire est souhaitée.
+
 ## Fait : infra emails / crons (régularisée sans secret)
 
 Portée dans `20260606120000_notifications_email_and_crons.sql` (modèle GUC de
