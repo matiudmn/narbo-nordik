@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { pacePerKm, isEffortZone, blockEffortLabel, DEFAULT_ALLURE_ZONES, calculateBlockPace } from './calculations';
+import type { SessionBlock, AllureZone } from '../types';
+
+const mkBlock = (allure: AllureZone, o: Partial<SessionBlock> = {}): SessionBlock => ({
+  id: 'b', type: 'travail', allure, duration_seconds: 0, distance_meters: 400,
+  repetitions: 8, rest_seconds: 0, rest_distance_meters: 400, ...o,
+});
 
 describe('pacePerKm', () => {
   it('retourne null si distance ou durée manquante ou nulle', () => {
@@ -39,11 +45,20 @@ describe('zone PMA (effort, sans allure)', () => {
     expect(isEffortZone('ef')).toBe(false);
   });
 
-  it('blockEffortLabel donne une cible FCmax/RPE pour PMA, null sinon', () => {
-    const label = blockEffortLabel('pma');
+  it('blockEffortLabel : defaut adouci (RPE 7-8, FCmax 90-95) pour PMA, null sinon', () => {
+    const label = blockEffortLabel(mkBlock('pma'));
     expect(label).toContain('FCmax');
-    expect(label).toContain('RPE');
-    expect(blockEffortLabel('vma')).toBeNull();
+    expect(label).toContain('RPE 7-8');
+    expect(label).toContain('90-95');
+    expect(label).not.toContain('10'); // jamais RPE 10 par defaut (retour David)
+    expect(blockEffortLabel(mkBlock('vma'))).toBeNull();
+  });
+
+  it('blockEffortLabel : la cible est surchargeable par bloc (RPE/FCmax)', () => {
+    const label = blockEffortLabel(mkBlock('pma', { rpe_min: 6, rpe_max: 6, fcmax_min: 85, fcmax_max: 90 }));
+    expect(label).toContain('RPE 6'); // min === max -> valeur unique
+    expect(label).not.toContain('RPE 6-6');
+    expect(label).toContain('85-90');
   });
 
   it('calculateBlockPace reste calculable pour PMA (usage interne, non affiché)', () => {

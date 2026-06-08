@@ -310,7 +310,7 @@ export default function SessionDetail() {
                       </p>
                       {isEffortZone(block.allure) ? (
                         <p className="text-xs mt-0.5" style={{ color: zone.color }}>
-                          {blockEffortLabel(block.allure)}
+                          {blockEffortLabel(block)}
                           <span className="text-gray-400 ml-1">(à l'effort, pas d'allure)</span>
                         </p>
                       ) : pace ? (

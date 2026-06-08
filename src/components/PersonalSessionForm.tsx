@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
-  calculateBlockPace, formatBlockSummary, estimateBlockEffortSeconds, formatSeconds, getAllureZones, isEffortZone, blockEffortLabel,
+  calculateBlockPace, formatBlockSummary, estimateBlockEffortSeconds, formatSeconds, getAllureZones, isEffortZone, blockEffortLabel, PMA_EFFORT,
 } from '../lib/calculations';
 import type { SessionBlock, AllureZone, BlockType, Session, ObjectiveReached, Sensations } from '../types';
 
@@ -141,6 +141,35 @@ const BlockCard = memo(function BlockCard({
         )}
       </div>
 
+      {isEffortZone(block.allure) && (
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-xs text-gray-500">RPE cible</label>
+            <div className="flex items-center gap-1">
+              <input type="number" min={1} max={10} value={block.rpe_min ?? PMA_EFFORT.rpeMin}
+                onChange={e => onUpdate({ ...block, rpe_min: Math.min(10, Math.max(1, parseInt(e.target.value) || PMA_EFFORT.rpeMin)) })}
+                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="RPE minimum" />
+              <span className="text-gray-300 text-xs">à</span>
+              <input type="number" min={1} max={10} value={block.rpe_max ?? PMA_EFFORT.rpeMax}
+                onChange={e => onUpdate({ ...block, rpe_max: Math.min(10, Math.max(1, parseInt(e.target.value) || PMA_EFFORT.rpeMax)) })}
+                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="RPE maximum" />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500">FCmax %</label>
+            <div className="flex items-center gap-1">
+              <input type="number" min={50} max={100} value={block.fcmax_min ?? PMA_EFFORT.fcMaxMin}
+                onChange={e => onUpdate({ ...block, fcmax_min: Math.min(100, Math.max(50, parseInt(e.target.value) || PMA_EFFORT.fcMaxMin)) })}
+                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="FCmax minimum" />
+              <span className="text-gray-300 text-xs">à</span>
+              <input type="number" min={50} max={100} value={block.fcmax_max ?? PMA_EFFORT.fcMaxMax}
+                onChange={e => onUpdate({ ...block, fcmax_max: Math.min(100, Math.max(50, parseInt(e.target.value) || PMA_EFFORT.fcMaxMax)) })}
+                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="FCmax maximum" />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between pt-1 border-t border-gray-50">
         <span className="text-xs text-gray-500">
           {formatBlockSummary(block, zones)}
@@ -148,7 +177,7 @@ const BlockCard = memo(function BlockCard({
         </span>
         {isEffortZone(block.allure) ? (
           <span className="text-xs font-medium" style={{ color: zone.color }}>
-            {blockEffortLabel(block.allure)}
+            {blockEffortLabel(block)}
           </span>
         ) : pace ? (
           <span className="text-xs font-medium" style={{ color: zone.color }}>
