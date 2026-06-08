@@ -252,6 +252,9 @@ export default function SessionDetail() {
             {!group && (
               <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">Tous les groupes</span>
             )}
+            {session.session_rpe != null && (
+              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">RPE séance {session.session_rpe}/10</span>
+            )}
           </div>
           <h1 className="text-xl font-bold">
             {session.title}
