@@ -18,6 +18,12 @@ export interface SessionBlock {
   repetitions: number;
   rest_seconds: number;
   rest_distance_meters: number | null;
+  // Cible d'effort, uniquement pour les zones a l'effort (PMA). Editable par le
+  // coach (varie selon la periode de saison). Absent -> valeurs par defaut.
+  rpe_min?: number | null;
+  rpe_max?: number | null;
+  fcmax_min?: number | null;
+  fcmax_max?: number | null;
 }
 
 export interface VmaEntry {

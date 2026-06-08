@@ -25,16 +25,32 @@ export const ALLURE_ZONES = DEFAULT_ALLURE_ZONES;
  * jamais de min/km ni de km/h (la vitesse ne veut rien dire en côte) : on montre
  * une cible d'effort (% FCmax + RPE). Cf. demande coach David (séance PMA côte).
  */
-export const PMA_EFFORT = { fcMaxMin: 95, fcMaxMax: 100, rpe: '9-10' } as const;
+// Defaut adouci (retour coach David) : RPE 7-8 (jamais 10), FCmax 90-95%,
+// coherent pour un fractionne dur en cote, non maximal. Surchargeable par bloc
+// via rpe_min/rpe_max/fcmax_min/fcmax_max (varie selon la periode de saison).
+export const PMA_EFFORT = { fcMaxMin: 90, fcMaxMax: 95, rpeMin: 7, rpeMax: 8 } as const;
 
 export function isEffortZone(zone: AllureZone): boolean {
   return zone === 'pma';
 }
 
-/** Cible d'effort lisible pour une zone effort (ex. PMA), sinon null. */
-export function blockEffortLabel(zone: AllureZone): string | null {
-  if (zone === 'pma') return `≈ ${PMA_EFFORT.fcMaxMin}-${PMA_EFFORT.fcMaxMax}% FCmax · RPE ${PMA_EFFORT.rpe}`;
-  return null;
+/** Cible d'effort resolue d'un bloc : valeurs du bloc si presentes, sinon defauts. */
+export function effortTarget(block: SessionBlock) {
+  return {
+    rpeMin: block.rpe_min ?? PMA_EFFORT.rpeMin,
+    rpeMax: block.rpe_max ?? PMA_EFFORT.rpeMax,
+    fcMin: block.fcmax_min ?? PMA_EFFORT.fcMaxMin,
+    fcMax: block.fcmax_max ?? PMA_EFFORT.fcMaxMax,
+  };
+}
+
+const rangeLabel = (min: number, max: number): string => (min === max ? `${min}` : `${min}-${max}`);
+
+/** Cible d'effort lisible d'un bloc a l'effort (ex. PMA), sinon null. */
+export function blockEffortLabel(block: SessionBlock): string | null {
+  if (!isEffortZone(block.allure)) return null;
+  const t = effortTarget(block);
+  return `≈ ${rangeLabel(t.fcMin, t.fcMax)}% FCmax · RPE ${rangeLabel(t.rpeMin, t.rpeMax)}`;
 }
 
 export function getAllureZones(overrides?: Record<string, AllureZoneConfig>): Record<AllureZone, AllureZoneConfig> {
