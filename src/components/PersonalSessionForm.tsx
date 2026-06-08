@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
-  calculateBlockPace, formatBlockSummary, estimateBlockEffortSeconds, formatSeconds, getAllureZones,
+  calculateBlockPace, formatBlockSummary, estimateBlockEffortSeconds, formatSeconds, getAllureZones, isEffortZone, blockEffortLabel,
 } from '../lib/calculations';
 import type { SessionBlock, AllureZone, BlockType, Session, ObjectiveReached, Sensations } from '../types';
 
@@ -87,7 +87,7 @@ const BlockCard = memo(function BlockCard({
           <label className="text-xs text-gray-500">Allure</label>
           <select value={block.allure} onChange={e => onUpdate({ ...block, allure: e.target.value as AllureZone })}
             className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
-            {Object.entries(ALLURE_ZONES).map(([k, v]) => <option key={k} value={k}>{v.label} ({Math.min(...v.pctMinByLevel)}-{Math.max(...v.pctMaxByLevel)}%)</option>)}
+            {Object.entries(ALLURE_ZONES).map(([k, v]) => <option key={k} value={k}>{isEffortZone(k as AllureZone) ? `${v.label} (côte · effort)` : `${v.label} (${Math.min(...v.pctMinByLevel)}-${Math.max(...v.pctMaxByLevel)}%)`}</option>)}
           </select>
         </div>
         <div>
@@ -146,11 +146,15 @@ const BlockCard = memo(function BlockCard({
           {formatBlockSummary(block, zones)}
           {estimatedTime && <span className="text-gray-400 ml-1">(~{estimatedTime}/rep)</span>}
         </span>
-        {pace && (
+        {isEffortZone(block.allure) ? (
+          <span className="text-xs font-medium" style={{ color: zone.color }}>
+            {blockEffortLabel(block.allure)}
+          </span>
+        ) : pace ? (
           <span className="text-xs font-medium" style={{ color: zone.color }}>
             {pace.paceMin} - {pace.paceMax} min/km
           </span>
-        )}
+        ) : null}
       </div>
     </div>
   );

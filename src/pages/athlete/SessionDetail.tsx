@@ -4,7 +4,7 @@ import { fr } from 'date-fns/locale';
 import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile, Heart, Activity, Sparkles } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
-import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode, getAllureZones, pacePerKm } from '../../lib/calculations';
+import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode, getAllureZones, pacePerKm, isEffortZone, blockEffortLabel } from '../../lib/calculations';
 import { useState, useRef } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
 import { useToast, Button } from '../../components/ui';
@@ -308,14 +308,19 @@ export default function SessionDetail() {
                         {formatBlockSummary(block, allureZones)}
                         <span className="text-gray-400 font-normal ml-2">({blockDur})</span>
                       </p>
-                      {pace && (
+                      {isEffortZone(block.allure) ? (
+                        <p className="text-xs mt-0.5" style={{ color: zone.color }}>
+                          {blockEffortLabel(block.allure)}
+                          <span className="text-gray-400 ml-1">(à l'effort, pas d'allure)</span>
+                        </p>
+                      ) : pace ? (
                         <p className="text-xs mt-0.5" style={{ color: zone.color }}>
                           {pace.paceMin} - {pace.paceMax} min/km
                           <span className="text-gray-400 ml-1">
                             ({pace.speedMin.toFixed(1)}-{pace.speedMax.toFixed(1)} km/h)
                           </span>
                         </p>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 );
