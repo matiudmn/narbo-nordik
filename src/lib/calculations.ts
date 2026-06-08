@@ -11,9 +11,31 @@ export const DEFAULT_ALLURE_ZONES: Record<AllureZone, AllureZoneConfig> = {
   as10: { label: 'AS10', pctMinByLevel: [85, 86, 86, 87, 88],    pctMaxByLevel: [91, 92, 92, 93, 94],    color: '#ef4444' },
   as5:  { label: 'AS5',  pctMinByLevel: [90, 91, 91, 92, 93],    pctMaxByLevel: [96, 97, 97, 98, 99],    color: '#f43f5e' },
   vma:  { label: 'VMA',  pctMinByLevel: [95, 95, 97, 100, 100],  pctMaxByLevel: [105, 107, 107, 110, 110], color: '#dc2626' },
+  // PMA : intensité VO2max calibrée a l'EFFORT (côte, terrain accidenté), pas a
+  // l'allure. La vitesse n'a pas de sens en montée, donc on n'affiche jamais de
+  // pace pour cette zone (cf. isEffortZone / blockEffortLabel). Les pourcentages
+  // ci-dessous ne servent qu'a estimer la durée d'une série (équivalent plat).
+  pma:  { label: 'PMA',  pctMinByLevel: [95, 95, 97, 100, 100],  pctMaxByLevel: [105, 107, 107, 110, 110], color: '#9f1239' },
 };
 
 export const ALLURE_ZONES = DEFAULT_ALLURE_ZONES;
+
+/**
+ * Zones calibrées a l'effort (et non a l'allure). Pour ces zones, on n'affiche
+ * jamais de min/km ni de km/h (la vitesse ne veut rien dire en côte) : on montre
+ * une cible d'effort (% FCmax + RPE). Cf. demande coach David (séance PMA côte).
+ */
+export const PMA_EFFORT = { fcMaxMin: 95, fcMaxMax: 100, rpe: '9-10' } as const;
+
+export function isEffortZone(zone: AllureZone): boolean {
+  return zone === 'pma';
+}
+
+/** Cible d'effort lisible pour une zone effort (ex. PMA), sinon null. */
+export function blockEffortLabel(zone: AllureZone): string | null {
+  if (zone === 'pma') return `≈ ${PMA_EFFORT.fcMaxMin}-${PMA_EFFORT.fcMaxMax}% FCmax · RPE ${PMA_EFFORT.rpe}`;
+  return null;
+}
 
 export function getAllureZones(overrides?: Record<string, AllureZoneConfig>): Record<AllureZone, AllureZoneConfig> {
   if (!overrides || Object.keys(overrides).length === 0) return DEFAULT_ALLURE_ZONES;

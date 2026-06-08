@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Save, RotateCcw } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
-import { DEFAULT_RACE_PACES, DEFAULT_ALLURE_ZONES, VMA_LEVELS } from '../../lib/calculations';
+import { DEFAULT_RACE_PACES, DEFAULT_ALLURE_ZONES, VMA_LEVELS, isEffortZone } from '../../lib/calculations';
 import { ZoneAccordion } from '../../components/coach/ZoneAccordion';
 import { Button, useToast } from '../../components/ui';
-import type { RacePaceConfig, AllureZoneConfig } from '../../types';
+import type { RacePaceConfig, AllureZoneConfig, AllureZone } from '../../types';
 
 export default function AlluresTab() {
   const { clubSettings, updateClubSettings } = useData();
@@ -153,7 +153,7 @@ export default function AlluresTab() {
           Fourchettes min-max de % VMA par niveau, utilisées dans les blocs de séances.
         </p>
         <div className="space-y-2">
-          {Object.entries(allureZones).map(([key, zone]) => (
+          {Object.entries(allureZones).filter(([key]) => !isEffortZone(key as AllureZone)).map(([key, zone]) => (
             <ZoneAccordion
               key={key}
               id={`zone-${key}`}

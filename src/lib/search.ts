@@ -138,6 +138,7 @@ const ALLURE_KEYWORDS: Record<string, string> = {
   as10: 'allure 10km',
   as5: 'allure 5km',
   vma: 'vma fractionne',
+  pma: 'pma puissance cote montee vo2max',
 };
 
 const fmtDate = (iso: string): string => {
