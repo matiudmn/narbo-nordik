@@ -14,23 +14,23 @@ function DurationInput({ value, onChange, label }: { value: number; onChange: (v
 
   return (
     <div>
-      {label && <label className="text-xs text-gray-500">{label}</label>}
+      {label && <label className="text-xs text-neutral-500">{label}</label>}
       <div className="flex items-center gap-1">
         <input type="number" inputMode="numeric" min={0} max={23} value={hh}
           onChange={e => rebuild(Math.max(0, Math.min(23, parseInt(e.target.value) || 0)), mm, ss)}
-          className="w-12 px-1 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="w-12 px-1 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
-        <span className="text-xs text-gray-400">h</span>
+        <span className="text-xs text-neutral-400">h</span>
         <input type="number" inputMode="numeric" min={0} max={59} value={mm}
           onChange={e => rebuild(hh, Math.max(0, Math.min(59, parseInt(e.target.value) || 0)), ss)}
-          className="w-12 px-1 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="w-12 px-1 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
-        <span className="text-xs text-gray-400">m</span>
+        <span className="text-xs text-neutral-400">m</span>
         <input type="number" inputMode="numeric" min={0} max={59} value={ss}
           onChange={e => rebuild(hh, mm, Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-          className="w-12 px-1 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="w-12 px-1 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
-        <span className="text-xs text-gray-400">s</span>
+        <span className="text-xs text-neutral-400">s</span>
       </div>
     </div>
   );
@@ -55,7 +55,7 @@ const BlockCard = memo(function BlockCard({
   const estimatedTime = isDistance && previewVma ? formatSeconds(estimateBlockEffortSeconds(block, previewVma, zones)) : null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 space-y-2">
+    <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-3 space-y-2">
       {/* Header row */}
       <div className="flex items-center gap-2">
         <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
@@ -71,14 +71,14 @@ const BlockCard = memo(function BlockCard({
         <div className="flex-1" />
         <div className="flex items-center gap-0.5">
           <button onClick={() => onMove(-1)} disabled={index === 0}
-            className="p-1 text-gray-300 hover:text-gray-600 disabled:opacity-20">
+            className="p-1 text-neutral-300 hover:text-neutral-600 disabled:opacity-20">
             <ChevronUp size={14} />
           </button>
           <button onClick={() => onMove(1)} disabled={index === total - 1}
-            className="p-1 text-gray-300 hover:text-gray-600 disabled:opacity-20">
+            className="p-1 text-neutral-300 hover:text-neutral-600 disabled:opacity-20">
             <ChevronDown size={14} />
           </button>
-          <button onClick={onDelete} className="p-1 text-gray-300 hover:text-red-500">
+          <button onClick={onDelete} className="p-1 text-neutral-300 hover:text-danger-500">
             <Trash2 size={14} />
           </button>
         </div>
@@ -87,11 +87,11 @@ const BlockCard = memo(function BlockCard({
       {/* Controls row */}
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-xs text-gray-500">Allure</label>
+          <label className="text-xs text-neutral-500">Allure</label>
           <select
             value={block.allure}
             onChange={e => onUpdate({ ...block, allure: e.target.value as AllureZone })}
-            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             {Object.entries(ALLURE_ZONES).map(([k, v]) => (
               <option key={k} value={k}>
@@ -104,7 +104,7 @@ const BlockCard = memo(function BlockCard({
         </div>
         <div>
           <div className="flex items-center justify-between mb-0.5">
-            <label className="text-xs text-gray-500">{isDistance ? 'Distance' : 'Duree'}</label>
+            <label className="text-xs text-neutral-500">{isDistance ? 'Distance' : 'Durée'}</label>
             <button
               type="button"
               onClick={() => {
@@ -117,7 +117,7 @@ const BlockCard = memo(function BlockCard({
               className="flex items-center gap-1 text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full hover:bg-primary/20 transition-colors"
             >
               {isDistance ? <Clock size={12} /> : <Ruler size={12} />}
-              {isDistance ? 'Duree' : 'Metres'}
+              {isDistance ? 'Durée' : 'Mètres'}
             </button>
           </div>
           {isDistance ? (
@@ -125,8 +125,8 @@ const BlockCard = memo(function BlockCard({
               type="number" inputMode="numeric" min={50} step={50}
               value={block.distance_meters || 400}
               onChange={e => onUpdate({ ...block, distance_meters: Math.max(50, parseInt(e.target.value) || 400) })}
-              className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="metres"
+              className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+              placeholder="mètres"
             />
           ) : (
             <DurationInput value={block.duration_seconds} onChange={v => onUpdate({ ...block, duration_seconds: v })} label="" />
@@ -136,17 +136,17 @@ const BlockCard = memo(function BlockCard({
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-xs text-gray-500">Repetitions</label>
+          <label className="text-xs text-neutral-500">Répétitions</label>
           <input
             type="number" min={1} max={50} value={block.repetitions}
             onChange={e => onUpdate({ ...block, repetitions: Math.max(1, parseInt(e.target.value) || 1) })}
-            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
         {block.repetitions > 1 && (
           <div>
             <div className="flex items-center justify-between mb-0.5">
-              <label className="text-xs text-gray-500">{isRestDistance ? 'Repos (m)' : 'Repos'}</label>
+              <label className="text-xs text-neutral-500">{isRestDistance ? 'Repos (m)' : 'Repos'}</label>
               <button
                 type="button"
                 onClick={() => {
@@ -156,10 +156,10 @@ const BlockCard = memo(function BlockCard({
                     onUpdate({ ...block, rest_distance_meters: 200, rest_seconds: 0 });
                   }
                 }}
-                className="flex items-center gap-1 text-xs text-orange-500 font-medium bg-orange-50 px-2 py-0.5 rounded-full hover:bg-orange-100 transition-colors"
+                className="flex items-center gap-1 text-xs text-warning-500 font-medium bg-warning-50 px-2 py-0.5 rounded-full hover:bg-warning-100 transition-colors"
               >
                 {isRestDistance ? <Clock size={10} /> : <Ruler size={10} />}
-                {isRestDistance ? 'Temps' : 'Metres'}
+                {isRestDistance ? 'Temps' : 'Mètres'}
               </button>
             </div>
             {isRestDistance ? (
@@ -167,8 +167,8 @@ const BlockCard = memo(function BlockCard({
                 type="number" inputMode="numeric" min={10} step={10}
                 value={block.rest_distance_meters || 200}
                 onChange={e => onUpdate({ ...block, rest_distance_meters: Math.max(10, parseInt(e.target.value) || 200) })}
-                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="metres"
+                className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="mètres"
               />
             ) : (
               <DurationInput value={block.rest_seconds} onChange={v => onUpdate({ ...block, rest_seconds: v })} label="" />
@@ -181,37 +181,37 @@ const BlockCard = memo(function BlockCard({
       {isEffortZone(block.allure) && (
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-xs text-gray-500">RPE cible</label>
+            <label className="text-xs text-neutral-500">RPE cible</label>
             <div className="flex items-center gap-1">
               <input type="number" min={1} max={10} value={block.rpe_min ?? PMA_EFFORT.rpeMin}
                 onChange={e => onUpdate({ ...block, rpe_min: Math.min(10, Math.max(1, parseInt(e.target.value) || PMA_EFFORT.rpeMin)) })}
-                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="RPE minimum" />
-              <span className="text-gray-300 text-xs">à</span>
+                className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="RPE minimum" />
+              <span className="text-neutral-300 text-xs">à</span>
               <input type="number" min={1} max={10} value={block.rpe_max ?? PMA_EFFORT.rpeMax}
                 onChange={e => onUpdate({ ...block, rpe_max: Math.min(10, Math.max(1, parseInt(e.target.value) || PMA_EFFORT.rpeMax)) })}
-                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="RPE maximum" />
+                className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="RPE maximum" />
             </div>
           </div>
           <div>
-            <label className="text-xs text-gray-500">FCmax %</label>
+            <label className="text-xs text-neutral-500">FCmax %</label>
             <div className="flex items-center gap-1">
               <input type="number" min={50} max={100} value={block.fcmax_min ?? PMA_EFFORT.fcMaxMin}
                 onChange={e => onUpdate({ ...block, fcmax_min: Math.min(100, Math.max(50, parseInt(e.target.value) || PMA_EFFORT.fcMaxMin)) })}
-                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="FCmax minimum" />
-              <span className="text-gray-300 text-xs">à</span>
+                className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="FCmax minimum" />
+              <span className="text-neutral-300 text-xs">à</span>
               <input type="number" min={50} max={100} value={block.fcmax_max ?? PMA_EFFORT.fcMaxMax}
                 onChange={e => onUpdate({ ...block, fcmax_max: Math.min(100, Math.max(50, parseInt(e.target.value) || PMA_EFFORT.fcMaxMax)) })}
-                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="FCmax maximum" />
+                className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="FCmax maximum" />
             </div>
           </div>
         </div>
       )}
 
       {/* Summary + preview */}
-      <div className="flex items-center justify-between pt-1 border-t border-gray-50">
-        <span className="text-xs text-gray-500">
+      <div className="flex items-center justify-between pt-1 border-t border-neutral-50">
+        <span className="text-xs text-neutral-500">
           {formatBlockSummary(block, zones)}
-          {estimatedTime && <span className="text-gray-400 ml-1">(~{estimatedTime}/rep)</span>}
+          {estimatedTime && <span className="text-neutral-400 ml-1">(~{estimatedTime}/rep)</span>}
         </span>
         {isEffortZone(block.allure) ? (
           <span className="text-xs font-medium" style={{ color: zone.color }}>
