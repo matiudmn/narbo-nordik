@@ -37,8 +37,10 @@ export default function PreparationsTab() {
     setConfirmDeleteId(null);
   };
 
+  // Référence temporelle figée au montage (granularité jour, render idempotent).
+  const [now] = useState(() => Date.now());
   const daysUntil = (dateStr: string) => {
-    const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    const diff = Math.ceil((new Date(dateStr).getTime() - now) / (1000 * 60 * 60 * 24));
     return diff;
   };
 

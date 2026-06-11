@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { format, startOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -48,8 +48,11 @@ export default function TrainingHistory() {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [sessions, targetUser, userPrepIds]);
 
-  const getValidation = (sessionId: string) =>
-    validations.find((v) => v.session_id === sessionId && v.user_id === targetUser?.id);
+  const targetId = targetUser?.id;
+  const getValidation = useCallback(
+    (sessionId: string) => validations.find((v) => v.session_id === sessionId && v.user_id === targetId),
+    [validations, targetId]
+  );
 
   // Counts par filtre (pour afficher dans les pills)
   const counts = useMemo(() => {
@@ -63,7 +66,7 @@ export default function TrainingHistory() {
       if (v?.status === 'missed') missed++;
     });
     return { all: allSessions.length, done, missed, personal };
-  }, [allSessions, validations, targetUser?.id]);
+  }, [allSessions, getValidation]);
 
   const filteredSessions = useMemo(() => {
     return allSessions.filter((s) => {
@@ -72,7 +75,7 @@ export default function TrainingHistory() {
       const v = getValidation(s.id);
       return v?.status === filter;
     });
-  }, [allSessions, filter, validations, targetUser?.id]);
+  }, [allSessions, filter, getValidation]);
 
   // Groupement par mois
   const groupedByMonth = useMemo(() => {
@@ -89,7 +92,7 @@ export default function TrainingHistory() {
       if (v?.status === 'done') group.doneCount++;
     });
     return Array.from(map.entries()).map(([key, val]) => ({ key, ...val }));
-  }, [filteredSessions, validations, targetUser?.id]);
+  }, [filteredSessions, getValidation]);
 
   // Early returns APRÈS tous les hooks (cf. note plus haut sur l'ordre des hooks).
   if (!targetUser) {

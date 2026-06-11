@@ -72,8 +72,8 @@ export default function AthletesTab() {
     const target = users.find(u => u.id === editId);
     if (!target || !cardRefs.current[editId]) return;
     deepLinkHandled.current = true;
-    if (target.vma) setVmaValue(String(target.vma));
     requestAnimationFrame(() => {
+      if (target.vma) setVmaValue(String(target.vma));
       cardRefs.current[editId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
   }, [searchParams, users, athletes]);

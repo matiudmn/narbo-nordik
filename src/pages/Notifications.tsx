@@ -67,10 +67,11 @@ export default function Notifications() {
 
   useEffect(() => {
     observerRef.current = new IntersectionObserver(handleIntersect, { threshold: 0.5 });
+    const timers = timersRef.current;
     return () => {
       observerRef.current?.disconnect();
-      timersRef.current.forEach(t => clearTimeout(t));
-      timersRef.current.clear();
+      timers.forEach(t => clearTimeout(t));
+      timers.clear();
     };
   }, [handleIntersect]);
 

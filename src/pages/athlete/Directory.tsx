@@ -62,7 +62,7 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
       month: calc(mStart, mEnd),
       season: calc(sStart, sEnd),
     };
-  }, [member.id, member.group_id, sessions, validations, userPrepIds]);
+  }, [member, sessions, validations, userPrepIds]);
 
   const lastRaces = useMemo(() => {
     return raceResults

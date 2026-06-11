@@ -95,17 +95,6 @@ export default function VmaHistory() {
     [sortedHistory]
   );
 
-  if (!targetUser) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-gray-500">Utilisateur introuvable</p>
-        <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium">Retour</button>
-      </div>
-    );
-  }
-
-  const isOwnProfile = !targetUserId || targetUserId === user?.id;
-
   // Insight : evolution vs début historique
   const insight = useMemo(() => {
     if (sortedHistory.length < 2) return null;
@@ -119,6 +108,17 @@ export default function VmaHistory() {
     );
     return { diff, pct: Number(pct), months };
   }, [sortedHistory]);
+
+  if (!targetUser) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-gray-500">Utilisateur introuvable</p>
+        <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium">Retour</button>
+      </div>
+    );
+  }
+
+  const isOwnProfile = !targetUserId || targetUserId === user?.id;
 
   return (
     <div className="py-4">

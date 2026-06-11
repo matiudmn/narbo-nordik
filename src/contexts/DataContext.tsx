@@ -134,6 +134,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (authUser) {
+      // Bootstrap des données à la connexion (toggle loading sync assumé).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       refreshAll();
     } else {
       setSessions([]);

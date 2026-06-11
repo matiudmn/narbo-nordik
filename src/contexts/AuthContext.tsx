@@ -118,9 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   }, []);
 
+  const userId = user?.id;
   const refreshUser = useCallback(async () => {
-    if (user?.id) await loadProfile(user.id);
-  }, [user?.id, loadProfile]);
+    if (userId) await loadProfile(userId);
+  }, [userId, loadProfile]);
 
   const impersonate = useCallback(async (userId: string | null) => {
     if (!userId) {

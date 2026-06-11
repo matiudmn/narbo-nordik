@@ -41,6 +41,8 @@ export function InAppNotificationProvider({ children }: { children: ReactNode })
 
   useEffect(() => {
     if (user) {
+      // Chargement initial des notifications (toggle loading sync assumé).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchNotifications();
     } else {
       setNotifications([]);
