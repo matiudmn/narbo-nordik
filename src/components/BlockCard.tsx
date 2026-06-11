@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { Trash2, ChevronUp, ChevronDown, Clock, Ruler } from 'lucide-react';
+import { Card } from './ui';
 import {
   ALLURE_ZONES, BLOCK_TYPES,
   calculateBlockPace, formatSeconds, estimateBlockEffortSeconds, formatBlockSummary, isEffortZone, blockEffortLabel, PMA_EFFORT,
@@ -55,7 +56,7 @@ const BlockCard = memo(function BlockCard({
   const estimatedTime = isDistance && previewVma ? formatSeconds(estimateBlockEffortSeconds(block, previewVma, zones)) : null;
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-100 shadow-sm p-3 space-y-2">
+    <Card padding="sm" className="shadow-sm space-y-2">
       {/* Header row */}
       <div className="flex items-center gap-2">
         <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
@@ -223,7 +224,7 @@ const BlockCard = memo(function BlockCard({
           </span>
         ) : null}
       </div>
-    </div>
+    </Card>
   );
 });
 
