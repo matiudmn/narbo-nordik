@@ -16,7 +16,7 @@ import {
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { useData } from '../contexts/DataContext';
 import { SUPER_ADMIN_EMAIL } from '../lib/constants';
-import { MetricTile } from '../components/ui';
+import { Card, MetricTile } from '../components/ui';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
@@ -312,9 +312,10 @@ export default function ClubProfile() {
           </h2>
           <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
             {palmares.slice(0, 5).map((race, idx) => (
-              <div
+              <Card
                 key={race.id}
-                className={`bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex items-center gap-3 ${
+                padding="sm"
+                className={`shadow-sm flex items-center gap-3 ${
                   idx === 0 ? 'ring-2 ring-amber-200' : ''
                 }`}
               >
@@ -350,7 +351,7 @@ export default function ClubProfile() {
                   </div>
                 </div>
                 <NordikButton raceId={race.id} />
-              </div>
+              </Card>
             ))}
           </div>
           {palmares.length > 5 && (
@@ -371,15 +372,15 @@ export default function ClubProfile() {
 
         <div className="lg:grid lg:grid-cols-2 lg:gap-4">
         {/* Group donut */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-3 lg:mb-0">
+        <Card className="shadow-sm mb-3 lg:mb-0">
           <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Repartition par Groupe</h3>
           <div className="h-[220px]">
             <Doughnut data={donutData} options={donutOptions} />
           </div>
-        </div>
+        </Card>
 
         {/* VMA Histogram */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-3 lg:mb-0">
+        <Card className="shadow-sm mb-3 lg:mb-0">
           <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Distribution VMA par Tranche</h3>
           <div className="h-[220px]">
             <Bar data={histogramData} options={histogramOptions} />
@@ -387,11 +388,11 @@ export default function ClubProfile() {
           <p className="text-xs text-gray-400 mt-2 text-center">
             Repartition des {stats.count} coureurs par tranche de 1 km/h
           </p>
-        </div>
+        </Card>
         </div>{/* end charts grid */}
 
         {/* Box plot */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <Card className="shadow-sm">
           <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Dispersion de la VMA</h3>
           <div className="px-2">
             {/* Scale */}
@@ -445,20 +446,20 @@ export default function ClubProfile() {
             Amplitude: {stats.min} - {stats.max} km/h.
             Allures a 100%&nbsp;: de {formatPace(stats.min)}/km a {formatPace(stats.max)}/km
           </p>
-        </div>
+        </Card>
       </section>
 
       {/* Bar chart - Individual VMA */}
       <section>
         <h2 className="text-base font-bold text-gray-900 mb-3">Profils VMA Individuels</h2>
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <Card className="shadow-sm">
           <div className="h-[300px]">
             <Bar data={barData} options={barOptions} />
           </div>
           <p className="text-xs text-gray-400 mt-3 text-center">
             Variable d'entree du moteur de calcul : VMA x Pourcentage cible
           </p>
-        </div>
+        </Card>
       </section>
     </div>
   );

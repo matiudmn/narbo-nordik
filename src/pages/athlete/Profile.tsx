@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Card } from '../../components/ui';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity } from 'lucide-react';
@@ -27,7 +28,7 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="bg-white rounded-xl border border-gray-100">
+    <Card padding="none">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between p-4"
@@ -43,7 +44,7 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
         </div>
       </button>
       {open && <div className="px-4 pb-4 -mt-1">{children}</div>}
-    </div>
+    </Card>
   );
 }
 
@@ -272,7 +273,7 @@ export default function Profile() {
   return (
     <div className="py-4 space-y-3">
       {/* Header card - always visible */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4">
+      <Card>
         <div className="flex items-center gap-4">
           <div className="relative">
             <button onClick={() => fileInputRef.current?.click()} className="group">
@@ -311,7 +312,7 @@ export default function Profile() {
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Tabs sticky — découpe en 4 sections */}
       <ProfileTabs current={tab} onChange={setTab} />

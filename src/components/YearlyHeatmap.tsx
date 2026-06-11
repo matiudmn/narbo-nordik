@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Card } from './ui';
 
 export interface HeatmapSession {
   date: string;
@@ -97,7 +98,7 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
   const handleCellLeave = useCallback(() => setTooltip(null), []);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4">
+    <Card>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-bold text-gray-900">Calendrier annuel</h3>
         <div className="flex items-center gap-2">
@@ -208,6 +209,6 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
           <span>Non faite</span>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

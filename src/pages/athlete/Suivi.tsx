@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Card } from '../../components/ui';
 import { format, startOfMonth, endOfMonth, addMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Check, Target, Smile, Dumbbell, Mountain, Battery, Bike, Footprints, Users, Trophy } from 'lucide-react';
@@ -171,7 +172,7 @@ export default function Suivi() {
 
       {/* Stats summary */}
       {stats.total > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4">
+        <Card className="mb-4">
           <div className="flex items-center gap-2 mb-3">
             <Check size={16} className="text-green-600" />
             <span className="font-semibold text-gray-900">
@@ -200,7 +201,7 @@ export default function Suivi() {
               </div>
             </div>
           )}
-        </div>
+        </Card>
       )}
 
       {/* Session list */}

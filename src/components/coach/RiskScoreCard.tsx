@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Phone, MessageCircle, ChevronRight } from 'lucide-react';
 import Avatar from '../Avatar';
+import { Card } from '../ui';
 import type { RiskScore } from '../../lib/risk';
 
 interface RiskScoreCardProps {
@@ -34,7 +35,7 @@ export function RiskScoreCard({ riskScore }: RiskScoreCardProps) {
   const cfg = bandConfig[band];
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-100 p-3 hover:border-neutral-200 transition-colors">
+    <Card padding="sm" className="hover:border-neutral-200 transition-colors">
       <div className="flex items-start gap-3">
         <Avatar user={athlete} size="md" />
         <div className="flex-1 min-w-0">
@@ -96,6 +97,6 @@ export function RiskScoreCard({ riskScore }: RiskScoreCardProps) {
           <ChevronRight size={16} aria-hidden="true" />
         </Link>
       </div>
-    </div>
+    </Card>
   );
 }

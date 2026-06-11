@@ -5,7 +5,7 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
-import { Button } from '../../components/ui';
+import { Button, Card } from '../../components/ui';
 import type { Role } from '../../types';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { matchTokens } from '../../lib/search';
@@ -192,7 +192,7 @@ export default function AthletesTab() {
 
       {/* Add form */}
       {showAdd && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
+        <Card className="space-y-3">
           <h2 className="font-bold text-gray-900 text-sm">Nouvel athlete</h2>
           <div className="grid grid-cols-2 gap-2">
             <input
@@ -235,7 +235,7 @@ export default function AthletesTab() {
           >
             {addingAthlete ? 'Création du compte…' : "Ajouter l'athlète"}
           </Button>
-        </div>
+        </Card>
       )}
 
       {/* Share panel */}

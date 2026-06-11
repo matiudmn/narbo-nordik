@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, UserMinus, UsersRound } from 'lucide-react';
+import { Card } from '../../components/ui';
 import { useData } from '../../contexts/DataContext';
 import Avatar from '../../components/Avatar';
 
@@ -38,7 +39,7 @@ export default function GroupsTab() {
   return (
     <div className="space-y-3">
       {/* Add group */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4">
+      <Card>
         <div className="flex gap-2">
           <input
             type="text"
@@ -57,7 +58,7 @@ export default function GroupsTab() {
             Ajouter
           </button>
         </div>
-      </div>
+      </Card>
 
       {/* Groups list */}
       {groups.map(group => {
@@ -67,7 +68,7 @@ export default function GroupsTab() {
         const isConfirmingDelete = confirmDeleteId === group.id;
 
         return (
-          <div key={group.id} className="bg-white rounded-xl border border-gray-100 p-4">
+          <Card key={group.id}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                 <UsersRound size={20} className="text-primary" />
@@ -168,12 +169,12 @@ export default function GroupsTab() {
                 </select>
               </div>
             )}
-          </div>
+          </Card>
         );
       })}
 
       {unassigned.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <Card>
           <h2 className="flex items-center gap-2 font-bold text-gray-900 mb-3">
             <UserMinus size={18} className="text-gray-400" />
             Sans groupe ({unassigned.length})
@@ -198,7 +199,7 @@ export default function GroupsTab() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

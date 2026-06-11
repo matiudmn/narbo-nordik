@@ -2,6 +2,7 @@ import { Clock, Repeat, Layers, Trash2 } from 'lucide-react';
 import type { SessionTemplate } from '../../types';
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '../../lib/sessionTemplates';
 import { calculateSessionTotalSeconds, formatSeconds } from '../../lib/calculations';
+import { Card } from '../ui';
 
 interface TemplateCardProps {
   template: SessionTemplate;
@@ -20,7 +21,7 @@ export function TemplateCard({ template, onUse, onDelete }: TemplateCardProps) {
   const blocksCount = template.blocks.length;
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-100 hover:border-neutral-200 hover:shadow-card-hover transition-all p-4">
+    <Card className="hover:border-neutral-200 hover:shadow-card-hover transition-all">
       <div className="flex items-start gap-3">
         <span
           className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0"
@@ -90,6 +91,6 @@ export function TemplateCard({ template, onUse, onDelete }: TemplateCardProps) {
           </button>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

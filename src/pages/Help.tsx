@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { HelpCircle, ChevronDown } from 'lucide-react';
+import { Card } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Section {
@@ -11,7 +12,7 @@ interface Section {
 
 function Accordion({ section, isOpen, onToggle }: { section: Section; isOpen: boolean; onToggle: () => void }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+    <Card padding="none" className="overflow-hidden">
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between p-4 text-left"
@@ -27,7 +28,7 @@ function Accordion({ section, isOpen, onToggle }: { section: Section; isOpen: bo
           {section.content}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 

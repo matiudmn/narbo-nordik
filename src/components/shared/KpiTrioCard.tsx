@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Card } from '../ui';
 
 export type KpiTone = 'primary' | 'accent' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
@@ -40,7 +41,7 @@ export function KpiTrioCard({ kpis, className = '' }: KpiTrioCardProps) {
       {kpis.map((kpi, i) => {
         const cfg = toneClasses[kpi.tone ?? 'neutral'];
         return (
-          <div key={i} className="bg-white rounded-xl border border-neutral-100 p-4 text-center shadow-card">
+          <Card key={i} className="text-center shadow-card">
             {kpi.icon && (
               <div className="flex justify-center mb-2">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${cfg.iconBg} ${cfg.iconText}`}>
@@ -59,7 +60,7 @@ export function KpiTrioCard({ kpis, className = '' }: KpiTrioCardProps) {
                 {kpi.delta.value}
               </p>
             )}
-          </div>
+          </Card>
         );
       })}
     </div>

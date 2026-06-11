@@ -4,7 +4,7 @@ import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isW
 import { fr } from 'date-fns/locale';
 import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Check, Flag, Star } from 'lucide-react';
 import { Calendar } from 'lucide-react';
-import { StatusBadge, EmptyState, Button, useToast, StreakFlame } from '../components/ui';
+import { StatusBadge, EmptyState, Button, useToast, StreakFlame, Card } from '../components/ui';
 import { QuickSurveySheet } from '../components/athlete/QuickSurveySheet';
 import { VmaRecordCelebration } from '../components/athlete/VmaRecordCelebration';
 import { useAuth } from '../contexts/AuthContext';
@@ -342,7 +342,7 @@ export default function Home() {
       <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
       {/* VMA + Evolution */}
       {user.vma && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <Card>
           <div className="bg-primary/5 rounded-lg p-3">
             <div className="flex items-center justify-between">
               <div>
@@ -401,11 +401,11 @@ export default function Home() {
             <Info size={12} />
             <span>{isCoach ? 'Modifiable depuis la fiche athlete' : 'Contacte ton coach pour modifier ta VMA'}</span>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Assiduite */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4">
+      <Card>
         <h2 className="flex items-center gap-2 font-bold text-gray-900 mb-3">
           <Target size={18} className="text-primary" />
           Assiduité
@@ -429,7 +429,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       </div>{/* end top grid */}
 

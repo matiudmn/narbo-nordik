@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence, DUR, EASE } from '../../lib/motion';
+import { Card } from '../ui';
 
 interface ZoneAccordionProps {
   /** Identifiant unique pour ARIA (ex: clé de zone) */
@@ -42,7 +43,7 @@ export function ZoneAccordion({
   const buttonId = `zone-${id}-button`;
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-100 overflow-hidden">
+    <Card padding="none" className="overflow-hidden">
       <button
         id={buttonId}
         type="button"
@@ -94,6 +95,6 @@ export function ZoneAccordion({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </Card>
   );
 }

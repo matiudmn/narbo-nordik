@@ -5,7 +5,7 @@ import { fr } from 'date-fns/locale';
 import { ArrowLeft, Trophy, Medal, Pencil, Plus, X, Star, Trash2 } from 'lucide-react';
 import NordikButton from '../components/NordikButton';
 import ExpandableText from '../components/ExpandableText';
-import { EmptyState } from '../components/ui';
+import { Card, EmptyState } from '../components/ui';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { SUPER_ADMIN_EMAIL } from '../lib/constants';
@@ -290,7 +290,7 @@ export default function Palmares() {
           {palmares.map((race, idx) => (
             <div key={race.id}>
               {editingId === race.id ? (
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3">
+                <Card padding="sm" className="shadow-sm">
                   <RaceForm
                     users={sortedUsers}
                     initial={{
@@ -317,11 +317,12 @@ export default function Palmares() {
                       setEditingId(null);
                     }}
                   />
-                </div>
+                </Card>
               ) : (
                 <>
-                  <div
-                    className={`bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex items-center gap-3 ${
+                  <Card
+                    padding="sm"
+                    className={`shadow-sm flex items-center gap-3 ${
                       idx === 0 ? 'ring-2 ring-amber-200' : ''
                     }`}
                   >
@@ -381,7 +382,7 @@ export default function Palmares() {
                         </button>
                       </>
                     )}
-                  </div>
+                  </Card>
                   {confirmDeleteId === race.id && (
                     <div className="bg-danger-50 border border-danger-100 rounded-lg p-3 mt-2">
                       <p className="text-sm text-danger-700 mb-2">Supprimer ce résultat de "{race.race_name}" ?</p>

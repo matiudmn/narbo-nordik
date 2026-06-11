@@ -15,7 +15,7 @@ import {
 import type { ChartOptions, TooltipItem } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { useAuth } from '../contexts/AuthContext';
-import { EmptyState, MetricTile } from '../components/ui';
+import { Card, EmptyState, MetricTile } from '../components/ui';
 import { useData } from '../contexts/DataContext';
 import { CHART_COLORS } from '../lib/chartTheme';
 
@@ -155,12 +155,12 @@ export default function VmaHistory() {
       )}
 
       {sortedHistory.length >= 2 && (
-        <div className="bg-white rounded-xl border border-neutral-100 p-4 mb-4 shadow-card">
+        <Card className="mb-4 shadow-card">
           <p className="label-micro text-neutral-400 mb-3">Évolution</p>
           <div className="h-48">
             <Line data={chartData} options={chartOptions} />
           </div>
-        </div>
+        </Card>
       )}
 
       {listHistory.length === 0 ? (
@@ -176,7 +176,7 @@ export default function VmaHistory() {
             const prevEntry = idx < listHistory.length - 1 ? listHistory[idx + 1] : null;
             const diff = prevEntry ? entry.vma - prevEntry.vma : null;
             return (
-              <div key={`${entry.date}-${entry.vma}`} className="bg-white rounded-xl border border-neutral-100 p-4 shadow-card">
+              <Card key={`${entry.date}-${entry.vma}`} className="shadow-card">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="text-xl font-bold text-primary tabular">{entry.vma}</span>
@@ -194,7 +194,7 @@ export default function VmaHistory() {
                   </span>
                 </div>
                 {entry.reason && <p className="text-sm text-neutral-600 mt-2 italic">{entry.reason}</p>}
-              </div>
+              </Card>
             );
           })}
         </div>

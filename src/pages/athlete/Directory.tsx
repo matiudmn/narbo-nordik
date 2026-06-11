@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, Phone, Shield, Cake, ChevronDown, Gauge, Target, Trophy, History, User as UserIcon } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { EmptyState } from '../../components/ui';
+import { Card, EmptyState } from '../../components/ui';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
@@ -209,7 +209,7 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
   const birthday = member.birth_date ? formatBirthDatePublic(member.birth_date) : null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+    <Card padding="none" className="overflow-hidden">
       <button className="w-full p-4 cursor-pointer text-left" onClick={onToggle} aria-expanded={isExpanded} aria-label={`${member.firstname} ${member.lastname}`}>
         <div className="flex items-center gap-3">
           <Avatar user={member} size="md" />
@@ -265,7 +265,7 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
         </div>
       </button>
       {isExpanded && <MemberStats member={member} />}
-    </div>
+    </Card>
   );
 }
 

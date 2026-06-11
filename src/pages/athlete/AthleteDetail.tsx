@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Phone, Shield, Cake, Gauge, Target, Trophy, History } from 'lucide-react';
+import { Card } from '../../components/ui';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useData } from '../../contexts/DataContext';
@@ -133,7 +134,7 @@ export default function AthleteDetail() {
       </div>
 
       {/* Profile card */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4">
+      <Card>
         <div className="flex items-center gap-3">
           <Avatar user={member} size="lg" />
           <div className="flex-1 min-w-0">
@@ -172,11 +173,11 @@ export default function AthleteDetail() {
             )}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* VMA + Allures */}
       {member.vma ? (
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <Card>
           <div className="flex items-center justify-between mb-2">
             <div>
               <p className="text-xs text-gray-400">VMA</p>
@@ -225,15 +226,15 @@ export default function AthleteDetail() {
               Historique entrainement
             </Link>
           )}
-        </div>
+        </Card>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
+        <Card className="text-center">
           <p className="text-xs text-gray-400">VMA non renseignee</p>
-        </div>
+        </Card>
       )}
 
       {/* Assiduite */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4">
+      <Card>
         <h3 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase mb-2">
           <Target size={14} className="text-primary" />
           Assiduité
@@ -256,14 +257,14 @@ export default function AthleteDetail() {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Heatmap */}
       {isCoach && <YearlyHeatmap sessions={heatmapSessions} />}
 
       {/* Palmares */}
       {memberRaces.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <Card>
           <div className="flex items-center justify-between mb-2">
             <h3 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase">
               <Trophy size={14} className="text-accent" />
@@ -288,7 +289,7 @@ export default function AthleteDetail() {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

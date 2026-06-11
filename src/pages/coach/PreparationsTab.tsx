@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, Trash2, Check, X, UserMinus, Calendar, Target } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
-import { EmptyState, Button } from '../../components/ui';
+import { EmptyState, Button, Card } from '../../components/ui';
 import Avatar from '../../components/Avatar';
 
 export default function PreparationsTab() {
@@ -59,7 +59,7 @@ export default function PreparationsTab() {
           </Button>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
+        <Card className="space-y-3">
           <input
             type="text" placeholder="Nom de la préparation" value={newName}
             onChange={e => setNewName(e.target.value)}
@@ -81,7 +81,7 @@ export default function PreparationsTab() {
             <button onClick={() => setShowAdd(false)} className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600">Annuler</button>
             <button onClick={handleAdd} className="flex-1 py-2 bg-accent text-white rounded-lg text-sm font-medium">Créer</button>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Preparations list */}
@@ -99,7 +99,7 @@ export default function PreparationsTab() {
             const days = daysUntil(prep.event_date);
 
             return (
-              <div key={prep.id} className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
+              <Card key={prep.id} className="space-y-3">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
@@ -169,7 +169,7 @@ export default function PreparationsTab() {
                     ))}
                   </select>
                 )}
-              </div>
+              </Card>
             );
           })}
         </div>

@@ -4,7 +4,7 @@ import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, Zap, Pencil, Copy, Calendar } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { EmptyState, Button, useToast } from '../../components/ui';
+import { EmptyState, Button, useToast, Card } from '../../components/ui';
 import { useSessionAutosave } from '../../hooks/useSessionAutosave';
 import { SessionSourceModal } from '../../components/coach/SessionSourceModal';
 import BlockCard from '../../components/BlockCard';
@@ -350,7 +350,7 @@ export default function SessionEditor() {
 
       {/* Creation form */}
       {showForm && (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4 space-y-3">
+        <Card className="shadow-sm mb-4 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-bold text-gray-900">{editingSessionId ? 'Modifier la séance' : 'Créer une séance'}</h2>
             {savedAt && !editingSessionId && (
@@ -561,7 +561,7 @@ export default function SessionEditor() {
               </button>
             )}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Modal "Enregistrer comme template" */}
@@ -664,7 +664,7 @@ export default function SessionEditor() {
             const prep = preparations.find(p => p.id === session.preparation_id);
             const borderColor = prep ? 'border-l-amber-400' : session.group_id ? 'border-l-blue-400' : 'border-l-gray-300';
             return (
-              <div key={session.id} className={`rounded-xl border border-gray-100 bg-white p-4 border-l-4 ${borderColor} shadow-sm hover:shadow-md transition-shadow`}>
+              <Card key={session.id} className={`border-l-4 ${borderColor} shadow-sm hover:shadow-md transition-shadow`}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
@@ -735,7 +735,7 @@ export default function SessionEditor() {
                     </div>
                   </div>
                 )}
-              </div>
+              </Card>
             );
           })}
         </div>
