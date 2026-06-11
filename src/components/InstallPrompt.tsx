@@ -8,14 +8,10 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => !!sessionStorage.getItem('pwa_install_dismissed'));
 
   useEffect(() => {
-    const alreadyDismissed = sessionStorage.getItem('pwa_install_dismissed');
-    if (alreadyDismissed) {
-      setDismissed(true);
-      return;
-    }
+    if (dismissed) return;
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -24,7 +20,7 @@ export default function InstallPrompt() {
 
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
+  }, [dismissed]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;

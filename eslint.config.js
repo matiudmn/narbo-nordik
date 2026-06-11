@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // priceless-kare-a8eb2d : worktree git imbriqué (sessions Claude parallèles), hors périmètre du lint
+  globalIgnores(['dist', 'priceless-kare-a8eb2d']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -19,5 +20,12 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+  },
+  {
+    // Contexts : Provider + hook useX co-localisés (idiome React standard).
+    // Fast Refresh retombe en full reload sur ces fichiers, sans impact en prod ;
+    // éclater les hooks toucherait ~50 fichiers importeurs pour un gain DX nul.
+    files: ['src/contexts/**/*.tsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
   },
 ])

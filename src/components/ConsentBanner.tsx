@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Shield } from 'lucide-react';
 
 const CONSENT_KEY = 'narbo_rgpd_consent';
@@ -17,7 +17,7 @@ const defaultConsent: ConsentState = {
   acceptedAt: null,
 };
 
-export function getConsent(): ConsentState {
+function getConsent(): ConsentState {
   try {
     const raw = localStorage.getItem(CONSENT_KEY);
     if (raw) return JSON.parse(raw);
@@ -25,21 +25,14 @@ export function getConsent(): ConsentState {
   return defaultConsent;
 }
 
-export function saveConsent(consent: ConsentState) {
+function saveConsent(consent: ConsentState) {
   localStorage.setItem(CONSENT_KEY, JSON.stringify(consent));
 }
 
 export default function ConsentBanner() {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(() => !getConsent().acceptedAt);
   const [showDetails, setShowDetails] = useState(false);
   const [consent, setConsent] = useState<ConsentState>(defaultConsent);
-
-  useEffect(() => {
-    const existing = getConsent();
-    if (!existing.acceptedAt) {
-      setVisible(true);
-    }
-  }, []);
 
   const handleAcceptAll = () => {
     const c: ConsentState = {

@@ -127,7 +127,13 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
     return m;
   }, [flat]);
 
-  useEffect(() => { setSelectedIndex(0); }, [debounced, aiMode, ai.results]);
+  // Recherche modifiée : reset de la sélection (ajustement d'état pendant le render,
+  // cf. doc React « adjusting state when a prop changes », évite un re-render en cascade).
+  const [prevSearch, setPrevSearch] = useState<{ q: string; ai: boolean; results: unknown }>({ q: debounced, ai: aiMode, results: ai.results });
+  if (prevSearch.q !== debounced || prevSearch.ai !== aiMode || prevSearch.results !== ai.results) {
+    setPrevSearch({ q: debounced, ai: aiMode, results: ai.results });
+    setSelectedIndex(0);
+  }
 
   const activate = useCallback((r: SearchResult) => {
     haptic('light');

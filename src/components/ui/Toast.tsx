@@ -1,12 +1,12 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
+import { ToastContext } from './useToast';
+import type { ToastContextValue } from './useToast';
 import type { ReactNode } from 'react';
 import { CheckCircle2, AlertCircle, Info, X, AlertTriangle } from 'lucide-react';
 
@@ -18,16 +18,6 @@ interface Toast {
   message: string;
   duration: number;
 }
-
-interface ToastContextValue {
-  show: (message: string, options?: { tone?: ToastTone; duration?: number }) => void;
-  success: (message: string, duration?: number) => void;
-  error: (message: string, duration?: number) => void;
-  info: (message: string, duration?: number) => void;
-  warning: (message: string, duration?: number) => void;
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null);
 
 const toneConfig: Record<ToastTone, { icon: typeof CheckCircle2; bg: string; ring: string; iconColor: string }> = {
   success: {
@@ -158,12 +148,4 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number)
       </button>
     </div>
   );
-}
-
-export function useToast(): ToastContextValue {
-  const ctx = useContext(ToastContext);
-  if (!ctx) {
-    throw new Error('useToast doit être appelé dans un <ToastProvider>');
-  }
-  return ctx;
 }

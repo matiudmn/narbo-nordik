@@ -30,3 +30,6 @@ dist-ssr
 # Supabase CLI local state (link config, branches)
 supabase/.temp/
 supabase/.branches/
+
+# Worktree git imbriqué (sessions Claude parallèles)
+priceless-kare-a8eb2d/

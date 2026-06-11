@@ -49,6 +49,8 @@ export function SessionSourceModal({
 
   useEffect(() => {
     if (!open) return;
+    // Spinner immédiat à l'ouverture, avant le fetch (cascade assumée, modale légère).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     fetchTemplates().then((t) => {
       setTemplates(t);

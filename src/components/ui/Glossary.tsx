@@ -85,12 +85,6 @@ export function Glossary({ term, children, className = '' }: GlossaryProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const entry = GLOSSARY[term as GlossaryTerm];
-  if (!entry) {
-    // Si le terme n'est pas dans le glossaire, on rend juste le texte sans tooltip
-    return <>{children ?? term}</>;
-  }
-
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
@@ -110,6 +104,12 @@ export function Glossary({ term, children, className = '' }: GlossaryProps) {
       window.removeEventListener('keydown', onKey);
     };
   }, [open, term]);
+
+  const entry = GLOSSARY[term as GlossaryTerm];
+  if (!entry) {
+    // Si le terme n'est pas dans le glossaire, on rend juste le texte sans tooltip
+    return <>{children ?? term}</>;
+  }
 
   return (
     <span className="relative inline-block">

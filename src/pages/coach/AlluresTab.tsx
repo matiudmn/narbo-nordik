@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Save, RotateCcw } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { DEFAULT_RACE_PACES, DEFAULT_ALLURE_ZONES, VMA_LEVELS, isEffortZone } from '../../lib/calculations';
@@ -13,7 +13,11 @@ export default function AlluresTab() {
   const [allureZones, setAllureZones] = useState<Record<string, AllureZoneConfig>>({});
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  // Resynchronise le brouillon d'édition quand clubSettings change
+  // (ajustement d'état pendant le render, cf. doc React).
+  const [syncedSettings, setSyncedSettings] = useState<typeof clubSettings | undefined>(undefined);
+  if (syncedSettings !== clubSettings) {
+    setSyncedSettings(clubSettings);
     if (clubSettings) {
       const rp = clubSettings.race_paces;
       const hasValidPaces =
@@ -34,7 +38,7 @@ export default function AlluresTab() {
       setRacePaces(DEFAULT_RACE_PACES);
       setAllureZones(DEFAULT_ALLURE_ZONES);
     }
-  }, [clubSettings]);
+  }
 
   const handleSave = async () => {
     setSaving(true);

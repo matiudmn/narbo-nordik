@@ -21,8 +21,9 @@ export { EmptyState } from './EmptyState';
 
 export { ConfirmDialog } from './ConfirmDialog';
 
-export { ToastProvider, useToast } from './Toast';
+export { ToastProvider } from './Toast';
 export type { ToastTone } from './Toast';
+export { useToast } from './useToast';
 
 // Visual components — sprint 3 polish
 export { MetricTile } from './MetricTile';
