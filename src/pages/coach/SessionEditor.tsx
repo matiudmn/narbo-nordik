@@ -387,7 +387,7 @@ export default function SessionEditor() {
             >
               <option value="">Tous les groupes</option>
               {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-              {preparations.length > 0 && <option disabled>───── Prep. specifiques ─────</option>}
+              {preparations.length > 0 && <option disabled>───── Prép. spécifiques ─────</option>}
               {preparations.map(p => <option key={p.id} value={`prep:${p.id}`}>{p.name}</option>)}
             </select>
           </div>
@@ -433,7 +433,7 @@ export default function SessionEditor() {
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1">
                 <Zap size={14} />
-                Programme de la seance
+                Programme de la séance
               </p>
               {blocks.length > 0 && (
                 <span className="text-xs text-gray-400">
@@ -458,7 +458,7 @@ export default function SessionEditor() {
               </button>
               <button onClick={() => addBlock('recuperation')}
                 className="flex-1 text-xs py-2 rounded-lg border border-dashed border-orange-300 text-orange-500 hover:bg-orange-50 font-medium transition-colors">
-                + Recup
+                + Récup
               </button>
             </div>
 
@@ -484,7 +484,7 @@ export default function SessionEditor() {
                         className="w-full flex items-center justify-center gap-1 py-1 my-1 text-[10px] text-orange-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors group"
                       >
                         <span className="flex-1 border-t border-dashed border-orange-200 group-hover:border-orange-400" />
-                        <span className="px-2 font-medium">+ Recup</span>
+                        <span className="px-2 font-medium">+ Récup</span>
                         <span className="flex-1 border-t border-dashed border-orange-200 group-hover:border-orange-400" />
                       </button>
                     )}
@@ -495,7 +495,7 @@ export default function SessionEditor() {
 
             {blocks.length === 0 && (
               <p className="text-center text-xs text-gray-400 py-4">
-                Ajoute des blocs pour composer ta seance
+                Ajoute des blocs pour composer ta séance
               </p>
             )}
 
@@ -526,7 +526,7 @@ export default function SessionEditor() {
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
 
-          {/* RPE de seance (optionnel) : difficulte globale attendue, sensible au volume */}
+          {/* RPE de séance (optionnel) : difficulté globale attendue, sensible au volume */}
           <div className="flex items-center gap-2">
             <label htmlFor="session-rpe" className="text-sm text-gray-600 flex-1">
               RPE de la séance <span className="text-gray-400">(optionnel, difficulté globale)</span>
