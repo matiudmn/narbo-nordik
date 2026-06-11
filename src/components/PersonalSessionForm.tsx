@@ -48,7 +48,7 @@ function DurationInput({ value, onChange, label }: { value: number; onChange: (v
 
 const ACTIVITY_TYPES: { key: ActivityType; label: string; icon: typeof Footprints }[] = [
   { key: 'run', label: 'Run', icon: Footprints },
-  { key: 'velo', label: 'Velo', icon: Bike },
+  { key: 'velo', label: 'Vélo', icon: Bike },
   { key: 'marche', label: 'Marche', icon: Footprints },
   { key: 'renfo', label: 'Renfo', icon: Dumbbell },
 ];
@@ -233,14 +233,14 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
     <div className="bg-gray-50 rounded-lg p-3 mb-4 space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-gray-700">
-          {editSession ? 'Modifier la seance' : 'Nouvelle seance'} - {ACTIVITY_TYPES.find(a => a.key === activity)?.label}
+          {editSession ? 'Modifier la séance' : 'Nouvelle séance'} - {ACTIVITY_TYPES.find(a => a.key === activity)?.label}
         </p>
         {!editSession && (
           <button onClick={() => setActivity(null)} className="text-xs text-primary font-medium">Changer</button>
         )}
       </div>
 
-      <input type="text" placeholder="Titre de la seance" value={title} onChange={e => setTitle(e.target.value)}
+      <input type="text" placeholder="Titre de la séance" value={title} onChange={e => setTitle(e.target.value)}
         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
 
       <input type="datetime-local" value={date} onChange={e => setDate(e.target.value)}
@@ -270,7 +270,7 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
 
       {(activity === 'velo' || activity === 'marche') && (
         <div className="grid grid-cols-2 gap-3">
-          <DurationInput value={duration} onChange={setDuration} label="Duree" />
+          <DurationInput value={duration} onChange={setDuration} label="Durée" />
           <div>
             <label className="text-xs text-gray-500">Distance (km)</label>
             <input type="number" step="0.1" min={0} placeholder="km" value={distanceKm} onChange={e => setDistanceKm(e.target.value)}
@@ -281,10 +281,10 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
 
       {activity === 'renfo' && (
         <div className="space-y-3">
-          <DurationInput value={duration} onChange={setDuration} label="Duree" />
+          <DurationInput value={duration} onChange={setDuration} label="Durée" />
           <div>
             <label className="text-xs text-gray-500">Description (facultatif)</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Details de la seance..."
+            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Détails de la séance..."
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
           </div>
         </div>
@@ -320,7 +320,7 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
 
           <div>
             <label className="text-xs text-gray-500">Commentaire (facultatif)</label>
-            <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={2} placeholder="Comment s'est passee la seance ?"
+            <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={2} placeholder="Comment s'est passée la séance ?"
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
           </div>
         </div>
