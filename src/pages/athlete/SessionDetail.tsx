@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile, Heart, Activity, Sparkles } from 'lucide-react';
+import { ArrowLeft, MapPin, ExternalLink, Timer, Gauge, Check, Paperclip, X, Pencil, Target, Smile, Heart, Activity, Sparkles, Share2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode, getAllureZones, pacePerKm, isEffortZone, blockEffortLabel } from '../../lib/calculations';
@@ -10,6 +10,8 @@ import { getAttachmentUrl } from '../../lib/storage';
 import { useToast, Button } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { motion, DUR, EASE } from '../../lib/motion';
+import ShareSheet from '../../components/ShareSheet';
+import { SessionShareCard } from '../../components/ShareCard';
 import type { ObjectiveReached, Sensations, SessionMetricsInput } from '../../types';
 
 export default function SessionDetail() {
@@ -19,6 +21,7 @@ export default function SessionDetail() {
   const { sessions, validations, validateSession, updateValidation, groups, userPreparations, sessionNordiks, toggleSessionNordik, validationReactions, clubSettings } = useData();
   const toast = useToast();
   const allureZones = getAllureZones(clubSettings?.allure_zones);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const session = sessions.find(s => s.id === id);
   const validation = validations.find(v => v.session_id === id && v.user_id === user?.id);
@@ -237,10 +240,25 @@ export default function SessionDetail() {
   return (
     <div className="py-4">
       {/* Header */}
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-500 hover:text-gray-900 mb-4">
-        <ArrowLeft size={20} />
-        <span className="text-sm">Retour</span>
-      </button>
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-500 hover:text-gray-900">
+          <ArrowLeft size={20} />
+          <span className="text-sm">Retour</span>
+        </button>
+        <button onClick={() => setShareOpen(true)} className="flex items-center gap-1 text-primary hover:text-primary/80 text-sm font-medium">
+          <Share2 size={16} aria-hidden="true" />
+          Partager
+        </button>
+      </div>
+      <ShareSheet
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        filenameBase={`narbo-nordik-${format(new Date(session.date), 'yyyy-MM-dd')}`}
+        shareTitle={session.title}
+        shareText={`${session.title}, ${format(new Date(session.date), 'EEEE d MMMM HH:mm', { locale: fr })}. Programme Narbo Nordik : ${window.location.origin}/session/${session.id}`}
+      >
+        {ref => <SessionShareCard ref={ref} session={session} zones={allureZones} />}
+      </ShareSheet>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Title section */}

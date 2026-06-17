@@ -2,12 +2,14 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, Zap, Pencil, Copy, Calendar } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, Zap, Pencil, Copy, Calendar, Share2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { EmptyState, Button, useToast, Card } from '../../components/ui';
 import { useSessionAutosave } from '../../hooks/useSessionAutosave';
 import { SessionSourceModal } from '../../components/coach/SessionSourceModal';
 import BlockCard from '../../components/BlockCard';
+import ShareSheet from '../../components/ShareSheet';
+import { WeekShareCard } from '../../components/ShareCard';
 import { saveTemplate, CATEGORY_LABELS } from '../../lib/sessionTemplates';
 import type { InstantiatedTemplate } from '../../lib/sessionTemplates';
 import type { TemplateCategory } from '../../types';
@@ -42,6 +44,7 @@ export default function SessionEditor() {
   const allureZones = getAllureZones(clubSettings?.allure_zones);
   const [weekOffset, setWeekOffset] = useState(0);
   const [showForm, setShowForm] = useState(false);
+  const [shareWeekOpen, setShareWeekOpen] = useState(false);
   const [showSourceModal, setShowSourceModal] = useState(false);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
@@ -649,6 +652,24 @@ export default function SessionEditor() {
           <ChevronRight size={20} />
         </button>
       </div>
+
+      {/* Partage de la semaine (image PNG / PDF pour le groupe WhatsApp) */}
+      {weekSessions.length > 0 && (
+        <div className="mb-3">
+          <Button variant="secondary" fullWidth size="sm" leftIcon={<Share2 size={16} aria-hidden="true" />} onClick={() => setShareWeekOpen(true)}>
+            Partager la semaine
+          </Button>
+        </div>
+      )}
+      <ShareSheet
+        open={shareWeekOpen}
+        onClose={() => setShareWeekOpen(false)}
+        filenameBase={`narbo-nordik-semaine-${format(weekStart, 'yyyy-MM-dd')}`}
+        shareTitle="Programme de la semaine"
+        shareText={`Programme Narbo Nordik, semaine du ${format(weekStart, 'd', { locale: fr })} au ${format(weekEnd, 'd MMMM', { locale: fr })}. ${window.location.origin}`}
+      >
+        {ref => <WeekShareCard ref={ref} weekStart={weekStart} weekEnd={weekEnd} sessions={weekSessions} zones={allureZones} />}
+      </ShareSheet>
 
       {/* Sessions list */}
       {weekSessions.length === 0 ? (
