@@ -18,7 +18,7 @@ export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { sessions, validations, validateSession, updateValidation, groups, userPreparations, sessionNordiks, toggleSessionNordik, validationReactions, clubSettings } = useData();
+  const { sessions, validations, validateSession, updateValidation, groups, preparations, userPreparations, sessionNordiks, toggleSessionNordik, validationReactions, clubSettings } = useData();
   const toast = useToast();
   const allureZones = getAllureZones(clubSettings?.allure_zones);
   const [shareOpen, setShareOpen] = useState(false);
@@ -257,7 +257,7 @@ export default function SessionDetail() {
         shareTitle={session.title}
         shareText={`${session.title}, ${format(new Date(session.date), 'EEEE d MMMM HH:mm', { locale: fr })}. Programme Narbo Nordik : ${window.location.origin}/session/${session.id}`}
       >
-        {ref => <SessionShareCard ref={ref} session={session} zones={allureZones} />}
+        {ref => <SessionShareCard ref={ref} session={session} zones={allureZones} groups={groups} preparations={preparations} />}
       </ShareSheet>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
