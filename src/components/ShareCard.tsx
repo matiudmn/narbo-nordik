@@ -14,7 +14,7 @@
 import { forwardRef, type ReactNode } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { Session, AllureZoneConfig, SessionType } from '../types';
+import type { Session, AllureZoneConfig, SessionType, Group, SpecificPreparation } from '../types';
 import { formatBlockSummary, blockEffortLabel, isEffortZone, ALLURE_ZONES } from '../lib/calculations';
 
 const SESSION_TYPE_LABELS: Record<SessionType, string> = {
@@ -37,6 +37,34 @@ function metaLine(session: Session): string {
   return parts.join('  ·  ');
 }
 
+interface Alloc { label: string; isPrep: boolean }
+
+// A qui la seance est allouee : prepa specifique > groupe > tous.
+function allocation(session: Session, groups: Group[], preparations: SpecificPreparation[]): Alloc {
+  if (session.preparation_id) {
+    const p = preparations.find(x => x.id === session.preparation_id);
+    if (p) return { label: p.name, isPrep: true };
+  }
+  if (session.group_id) {
+    const g = groups.find(x => x.id === session.group_id);
+    if (g) return { label: g.name, isPrep: false };
+  }
+  return { label: 'Tous', isPrep: false };
+}
+
+function AllocPill({ alloc }: { alloc: Alloc }) {
+  return (
+    <span style={{
+      display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 999,
+      background: alloc.isPrep ? '#e0f2fe' : '#f1f5f9',
+      color: alloc.isPrep ? '#075985' : '#475569',
+      marginRight: 6, verticalAlign: 'middle',
+    }}>
+      {alloc.label}
+    </span>
+  );
+}
+
 function CardShell({ subtitle, children }: { subtitle: string; children: ReactNode }) {
   return (
     <div style={{ width: 480, background: C.white, fontFamily: FONT, color: C.ink }}>
@@ -55,12 +83,15 @@ function CardShell({ subtitle, children }: { subtitle: string; children: ReactNo
   );
 }
 
-export const SessionShareCard = forwardRef<HTMLDivElement, { session: Session; zones: Zones }>(
-  function SessionShareCard({ session, zones }, ref) {
+export const SessionShareCard = forwardRef<HTMLDivElement, {
+  session: Session; zones: Zones; groups: Group[]; preparations: SpecificPreparation[];
+}>(
+  function SessionShareCard({ session, zones, groups, preparations }, ref) {
     return (
       <div ref={ref}>
         <CardShell subtitle={format(new Date(session.date), 'EEEE d MMMM yyyy - HH:mm', { locale: fr })}>
           <div style={{ marginBottom: 12 }}>
+            <div style={{ marginBottom: 4 }}><AllocPill alloc={allocation(session, groups, preparations)} /></div>
             <div style={{ fontSize: 18, fontWeight: 700, color: C.ink, lineHeight: 1.3 }}>{session.title}</div>
             <div style={{ fontSize: 12, color: C.sub, marginTop: 3 }}>{metaLine(session)}</div>
           </div>
@@ -90,8 +121,8 @@ export const SessionShareCard = forwardRef<HTMLDivElement, { session: Session; z
 );
 
 export const WeekShareCard = forwardRef<HTMLDivElement, {
-  weekStart: Date; weekEnd: Date; sessions: Session[]; zones: Zones;
-}>(function WeekShareCard({ weekStart, weekEnd, sessions, zones }, ref) {
+  weekStart: Date; weekEnd: Date; sessions: Session[]; zones: Zones; groups: Group[]; preparations: SpecificPreparation[];
+}>(function WeekShareCard({ weekStart, weekEnd, sessions, zones, groups, preparations }, ref) {
   const subtitle = `Semaine du ${format(weekStart, 'd', { locale: fr })} au ${format(weekEnd, 'd MMMM yyyy', { locale: fr })}`;
   return (
     <div ref={ref}>
@@ -107,6 +138,7 @@ export const WeekShareCard = forwardRef<HTMLDivElement, {
             style={{ borderLeft: `3px solid ${C.accent}`, paddingLeft: 10, marginBottom: i === sessions.length - 1 ? 0 : 14 }}
           >
             <div style={{ fontSize: 11, color: C.faint }}>
+              <AllocPill alloc={allocation(session, groups, preparations)} />
               {format(new Date(session.date), 'EEEE d MMMM - HH:mm', { locale: fr })}
             </div>
             <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, lineHeight: 1.3, marginTop: 1 }}>{session.title}</div>

@@ -668,7 +668,7 @@ export default function SessionEditor() {
         shareTitle="Programme de la semaine"
         shareText={`Programme Narbo Nordik, semaine du ${format(weekStart, 'd', { locale: fr })} au ${format(weekEnd, 'd MMMM', { locale: fr })}. ${window.location.origin}`}
       >
-        {ref => <WeekShareCard ref={ref} weekStart={weekStart} weekEnd={weekEnd} sessions={weekSessions} zones={allureZones} />}
+        {ref => <WeekShareCard ref={ref} weekStart={weekStart} weekEnd={weekEnd} sessions={weekSessions} zones={allureZones} groups={groups} preparations={preparations} />}
       </ShareSheet>
 
       {/* Sessions list */}
