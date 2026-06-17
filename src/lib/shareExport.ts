@@ -8,7 +8,10 @@
 
 export async function nodeToPngBlob(node: HTMLElement): Promise<Blob> {
   const { toBlob } = await import('html-to-image');
-  const blob = await toBlob(node, { pixelRatio: 2, cacheBust: true, backgroundColor: '#ffffff' });
+  // skipFonts: la carte utilise des polices systeme ; on evite que html-to-image
+  // tente d'inliner les Google Fonts du site (echec CORS + capture ralentie de
+  // plusieurs secondes). Capture rapide et sans erreur console.
+  const blob = await toBlob(node, { pixelRatio: 2, cacheBust: true, backgroundColor: '#ffffff', skipFonts: true });
   if (!blob) throw new Error('Image non générée');
   return blob;
 }
