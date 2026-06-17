@@ -2,8 +2,14 @@
  * Carte d'export partageable (PNG/PDF) d'une seance ou de la semaine.
  * Destinee au groupe WhatsApp du club : on montre le PROGRAMME et l'intensite,
  * jamais une allure perso (qui depend de la VMA de chaque athlete ; ils la
- * voient personnalisee en ouvrant l'app). Rendu a largeur fixe pour une capture
- * coherente. Pas de bouton ni d'interaction : c'est un visuel pur.
+ * voient personnalisee en ouvrant l'app).
+ *
+ * IMPORTANT : styles 100% inline (couleurs/tailles/marges en dur) et empilement
+ * vertical sans justify-between ni flex-wrap. C'est volontaire : html-to-image
+ * capture les styles calcules element par element et gere mal les combinateurs
+ * (space-y), le flex-wrap et la hauteur des titres sur 2 lignes -> sinon le
+ * texte se chevauche dans l'image exportee. Ici, chaque ligne a sa marge
+ * explicite, donc le rendu PNG est fidele.
  */
 import { forwardRef, type ReactNode } from 'react';
 import { format } from 'date-fns';
@@ -18,41 +24,33 @@ const SESSION_TYPE_LABELS: Record<SessionType, string> = {
 
 type Zones = Record<string, AllureZoneConfig>;
 
-function CardShell({ subtitle, children }: { subtitle: string; children: ReactNode }) {
-  return (
-    <div style={{ width: 480 }} className="bg-white font-sans">
-      <div className="bg-primary text-white px-5 py-4 flex items-center gap-3">
-        <img src="/logo-club.png" alt="" className="h-10 w-10 rounded-full bg-white/10" />
-        <div>
-          <p className="text-base font-bold leading-tight">Narbo Nordik</p>
-          <p className="text-xs text-white/70">{subtitle}</p>
-        </div>
-      </div>
-      <div className="p-5 space-y-3">{children}</div>
-      <div className="px-5 py-2 bg-gray-50 text-[10px] text-gray-400 text-center">
-        Section running & trail · allures personnalisées dans l'app
-      </div>
-    </div>
-  );
+const C = {
+  ink: '#111827', sub: '#6b7280', faint: '#9ca3af', line: '#e5e7eb',
+  accent: '#6CCBE6', primary: '#0a0a0a', white: '#ffffff',
+};
+const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
+function metaLine(session: Session): string {
+  const parts = [SESSION_TYPE_LABELS[session.session_type]];
+  if (session.location) parts.push(session.location);
+  if (session.session_rpe != null) parts.push(`RPE séance ${session.session_rpe}/10`);
+  return parts.join('  ·  ');
 }
 
-function Blocks({ session, zones }: { session: Session; zones: Zones }) {
+function CardShell({ subtitle, children }: { subtitle: string; children: ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      {session.blocks.map(block => {
-        const zone = zones[block.allure] || ALLURE_ZONES[block.allure];
-        return (
-          <div key={block.id} className="flex items-start gap-2 text-sm">
-            <span className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
-            <div className="flex-1 min-w-0">
-              <span className="text-gray-900">{formatBlockSummary(block, zones)}</span>
-              {isEffortZone(block.allure) && (
-                <span className="text-gray-500" style={{ color: zone.color }}> · {blockEffortLabel(block)}</span>
-              )}
-            </div>
-          </div>
-        );
-      })}
+    <div style={{ width: 480, background: C.white, fontFamily: FONT, color: C.ink }}>
+      <div style={{ background: C.primary, color: C.white, padding: '16px 20px', display: 'flex', alignItems: 'center' }}>
+        <img src="/logo-club.png" alt="" width={40} height={40} style={{ borderRadius: '50%', display: 'block', marginRight: 12 }} />
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>Narbo Nordik</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.72)', marginTop: 2 }}>{subtitle}</div>
+        </div>
+      </div>
+      <div style={{ padding: 20 }}>{children}</div>
+      <div style={{ padding: '8px 20px', background: '#f9fafb', color: C.faint, fontSize: 10, textAlign: 'center' }}>
+        Section running &amp; trail · allures personnalisées dans l'app
+      </div>
     </div>
   );
 }
@@ -62,17 +60,28 @@ export const SessionShareCard = forwardRef<HTMLDivElement, { session: Session; z
     return (
       <div ref={ref}>
         <CardShell subtitle={format(new Date(session.date), 'EEEE d MMMM yyyy - HH:mm', { locale: fr })}>
-          <div>
-            <p className="text-lg font-bold text-gray-900">{session.title}</p>
-            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500 mt-0.5">
-              <span>{SESSION_TYPE_LABELS[session.session_type]}</span>
-              {session.location && <span>{session.location}</span>}
-              {session.session_rpe != null && <span className="font-medium text-primary">RPE séance {session.session_rpe}/10</span>}
-            </div>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: C.ink, lineHeight: 1.3 }}>{session.title}</div>
+            <div style={{ fontSize: 12, color: C.sub, marginTop: 3 }}>{metaLine(session)}</div>
           </div>
-          {session.blocks.length > 0 && <Blocks session={session} zones={zones} />}
+
+          {session.blocks.map(block => {
+            const zone = zones[block.allure] || ALLURE_ZONES[block.allure];
+            return (
+              <div key={block.id} style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 6 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: zone.color, marginTop: 6, marginRight: 8, flexShrink: 0 }} />
+                <div style={{ fontSize: 14, color: C.ink, lineHeight: 1.35 }}>
+                  {formatBlockSummary(block, zones)}
+                  {isEffortZone(block.allure) && <span style={{ color: zone.color }}> · {blockEffortLabel(block)}</span>}
+                </div>
+              </div>
+            );
+          })}
+
           {session.description && (
-            <p className="text-xs text-gray-500 border-t border-gray-100 pt-2 whitespace-pre-line">{session.description}</p>
+            <div style={{ fontSize: 12, color: C.sub, borderTop: `1px solid ${C.line}`, paddingTop: 8, marginTop: 8, whiteSpace: 'pre-line', lineHeight: 1.4 }}>
+              {session.description}
+            </div>
           )}
         </CardShell>
       </div>
@@ -88,25 +97,24 @@ export const WeekShareCard = forwardRef<HTMLDivElement, {
     <div ref={ref}>
       <CardShell subtitle={subtitle}>
         {sessions.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-4">Aucune séance programmée cette semaine.</p>
+          <div style={{ fontSize: 14, color: C.faint, textAlign: 'center', padding: '16px 0' }}>
+            Aucune séance programmée cette semaine.
+          </div>
         )}
-        {sessions.map(session => (
-          <div key={session.id} className="border-l-2 border-accent/30 pl-3">
-            <div className="flex items-baseline justify-between gap-2">
-              <p className="text-sm font-bold text-gray-900">{session.title}</p>
-              <span className="text-[11px] text-gray-400 flex-shrink-0">
-                {format(new Date(session.date), 'EEE d MMM - HH:mm', { locale: fr })}
-              </span>
+        {sessions.map((session, i) => (
+          <div
+            key={session.id}
+            style={{ borderLeft: `3px solid ${C.accent}`, paddingLeft: 10, marginBottom: i === sessions.length - 1 ? 0 : 14 }}
+          >
+            <div style={{ fontSize: 11, color: C.faint }}>
+              {format(new Date(session.date), 'EEEE d MMMM - HH:mm', { locale: fr })}
             </div>
-            <div className="flex flex-wrap gap-x-2 text-[11px] text-gray-500">
-              <span>{SESSION_TYPE_LABELS[session.session_type]}</span>
-              {session.location && <span>· {session.location}</span>}
-              {session.session_rpe != null && <span className="text-primary font-medium">· RPE {session.session_rpe}/10</span>}
-            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, lineHeight: 1.3, marginTop: 1 }}>{session.title}</div>
+            <div style={{ fontSize: 11, color: C.sub, marginTop: 2 }}>{metaLine(session)}</div>
             {session.blocks.length > 0 && (
-              <p className="text-xs text-gray-700 mt-0.5">
+              <div style={{ fontSize: 12, color: C.ink, marginTop: 3, lineHeight: 1.35 }}>
                 {session.blocks.map(b => formatBlockSummary(b, zones)).join('  ·  ')}
-              </p>
+              </div>
             )}
           </div>
         ))}
