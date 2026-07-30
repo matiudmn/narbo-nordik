@@ -70,6 +70,7 @@ désormais l'historique réel et reconstruit la base complète.
 | 28 | `20260730150000_exit_feedbacks_anonymous.sql` | `exit_feedbacks` : suppression de la colonne `user_id` (dérive dashboard), insertion rendue à l'app et lecture rendue aux coachs. Débloque `db reset` et remet l'enquête de sortie en service |
 | 29 | `20260730160000_users_role_escalation_guard.sql` | **correctif de sécurité** : fermeture de l'escalade de privilège sur `users`. Les policies d'écriture contrôlaient la ligne et jamais les colonnes, donc un athlète pouvait passer son propre `role` à `coach` puis écrire tous les profils. Trigger `BEFORE INSERT OR UPDATE` qui fige `role` hors coach et hors service_role |
 | 30 | `20260730170000_drop_strava_archive.sql` | **DESTRUCTIF** : `DROP TABLE _archive_strava_activities`. Clôt la décision RGPD laissée ouverte par l'entrée 27 (finalité disparue avec le retrait de Strava le 06/06, aucune durée de conservation définie). Rend caduque la section 3 de l'entrée 27 |
+| 31 | `20260731081000_users_super_admin_flag.sql` | **correctif de sécurité** : `users.is_super_admin`, colonne dédiée remplaçant la dérivation par email (`isSuperAdmin` valait `user.email === SUPER_ADMIN_EMAIL`, or `email` était modifiable par PATCH client). Trigger `enforce_user_role_change` étendu : `is_super_admin` figé pour tout appelant client (INSERT comme UPDATE), `email` figé à l'UPDATE. Seed du compte existant |
 
 > **État réel en prod** (revérifié le 2026-07-30 au soir, après le `supabase db push`
 > appliquant les entrées 28, 29 et 30) : **toutes les entrées jusqu'à la 30 sont
@@ -80,6 +81,10 @@ désormais l'historique réel et reconstruit la base complète.
 > Cette note a déjà dérivé deux fois (état d'application annoncé faux après un
 > `db push`) : **toujours revérifier avec `supabase migration list --linked`**
 > avant de s'y fier ou de la modifier.
+>
+> **Séquencement obligatoire pour l'entrée 31** : appliquer cette migration
+> avant de déployer le front correspondant (le front qui lit
+> `users.is_super_admin` au lieu de comparer `email` à `SUPER_ADMIN_EMAIL`).
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 
