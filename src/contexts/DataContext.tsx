@@ -22,37 +22,37 @@ interface DataContextType {
   loading: boolean;
   addSession: (session: Omit<Session, 'id' | 'created_at'>) => Promise<{ id: string } | { error: string }>;
   addSessionsBulk: (sessions: Omit<Session, 'id' | 'created_at'>[]) => Promise<{ created: number } | { error: string }>;
-  updateSession: (id: string, updates: Partial<Session>) => Promise<void>;
-  deleteSession: (id: string) => Promise<void>;
+  updateSession: (id: string, updates: Partial<Session>) => Promise<{ error: string | null }>;
+  deleteSession: (id: string) => Promise<{ error: string | null }>;
   validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File, objectiveReached?: ObjectiveReached, sensations?: Sensations, metrics?: SessionMetricsInput) => Promise<{ id: string } | { error: string }>;
   updateValidation: (validationId: string, updates: { feedback?: string; objective_reached?: ObjectiveReached | null; sensations?: Sensations | null; metrics?: SessionMetricsInput }, file?: File) => Promise<{ error?: string }>;
-  addRaceResult: (result: Omit<RaceResult, 'id' | 'created_at'>) => Promise<void>;
-  updateRaceResult: (id: string, updates: Partial<Omit<RaceResult, 'id' | 'created_at'>>) => Promise<void>;
-  deleteRaceResult: (id: string) => Promise<void>;
-  toggleNordik: (raceId: string, userId: string) => Promise<void>;
-  toggleSessionNordik: (sessionId: string, userId: string) => Promise<void>;
-  toggleValidationReaction: (validationId: string, emoji: string, authorId: string) => Promise<void>;
-  updateUserVma: (userId: string, vma: number, reason?: string) => Promise<void>;
-  updateUserPublic: (userId: string, isPublic: boolean) => Promise<void>;
-  updateUserPhone: (userId: string, phone: string | null) => Promise<void>;
-  updateUserLicense: (userId: string, licenseNumber: string | null) => Promise<void>;
-  updateUserBirthDate: (userId: string, birthDate: string | null) => Promise<void>;
-  updateUserPhoto: (userId: string, photoUrl: string | null) => Promise<void>;
+  addRaceResult: (result: Omit<RaceResult, 'id' | 'created_at'>) => Promise<{ error: string | null }>;
+  updateRaceResult: (id: string, updates: Partial<Omit<RaceResult, 'id' | 'created_at'>>) => Promise<{ error: string | null }>;
+  deleteRaceResult: (id: string) => Promise<{ error: string | null }>;
+  toggleNordik: (raceId: string, userId: string) => Promise<{ error: string | null }>;
+  toggleSessionNordik: (sessionId: string, userId: string) => Promise<{ error: string | null }>;
+  toggleValidationReaction: (validationId: string, emoji: string, authorId: string) => Promise<{ error: string | null }>;
+  updateUserVma: (userId: string, vma: number, reason?: string) => Promise<{ error: string | null }>;
+  updateUserPublic: (userId: string, isPublic: boolean) => Promise<{ error: string | null }>;
+  updateUserPhone: (userId: string, phone: string | null) => Promise<{ error: string | null }>;
+  updateUserLicense: (userId: string, licenseNumber: string | null) => Promise<{ error: string | null }>;
+  updateUserBirthDate: (userId: string, birthDate: string | null) => Promise<{ error: string | null }>;
+  updateUserPhoto: (userId: string, photoUrl: string | null) => Promise<{ error: string | null }>;
   addUser: (user: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date' | 'notification_preferences'>) => Promise<AddUserResult | null>;
-  deleteUser: (id: string) => Promise<void>;
-  addGroup: (name: string) => Promise<void>;
-  updateGroup: (id: string, name: string) => Promise<void>;
-  deleteGroup: (id: string) => Promise<void>;
-  updateUserGroup: (userId: string, groupId: string | null) => Promise<void>;
-  updateNotificationPreferences: (userId: string, prefs: NotificationPreferences) => Promise<void>;
-  addPreparation: (name: string, eventDate: string, description: string | null) => Promise<void>;
-  updatePreparation: (id: string, updates: Partial<SpecificPreparation>) => Promise<void>;
-  deletePreparation: (id: string) => Promise<void>;
-  addUserToPreparation: (userId: string, preparationId: string) => Promise<void>;
-  removeUserFromPreparation: (userId: string, preparationId: string) => Promise<void>;
+  deleteUser: (id: string) => Promise<{ error: string | null }>;
+  addGroup: (name: string) => Promise<{ error: string | null }>;
+  updateGroup: (id: string, name: string) => Promise<{ error: string | null }>;
+  deleteGroup: (id: string) => Promise<{ error: string | null }>;
+  updateUserGroup: (userId: string, groupId: string | null) => Promise<{ error: string | null }>;
+  updateNotificationPreferences: (userId: string, prefs: NotificationPreferences) => Promise<{ error: string | null }>;
+  addPreparation: (name: string, eventDate: string, description: string | null) => Promise<{ error: string | null }>;
+  updatePreparation: (id: string, updates: Partial<SpecificPreparation>) => Promise<{ error: string | null }>;
+  deletePreparation: (id: string) => Promise<{ error: string | null }>;
+  addUserToPreparation: (userId: string, preparationId: string) => Promise<{ error: string | null }>;
+  removeUserFromPreparation: (userId: string, preparationId: string) => Promise<{ error: string | null }>;
   clubSettings: ClubSettings | null;
-  updateClubSettings: (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>) => Promise<void>;
-  setFeaturedValidation: (validationId: string | null) => Promise<void>;
+  updateClubSettings: (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>) => Promise<{ error: string | null }>;
+  setFeaturedValidation: (validationId: string | null) => Promise<{ error: string | null }>;
   refreshAll: () => Promise<void>;
 }
 
@@ -189,19 +189,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return { error: 'Aucune donnee retournee par Supabase' };
   }, []);
 
-  const updateSession = useCallback(async (id: string, updates: Partial<Session>) => {
+  const updateSession = useCallback(async (id: string, updates: Partial<Session>): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('sessions').update(updates).eq('id', id);
-    if (!error) {
-      setSessions(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    if (error) {
+      console.error('updateSession error:', error.message);
+      return { error: error.message };
     }
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    return { error: null };
   }, []);
 
-  const deleteSession = useCallback(async (id: string) => {
+  const deleteSession = useCallback(async (id: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('sessions').delete().eq('id', id);
-    if (!error) {
-      setSessions(prev => prev.filter(s => s.id !== id));
-      setValidations(prev => prev.filter(v => v.session_id !== id));
+    if (error) {
+      console.error('deleteSession error:', error.message);
+      return { error: error.message };
     }
+    setSessions(prev => prev.filter(s => s.id !== id));
+    setValidations(prev => prev.filter(v => v.session_id !== id));
+    return { error: null };
   }, []);
 
   // --- Validations ---
@@ -314,192 +320,237 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // --- Race Results ---
 
-  const addRaceResult = useCallback(async (result: Omit<RaceResult, 'id' | 'created_at'>) => {
+  const addRaceResult = useCallback(async (result: Omit<RaceResult, 'id' | 'created_at'>): Promise<{ error: string | null }> => {
     const { data, error } = await supabase.from('race_results').insert(result).select().single();
-    if (!error && data) {
-      setRaceResults(prev => [...prev, data]);
-
-      // Auto-create a personal session marked as done
-      const durationParts = result.time_duration.split(':').map(Number);
-      const totalSeconds = (durationParts[0] || 0) * 3600 + (durationParts[1] || 0) * 60 + (durationParts[2] || 0);
-      const distanceMeters = Math.round(result.distance_km * 1000);
-
-      const sessionPayload = {
-        title: `Course : ${result.race_name}`,
-        date: new Date(result.date).toISOString(),
-        session_type: 'course' as const,
-        terrain_options: [] as string[],
-        location: null,
-        location_url: null,
-        description: result.comment || null,
-        group_id: null,
-        preparation_id: null,
-        target_distance: null,
-        vma_percent_min: null,
-        vma_percent_max: null,
-        blocks: [{
-          id: `blk_race_${Date.now()}`,
-          type: 'travail' as const,
-          allure: 'ef' as const,
-          duration_seconds: totalSeconds,
-          distance_meters: distanceMeters,
-          repetitions: 1,
-          rest_seconds: 0,
-          rest_distance_meters: null,
-        }],
-        is_personal: true,
-        created_by: result.user_id,
-      };
-
-      const { data: sessionData, error: sessionError } = await supabase
-        .from('sessions').insert(sessionPayload).select().single();
-
-      if (!sessionError && sessionData) {
-        setSessions(prev => [...prev, { ...sessionData, blocks: sessionData.blocks || [] }].sort((a, b) => a.date.localeCompare(b.date)));
-
-        const validationRow = {
-          session_id: sessionData.id,
-          user_id: result.user_id,
-          status: 'done',
-          feedback: result.comment || null,
-          attachment_path: null,
-          attachment_type: null,
-          objective_reached: 'oui',
-          sensations: null,
-          created_at: new Date().toISOString(),
-        };
-
-        const { data: valData, error: valError } = await supabase
-          .from('session_validations').insert(validationRow).select().single();
-
-        if (!valError && valData) {
-          setValidations(prev => [...prev, valData]);
-        }
-      }
+    if (error || !data) {
+      console.error('addRaceResult error:', error?.message);
+      return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
     }
+    setRaceResults(prev => [...prev, data]);
+
+    // Auto-create a personal session marked as done
+    const durationParts = result.time_duration.split(':').map(Number);
+    const totalSeconds = (durationParts[0] || 0) * 3600 + (durationParts[1] || 0) * 60 + (durationParts[2] || 0);
+    const distanceMeters = Math.round(result.distance_km * 1000);
+
+    const sessionPayload = {
+      title: `Course : ${result.race_name}`,
+      date: new Date(result.date).toISOString(),
+      session_type: 'course' as const,
+      terrain_options: [] as string[],
+      location: null,
+      location_url: null,
+      description: result.comment || null,
+      group_id: null,
+      preparation_id: null,
+      target_distance: null,
+      vma_percent_min: null,
+      vma_percent_max: null,
+      blocks: [{
+        id: `blk_race_${Date.now()}`,
+        type: 'travail' as const,
+        allure: 'ef' as const,
+        duration_seconds: totalSeconds,
+        distance_meters: distanceMeters,
+        repetitions: 1,
+        rest_seconds: 0,
+        rest_distance_meters: null,
+      }],
+      is_personal: true,
+      created_by: result.user_id,
+    };
+
+    const { data: sessionData, error: sessionError } = await supabase
+      .from('sessions').insert(sessionPayload).select().single();
+
+    if (sessionError || !sessionData) {
+      console.error('addRaceResult (auto-session) error:', sessionError?.message);
+      return { error: null };
+    }
+    setSessions(prev => [...prev, { ...sessionData, blocks: sessionData.blocks || [] }].sort((a, b) => a.date.localeCompare(b.date)));
+
+    const validationRow = {
+      session_id: sessionData.id,
+      user_id: result.user_id,
+      status: 'done',
+      feedback: result.comment || null,
+      attachment_path: null,
+      attachment_type: null,
+      objective_reached: 'oui',
+      sensations: null,
+      created_at: new Date().toISOString(),
+    };
+
+    const { data: valData, error: valError } = await supabase
+      .from('session_validations').insert(validationRow).select().single();
+
+    if (valError || !valData) {
+      console.error('addRaceResult (auto-validation) error:', valError?.message);
+      return { error: null };
+    }
+    setValidations(prev => [...prev, valData]);
+    return { error: null };
   }, []);
 
-  const updateRaceResult = useCallback(async (id: string, updates: Partial<Omit<RaceResult, 'id' | 'created_at'>>) => {
+  const updateRaceResult = useCallback(async (id: string, updates: Partial<Omit<RaceResult, 'id' | 'created_at'>>): Promise<{ error: string | null }> => {
     setRaceResults(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
     const { error } = await supabase.from('race_results').update(updates).eq('id', id);
     if (error) {
+      console.error('updateRaceResult error:', error.message);
       const { data } = await supabase.from('race_results').select('*');
       if (data) setRaceResults(data);
+      return { error: error.message };
     }
+    return { error: null };
   }, []);
 
-  const deleteRaceResult = useCallback(async (id: string) => {
+  const deleteRaceResult = useCallback(async (id: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('race_results').delete().eq('id', id);
-    if (!error) {
-      setRaceResults(prev => prev.filter(r => r.id !== id));
-      setRaceNordiks(prev => prev.filter(n => n.race_id !== id));
+    if (error) {
+      console.error('deleteRaceResult error:', error.message);
+      return { error: error.message };
     }
+    setRaceResults(prev => prev.filter(r => r.id !== id));
+    setRaceNordiks(prev => prev.filter(n => n.race_id !== id));
+    return { error: null };
   }, []);
 
   // --- Nordiks ---
 
-  const toggleNordik = useCallback(async (raceId: string, userId: string) => {
+  const toggleNordik = useCallback(async (raceId: string, userId: string): Promise<{ error: string | null }> => {
     const { data: existing } = await supabase.from('race_nordiks').select('*').eq('race_id', raceId).eq('user_id', userId).maybeSingle();
     if (existing) {
       const { error } = await supabase.from('race_nordiks').delete().eq('id', existing.id);
-      if (!error) setRaceNordiks(prev => prev.filter(n => n.id !== existing.id));
+      if (error) {
+        console.error('toggleNordik error:', error.message);
+        return { error: error.message };
+      }
+      setRaceNordiks(prev => prev.filter(n => n.id !== existing.id));
     } else {
       const { data, error } = await supabase.from('race_nordiks').insert({ race_id: raceId, user_id: userId }).select().single();
-      if (!error && data) setRaceNordiks(prev => [...prev, data]);
+      if (error || !data) {
+        console.error('toggleNordik error:', error?.message);
+        return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
+      }
+      setRaceNordiks(prev => [...prev, data]);
     }
+    return { error: null };
   }, []);
 
-  const toggleSessionNordik = useCallback(async (sessionId: string, userId: string) => {
+  const toggleSessionNordik = useCallback(async (sessionId: string, userId: string): Promise<{ error: string | null }> => {
     const { data: existing } = await supabase.from('session_nordiks').select('*').eq('session_id', sessionId).eq('user_id', userId).maybeSingle();
     if (existing) {
       const { error } = await supabase.from('session_nordiks').delete().eq('id', existing.id);
-      if (!error) setSessionNordiks(prev => prev.filter(n => n.id !== existing.id));
+      if (error) {
+        console.error('toggleSessionNordik error:', error.message);
+        return { error: error.message };
+      }
+      setSessionNordiks(prev => prev.filter(n => n.id !== existing.id));
     } else {
       const { data, error } = await supabase.from('session_nordiks').insert({ session_id: sessionId, user_id: userId }).select().single();
-      if (!error && data) {
-        setSessionNordiks(prev => [...prev, data]);
-        const [{ data: session }, { data: actor }] = await Promise.all([
-          supabase.from('sessions').select('created_by, title').eq('id', sessionId).single(),
-          supabase.from('users').select('firstname').eq('id', userId).single(),
-        ]);
-        if (session && actor && session.created_by !== userId) {
-          const { error: notifError } = await supabase.from('notifications').insert({
-            user_id: session.created_by,
-            type: 'system',
-            title: 'Nordik !',
-            body: `${actor.firstname} a aime ta seance "${session.title}"`,
-          });
-          if (notifError) console.error('Notification error:', notifError.message);
-        }
+      if (error || !data) {
+        console.error('toggleSessionNordik error:', error?.message);
+        return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
+      }
+      setSessionNordiks(prev => [...prev, data]);
+      const [{ data: session }, { data: actor }] = await Promise.all([
+        supabase.from('sessions').select('created_by, title').eq('id', sessionId).single(),
+        supabase.from('users').select('firstname').eq('id', userId).single(),
+      ]);
+      if (session && actor && session.created_by !== userId) {
+        const { error: notifError } = await supabase.from('notifications').insert({
+          user_id: session.created_by,
+          type: 'system',
+          title: 'Nordik !',
+          body: `${actor.firstname} a aime ta seance "${session.title}"`,
+        });
+        if (notifError) console.error('Notification error:', notifError.message);
       }
     }
+    return { error: null };
   }, []);
 
-  const toggleValidationReaction = useCallback(async (validationId: string, emoji: string, authorId: string) => {
+  const toggleValidationReaction = useCallback(async (validationId: string, emoji: string, authorId: string): Promise<{ error: string | null }> => {
     const { data: existing } = await supabase.from('validation_reactions')
       .select('*').eq('validation_id', validationId).eq('author_id', authorId).eq('emoji', emoji).maybeSingle();
     if (existing) {
       const { error } = await supabase.from('validation_reactions').delete().eq('id', existing.id);
-      if (!error) setValidationReactions(prev => prev.filter(r => r.id !== existing.id));
+      if (error) {
+        console.error('toggleValidationReaction error:', error.message);
+        return { error: error.message };
+      }
+      setValidationReactions(prev => prev.filter(r => r.id !== existing.id));
     } else {
       const { data, error } = await supabase.from('validation_reactions').insert({ validation_id: validationId, author_id: authorId, emoji }).select().single();
-      if (!error && data) {
-        setValidationReactions(prev => [...prev, data]);
-        // Notifier le propriétaire du compte-rendu (sauf s'il réagit au sien).
-        const { data: val } = await supabase.from('session_validations').select('user_id, session_id').eq('id', validationId).single();
-        if (val && val.user_id !== authorId) {
-          const [{ data: sess }, { data: actor }] = await Promise.all([
-            supabase.from('sessions').select('title').eq('id', val.session_id).single(),
-            supabase.from('users').select('firstname').eq('id', authorId).single(),
-          ]);
-          const { error: notifError } = await supabase.from('notifications').insert({
-            user_id: val.user_id,
-            type: 'reaction',
-            title: 'Réaction !',
-            body: `${actor?.firstname ?? "Quelqu'un"} a réagi ${emoji} à ton compte-rendu${sess?.title ? ` "${sess.title}"` : ''}`,
-          });
-          if (notifError) console.error('Notification error:', notifError.message);
-        }
+      if (error || !data) {
+        console.error('toggleValidationReaction error:', error?.message);
+        return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
+      }
+      setValidationReactions(prev => [...prev, data]);
+      // Notifier le propriétaire du compte-rendu (sauf s'il réagit au sien).
+      const { data: val } = await supabase.from('session_validations').select('user_id, session_id').eq('id', validationId).single();
+      if (val && val.user_id !== authorId) {
+        const [{ data: sess }, { data: actor }] = await Promise.all([
+          supabase.from('sessions').select('title').eq('id', val.session_id).single(),
+          supabase.from('users').select('firstname').eq('id', authorId).single(),
+        ]);
+        const { error: notifError } = await supabase.from('notifications').insert({
+          user_id: val.user_id,
+          type: 'reaction',
+          title: 'Réaction !',
+          body: `${actor?.firstname ?? "Quelqu'un"} a réagi ${emoji} à ton compte-rendu${sess?.title ? ` "${sess.title}"` : ''}`,
+        });
+        if (notifError) console.error('Notification error:', notifError.message);
       }
     }
+    return { error: null };
   }, []);
 
   // --- Users ---
 
-  const patchUser = useCallback(async (userId: string, updates: Partial<User>) => {
+  const patchUser = useCallback(async (userId: string, updates: Partial<User>): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('users').update(updates).eq('id', userId);
-    if (!error) {
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
+    if (error) {
+      console.error('patchUser error:', error.message);
+      return { error: error.message };
     }
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
+    return { error: null };
   }, []);
 
-  const updateUserVma = useCallback(async (userId: string, vma: number, reason?: string) => {
-    const targetUser = users.find(u => u.id === userId);
-    if (!targetUser) return;
+  // Historique VMA reconstruit à partir de la donnée fraîche en base (pas de l'état
+  // React, potentiellement obsolète) pour éviter une entrée perdue ou dupliquée en
+  // cas de double-clic.
+  const updateUserVma = useCallback(async (userId: string, vma: number, reason?: string): Promise<{ error: string | null }> => {
+    const { data: existing, error: fetchError } = await supabase.from('users').select('vma_history').eq('id', userId).single();
+    if (fetchError || !existing) {
+      console.error('updateUserVma error:', fetchError?.message);
+      return { error: fetchError?.message ?? 'Utilisateur introuvable' };
+    }
     const entry: { vma: number; date: string; reason?: string } = { vma, date: new Date().toISOString().split('T')[0] };
     if (reason) entry.reason = reason;
-    const history = [...targetUser.vma_history, entry];
-    await patchUser(userId, { vma, vma_history: history } as Partial<User>);
-  }, [users, patchUser]);
+    const history = [...((existing.vma_history as User['vma_history']) ?? []), entry];
+    return patchUser(userId, { vma, vma_history: history } as Partial<User>);
+  }, [patchUser]);
 
   const updateUserPublic = useCallback(async (userId: string, isPublic: boolean) => {
-    await patchUser(userId, { is_public: isPublic });
+    return patchUser(userId, { is_public: isPublic });
   }, [patchUser]);
 
   const updateUserPhone = useCallback(async (userId: string, phone: string | null) => {
-    await patchUser(userId, { phone });
+    return patchUser(userId, { phone });
   }, [patchUser]);
 
   const updateUserLicense = useCallback(async (userId: string, licenseNumber: string | null) => {
-    await patchUser(userId, { license_number: licenseNumber });
+    return patchUser(userId, { license_number: licenseNumber });
   }, [patchUser]);
 
   const updateUserBirthDate = useCallback(async (userId: string, birthDate: string | null) => {
-    await patchUser(userId, { birth_date: birthDate });
+    return patchUser(userId, { birth_date: birthDate });
   }, [patchUser]);
 
   const updateUserPhoto = useCallback(async (userId: string, photoUrl: string | null) => {
-    await patchUser(userId, { photo_url: photoUrl });
+    return patchUser(userId, { photo_url: photoUrl });
   }, [patchUser]);
 
   const addUser = useCallback(async (
@@ -543,85 +594,122 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return { userId: newUserId, tempPassword };
   }, []);
 
-  const deleteUser = useCallback(async (id: string) => {
+  const deleteUser = useCallback(async (id: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('users').delete().eq('id', id);
-    if (!error) {
-      setUsers(prev => prev.filter(u => u.id !== id));
-      setValidations(prev => prev.filter(v => v.user_id !== id));
-      setRaceResults(prev => prev.filter(r => r.user_id !== id));
-      setRaceNordiks(prev => prev.filter(n => n.user_id !== id));
-      setSessionNordiks(prev => prev.filter(n => n.user_id !== id));
+    if (error) {
+      console.error('deleteUser error:', error.message);
+      return { error: error.message };
     }
+    setUsers(prev => prev.filter(u => u.id !== id));
+    setValidations(prev => prev.filter(v => v.user_id !== id));
+    setRaceResults(prev => prev.filter(r => r.user_id !== id));
+    setRaceNordiks(prev => prev.filter(n => n.user_id !== id));
+    setSessionNordiks(prev => prev.filter(n => n.user_id !== id));
+    return { error: null };
   }, []);
 
   // --- Groups ---
 
-  const addGroup = useCallback(async (name: string) => {
+  const addGroup = useCallback(async (name: string): Promise<{ error: string | null }> => {
     const { data, error } = await supabase.from('groups').insert({ name }).select().single();
-    if (!error && data) setGroups(prev => [...prev, data]);
-  }, []);
-
-  const updateGroup = useCallback(async (id: string, name: string) => {
-    const { error } = await supabase.from('groups').update({ name }).eq('id', id);
-    if (!error) setGroups(prev => prev.map(g => g.id === id ? { ...g, name } : g));
-  }, []);
-
-  const deleteGroup = useCallback(async (id: string) => {
-    const { error } = await supabase.from('groups').delete().eq('id', id);
-    if (!error) {
-      setGroups(prev => prev.filter(g => g.id !== id));
-      setUsers(prev => prev.map(u => u.group_id === id ? { ...u, group_id: null } : u));
-      setSessions(prev => prev.map(s => s.group_id === id ? { ...s, group_id: null } : s));
+    if (error || !data) {
+      console.error('addGroup error:', error?.message);
+      return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
     }
+    setGroups(prev => [...prev, data]);
+    return { error: null };
+  }, []);
+
+  const updateGroup = useCallback(async (id: string, name: string): Promise<{ error: string | null }> => {
+    const { error } = await supabase.from('groups').update({ name }).eq('id', id);
+    if (error) {
+      console.error('updateGroup error:', error.message);
+      return { error: error.message };
+    }
+    setGroups(prev => prev.map(g => g.id === id ? { ...g, name } : g));
+    return { error: null };
+  }, []);
+
+  const deleteGroup = useCallback(async (id: string): Promise<{ error: string | null }> => {
+    const { error } = await supabase.from('groups').delete().eq('id', id);
+    if (error) {
+      console.error('deleteGroup error:', error.message);
+      return { error: error.message };
+    }
+    setGroups(prev => prev.filter(g => g.id !== id));
+    setUsers(prev => prev.map(u => u.group_id === id ? { ...u, group_id: null } : u));
+    setSessions(prev => prev.map(s => s.group_id === id ? { ...s, group_id: null } : s));
+    return { error: null };
   }, []);
 
   const updateUserGroup = useCallback(async (userId: string, groupId: string | null) => {
-    await patchUser(userId, { group_id: groupId });
+    return patchUser(userId, { group_id: groupId });
   }, [patchUser]);
 
   const updateNotificationPreferences = useCallback(async (userId: string, prefs: NotificationPreferences) => {
-    await patchUser(userId, { notification_preferences: prefs });
+    return patchUser(userId, { notification_preferences: prefs });
   }, [patchUser]);
 
   // --- Preparations ---
 
-  const addPreparation = useCallback(async (name: string, eventDate: string, description: string | null) => {
+  const addPreparation = useCallback(async (name: string, eventDate: string, description: string | null): Promise<{ error: string | null }> => {
     const { data, error } = await supabase.from('specific_preparations').insert({
       name, event_date: eventDate, description, created_by: authUser?.id,
     }).select().single();
-    if (!error && data) setPreparations(prev => [...prev, data].sort((a, b) => a.event_date.localeCompare(b.event_date)));
+    if (error || !data) {
+      console.error('addPreparation error:', error?.message);
+      return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
+    }
+    setPreparations(prev => [...prev, data].sort((a, b) => a.event_date.localeCompare(b.event_date)));
+    return { error: null };
   }, [authUser?.id]);
 
-  const updatePreparation = useCallback(async (id: string, updates: Partial<SpecificPreparation>) => {
+  const updatePreparation = useCallback(async (id: string, updates: Partial<SpecificPreparation>): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('specific_preparations').update(updates).eq('id', id);
-    if (!error) setPreparations(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-  }, []);
-
-  const deletePreparation = useCallback(async (id: string) => {
-    const { error } = await supabase.from('specific_preparations').delete().eq('id', id);
-    if (!error) {
-      setPreparations(prev => prev.filter(p => p.id !== id));
-      setUserPreparations(prev => prev.filter(up => up.preparation_id !== id));
-      setSessions(prev => prev.map(s => s.preparation_id === id ? { ...s, preparation_id: null } : s));
+    if (error) {
+      console.error('updatePreparation error:', error.message);
+      return { error: error.message };
     }
+    setPreparations(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    return { error: null };
   }, []);
 
-  const addUserToPreparation = useCallback(async (userId: string, preparationId: string) => {
+  const deletePreparation = useCallback(async (id: string): Promise<{ error: string | null }> => {
+    const { error } = await supabase.from('specific_preparations').delete().eq('id', id);
+    if (error) {
+      console.error('deletePreparation error:', error.message);
+      return { error: error.message };
+    }
+    setPreparations(prev => prev.filter(p => p.id !== id));
+    setUserPreparations(prev => prev.filter(up => up.preparation_id !== id));
+    setSessions(prev => prev.map(s => s.preparation_id === id ? { ...s, preparation_id: null } : s));
+    return { error: null };
+  }, []);
+
+  const addUserToPreparation = useCallback(async (userId: string, preparationId: string): Promise<{ error: string | null }> => {
     const { data, error } = await supabase.from('user_preparations').insert({ user_id: userId, preparation_id: preparationId }).select().single();
-    if (!error && data) setUserPreparations(prev => [...prev, data]);
+    if (error || !data) {
+      console.error('addUserToPreparation error:', error?.message);
+      return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
+    }
+    setUserPreparations(prev => [...prev, data]);
+    return { error: null };
   }, []);
 
-  const removeUserFromPreparation = useCallback(async (userId: string, preparationId: string) => {
+  const removeUserFromPreparation = useCallback(async (userId: string, preparationId: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('user_preparations').delete()
       .eq('user_id', userId).eq('preparation_id', preparationId);
-    if (!error) {
-      setUserPreparations(prev => prev.filter(up => !(up.user_id === userId && up.preparation_id === preparationId)));
+    if (error) {
+      console.error('removeUserFromPreparation error:', error.message);
+      return { error: error.message };
     }
+    setUserPreparations(prev => prev.filter(up => !(up.user_id === userId && up.preparation_id === preparationId)));
+    return { error: null };
   }, []);
 
   // --- Club Settings ---
 
-  const updateClubSettings = useCallback(async (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>) => {
+  const updateClubSettings = useCallback(async (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>): Promise<{ error: string | null }> => {
     const payload = {
       race_paces: racePaces,
       allure_zones: allureZones,
@@ -630,26 +718,36 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
     if (clubSettings) {
       const { error } = await supabase.from('club_settings').update(payload).eq('id', clubSettings.id);
-      if (!error) {
-        setClubSettings(prev => prev ? { ...prev, race_paces: racePaces, allure_zones: allureZones } : prev);
+      if (error) {
+        console.error('updateClubSettings error:', error.message);
+        return { error: error.message };
       }
+      setClubSettings(prev => prev ? { ...prev, race_paces: racePaces, allure_zones: allureZones } : prev);
     } else {
       const { data, error } = await supabase.from('club_settings').insert(payload).select().single();
-      if (!error && data) setClubSettings(data as ClubSettings);
+      if (error || !data) {
+        console.error('updateClubSettings error:', error?.message);
+        return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
+      }
+      setClubSettings(data as ClubSettings);
     }
+    return { error: null };
   }, [clubSettings, authUser?.id]);
 
-  const setFeaturedValidation = useCallback(async (validationId: string | null) => {
+  const setFeaturedValidation = useCallback(async (validationId: string | null): Promise<{ error: string | null }> => {
     // Une ligne club_settings est toujours seedée. On ne fait QUE de l'update :
     // jamais d'insert partiel (qui créerait une 2e ligne aux allures vides).
-    if (!clubSettings) return;
+    if (!clubSettings) return { error: 'Parametres du club non initialises' };
     const featured_at = validationId ? new Date().toISOString() : null;
     const { error } = await supabase.from('club_settings')
       .update({ featured_validation_id: validationId, featured_at })
       .eq('id', clubSettings.id);
-    if (!error) {
-      setClubSettings(prev => prev ? { ...prev, featured_validation_id: validationId, featured_at } : prev);
+    if (error) {
+      console.error('setFeaturedValidation error:', error.message);
+      return { error: error.message };
     }
+    setClubSettings(prev => prev ? { ...prev, featured_validation_id: validationId, featured_at } : prev);
+    return { error: null };
   }, [clubSettings]);
 
   return (
