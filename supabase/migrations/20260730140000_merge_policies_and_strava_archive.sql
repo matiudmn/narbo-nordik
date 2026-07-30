@@ -17,6 +17,9 @@
 --
 -- NON APPLIQUÉE À LA PROD : aucune écriture n'a été faite pendant sa rédaction.
 -- Elle attend une revue puis un `supabase db push` explicite.
+-- MISE À JOUR : APPLIQUÉE en prod le 2026-07-30 (confirmé par
+-- `supabase migration list --linked`). La phrase ci-dessus vaut pour la
+-- rédaction, plus pour l'état actuel.
 --
 -- ----------------------------------------------------------------------------
 -- TRAÇABILITÉ DES SOURCES (à lire avant revue)

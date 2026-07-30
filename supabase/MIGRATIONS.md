@@ -69,9 +69,14 @@ désormais l'historique réel et reconstruit la base complète.
 | 27 | `20260730140000_merge_policies_and_strava_archive.sql` | fin des advisors : fusion des policies permissives doublées (`sessions` INSERT/UPDATE/DELETE, `users` INSERT/UPDATE) en une policy par action, deny-all RESTRICTIVE explicite + clé primaire sur `_archive_strava_activities` |
 | 28 | `20260730150000_exit_feedbacks_anonymous.sql` | `exit_feedbacks` : suppression de la colonne `user_id` (dérive dashboard), insertion rendue à l'app et lecture rendue aux coachs. Débloque `db reset` et remet l'enquête de sortie en service |
 
-> **État réel en prod** (vérifié le 2026-07-30 via `supabase migration list --linked`) :
-> l'entrée **26 est appliquée**, les entrées **27 et 28 ne le sont pas** (rédigées
-> sans écriture, en attente d'un `supabase db push` explicite après revue).
+> **État réel en prod** (relu le 2026-07-30 en fin de journée via
+> `supabase migration list --linked`) : les entrées **26 et 27 sont appliquées**,
+> l'entrée **28 ne l'est pas** (rédigée sans écriture, en attente d'un
+> `supabase db push` explicite après revue).
+>
+> Cette note a déjà dérivé une fois (elle donnait 27 comme non appliquée alors
+> qu'un `db push` avait eu lieu) : **toujours revérifier avec
+> `supabase migration list --linked`** avant de s'y fier ou de la modifier.
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 
