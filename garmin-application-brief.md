@@ -11,7 +11,7 @@
 
 > **À FAIRE avant d'envoyer le formulaire** :
 >
-> - [ ] **Rédiger et publier la politique de confidentialité** à l'URL `https://app.narbo-nordik.fr/legal/privacy` (ou équivalent). Garmin va explicitement la demander.
+> - [x] **Rédiger et publier la politique de confidentialité** à l'URL `https://app.narbo-nordik.fr/legal/privacy`. Garmin va explicitement la demander. Document : `legal/privacy-policy.md` (v1.0). Route publique en place (`/legal/privacy`, sans authentification) : l'URL répond dès le déploiement en production.
 > - [ ] **Préparer 3-4 screenshots de l'app** (Home avec séances, SessionDetail, Profil avec section "Mes appareils" actuelle, fiche athlète avec données Strava). Format PNG, 1080×1920 ou similaire.
 > - [ ] **Préparer un mockup** de l'intégration Garmin envisagée (carte "Garmin Connect" dans le panneau Mes appareils). Peut être fait dans Figma ou simple Canva — l'idée est de montrer la maquette UX.
 > - [ ] **(Optionnel mais recommandé)** Lettre de soutien du président du club Régis Champrose, sur papier à en-tête de l'association, attestant que l'app est développée pour les besoins du club. Une page max.
@@ -120,7 +120,7 @@
 | Personal data stored | Activity summaries (date, distance, duration, pace, heart rate avg/max, elevation, VO2max estimate, training load), encrypted OAuth tokens, athlete identifier mapping. |
 | Retention | While the athlete is a licensed club member + 12 months after license expiry. |
 | Right to erasure | Account deletion in the app triggers full purge of OAuth tokens, cached activities, and user profile (cascade delete in Postgres). |
-| Privacy policy URL | https://app.narbo-nordik.fr/legal/privacy _(to be published before OAuth keys activation — see pre-flight checklist)_ |
+| Privacy policy URL | https://app.narbo-nordik.fr/legal/privacy _(public route, no authentication required)_ |
 | Regulatory compliance | RGPD (EU General Data Protection Regulation). CNIL declaration in progress. |
 | Data residency | Supabase EU region (Frankfurt, Germany). |
 

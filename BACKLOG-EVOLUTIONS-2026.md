@@ -1490,7 +1490,7 @@ Le reste (autres écrans) sera fait en continu, écran par écran.
 
 #### Pré-requis avant envoi candidature
 
-- [ ] Rédiger et publier la politique de confidentialité (URL `/legal/privacy`)
+- [x] Rédiger et publier la politique de confidentialité (URL `/legal/privacy`)
 - [ ] Préparer 3-4 screenshots de l'app
 - [ ] Préparer un mockup de l'intégration Garmin
 - [ ] (Optionnel) Lettre de soutien signée du président du club
@@ -1546,7 +1546,7 @@ Le brief complet de candidature (sections 1-11 + cover email) est dans [garmin-a
 - **Données stockées** : activités running uniquement, pas de données médicales / de sommeil / de stress (out of scope).
 - **Conformité RGPD** : déclaration CNIL en cours, droit à l'oubli implémenté (suppression compte = purge intégrale).
 - **Durée de conservation** : tant que l'athlète est licencié du club + 12 mois après désinscription.
-- **Mentions légales et politique de confidentialité** : publiées sur https://app.narbo-nordik.fr/legal (à confirmer).
+- **Politique de confidentialité** : publiée sur https://app.narbo-nordik.fr/legal/privacy (route publique). Mentions légales : reste à rédiger.
 
 #### Calendrier souhaité
 

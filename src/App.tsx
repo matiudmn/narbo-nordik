@@ -31,6 +31,7 @@ const VmaHistory = lazy(() => import('./pages/VmaHistory'));
 const TrainingHistory = lazy(() => import('./pages/TrainingHistory'));
 const Help = lazy(() => import('./pages/Help'));
 const Suivi = lazy(() => import('./pages/athlete/Suivi'));
+const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'));
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -79,25 +80,45 @@ function AppRoutes() {
   );
 }
 
+function AuthenticatedApp() {
+  return (
+    <ToastProvider>
+      <AuthProvider>
+        <DataProvider>
+          <InAppNotificationProvider>
+            <NotificationProvider>
+              <OfflineIndicator />
+              <AppRoutes />
+              <InstallPrompt />
+              <ConsentBanner />
+            </NotificationProvider>
+          </InAppNotificationProvider>
+        </DataProvider>
+      </AuthProvider>
+    </ToastProvider>
+  );
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-      <ToastProvider>
-        <AuthProvider>
-          <DataProvider>
-            <InAppNotificationProvider>
-              <NotificationProvider>
-                <OfflineIndicator />
-                <AppRoutes />
-                <InstallPrompt />
-                <ConsentBanner />
-              </NotificationProvider>
-            </InAppNotificationProvider>
-          </DataProvider>
-        </AuthProvider>
-      </ToastProvider>
-    </BrowserRouter>
+        <Routes>
+          {/*
+            Routes publiques : montées hors des providers, donc rendues sans
+            session Supabase ni garde d'authentification.
+          */}
+          <Route
+            path="/legal/privacy"
+            element={
+              <Suspense fallback={<div className="min-h-screen bg-bg-base" />}>
+                <PrivacyPolicy />
+              </Suspense>
+            }
+          />
+          <Route path="*" element={<AuthenticatedApp />} />
+        </Routes>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }
