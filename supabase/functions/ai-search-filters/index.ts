@@ -5,6 +5,7 @@
 // jour pour résoudre les dates relatives. Agnostique provider (Mistral par
 // défaut, UE/RGPD), même squelette qu'ai-ocr. Aucune donnée stockée.
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -58,6 +59,19 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   if (!AI_API_KEY) return json({ error: 'IA non configurée (secret MISTRAL_API_KEY manquant).' }, 503);
+
+  // Réservé aux membres du club : le JWT doit correspondre à un compte existant
+  // (bloque la clé anon publique du bundle, qui n'a pas d'utilisateur associé).
+  const authHeader = req.headers.get('Authorization') ?? '';
+  const supa = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    { global: { headers: { Authorization: authHeader } } },
+  );
+  const { data: auth } = await supa.auth.getUser();
+  if (!auth?.user) return json({ error: 'Non authentifié.' }, 401);
+  const { data: profile } = await supa.from('users').select('id').eq('id', auth.user.id).single();
+  if (!profile) return json({ error: 'Non autorisé.' }, 403);
 
   // Garde de taille du corps, en amont du parse (défense en profondeur).
   const contentLength = Number(req.headers.get('content-length') ?? 0);

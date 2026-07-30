@@ -7,7 +7,24 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const FROM_EMAIL = 'Narbo Nordik <club@2nc.fr>';
 const APP_URL = 'https://narbo-nordik.vercel.app';
 
-serve(async () => {
+// Appelant : uniquement le cron pg_cron 'weekly-digest-monday', qui porte deja
+// SUPABASE_SERVICE_ROLE_KEY en Bearer. Bloque la cle anon publique du bundle.
+function isServiceRoleCaller(req: Request): boolean {
+  const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+  return token.length > 0 && token === SUPABASE_SERVICE_ROLE_KEY;
+}
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string
+  ));
+}
+
+serve(async (req) => {
+  if (!isServiceRoleCaller(req)) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+  }
+
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -90,8 +107,8 @@ serve(async () => {
          <ul style="margin:0;padding:0 0 0 16px;color:#4b5563;font-size:14px;line-height:1.8;">
            ${races.map(r => {
              const u = userMap.get(r.user_id);
-             const name = u ? `${u.firstname} ${u.lastname.charAt(0)}.` : '';
-             return `<li><strong>${r.race_name}</strong> — ${r.distance_km} km en ${formatDuration(r.time_duration)} (${name})</li>`;
+             const name = u ? `${escapeHtml(u.firstname)} ${escapeHtml(u.lastname.charAt(0))}.` : '';
+             return `<li><strong>${escapeHtml(r.race_name)}</strong> — ${r.distance_km} km en ${formatDuration(r.time_duration)} (${name})</li>`;
            }).join('')}
          </ul>`
       : '';
@@ -131,7 +148,7 @@ serve(async () => {
       const sessionsHtml = userSessions.length > 0
         ? `<h3 style="margin:16px 0 8px;color:#111827;font-size:15px;">Séances de la semaine</h3>
            <ul style="margin:0;padding:0 0 0 16px;color:#4b5563;font-size:14px;line-height:1.8;">
-             ${userSessions.map(s => `<li><strong>${s.title}</strong> — ${formatDate(s.date)}</li>`).join('')}
+             ${userSessions.map(s => `<li><strong>${escapeHtml(s.title)}</strong> — ${formatDate(s.date)}</li>`).join('')}
            </ul>
            <p style="margin:8px 0 0;color:#6b7280;font-size:13px;">${userDoneCount} séance${userDoneCount > 1 ? 's' : ''} validée${userDoneCount > 1 ? 's' : ''}</p>`
         : '';
@@ -139,7 +156,7 @@ serve(async () => {
       const upcomingHtml = userUpcoming.length > 0
         ? `<h3 style="margin:16px 0 8px;color:#111827;font-size:15px;">À venir cette semaine</h3>
            <ul style="margin:0;padding:0 0 0 16px;color:#4b5563;font-size:14px;line-height:1.8;">
-             ${userUpcoming.map(s => `<li><strong>${s.title}</strong> — ${formatDate(s.date)}</li>`).join('')}
+             ${userUpcoming.map(s => `<li><strong>${escapeHtml(s.title)}</strong> — ${formatDate(s.date)}</li>`).join('')}
            </ul>`
         : '';
 
@@ -200,7 +217,7 @@ function buildDigestHtml(firstname: string, sessionsHtml: string, racesHtml: str
       <p style="margin:4px 0 0;color:#9ca3af;font-size:13px;">Digest hebdomadaire</p>
     </div>
     <div style="padding:24px;">
-      <p style="margin:0 0 16px;color:#374151;font-size:15px;">Salut ${firstname},</p>
+      <p style="margin:0 0 16px;color:#374151;font-size:15px;">Salut ${escapeHtml(firstname)},</p>
       <p style="margin:0 0 8px;color:#4b5563;font-size:14px;">Voici le résumé de ta semaine au club.</p>
       ${sessionsHtml}
       ${racesHtml}
