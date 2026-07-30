@@ -17,9 +17,10 @@ import { Line } from 'react-chartjs-2';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, EmptyState, MetricTile } from '../components/ui';
 import { useData } from '../contexts/DataContext';
-import { CHART_COLORS } from '../lib/chartTheme';
+import { CHART_COLORS, applyChartTheme } from '../lib/chartTheme';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
+applyChartTheme();
 
 export default function VmaHistory() {
   const [searchParams] = useSearchParams();

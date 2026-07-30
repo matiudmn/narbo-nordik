@@ -9,17 +9,6 @@ import { registerChunkErrorReload } from './lib/chunkReload'
 // service worker). À enregistrer avant tout import() de route lazy.
 registerChunkErrorReload()
 
-// Theme Chart.js — best-effort, ne doit JAMAIS bloquer le mount React
-import('./lib/chartTheme')
-  .then(({ applyChartTheme }) => {
-    try {
-      applyChartTheme();
-    } catch (err) {
-      console.warn('[chartTheme] non-blocking init error:', err);
-    }
-  })
-  .catch((err) => console.warn('[chartTheme] dynamic import failed:', err));
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
