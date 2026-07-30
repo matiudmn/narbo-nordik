@@ -67,10 +67,21 @@ désormais l'historique réel et reconstruit la base complète.
 | 25 | `20260608110000_session_rpe.sql` | `sessions.session_rpe` (difficulté attendue de la séance, posée par le coach) |
 | 26 | `20260730120000_security_perf_hardening.sql` | durcissement issu des advisors : `search_path` figé sur 2 fonctions, `increment_template_usage` retirée à anon, `WITH CHECK` resserré sur l'insert de `notifications`, SELECT du bucket `session-attachments` limité au dossier de l'utilisateur, 6 index de FK manquants, 44 policies encapsulées en `(select auth.uid())` (`auth_rls_initplan`) |
 | 27 | `20260730140000_merge_policies_and_strava_archive.sql` | fin des advisors : fusion des policies permissives doublées (`sessions` INSERT/UPDATE/DELETE, `users` INSERT/UPDATE) en une policy par action, deny-all RESTRICTIVE explicite + clé primaire sur `_archive_strava_activities` |
+| 28 | `20260730160000_users_role_escalation_guard.sql` | **correctif de sécurité** : fermeture de l'escalade de privilège sur `users`. Les policies d'écriture contrôlaient la ligne et jamais les colonnes, donc un athlète pouvait passer son propre `role` à `coach` puis écrire tous les profils. Trigger `BEFORE INSERT OR UPDATE` qui fige `role` hors coach et hors service_role |
 
-> **État réel en prod** (vérifié le 2026-07-30 via `supabase migration list --linked`) :
-> l'entrée **26 est appliquée**, l'entrée **27 ne l'est pas** (rédigée sans écriture,
-> en attente d'un `supabase db push` explicite après revue).
+> **État réel en prod** (revérifié le 2026-07-30 via `supabase migration list --linked`) :
+> les entrées **26 et 27 sont appliquées**, l'entrée **28 ne l'est pas** (rédigée sans
+> écriture, en attente d'un `supabase db push` explicite après revue).
+>
+> Cette note affirmait précédemment que l'entrée 27 n'était pas appliquée : elle
+> n'avait pas été remise à jour après le `db push` du 30/07. Corrigé sur relecture
+> du registre distant.
+>
+> L'entrée 28 corrige une faille **exploitable en prod aujourd'hui** : elle vient du
+> baseline, et ni l'entrée 26 ni l'entrée 27 ne l'ont introduite ou refermée. Le
+> trigger ne dépendant d'aucune policy, il produit le même résultat sur l'état
+> pré-fusion et sur l'état post-fusion (les deux ont été rejoués sur un Postgres
+> réel), donc son application ne dépend d'aucune autre migration.
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 
