@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Card } from '../../components/ui';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity } from 'lucide-react';
+import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import NordikButton from '../../components/NordikButton';
@@ -983,6 +983,13 @@ export default function Profile() {
             <UserX size={16} />
             <span>Supprimer mon compte et mes donnees</span>
           </button>
+          <Link
+            to="/legal/privacy"
+            className="flex items-center gap-2 w-full text-left px-3 py-2.5 text-sm bg-neutral-50 hover:bg-neutral-100 rounded-lg transition-colors"
+          >
+            <FileText size={16} className="text-primary" />
+            <span>Lire la politique de confidentialité</span>
+          </Link>
           <p className="text-xs text-gray-400">
             Conforme RGPD. Tes données sont stockées de manière sécurisée.
           </p>
