@@ -67,21 +67,22 @@ désormais l'historique réel et reconstruit la base complète.
 | 25 | `20260608110000_session_rpe.sql` | `sessions.session_rpe` (difficulté attendue de la séance, posée par le coach) |
 | 26 | `20260730120000_security_perf_hardening.sql` | durcissement issu des advisors : `search_path` figé sur 2 fonctions, `increment_template_usage` retirée à anon, `WITH CHECK` resserré sur l'insert de `notifications`, SELECT du bucket `session-attachments` limité au dossier de l'utilisateur, 6 index de FK manquants, 44 policies encapsulées en `(select auth.uid())` (`auth_rls_initplan`) |
 | 27 | `20260730140000_merge_policies_and_strava_archive.sql` | fin des advisors : fusion des policies permissives doublées (`sessions` INSERT/UPDATE/DELETE, `users` INSERT/UPDATE) en une policy par action, deny-all RESTRICTIVE explicite + clé primaire sur `_archive_strava_activities` |
-| 28 | `20260730160000_users_role_escalation_guard.sql` | **correctif de sécurité** : fermeture de l'escalade de privilège sur `users`. Les policies d'écriture contrôlaient la ligne et jamais les colonnes, donc un athlète pouvait passer son propre `role` à `coach` puis écrire tous les profils. Trigger `BEFORE INSERT OR UPDATE` qui fige `role` hors coach et hors service_role |
+| 28 | `20260730150000_exit_feedbacks_anonymous.sql` | `exit_feedbacks` : suppression de la colonne `user_id` (dérive dashboard), insertion rendue à l'app et lecture rendue aux coachs. Débloque `db reset` et remet l'enquête de sortie en service |
+| 29 | `20260730160000_users_role_escalation_guard.sql` | **correctif de sécurité** : fermeture de l'escalade de privilège sur `users`. Les policies d'écriture contrôlaient la ligne et jamais les colonnes, donc un athlète pouvait passer son propre `role` à `coach` puis écrire tous les profils. Trigger `BEFORE INSERT OR UPDATE` qui fige `role` hors coach et hors service_role |
 
 > **État réel en prod** (revérifié le 2026-07-30 via `supabase migration list --linked`) :
-> les entrées **26 et 27 sont appliquées**, l'entrée **28 ne l'est pas** (rédigée sans
-> écriture, en attente d'un `supabase db push` explicite après revue).
+> les entrées **26 et 27 sont appliquées**, les entrées **28 et 29 ne le sont pas**
+> (rédigées sans écriture, en attente d'un `supabase db push` explicite après revue).
 >
-> Cette note affirmait précédemment que l'entrée 27 n'était pas appliquée : elle
-> n'avait pas été remise à jour après le `db push` du 30/07. Corrigé sur relecture
-> du registre distant.
+> Cette note a déjà dérivé une fois (elle donnait 27 comme non appliquée alors
+> qu'un `db push` avait eu lieu) : **toujours revérifier avec
+> `supabase migration list --linked`** avant de s'y fier ou de la modifier.
 >
-> L'entrée 28 corrige une faille **exploitable en prod aujourd'hui** : elle vient du
-> baseline, et ni l'entrée 26 ni l'entrée 27 ne l'ont introduite ou refermée. Le
-> trigger ne dépendant d'aucune policy, il produit le même résultat sur l'état
-> pré-fusion et sur l'état post-fusion (les deux ont été rejoués sur un Postgres
-> réel), donc son application ne dépend d'aucune autre migration.
+> L'entrée 29 corrige une faille **exploitable en prod tant qu'elle n'est pas
+> appliquée** : elle vient du baseline, et ni l'entrée 26 ni l'entrée 27 ne l'ont
+> introduite ou refermée. Le trigger ne dépendant d'aucune policy, il produit le
+> même résultat sur l'état pré-fusion et post-fusion (les deux rejoués sur un
+> Postgres réel), donc son application ne dépend d'aucune autre migration.
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 
@@ -90,27 +91,25 @@ supabase link --project-ref <ref-de-l-instance>
 supabase db reset            # applique baseline puis toutes les migrations CLI
 ```
 
-> ### ⚠️ Un `db reset` échoue actuellement sur `20260730120000` (entrée 26)
+> ### ✅ `db reset` débloqué (dérive `exit_feedbacks` régularisée le 2026-07-30)
 >
-> Cette migration fait, sur `exit_feedbacks` :
-> `ALTER POLICY "Users can insert their own feedback" ... WITH CHECK (auth.uid() = user_id)`
-> et `ALTER POLICY "Users can read their own feedback" ...`.
-> Or dans le dépôt, `exit_feedbacks` n'a **pas** de colonne `user_id` (baseline :
-> `id`, `reason`, `comment`, `created_at`, enquête **anonyme** de suppression de
-> compte) et la policy SELECT s'appelle `"Coaches can read exit feedbacks"`.
-> Un reset s'arrête donc là en erreur (`42703` colonne inexistante / `42704`
-> policy inexistante), et les migrations suivantes ne sont jamais jouées.
+> Un `db reset` s'arrêtait sur l'entrée 26 (`20260730120000`), qui fait un
+> `ALTER POLICY ... = user_id` sur `exit_feedbacks` alors que le dépôt ne
+> déclarait ni la colonne `user_id`, ni la policy SELECT
+> `"Users can read their own feedback"` (`42703` / `42704`). Les migrations
+> suivantes n'étaient donc jamais jouées.
 >
-> Cela révèle une **dérive prod ↔ dépôt**, et c'est prouvé, pas supposé : cette
-> migration a été appliquée avec succès en prod le 30/07, or un `ALTER POLICY`
-> sur une colonne ou une policy absente échoue. La prod possède donc bien une
-> colonne `user_id` et une policy SELECT `"Users can read their own feedback"`
-> que le dépôt n'a jamais capturées (le baseline signalait déjà ce doute,
-> § dérives « dashboard »). Autrement dit : le chemin prod fonctionne, c'est la
-> reconstruction depuis zéro qui est cassée. À régulariser dans le baseline après
-> une lecture réelle de la prod (`\d exit_feedbacks` + `pg_policies`), en
-> tranchant au passage la question de sécurité restée ouverte : si la policy
-> SELECT live est permissive, les retours de sortie sont sur-exposés.
+> La prod a été **lue réellement** le 2026-07-30 (voir « Comment lire la prod »
+> ci-dessous) : la colonne existe bien (`uuid NOT NULL`, sans DEFAULT ni clé
+> étrangère) et les deux policies portent les noms attendus. Le **baseline
+> reflète désormais cet état constaté**, et l'entrée **28**
+> (`20260730150000`) le corrige derrière. La chaîne
+> `baseline ➜ 20260730120000 ➜ 20260730150000` a été rejouée sur un Postgres réel
+> (PGlite, 10/10 vérifications) à partir des fichiers du dépôt.
+>
+> Le bloc `exit_feedbacks` du baseline est volontairement « cassé » (il reproduit
+> la prod pré-correctif) : **ne pas le corriger sur place**, sinon l'entrée 26 ne
+> rejoue plus.
 
 ## Adopter le baseline sur la base de PROD EXISTANTE
 
@@ -147,27 +146,71 @@ une **branche jetable** (DB neuve, données de prod NON copiées) :
 > finale recommandée** (gratuite, locale) : `supabase db reset` sur une instance
 > de test, qui prouve que `baseline → migrations` reconstruit sans erreur.
 
+## Comment lire la prod sans MCP, sans psql et sans Docker
+
+Situation rencontrée en 06/2026 et 07/2026 : serveur MCP Supabase non connecté,
+`psql`/`pg_dump` absents du poste, Docker non lancé (donc `db dump` et `db pull`
+indisponibles). Trois lectures restent possibles, **en lecture seule** :
+
+```bash
+supabase gen types typescript --linked   # schéma distant complet
+supabase inspect db table-stats --linked # tailles + nb de lignes estimé
+supabase inspect db vacuum-stats --linked # lignes mortes, dernier vacuum/analyze
+```
+
+`gen types` est le plus utile : il donne colonnes, types, **nullabilité**
+(`Row`), **présence d'un DEFAULT** (une colonne `NOT NULL` qui apparaît
+optionnelle dans `Insert` a un DEFAULT) et les **clés étrangères**
+(`Relationships`).
+
+Complément côté PostgREST, avec la seule clé anon, pour sonder une colonne :
+
+```bash
+curl -s "$VITE_SUPABASE_URL/rest/v1/<table>?select=<colonne>&limit=1" -H "apikey: $VITE_SUPABASE_ANON_KEY"
+```
+
+`42703` = la colonne n'existe pas, `[]` = elle existe (toujours faire le
+contrôle négatif avec un nom bidon). Un filtre `?<colonne>=eq.xxx` renvoie
+`22P02` avec le **type** attendu, et `select=id,<table2>(id)` renvoie `PGRST200`
+s'il n'y a **pas de FK**.
+
+Ce qui reste **non lisible** par ces chemins : `pg_policies` (définitions des
+policies) et `pg_trigger`. Pour valider du SQL de RLS, la parade utilisée est
+**PGlite** (Postgres en WASM via npm) : on y rejoue les fichiers du dépôt et on
+compare les comportements avant/après par persona.
+
 ## Dérives « dashboard » détectées via advisors et régularisées
 
-Quatre policies présentes en prod mais dans **aucun** fichier SQL (ni racine, ni
-CLI) — confirmant l'hypothèse de l'audit. Régularisées dans le baseline :
+Policies et colonnes présentes en prod mais dans **aucun** fichier SQL (ni
+racine, ni CLI), confirmant l'hypothèse de l'audit. Régularisées dans le
+baseline :
 
 | Table | Constat live | Traitement dans le baseline |
 |---|---|---|
 | `users` | policy INSERT `Users can insert their own profile` (nécessaire à l'inscription) | **Ajoutée** : `WITH CHECK (auth.uid() = id)` (déduit de `AuthContext.signup`) |
 | `notifications` | `System can insert notifications` renommée `Authenticated can insert notifications` | **Nom aligné** (effet identique `WITH CHECK (true)`, voulu — cf. ci-dessous) |
-| `exit_feedbacks` | INSERT renommée `Users can insert their own feedback` | **Nom aligné** (`WITH CHECK (true)` ; table anonyme, l'app insère `{reason, comment}`) |
-| `exit_feedbacks` | SELECT renommée `Users can read their own feedback` | **Conservé coach-only** (définition live inconnue ; voir sécurité) |
+| `exit_feedbacks` | colonne `user_id` `uuid NOT NULL`, sans DEFAULT ni FK, dans aucun fichier SQL | **Déclarée** dans le baseline (état constaté), puis **supprimée** par l'entrée 28 |
+| `exit_feedbacks` | INSERT renommée `Users can insert their own feedback`, `WITH CHECK (auth.uid() = user_id)` | **Reflétée** dans le baseline, puis remplacée par l'entrée 28 |
+| `exit_feedbacks` | SELECT nommée `Users can read their own feedback`, `USING (auth.uid() = user_id)` | **Reflétée** dans le baseline, puis rendue aux coachs par l'entrée 28 |
 
 ## Points de sécurité à trancher (advisors)
 
-Relevés par `get_advisors(security)` — **non modifiés** ici (hors périmètre ou
+Relevés par `get_advisors(security)`. Le premier point est **tranché et corrigé**
+(entrée 28) ; les suivants restent **non modifiés** (hors périmètre ou
 by-design), à arbitrer :
 
-- **`exit_feedbacks` SELECT** : prod expose une policy `Users can read their own
-  feedback` de définition inconnue. La table est **anonyme** (pas de `user_id`) ;
-  si le `USING` live est permissif, les motifs de départ sont **sur-exposés**.
-  → dumper la définition (requête ci-dessous) et confirmer une lecture coach-only.
+- ~~**`exit_feedbacks` SELECT**~~ : **tranché le 2026-07-30**. La définition live
+  est `USING ((select auth.uid()) = user_id)`, posée par l'entrée 26 : elle n'est
+  **pas permissive**, les motifs de départ ne sont donc **pas** sur-exposés aux
+  membres. Le défaut réel était l'inverse et plus grave : la table portait un
+  `user_id NOT NULL` sans DEFAULT que l'app n'envoie pas
+  (`src/pages/athlete/Profile.tsx:149`), donc **chaque réponse à l'enquête était
+  rejetée en `42501` et perdue en silence** (l'erreur n'est pas testée avant la
+  suppression du compte) ; et la lecture étant limitée à l'auteur, dont le compte
+  venait d'être supprimé, **aucun coach ne pouvait lire quoi que ce soit**. En
+  prod, `exit_feedbacks` n'a **jamais contenu une seule ligne** (0 ligne,
+  0 ligne morte, jamais analysée). Corrigé par l'entrée 28 : table réellement
+  anonyme, insertion rendue à l'app, lecture rendue aux coachs.
 - **`notifications` INSERT `WITH CHECK (true)`** : permissif, mais **voulu** — le
   client insère des notifs pour d'autres users (nordik → propriétaire de séance).
   Durcir nécessiterait de revoir cette logique.
