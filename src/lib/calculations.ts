@@ -1,4 +1,4 @@
-import { getISOWeek } from 'date-fns';
+import { getISOWeek, getISOWeekYear } from 'date-fns';
 import type { PaceCalculation, AllureZone, AllureZoneConfig, RacePaceConfig, SessionBlock, Session, Group, SpecificPreparation } from '../types';
 
 export const DEFAULT_ALLURE_ZONES: Record<AllureZone, AllureZoneConfig> = {
@@ -91,6 +91,11 @@ export function estimateBlockEffortSeconds(block: SessionBlock, vma?: number, zo
     const avgPct = (pctMin + pctMax) / 2 / 100;
     const speedMs = (vma * avgPct) / 3.6;
     return Math.round(block.distance_meters / speedMs);
+  }
+  if (block.distance_meters) {
+    // Pas de VMA renseignee : meme allure de repli que estimateRestSeconds
+    // (2.5 m/s, ~9 km/h) pour eviter une duree a 0 sur un bloc distance.
+    return Math.round(block.distance_meters / 2.5);
   }
   return block.duration_seconds;
 }
@@ -261,13 +266,17 @@ export function getSessionCode(
 
   const sessionDate = new Date(session.date);
   const weekNum = getISOWeek(sessionDate);
-  const year = sessionDate.getFullYear();
+  // getISOWeekYear (et non getFullYear) : une semaine ISO peut chevaucher deux
+  // annees civiles (ex. 28/12/2026 et 01/01/2027 sont tous deux en S53 de
+  // l'annee ISO 2026), sans quoi des seances soeurs sont numerotees a tort
+  // comme seules dans leur semaine.
+  const year = getISOWeekYear(sessionDate);
 
   const siblings = allSessions
     .filter(s => {
       if (s.is_personal) return false;
       const d = new Date(s.date);
-      if (getISOWeek(d) !== weekNum || d.getFullYear() !== year) return false;
+      if (getISOWeek(d) !== weekNum || getISOWeekYear(d) !== year) return false;
       if (session.preparation_id) return s.preparation_id === session.preparation_id;
       if (session.group_id) return s.group_id === session.group_id;
       return !s.group_id && !s.preparation_id;
