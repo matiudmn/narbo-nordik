@@ -29,12 +29,11 @@
 -- fonctionne sans eux (seuls les emails / purges automatiques sont désactivés).
 --
 -- VÉRIFIÉ vs PROD (06/2026) via les advisors Supabase : 15 tables, FKs, index,
--- fonctions et 46 policies recoupés. 4 dérives « dashboard » (absentes de TOUT
+-- fonctions et 46 policies recoupés. Dérives « dashboard » (absentes de TOUT
 -- fichier) détectées et régularisées ici : policy d'inscription `users`,
--- renommage de la policy d'insert `notifications`, et `exit_feedbacks` (insert).
--- Détails + points de sécurité : supabase/MIGRATIONS.md. (Diff colonne-par-colonne
--- non récupérable — execute_sql / list_tables non autorisés en session ; recoupé
--- via src/types/index.ts + le comportement réel de l'app.)
+-- renommage de la policy d'insert `notifications`, et `exit_feedbacks` (insert,
+-- select ET colonne user_id, ces deux derniers points relus directement sur la
+-- prod le 30/07/2026). Détails + points de sécurité : supabase/MIGRATIONS.md.
 --
 -- IDEMPOTENT : sûr à ré-exécuter (IF NOT EXISTS / CREATE OR REPLACE /
 -- DROP POLICY IF EXISTS). Sur la base de PROD EXISTANTE : NE PAS l'exécuter,
@@ -168,12 +167,18 @@ CREATE TABLE IF NOT EXISTS session_nordiks (
   UNIQUE(session_id, user_id)
 );
 
--- Feedbacks de sortie (anonymes, enquête suppression de compte)
+-- Feedbacks de sortie (enquête suppression de compte).
+-- user_id : dérive « dashboard » LUE EN PROD le 2026-07-30 (uuid NOT NULL, SANS
+-- DEFAULT et SANS clé étrangère), absente de tout fichier SQL du dépôt. Déclarée
+-- ici pour que 20260730120000 (qui fait un ALTER POLICY sur cette colonne)
+-- rejoue lors d'un `db reset`. Elle est SUPPRIMÉE par 20260730150000, qui rend
+-- l'enquête réellement anonyme (cf. MIGRATIONS.md).
 CREATE TABLE IF NOT EXISTS exit_feedbacks (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   reason TEXT NOT NULL,
   comment TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  user_id UUID NOT NULL
 );
 
 -- Notifications in-app (ex phase2)
@@ -358,23 +363,25 @@ DROP POLICY IF EXISTS "Users can delete own session nordiks" ON session_nordiks;
 CREATE POLICY "Users can delete own session nordiks" ON session_nordiks
   FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
--- Policies : exit_feedbacks (enquête ANONYME de suppression de compte).
--- Dérive prod (constatée via advisors) :
---  * INSERT renommée "Users can insert their own feedback" — reflétée ici (effet
---    identique : l'app insère {reason, comment} SANS user_id ⇒ WITH CHECK (true)).
---  * SELECT renommée "Users can read their own feedback" — définition live NON
---    récupérable (execute_sql non autorisé). La table étant anonyme (pas de
---    user_id) et les motifs de départ sensibles, on CONSERVE une lecture
---    restreinte aux coachs (choix sûr). À VÉRIFIER en prod : si la définition
---    live est permissive, ces retours sont sur-exposés (cf. MIGRATIONS.md § sécu).
+-- Policies : exit_feedbacks (enquête de suppression de compte).
+-- Dérive prod « dashboard » LEVÉE le 2026-07-30 par lecture réelle de la prod
+-- (`supabase gen types typescript --linked` + sondes PostgREST). Le doute laissé
+-- ici auparavant est tranché : la prod porte bien une colonne user_id et une
+-- policy SELECT "Users can read their own feedback" (et NON "Coaches can read
+-- exit feedbacks"). Les deux sont reflétées à l'identique ci-dessous pour que
+-- 20260730120000 rejoue lors d'un `db reset`.
+-- Ces définitions sont l'ÉTAT CONSTATÉ, pas l'état souhaité : elles cassent
+-- l'enquête (l'app insère {reason, comment} sans user_id ⇒ rejet 42501, et un
+-- coach ne peut rien lire). 20260730150000 les remplace. NE PAS « corriger »
+-- ce bloc : il doit rester le reflet de la prod pré-correctif.
 DROP POLICY IF EXISTS "Authenticated users can insert exit feedbacks" ON exit_feedbacks;
 DROP POLICY IF EXISTS "Users can insert their own feedback" ON exit_feedbacks;
 CREATE POLICY "Users can insert their own feedback" ON exit_feedbacks
-  FOR INSERT TO authenticated WITH CHECK (true);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Coaches can read exit feedbacks" ON exit_feedbacks;
-CREATE POLICY "Coaches can read exit feedbacks" ON exit_feedbacks
-  FOR SELECT TO authenticated
-  USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'coach'));
+DROP POLICY IF EXISTS "Users can read their own feedback" ON exit_feedbacks;
+CREATE POLICY "Users can read their own feedback" ON exit_feedbacks
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 -- Policies : notifications (ex phase2)
 DROP POLICY IF EXISTS "Users see own notifications" ON notifications;
