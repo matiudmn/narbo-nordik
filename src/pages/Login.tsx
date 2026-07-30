@@ -91,12 +91,15 @@ export default function Login() {
                   <p className="text-sm text-neutral-500 mb-2">
                     Entre ton email pour recevoir un lien de réinitialisation.
                   </p>
+                  <label htmlFor="reset-email" className="sr-only">Email</label>
                   <input
+                    id="reset-email"
                     type="email" placeholder="Email" autoComplete="email"
                     value={email} onChange={e => setEmail(e.target.value)}
+                    aria-describedby={error ? 'reset-error' : undefined}
                     className={inputClass}
                   />
-                  {error && <p className="text-danger text-sm">{error}</p>}
+                  {error && <p id="reset-error" role="alert" className="text-danger text-sm">{error}</p>}
                   <Button type="submit" variant="accent" size="lg" fullWidth loading={loading}>
                     Envoyer le lien
                   </Button>
@@ -116,28 +119,40 @@ export default function Login() {
               <h2 className="text-lg font-bold text-neutral-900 mb-4">Créer mon compte</h2>
               <form onSubmit={handleSignup} className="space-y-3">
                 <div className="flex gap-2">
+                  <label htmlFor="signup-firstname" className="sr-only">Prénom</label>
                   <input
+                    id="signup-firstname"
                     type="text" placeholder="Prénom" required autoComplete="given-name"
                     value={firstname} onChange={e => setFirstname(e.target.value)}
+                    aria-describedby={error ? 'signup-error' : undefined}
                     className={`w-1/2 ${inputClass.replace('w-full ', '')}`}
                   />
+                  <label htmlFor="signup-lastname" className="sr-only">Nom</label>
                   <input
+                    id="signup-lastname"
                     type="text" placeholder="Nom" required autoComplete="family-name"
                     value={lastname} onChange={e => setLastname(e.target.value)}
+                    aria-describedby={error ? 'signup-error' : undefined}
                     className={`w-1/2 ${inputClass.replace('w-full ', '')}`}
                   />
                 </div>
+                <label htmlFor="signup-email" className="sr-only">Email</label>
                 <input
+                  id="signup-email"
                   type="email" placeholder="Email" required autoComplete="email"
                   value={email} onChange={e => setEmail(e.target.value)}
+                  aria-describedby={error ? 'signup-error' : undefined}
                   className={inputClass}
                 />
+                <label htmlFor="signup-password" className="sr-only">Mot de passe (minimum 6 caractères)</label>
                 <input
+                  id="signup-password"
                   type="password" placeholder="Mot de passe (min. 6 car.)" required autoComplete="new-password"
                   value={password} onChange={e => setPassword(e.target.value)}
+                  aria-describedby={error ? 'signup-error' : undefined}
                   className={inputClass}
                 />
-                {error && <p className="text-danger text-sm">{error}</p>}
+                {error && <p id="signup-error" role="alert" className="text-danger text-sm">{error}</p>}
                 <Button
                   type="submit"
                   variant="accent"
@@ -160,17 +175,23 @@ export default function Login() {
             <>
               <h2 className="text-lg font-bold text-neutral-900 mb-4">Connexion</h2>
               <form onSubmit={handleLogin} className="space-y-3">
+                <label htmlFor="login-email" className="sr-only">Email</label>
                 <input
+                  id="login-email"
                   type="email" placeholder="Email" autoComplete="email"
                   value={email} onChange={e => setEmail(e.target.value)}
+                  aria-describedby={error ? 'login-error' : undefined}
                   className={inputClass}
                 />
+                <label htmlFor="login-password" className="sr-only">Mot de passe</label>
                 <input
+                  id="login-password"
                   type="password" placeholder="Mot de passe" autoComplete="current-password"
                   value={password} onChange={e => setPassword(e.target.value)}
+                  aria-describedby={error ? 'login-error' : undefined}
                   className={inputClass}
                 />
-                {error && <p className="text-danger text-sm">{error}</p>}
+                {error && <p id="login-error" role="alert" className="text-danger text-sm">{error}</p>}
                 <Button type="submit" variant="accent" size="lg" fullWidth loading={loading}>
                   Se connecter
                 </Button>

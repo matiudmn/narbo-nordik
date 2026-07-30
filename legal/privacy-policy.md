@@ -1,7 +1,7 @@
 # Politique de confidentialité — Application Narbo Nordik
 
-**Dernière mise à jour** : 30 juillet 2026
-**Version** : 1.1
+**Dernière mise à jour** : 31 juillet 2026
+**Version** : 1.2
 
 ---
 
@@ -117,7 +117,8 @@ Elles sont traitées par les sous-traitants techniques suivants, choisis pour le
 | **Garmin Ltd.** (USA) | Fournisseur du service connecté Garmin Connect (sur votre demande, futur) | USA | Consentement explicite + CCT |
 | **Coros Wearables Inc.** (USA) | Fournisseur du service connecté Coros (sur votre demande, futur) | USA | Consentement explicite + CCT |
 | **Suunto Oy** (Finlande) | Fournisseur du service connecté Suunto (sur votre demande, futur) | UE | Consentement explicite |
-| **Anthropic PBC** (USA) | Fournisseur du modèle d'intelligence artificielle utilisé pour générer les analyses post-séance (sur votre consentement) | USA | CCT + traitement transitoire (les données envoyées ne sont pas conservées par Anthropic au-delà du temps de réponse, conformément à leurs engagements contractuels) |
+| **Mistral AI** (France, UE) | Fournisseur du modèle d'intelligence artificielle utilisé par défaut pour les traitements IA (résumé coach, OCR de capture, filtres de recherche) (sur votre consentement) | UE | Traitement au sein de l'Union européenne |
+| **Resend** (USA) | Envoi des emails transactionnels et des digests | USA | Encadrement par garanties appropriées (CCT) |
 
 Les transferts de données hors Union européenne sont encadrés par les **Clauses Contractuelles Types** adoptées par la Commission européenne (décision 2021/914/UE), ou par votre consentement explicite et éclairé pour les services tiers que vous choisissez de connecter.
 
@@ -218,6 +219,7 @@ Cette politique peut être amenée à évoluer, notamment pour refléter les év
 
 | Version | Date | Modifications |
 |---|---|---|
+| 1.2 | 2026-07-31 | Correction du tableau des sous-traitants (section 5) : le fournisseur IA effectivement utilisé par défaut pour les traitements IA (résumé coach, OCR de capture, filtres de recherche) est Mistral AI (France, UE), et non Anthropic PBC. Ajout de Resend (USA) comme sous-traitant pour l'envoi des emails transactionnels et des digests. |
 | 1.1 | 2026-07-30 | Retrait de l'intégration Strava, effective depuis le 6 juin 2026 : Strava n'est plus listé parmi les services connectés ni parmi les sous-traitants destinataires, et les données associées ont été supprimées. Les intégrations Garmin, Coros et Suunto sont désormais présentées comme à venir, aucune connexion à un service tiers n'étant disponible à ce jour. |
 | 1.0 | 2026-05-23 | Version initiale |
 

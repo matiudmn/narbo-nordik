@@ -56,25 +56,31 @@ export default function ResetPassword() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3">
+            <label htmlFor="reset-password" className="sr-only">Nouveau mot de passe (minimum 6 caractères)</label>
             <input
+              id="reset-password"
               type="password"
               placeholder="Nouveau mot de passe (min. 6 car.)"
               autoComplete="new-password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
+              aria-describedby={error ? 'reset-password-error' : undefined}
               className="w-full px-3 py-2.5 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
+            <label htmlFor="reset-password-confirm" className="sr-only">Confirmer le mot de passe</label>
             <input
+              id="reset-password-confirm"
               type="password"
               placeholder="Confirmer le mot de passe"
               autoComplete="new-password"
               value={confirm}
               onChange={e => setConfirm(e.target.value)}
               required
+              aria-describedby={error ? 'reset-password-error' : undefined}
               className="w-full px-3 py-2.5 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
-            {error && <p className="text-danger text-sm">{error}</p>}
+            {error && <p id="reset-password-error" role="alert" className="text-danger text-sm">{error}</p>}
             <Button
               type="submit"
               variant="primary"
