@@ -218,6 +218,7 @@ Cette politique peut être amenée à évoluer, notamment pour refléter les év
 
 | Version | Date | Modifications |
 |---|---|---|
+| 1.1 | 2026-07-30 | Retrait de l'intégration Strava, effective depuis le 6 juin 2026 : Strava n'est plus listé parmi les services connectés ni parmi les sous-traitants destinataires, et les données associées ont été supprimées. Les intégrations Garmin, Coros et Suunto sont désormais présentées comme à venir, aucune connexion à un service tiers n'étant disponible à ce jour. |
 | 1.0 | 2026-05-23 | Version initiale |
 
 ---
