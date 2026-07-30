@@ -72,12 +72,38 @@ export default defineConfig({
         // stays under control. Chart.js is only used on a few pages —
         // lazy loaded via React.lazy in App.tsx anyway, but vendor
         // chunking lets the browser cache it independently.
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'chart-vendor': ['chart.js', 'react-chartjs-2'],
-          'motion-vendor': ['motion'],
-          'supabase-vendor': ['@supabase/supabase-js'],
-          'date-vendor': ['date-fns'],
+        //
+        // manualChunks doit être une fonction (et non l'objet ci-dessus) :
+        // la forme objet ne capture que les paquets listés littéralement,
+        // donc les runtimes partagés comme react/jsx-runtime (importé par
+        // toutes les pages, y compris les pages à graphique) retombaient
+        // dans le premier chunk qui les référençait, ici chart-vendor —
+        // ce qui le tirait dans le chunk d'entrée au lieu de rester lazy.
+        // La fonction range explicitement tout module react-* dans
+        // react-vendor avant de tester chart.js, pour que chart-vendor ne
+        // contienne plus que chart.js/react-chartjs-2.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('react-router') ||
+            id.includes('/scheduler/')
+          ) {
+            return 'react-vendor'
+          }
+          if (id.includes('chart.js') || id.includes('react-chartjs-2')) {
+            return 'chart-vendor'
+          }
+          if (id.includes('/motion/') || id.includes('/motion-')) {
+            return 'motion-vendor'
+          }
+          if (id.includes('@supabase/supabase-js')) {
+            return 'supabase-vendor'
+          }
+          if (id.includes('date-fns')) {
+            return 'date-vendor'
+          }
         },
       },
     },

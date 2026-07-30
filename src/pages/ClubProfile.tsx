@@ -17,8 +17,10 @@ import { Bar, Doughnut } from 'react-chartjs-2';
 import { useData } from '../contexts/DataContext';
 import { SUPER_ADMIN_EMAIL } from '../lib/constants';
 import { Card, MetricTile } from '../components/ui';
+import { applyChartTheme } from '../lib/chartTheme';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
+applyChartTheme();
 
 function formatPace(vma: number): string {
   const pace = 60 / vma;
