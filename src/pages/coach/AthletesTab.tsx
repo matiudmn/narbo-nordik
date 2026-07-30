@@ -5,7 +5,7 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
-import { Button, Card } from '../../components/ui';
+import { Button, Card, useToast } from '../../components/ui';
 import type { Role } from '../../types';
 import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { matchTokens } from '../../lib/search';
@@ -14,6 +14,7 @@ import { filterSessionsForAthlete, getUserPrepIds } from '../../lib/athleteSessi
 export default function AthletesTab() {
   const { users, groups, validations, sessions, preparations, userPreparations, updateUserVma, updateUserLicense, updateUserGroup, addUser, deleteUser } = useData();
   const { isSuperAdmin, impersonate } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -33,6 +34,7 @@ export default function AthletesTab() {
   const [shareInfo, setShareInfo] = useState<{ name: string; email: string; tempPassword: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [addingAthlete, setAddingAthlete] = useState(false);
+  const [submittingVma, setSubmittingVma] = useState(false);
   const [addError, setAddError] = useState('');
 
   const [newFirstname, setNewFirstname] = useState('');
@@ -103,9 +105,16 @@ export default function AthletesTab() {
     return Math.round((done / eligible.length) * 100);
   };
 
-  const handleVmaEdit = (userId: string) => {
+  const handleVmaEdit = async (userId: string) => {
+    if (submittingVma) return;
     if (vmaValue && !isNaN(parseFloat(vmaValue))) {
-      updateUserVma(userId, parseFloat(vmaValue), vmaReason.trim() || undefined);
+      setSubmittingVma(true);
+      const res = await updateUserVma(userId, parseFloat(vmaValue), vmaReason.trim() || undefined);
+      setSubmittingVma(false);
+      if (res.error) {
+        toast.error("Échec de la mise à jour de la VMA.");
+        return;
+      }
     }
     closeVmaEditor();
   };
@@ -381,11 +390,12 @@ export default function AthletesTab() {
                         type="number" step="0.5" inputMode="decimal"
                         value={vmaValue}
                         onChange={e => setVmaValue(e.target.value)}
-                        className="w-16 px-2 py-1 border border-primary rounded-lg text-center text-sm focus:outline-none"
+                        disabled={submittingVma}
+                        className="w-16 px-2 py-1 border border-primary rounded-lg text-center text-sm focus:outline-none disabled:opacity-60"
                         autoFocus
                       />
-                      <button onClick={() => handleVmaEdit(athlete.id)} className="p-1 text-green-600 hover:text-green-700"><Check size={14} /></button>
-                      <button onClick={closeVmaEditor} className="p-1 text-gray-400 hover:text-gray-600"><X size={14} /></button>
+                      <button onClick={() => handleVmaEdit(athlete.id)} disabled={submittingVma} className="p-1 text-green-600 hover:text-green-700 disabled:opacity-60"><Check size={14} /></button>
+                      <button onClick={closeVmaEditor} disabled={submittingVma} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-60"><X size={14} /></button>
                     </div>
                   ) : (
                     <button
@@ -435,8 +445,9 @@ export default function AthletesTab() {
                     value={vmaReason}
                     onChange={e => setVmaReason(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleVmaEdit(athlete.id)}
+                    disabled={submittingVma}
                     placeholder="Raison (test piste, estimation...)"
-                    className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                    className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:opacity-60"
                   />
                 </div>
               )}

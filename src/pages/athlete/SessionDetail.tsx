@@ -45,6 +45,7 @@ export default function SessionDetail() {
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
   const [ocrFilled, setOcrFilled] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'];
@@ -112,8 +113,10 @@ export default function SessionDetail() {
     : null;
 
   const handleValidate = async () => {
-    if (!user) return;
+    if (!user || isSubmitting) return;
+    setIsSubmitting(true);
     const res = await validateSession(session.id, user.id, 'done', feedback || undefined, attachedFile || undefined, objectiveReached || undefined, sensations || undefined, buildMetrics());
+    setIsSubmitting(false);
     if ('error' in res) {
       toast.error("Échec de l'enregistrement. Vérifie tes chiffres.");
       return;
@@ -127,13 +130,15 @@ export default function SessionDetail() {
   };
 
   const handleEditSave = async () => {
-    if (!validation) return;
+    if (!validation || isSubmitting) return;
+    setIsSubmitting(true);
     const res = await updateValidation(validation.id, {
       feedback: feedback || undefined,
       objective_reached: objectiveReached,
       sensations: sensations,
       metrics: buildMetrics(true),
     }, attachedFile || undefined);
+    setIsSubmitting(false);
     if (res?.error) {
       toast.error('Échec de la mise à jour. Vérifie tes chiffres.');
       return;
@@ -722,15 +727,17 @@ export default function SessionDetail() {
                         resetMetrics();
                         removeFile();
                       }}
-                      className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium"
+                      disabled={isSubmitting}
+                      className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium disabled:opacity-60"
                     >
                       Annuler
                     </button>
                     <button
                       onClick={isEditing ? handleEditSave : handleValidate}
-                      className="flex-1 bg-accent hover:bg-accent-light text-white font-semibold py-2.5 rounded-xl transition-colors"
+                      disabled={isSubmitting}
+                      className="flex-1 bg-accent hover:bg-accent-light text-white font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-60"
                     >
-                      Enregistrer
+                      {isSubmitting ? 'Enregistrement…' : 'Enregistrer'}
                     </button>
                   </div>
                 </div>

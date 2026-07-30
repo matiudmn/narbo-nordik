@@ -200,40 +200,46 @@ export default function SessionEditor() {
     }
   };
 
-  const handleSubmit = () => {
-    if (!title || !date || !user) return;
-    if (editingSessionId) {
-      updateSession(editingSessionId, {
-        title,
-        date: new Date(date).toISOString(),
-        session_type: sessionType,
-        terrain_options: terrainOptions,
-        group_id: preparationId ? null : (groupId || null),
-        preparation_id: preparationId || null,
-        location: location || null,
-        description: description || null,
-        session_rpe: sessionRpe ? parseInt(sessionRpe) : null,
-        blocks,
-      });
-    } else {
-      addSession({
-        title,
-        date: new Date(date).toISOString(),
-        session_type: sessionType,
-        terrain_options: terrainOptions,
-        group_id: preparationId ? null : (groupId || null),
-        preparation_id: preparationId || null,
-        location: location || null,
-        location_url: null,
-        description: description || null,
-        session_rpe: sessionRpe ? parseInt(sessionRpe) : null,
-        target_distance: null,
-        vma_percent_min: null,
-        vma_percent_max: null,
-        created_by: user.id,
-        is_personal: false,
-        blocks,
-      });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!title || !date || !user || submitting) return;
+    setSubmitting(true);
+    const res = editingSessionId
+      ? await updateSession(editingSessionId, {
+          title,
+          date: new Date(date).toISOString(),
+          session_type: sessionType,
+          terrain_options: terrainOptions,
+          group_id: preparationId ? null : (groupId || null),
+          preparation_id: preparationId || null,
+          location: location || null,
+          description: description || null,
+          session_rpe: sessionRpe ? parseInt(sessionRpe) : null,
+          blocks,
+        })
+      : await addSession({
+          title,
+          date: new Date(date).toISOString(),
+          session_type: sessionType,
+          terrain_options: terrainOptions,
+          group_id: preparationId ? null : (groupId || null),
+          preparation_id: preparationId || null,
+          location: location || null,
+          location_url: null,
+          description: description || null,
+          session_rpe: sessionRpe ? parseInt(sessionRpe) : null,
+          target_distance: null,
+          vma_percent_min: null,
+          vma_percent_max: null,
+          created_by: user.id,
+          is_personal: false,
+          blocks,
+        });
+    setSubmitting(false);
+    if ('error' in res && res.error) {
+      toast.error(`Échec de l'enregistrement : ${res.error}`);
+      return;
     }
     clearDraft();
     resetForm();
@@ -570,7 +576,8 @@ export default function SessionEditor() {
             <Button
               variant="primary"
               fullWidth
-              disabled={!title || !date}
+              disabled={!title || !date || submitting}
+              loading={submitting}
               onClick={handleSubmit}
             >
               {editingSessionId ? 'Enregistrer les modifications' : 'Publier la séance au club'}

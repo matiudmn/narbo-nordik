@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Card } from '../../components/ui';
+import { Card, useToast } from '../../components/ui';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity, FileText } from 'lucide-react';
@@ -59,6 +59,7 @@ const VALID_TABS = ['infos', 'sessions', 'account'] as const;
  */
 export default function Profile() {
   const { user, refreshUser } = useAuth();
+  const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get('tab') ?? 'infos';
   const tab: ProfileTab = (VALID_TABS as readonly string[]).includes(rawTab)
@@ -92,6 +93,7 @@ export default function Profile() {
   const [editingVma, setEditingVma] = useState(false);
   const [vmaValue, setVmaValue] = useState('');
   const [vmaReason, setVmaReason] = useState('');
+  const [submittingVma, setSubmittingVma] = useState(false);
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -376,25 +378,34 @@ export default function Profile() {
                       max="30"
                       value={vmaValue}
                       onChange={e => setVmaValue(e.target.value)}
-                      className="w-20 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      disabled={submittingVma}
+                      className="w-20 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
                       autoFocus
                     />
                     <span className="text-xs text-gray-400">km/h</span>
                     <button
                       onClick={async () => {
+                        if (submittingVma) return;
                         const v = parseFloat(vmaValue);
                         if (v >= 5 && v <= 30) {
-                          await updateUserVma(user.id, v, vmaReason.trim() || undefined);
+                          setSubmittingVma(true);
+                          const res = await updateUserVma(user.id, v, vmaReason.trim() || undefined);
+                          setSubmittingVma(false);
+                          if (res.error) {
+                            toast.error("Échec de la mise à jour de la VMA.");
+                            return;
+                          }
                           await refreshUser();
                           setEditingVma(false);
                           setVmaReason('');
                         }
                       }}
-                      className="p-1 text-green-600 hover:text-green-700"
+                      disabled={submittingVma}
+                      className="p-1 text-green-600 hover:text-green-700 disabled:opacity-60"
                     >
                       <Check size={16} />
                     </button>
-                    <button onClick={() => { setEditingVma(false); setVmaReason(''); }} className="p-1 text-gray-400 hover:text-gray-600">
+                    <button onClick={() => { setEditingVma(false); setVmaReason(''); }} disabled={submittingVma} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-60">
                       <X size={16} />
                     </button>
                   </div>
@@ -402,8 +413,9 @@ export default function Profile() {
                     type="text"
                     value={vmaReason}
                     onChange={e => setVmaReason(e.target.value)}
+                    disabled={submittingVma}
                     placeholder="Raison (test piste, estimation...)"
-                    className="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    className="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
                   />
                 </div>
               ) : (
