@@ -46,7 +46,9 @@ export interface User {
   license_number: string | null;
   photo_url: string | null;
   is_public: boolean;
-  is_super_admin: boolean;
+  // Optionnel : la colonne n'existe qu'apres la migration 20260731081000 ;
+  // le front doit tolerer son absence (undefined => pas super-admin).
+  is_super_admin?: boolean;
   notification_preferences: NotificationPreferences;
   created_at: string;
 }
