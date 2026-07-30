@@ -26,7 +26,7 @@ type Zones = Record<string, AllureZoneConfig>;
 
 const C = {
   ink: '#111827', sub: '#6b7280', faint: '#9ca3af', line: '#e5e7eb',
-  accent: '#6CCBE6', primary: '#0a0a0a', white: '#ffffff',
+  accent: '#6CCBE6', primary: '#000000', white: '#ffffff',
 };
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 
@@ -37,27 +37,36 @@ function metaLine(session: Session): string {
   return parts.join('  ·  ');
 }
 
-interface Alloc { label: string; isPrep: boolean }
+type AllocKind = 'prep' | 'group' | 'tous';
+interface Alloc { label: string; kind: AllocKind }
+
+// Couleurs alignees sur les tokens warning-*/info-*/neutral-* de src/index.css
+// (mêmes 3 etats que les pastilles de SessionEditor.tsx : prepa=ambre, groupe=bleu, Tous=gris).
+const ALLOC_COLORS: Record<AllocKind, { background: string; color: string }> = {
+  prep: { background: '#fef3c7', color: '#b45309' },
+  group: { background: '#dbeafe', color: '#1d4ed8' },
+  tous: { background: '#f1f5f9', color: '#475569' },
+};
 
 // A qui la seance est allouee : prepa specifique > groupe > tous.
 function allocation(session: Session, groups: Group[], preparations: SpecificPreparation[]): Alloc {
   if (session.preparation_id) {
     const p = preparations.find(x => x.id === session.preparation_id);
-    if (p) return { label: p.name, isPrep: true };
+    if (p) return { label: p.name, kind: 'prep' };
   }
   if (session.group_id) {
     const g = groups.find(x => x.id === session.group_id);
-    if (g) return { label: g.name, isPrep: false };
+    if (g) return { label: g.name, kind: 'group' };
   }
-  return { label: 'Tous', isPrep: false };
+  return { label: 'Tous', kind: 'tous' };
 }
 
 function AllocPill({ alloc }: { alloc: Alloc }) {
+  const { background, color } = ALLOC_COLORS[alloc.kind];
   return (
     <span style={{
       display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 999,
-      background: alloc.isPrep ? '#e0f2fe' : '#f1f5f9',
-      color: alloc.isPrep ? '#075985' : '#475569',
+      background, color,
       marginRight: 6, verticalAlign: 'middle',
     }}>
       {alloc.label}

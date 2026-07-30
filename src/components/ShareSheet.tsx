@@ -17,15 +17,18 @@ interface ShareSheetProps {
   filenameBase: string;
   shareTitle: string;
   shareText: string;
+  /** Portee de l'export (ex. "Toutes", nom du groupe/prepa) affichee avant diffusion. */
+  scopeLabel?: string;
   children: (ref: Ref<HTMLDivElement>) => ReactNode;
 }
 
-export default function ShareSheet({ open, onClose, filenameBase, shareTitle, shareText, children }: ShareSheetProps) {
+export default function ShareSheet({ open, onClose, filenameBase, shareTitle, shareText, scopeLabel, children }: ShareSheetProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [pngUrl, setPngUrl] = useState<string | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [status, setStatus] = useState<'generating' | 'ready' | 'error'>('generating');
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   // Capture a l'ouverture (apres rendu de la carte + chargement du logo).
   useEffect(() => {
@@ -61,9 +64,16 @@ export default function ShareSheet({ open, onClose, filenameBase, shareTitle, sh
   const pngName = `${filenameBase}.png`;
 
   const handleShare = async () => {
-    if (!blob) return;
-    const ok = await shareImage(blob, pngName, { title: shareTitle, text: shareText });
-    if (!ok) downloadBlob(blob, pngName);
+    if (!blob || sharing) return;
+    setSharing(true);
+    try {
+      const outcome = await shareImage(blob, pngName, { title: shareTitle, text: shareText });
+      // 'cancelled' : l'utilisateur a ferme la feuille de partage, on ne fait rien.
+      // 'unavailable' : l'API a echoue reellement, on retombe sur le telechargement.
+      if (outcome === 'unavailable') downloadBlob(blob, pngName);
+    } finally {
+      setSharing(false);
+    }
   };
   const handlePng = () => { if (blob) downloadBlob(blob, pngName); };
   const handlePdf = async () => {
@@ -83,14 +93,17 @@ export default function ShareSheet({ open, onClose, filenameBase, shareTitle, sh
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="absolute inset-x-0 bottom-0 lg:inset-0 lg:m-auto lg:h-fit lg:max-w-md bg-white rounded-t-2xl lg:rounded-2xl p-4 max-h-[90vh] overflow-y-auto safe-bottom">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-gray-900">Partager</h2>
-          <button onClick={onClose} aria-label="Fermer" className="flex items-center justify-center w-9 h-9 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+          <h2 className="font-bold text-neutral-900">Partager</h2>
+          <button onClick={onClose} aria-label="Fermer" className="flex items-center justify-center w-9 h-9 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg">
             <X size={18} />
           </button>
         </div>
+        {scopeLabel && (
+          <p className="text-xs text-neutral-500 -mt-2 mb-3">Portée : <span className="font-medium">{scopeLabel}</span></p>
+        )}
 
         {status === 'generating' && (
-          <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500" role="status">
+          <div className="flex items-center justify-center gap-2 py-10 text-sm text-neutral-500" role="status">
             <Loader2 size={18} className="animate-spin text-accent" /> Préparation de l'image...
           </div>
         )}
@@ -98,12 +111,12 @@ export default function ShareSheet({ open, onClose, filenameBase, shareTitle, sh
           <p className="py-8 text-center text-sm text-danger">Impossible de générer l'image. Réessaie.</p>
         )}
         {pngUrl && (
-          <img src={pngUrl} alt="Aperçu du partage" className="w-full rounded-lg border border-gray-200 mb-3" />
+          <img src={pngUrl} alt="Aperçu du partage" className="w-full rounded-lg border border-neutral-200 mb-3" />
         )}
 
         <div className="space-y-2">
           {canShare && (
-            <Button variant="accent" fullWidth disabled={!blob} leftIcon={<Share2 size={16} aria-hidden="true" />} onClick={handleShare}>
+            <Button variant="accent" fullWidth disabled={!blob || sharing} loading={sharing} leftIcon={!sharing ? <Share2 size={16} aria-hidden="true" /> : undefined} onClick={handleShare}>
               Partager (WhatsApp, etc.)
             </Button>
           )}
