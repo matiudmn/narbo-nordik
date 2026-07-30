@@ -66,15 +66,22 @@ export function canShareImage(blob: Blob): boolean {
   }
 }
 
-/** Partage natif d'une image. Renvoie true si partagee, false si impossible/annulé. */
-export async function shareImage(blob: Blob, filename: string, opts: { title?: string; text?: string }): Promise<boolean> {
-  if (!canShareImage(blob)) return false;
+export type ShareOutcome = 'shared' | 'cancelled' | 'unavailable';
+
+/**
+ * Partage natif d'une image. 'shared' si envoye, 'cancelled' si l'utilisateur
+ * annule la feuille de partage (ne doit declencher aucun fallback), 'unavailable'
+ * si l'API est absente ou echoue reellement (fallback telechargement).
+ */
+export async function shareImage(blob: Blob, filename: string, opts: { title?: string; text?: string }): Promise<ShareOutcome> {
+  if (!canShareImage(blob)) return 'unavailable';
   const file = new File([blob], filename, { type: 'image/png' });
   try {
     await navigator.share({ files: [file], title: opts.title, text: opts.text });
-    return true;
-  } catch {
-    return false; // annulation utilisateur ou echec
+    return 'shared';
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') return 'cancelled';
+    return 'unavailable';
   }
 }
 

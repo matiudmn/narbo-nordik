@@ -26,6 +26,7 @@ export default function ShareSheet({ open, onClose, filenameBase, shareTitle, sh
   const [blob, setBlob] = useState<Blob | null>(null);
   const [status, setStatus] = useState<'generating' | 'ready' | 'error'>('generating');
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   // Capture a l'ouverture (apres rendu de la carte + chargement du logo).
   useEffect(() => {
@@ -61,9 +62,16 @@ export default function ShareSheet({ open, onClose, filenameBase, shareTitle, sh
   const pngName = `${filenameBase}.png`;
 
   const handleShare = async () => {
-    if (!blob) return;
-    const ok = await shareImage(blob, pngName, { title: shareTitle, text: shareText });
-    if (!ok) downloadBlob(blob, pngName);
+    if (!blob || sharing) return;
+    setSharing(true);
+    try {
+      const outcome = await shareImage(blob, pngName, { title: shareTitle, text: shareText });
+      // 'cancelled' : l'utilisateur a ferme la feuille de partage, on ne fait rien.
+      // 'unavailable' : l'API a echoue reellement, on retombe sur le telechargement.
+      if (outcome === 'unavailable') downloadBlob(blob, pngName);
+    } finally {
+      setSharing(false);
+    }
   };
   const handlePng = () => { if (blob) downloadBlob(blob, pngName); };
   const handlePdf = async () => {
@@ -103,7 +111,7 @@ export default function ShareSheet({ open, onClose, filenameBase, shareTitle, sh
 
         <div className="space-y-2">
           {canShare && (
-            <Button variant="accent" fullWidth disabled={!blob} leftIcon={<Share2 size={16} aria-hidden="true" />} onClick={handleShare}>
+            <Button variant="accent" fullWidth disabled={!blob || sharing} loading={sharing} leftIcon={!sharing ? <Share2 size={16} aria-hidden="true" /> : undefined} onClick={handleShare}>
               Partager (WhatsApp, etc.)
             </Button>
           )}
