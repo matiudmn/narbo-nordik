@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -104,14 +104,14 @@ export default function SessionEditor() {
     ];
   }, [weekSessions, groups, preparations]);
 
-  // Reinitialise le filtre a chaque changement de semaine (les audiences disponibles changent).
-  useEffect(() => { setWeekAudience('all'); }, [weekOffset]);
+  // Le filtre choisi peut ne plus exister apres un changement de semaine : retombe sur "Toutes".
+  const effectiveWeekAudience = weekAudiences.some(a => a.value === weekAudience) ? weekAudience : 'all';
 
   const weekShareSessions = useMemo(() => {
-    if (weekAudience.startsWith('group:')) return weekSessions.filter(s => s.group_id === weekAudience.slice(6));
-    if (weekAudience.startsWith('prep:')) return weekSessions.filter(s => s.preparation_id === weekAudience.slice(5));
+    if (effectiveWeekAudience.startsWith('group:')) return weekSessions.filter(s => s.group_id === effectiveWeekAudience.slice(6));
+    if (effectiveWeekAudience.startsWith('prep:')) return weekSessions.filter(s => s.preparation_id === effectiveWeekAudience.slice(5));
     return weekSessions;
-  }, [weekSessions, weekAudience]);
+  }, [weekSessions, effectiveWeekAudience]);
 
   const allMembers = users.filter(u => u.vma);
   const previewUser = previewUserId ? allMembers.find(u => u.id === previewUserId) : null;
@@ -679,10 +679,10 @@ export default function SessionEditor() {
         <div className="mb-3 space-y-2">
           {weekAudiences.length > 1 && (
             <select
-              value={weekAudience}
+              value={effectiveWeekAudience}
               onChange={e => setWeekAudience(e.target.value)}
               aria-label="Choisir l'audience à partager"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               {weekAudiences.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
             </select>
@@ -698,7 +698,7 @@ export default function SessionEditor() {
         filenameBase={`narbo-nordik-semaine-${format(weekStart, 'yyyy-MM-dd')}`}
         shareTitle="Programme de la semaine"
         shareText={`Programme Narbo Nordik, semaine du ${format(weekStart, 'd', { locale: fr })} au ${format(weekEnd, 'd MMMM', { locale: fr })}. ${window.location.origin}`}
-        scopeLabel={weekAudiences.find(a => a.value === weekAudience)?.label ?? 'Toutes'}
+        scopeLabel={weekAudiences.find(a => a.value === effectiveWeekAudience)?.label ?? 'Toutes'}
       >
         {ref => <WeekShareCard ref={ref} weekStart={weekStart} weekEnd={weekEnd} sessions={weekShareSessions} zones={allureZones} groups={groups} preparations={preparations} />}
       </ShareSheet>
