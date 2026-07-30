@@ -103,7 +103,7 @@ describe('getSessionCode (numerotation ISO week/year)', () => {
   });
 
   it('passage semaine 52/53 -> semaine 1 : deux seances de semaines ISO differentes ne sont jamais groupees ensemble', () => {
-    // 30/12/2025 (mercredi) = semaine ISO 1 de l'annee ISO 2026 (getFullYear() = 2025 !).
+    // 30/12/2025 (mardi) = semaine ISO 1 de l'annee ISO 2026 (getFullYear() = 2025 !).
     // 05/01/2026 (lundi) = semaine ISO 2 de 2026.
     const s1 = mkSession({ id: 'a', date: '2025-12-30' });
     const s2 = mkSession({ id: 'b', date: '2026-01-05' });
