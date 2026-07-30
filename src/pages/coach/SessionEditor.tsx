@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -45,6 +45,7 @@ export default function SessionEditor() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [shareWeekOpen, setShareWeekOpen] = useState(false);
+  const [weekAudience, setWeekAudience] = useState('all');
   const [showSourceModal, setShowSourceModal] = useState(false);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
@@ -91,6 +92,26 @@ export default function SessionEditor() {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     [sessions, weekStart, weekEnd]
   );
+
+  // Audiences reellement presentes cette semaine (pour ne proposer que des choix pertinents).
+  const weekAudiences = useMemo(() => {
+    const groupIds = new Set(weekSessions.filter(s => s.group_id).map(s => s.group_id as string));
+    const prepIds = new Set(weekSessions.filter(s => s.preparation_id).map(s => s.preparation_id as string));
+    return [
+      { value: 'all', label: 'Toutes' },
+      ...groups.filter(g => groupIds.has(g.id)).map(g => ({ value: `group:${g.id}`, label: g.name })),
+      ...preparations.filter(p => prepIds.has(p.id)).map(p => ({ value: `prep:${p.id}`, label: p.name })),
+    ];
+  }, [weekSessions, groups, preparations]);
+
+  // Reinitialise le filtre a chaque changement de semaine (les audiences disponibles changent).
+  useEffect(() => { setWeekAudience('all'); }, [weekOffset]);
+
+  const weekShareSessions = useMemo(() => {
+    if (weekAudience.startsWith('group:')) return weekSessions.filter(s => s.group_id === weekAudience.slice(6));
+    if (weekAudience.startsWith('prep:')) return weekSessions.filter(s => s.preparation_id === weekAudience.slice(5));
+    return weekSessions;
+  }, [weekSessions, weekAudience]);
 
   const allMembers = users.filter(u => u.vma);
   const previewUser = previewUserId ? allMembers.find(u => u.id === previewUserId) : null;
@@ -655,7 +676,17 @@ export default function SessionEditor() {
 
       {/* Partage de la semaine (image PNG / PDF pour le groupe WhatsApp) */}
       {weekSessions.length > 0 && (
-        <div className="mb-3">
+        <div className="mb-3 space-y-2">
+          {weekAudiences.length > 1 && (
+            <select
+              value={weekAudience}
+              onChange={e => setWeekAudience(e.target.value)}
+              aria-label="Choisir l'audience à partager"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              {weekAudiences.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+            </select>
+          )}
           <Button variant="secondary" fullWidth size="sm" leftIcon={<Share2 size={16} aria-hidden="true" />} onClick={() => setShareWeekOpen(true)}>
             Partager la semaine
           </Button>
@@ -667,8 +698,9 @@ export default function SessionEditor() {
         filenameBase={`narbo-nordik-semaine-${format(weekStart, 'yyyy-MM-dd')}`}
         shareTitle="Programme de la semaine"
         shareText={`Programme Narbo Nordik, semaine du ${format(weekStart, 'd', { locale: fr })} au ${format(weekEnd, 'd MMMM', { locale: fr })}. ${window.location.origin}`}
+        scopeLabel={weekAudiences.find(a => a.value === weekAudience)?.label ?? 'Toutes'}
       >
-        {ref => <WeekShareCard ref={ref} weekStart={weekStart} weekEnd={weekEnd} sessions={weekSessions} zones={allureZones} groups={groups} preparations={preparations} />}
+        {ref => <WeekShareCard ref={ref} weekStart={weekStart} weekEnd={weekEnd} sessions={weekShareSessions} zones={allureZones} groups={groups} preparations={preparations} />}
       </ShareSheet>
 
       {/* Sessions list */}

@@ -17,10 +17,12 @@ interface ShareSheetProps {
   filenameBase: string;
   shareTitle: string;
   shareText: string;
+  /** Portee de l'export (ex. "Toutes", nom du groupe/prepa) affichee avant diffusion. */
+  scopeLabel?: string;
   children: (ref: Ref<HTMLDivElement>) => ReactNode;
 }
 
-export default function ShareSheet({ open, onClose, filenameBase, shareTitle, shareText, children }: ShareSheetProps) {
+export default function ShareSheet({ open, onClose, filenameBase, shareTitle, shareText, scopeLabel, children }: ShareSheetProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [pngUrl, setPngUrl] = useState<string | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
@@ -96,6 +98,9 @@ export default function ShareSheet({ open, onClose, filenameBase, shareTitle, sh
             <X size={18} />
           </button>
         </div>
+        {scopeLabel && (
+          <p className="text-xs text-gray-500 -mt-2 mb-3">Portée : <span className="font-medium">{scopeLabel}</span></p>
+        )}
 
         {status === 'generating' && (
           <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500" role="status">
