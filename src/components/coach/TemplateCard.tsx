@@ -57,7 +57,7 @@ export function TemplateCard({ template, onUse, onDelete }: TemplateCardProps) {
             {totalSeconds > 0 && (
               <span className="inline-flex items-center gap-1">
                 <Clock size={12} aria-hidden="true" />
-                {formatSeconds(totalSeconds)}
+                {template.blocks.some(b => b.distance_meters) ? '~' : ''}{formatSeconds(totalSeconds)}
               </span>
             )}
             <span className="inline-flex items-center gap-1">
