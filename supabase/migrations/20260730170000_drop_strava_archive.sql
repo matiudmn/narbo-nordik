@@ -1,0 +1,45 @@
+-- ============================================================================
+-- Suppression définitive de l'archive Strava (DESTRUCTIF, IRRÉVERSIBLE)
+-- ----------------------------------------------------------------------------
+-- Clôt la décision RGPD laissée ouverte par 20260730140000, sur go explicite du
+-- 2026-07-30.
+--
+-- CE QUI EST SUPPRIMÉ
+--   public._archive_strava_activities : copie brute de strava_activities faite
+--   par 20260606140000 juste avant le retrait total de Strava (20260606150000).
+--
+-- POURQUOI
+--   La finalité du traitement a disparu le 2026-06-06 avec l'intégration
+--   elle-même : plus d'OAuth, plus de synchronisation, plus de table
+--   strava_connections, plus de colonne users.strava_id. Conserver des données
+--   personnelles (user_id, fréquence cardiaque, device, raw_payload contenant
+--   les traces GPS) sans finalité ni durée de conservation définie est
+--   contraire aux principes de limitation des finalités et de limitation de la
+--   conservation (RGPD art. 5.1.b et 5.1.e). L'archive était un filet de
+--   sécurité pour la migration de juin, pas une donnée d'exploitation.
+--
+-- CE QUI N'EST PAS PERDU (état relevé en prod le 2026-07-30 avant suppression)
+--   59 activités, d'UN SEUL athlète, du 2026-02-14 au 2026-05-28.
+--   58 des 59 étaient déjà matchées à une séance, et leurs métriques utiles
+--   (distance, durée, dénivelé, FC, cadence) ont été rapatriées dans
+--   session_validations par le backfill 20260606140000, qui reste la source
+--   vivante. La seule activité non matchée n'a jamais été exploitée par
+--   l'application. L'athlète conserve par ailleurs l'intégralité de ces
+--   activités dans son propre compte Strava : la suppression ne le prive de rien.
+--
+-- EFFETS DE BORD : aucun.
+--   Aucune référence dans src/ ni dans les Edge Functions (vérifié), aucune vue
+--   ni contrainte dépendante, aucun GRANT anon/authenticated (retirés par
+--   20260606160000). Les objets créés sur cette table par 20260730140000
+--   (policy RESTRICTIVE « Strava archive is deny-all » et clé primaire
+--   _archive_strava_activities_pkey) disparaissent avec elle : c'est attendu et
+--   documenté dans cette migration-là.
+--   Effet advisors : plus aucune entrée pour cette table, ce qui rend caduque
+--   la section 3 de 20260730140000 comme prévu.
+--
+-- Pas de CASCADE : si un objet dépendant apparaissait malgré la vérification,
+-- on préfère que la migration échoue bruyamment plutôt que de supprimer en
+-- silence quelque chose d'imprévu.
+-- ============================================================================
+
+DROP TABLE IF EXISTS public._archive_strava_activities;

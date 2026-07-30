@@ -1,7 +1,7 @@
 # Politique de confidentialité — Application Narbo Nordik
 
-**Dernière mise à jour** : 23 mai 2026
-**Version** : 1.0
+**Dernière mise à jour** : 30 juillet 2026
+**Version** : 1.1
 
 ---
 
@@ -59,16 +59,17 @@ Pour toute question relative au traitement de vos données, vous pouvez écrire 
 
 ### 3.3 Données collectées via des services tiers (avec votre consentement explicite)
 
-Si vous choisissez de connecter votre montre ou votre compte sportif à l'Application, nous récupérons depuis ces services les données suivantes :
+> **À ce jour, aucune connexion à un service tiers n'est disponible dans l'Application, et aucune donnée n'est récupérée par ce biais.** L'intégration Strava, active jusqu'au 6 juin 2026, a été retirée : les données associées ont été supprimées et Strava n'est plus destinataire d'aucune donnée. Les intégrations ci-dessous sont envisagées ; cette section sera mise à jour lors de leur mise en service effective.
+
+Si vous choisissez à l'avenir de connecter votre montre ou votre compte sportif à l'Application, nous récupérerons depuis ces services les données suivantes :
 
 | Service connecté | Données récupérées | Statut |
 |---|---|---|
-| **Strava** | Activités sportives (date, durée, distance, allure, FC moyenne et max, dénivelé, calories, identifiant athlète), zones de fréquence cardiaque, statistiques de cumul | En production |
 | **Coros** | Activités sportives + métriques avancées (puissance, training load, VO2max estimé) | À venir |
 | **Garmin Connect** | Activités sportives + métriques avancées (VO2max, training load, recovery time) | À venir, sous réserve d'approbation Garmin |
 | **Suunto** | Activités sportives | À venir |
 
-La connexion à ces services est **toujours optionnelle** et requiert votre **autorisation explicite** via la procédure officielle d'authentification (OAuth) propre à chaque prestataire. Vous pouvez révoquer cette autorisation à tout moment depuis votre profil ou directement chez le prestataire.
+La connexion à ces services sera **toujours optionnelle** et requerra votre **autorisation explicite** via la procédure officielle d'authentification (OAuth) propre à chaque prestataire. Vous pourrez révoquer cette autorisation à tout moment depuis votre profil ou directement chez le prestataire.
 
 ### 3.4 Données techniques
 
@@ -92,7 +93,7 @@ La connexion à ces services est **toujours optionnelle** et requiert votre **au
 |---|---|---|
 | Gestion de votre compte utilisateur et accès à l'Application | Exécution du contrat (votre adhésion au Club et son service numérique) | Données d'identification, mot de passe |
 | Programmation et suivi des séances d'entraînement | Exécution du contrat | Séances, validations, ressenti, VMA |
-| Récupération automatique de vos activités sportives | **Consentement explicite** via OAuth | Données Strava / Garmin / Coros / Suunto |
+| Récupération automatique de vos activités sportives (à venir, aucun service actif à ce jour) | **Consentement explicite** via OAuth | Données Garmin / Coros / Suunto |
 | Génération d'analyses qualitatives post-séance par intelligence artificielle | **Consentement explicite** (opt-in dans les paramètres) | Données de séance + activité montre + ressenti |
 | Envoi de notifications (séances, palmarès, rappels) | Consentement (notifications) + intérêt légitime (notifications essentielles type "nouvelle séance programmée") | Identifiants, préférences |
 | Statistiques anonymisées d'usage de l'Application | Consentement (analytics) | Données techniques agrégées |
@@ -113,7 +114,6 @@ Elles sont traitées par les sous-traitants techniques suivants, choisis pour le
 |---|---|---|---|
 | **Supabase Inc.** (USA) | Hébergement base de données, authentification, fonctions serveurs, stockage des photos | Serveurs en UE — Francfort (Allemagne) | Clauses contractuelles types (CCT) de la Commission européenne |
 | **Vercel Inc.** (USA) | Hébergement de l'interface web et des fonctions de rendu | Serveurs en UE | CCT |
-| **Strava Inc.** (USA) | Fournisseur du service connecté Strava (sur votre demande uniquement) | USA | Consentement explicite + CCT |
 | **Garmin Ltd.** (USA) | Fournisseur du service connecté Garmin Connect (sur votre demande, futur) | USA | Consentement explicite + CCT |
 | **Coros Wearables Inc.** (USA) | Fournisseur du service connecté Coros (sur votre demande, futur) | USA | Consentement explicite + CCT |
 | **Suunto Oy** (Finlande) | Fournisseur du service connecté Suunto (sur votre demande, futur) | UE | Consentement explicite |
@@ -129,9 +129,9 @@ Les transferts de données hors Union européenne sont encadrés par les **Claus
 |---|---|
 | Données de compte (profil, mot de passe) | Tant que vous êtes licencié du Club, puis 12 mois après la fin de votre licence |
 | Données sportives (séances, validations, VMA, palmarès) | Idem (12 mois après fin de licence) |
-| Activités importées depuis des services tiers (Strava, Garmin, etc.) | Idem |
+| Activités importées depuis des services tiers (Garmin, Coros, etc.) | Idem |
 | Photos jointes aux validations | Idem (supprimées avec la validation) |
-| Tokens d'authentification OAuth (Strava, Garmin, etc.) | Tant que la connexion est active. Supprimés immédiatement en cas de déconnexion. |
+| Tokens d'authentification OAuth (Garmin, Coros, etc.) | Tant que la connexion est active. Supprimés immédiatement en cas de déconnexion. |
 | Logs techniques | 30 jours glissants |
 | Données de consentement | 13 mois |
 | Données de comptes supprimés (statistiques anonymisées) | Conservées indéfiniment sous forme anonyme (impossible à relier à une personne) |
