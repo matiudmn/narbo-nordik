@@ -71,24 +71,15 @@ désormais l'historique réel et reconstruit la base complète.
 | 29 | `20260730160000_users_role_escalation_guard.sql` | **correctif de sécurité** : fermeture de l'escalade de privilège sur `users`. Les policies d'écriture contrôlaient la ligne et jamais les colonnes, donc un athlète pouvait passer son propre `role` à `coach` puis écrire tous les profils. Trigger `BEFORE INSERT OR UPDATE` qui fige `role` hors coach et hors service_role |
 | 30 | `20260730170000_drop_strava_archive.sql` | **DESTRUCTIF** : `DROP TABLE _archive_strava_activities`. Clôt la décision RGPD laissée ouverte par l'entrée 27 (finalité disparue avec le retrait de Strava le 06/06, aucune durée de conservation définie). Rend caduque la section 3 de l'entrée 27 |
 
-> **État réel en prod** (revérifié le 2026-07-30 via `supabase migration list --linked`) :
-> les entrées **26 et 27 sont appliquées**, les entrées **28, 29 et 30 ne le sont pas**
-> (rédigées sans écriture, en attente d'un `supabase db push` explicite après revue).
+> **État réel en prod** (revérifié le 2026-07-30 au soir, après le `supabase db push`
+> appliquant les entrées 28, 29 et 30) : **toutes les entrées jusqu'à la 30 sont
+> appliquées**, registre Local = Remote. Vérifié dans la foulée : trigger
+> `on_user_role_change` actif, `exit_feedbacks.user_id` supprimée,
+> `_archive_strava_activities` n'existe plus.
 >
-> **Conséquence à connaître** : les entrées 28, 29 et 30 partiront **ensemble** au
-> prochain `supabase db push`, qui applique tout le retard d'un coup. Faire un
-> `supabase db push --dry-run` d'abord, et ne lancer le push que si l'on assume
-> les trois (dont l'entrée 30, irréversible).
->
-> Cette note a déjà dérivé une fois (elle donnait 27 comme non appliquée alors
-> qu'un `db push` avait eu lieu) : **toujours revérifier avec
-> `supabase migration list --linked`** avant de s'y fier ou de la modifier.
->
-> L'entrée 29 corrige une faille **exploitable en prod tant qu'elle n'est pas
-> appliquée** : elle vient du baseline, et ni l'entrée 26 ni l'entrée 27 ne l'ont
-> introduite ou refermée. Le trigger ne dépendant d'aucune policy, il produit le
-> même résultat sur l'état pré-fusion et post-fusion (les deux rejoués sur un
-> Postgres réel), donc son application ne dépend d'aucune autre migration.
+> Cette note a déjà dérivé deux fois (état d'application annoncé faux après un
+> `db push`) : **toujours revérifier avec `supabase migration list --linked`**
+> avant de s'y fier ou de la modifier.
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 
