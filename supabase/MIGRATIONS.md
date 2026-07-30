@@ -65,6 +65,11 @@ désormais l'historique réel et reconstruit la base complète.
 | 23 | `20260606200000_validation_rpe.sql` | `session_validations.rpe` (ressenti d'effort 1-10 de l'athlète) |
 | 24 | `20260608100000_sessions_personal_read_rls.sql` | durcissement RLS : lecture des séances perso (`sessions.is_personal`) limitée au créateur et aux coachs |
 | 25 | `20260608110000_session_rpe.sql` | `sessions.session_rpe` (difficulté attendue de la séance, posée par le coach) |
+| 26 | `20260730120000_security_perf_hardening.sql` | durcissement issu des advisors : `search_path` figé sur 2 fonctions, `increment_template_usage` retirée à anon, `WITH CHECK` resserré sur l'insert de `notifications`, SELECT du bucket `session-attachments` limité au dossier de l'utilisateur, 6 index de FK manquants, 44 policies encapsulées en `(select auth.uid())` (`auth_rls_initplan`) |
+| 27 | `20260730140000_merge_policies_and_strava_archive.sql` | fin des advisors : fusion des policies permissives doublées (`sessions` INSERT/UPDATE/DELETE, `users` INSERT/UPDATE) en une policy par action, deny-all RESTRICTIVE explicite + clé primaire sur `_archive_strava_activities` |
+
+> **Les entrées 26 et 27 ne sont PAS appliquées en prod** (rédigées sans écriture,
+> en attente d'un `supabase db push` explicite après revue).
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 
@@ -72,6 +77,25 @@ désormais l'historique réel et reconstruit la base complète.
 supabase link --project-ref <ref-de-l-instance>
 supabase db reset            # applique baseline puis toutes les migrations CLI
 ```
+
+> ### ⚠️ Un `db reset` échoue actuellement sur `20260730120000` (entrée 26)
+>
+> Cette migration fait, sur `exit_feedbacks` :
+> `ALTER POLICY "Users can insert their own feedback" ... WITH CHECK (auth.uid() = user_id)`
+> et `ALTER POLICY "Users can read their own feedback" ...`.
+> Or dans le dépôt, `exit_feedbacks` n'a **pas** de colonne `user_id` (baseline :
+> `id`, `reason`, `comment`, `created_at`, enquête **anonyme** de suppression de
+> compte) et la policy SELECT s'appelle `"Coaches can read exit feedbacks"`.
+> Un reset s'arrête donc là en erreur (`42703` colonne inexistante / `42704`
+> policy inexistante), et les migrations suivantes ne sont jamais jouées.
+>
+> Cela révèle une **dérive prod ↔ dépôt** : ces deux policies ont été relevées
+> depuis les advisors de la prod, donc la prod possède bien une colonne `user_id`
+> et une policy SELECT que le dépôt n'a jamais capturées (le baseline signalait
+> déjà ce doute, § dérives « dashboard »). À régulariser dans le baseline après
+> une lecture réelle de la prod (`\d exit_feedbacks` + `pg_policies`), en
+> tranchant au passage la question de sécurité restée ouverte : si la policy
+> SELECT live est permissive, les retours de sortie sont sur-exposés.
 
 ## Adopter le baseline sur la base de PROD EXISTANTE
 
