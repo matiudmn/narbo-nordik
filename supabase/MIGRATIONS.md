@@ -68,15 +68,21 @@ désormais l'historique réel et reconstruit la base complète.
 | 26 | `20260730120000_security_perf_hardening.sql` | durcissement issu des advisors : `search_path` figé sur 2 fonctions, `increment_template_usage` retirée à anon, `WITH CHECK` resserré sur l'insert de `notifications`, SELECT du bucket `session-attachments` limité au dossier de l'utilisateur, 6 index de FK manquants, 44 policies encapsulées en `(select auth.uid())` (`auth_rls_initplan`) |
 | 27 | `20260730140000_merge_policies_and_strava_archive.sql` | fin des advisors : fusion des policies permissives doublées (`sessions` INSERT/UPDATE/DELETE, `users` INSERT/UPDATE) en une policy par action, deny-all RESTRICTIVE explicite + clé primaire sur `_archive_strava_activities` |
 | 28 | `20260730150000_exit_feedbacks_anonymous.sql` | `exit_feedbacks` : suppression de la colonne `user_id` (dérive dashboard), insertion rendue à l'app et lecture rendue aux coachs. Débloque `db reset` et remet l'enquête de sortie en service |
+| 29 | `20260730160000_users_role_escalation_guard.sql` | **correctif de sécurité** : fermeture de l'escalade de privilège sur `users`. Les policies d'écriture contrôlaient la ligne et jamais les colonnes, donc un athlète pouvait passer son propre `role` à `coach` puis écrire tous les profils. Trigger `BEFORE INSERT OR UPDATE` qui fige `role` hors coach et hors service_role |
 
-> **État réel en prod** (relu le 2026-07-30 en fin de journée via
-> `supabase migration list --linked`) : les entrées **26 et 27 sont appliquées**,
-> l'entrée **28 ne l'est pas** (rédigée sans écriture, en attente d'un
-> `supabase db push` explicite après revue).
+> **État réel en prod** (revérifié le 2026-07-30 via `supabase migration list --linked`) :
+> les entrées **26 et 27 sont appliquées**, les entrées **28 et 29 ne le sont pas**
+> (rédigées sans écriture, en attente d'un `supabase db push` explicite après revue).
 >
 > Cette note a déjà dérivé une fois (elle donnait 27 comme non appliquée alors
 > qu'un `db push` avait eu lieu) : **toujours revérifier avec
 > `supabase migration list --linked`** avant de s'y fier ou de la modifier.
+>
+> L'entrée 29 corrige une faille **exploitable en prod tant qu'elle n'est pas
+> appliquée** : elle vient du baseline, et ni l'entrée 26 ni l'entrée 27 ne l'ont
+> introduite ou refermée. Le trigger ne dépendant d'aucune policy, il produit le
+> même résultat sur l'état pré-fusion et post-fusion (les deux rejoués sur un
+> Postgres réel), donc son application ne dépend d'aucune autre migration.
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 
