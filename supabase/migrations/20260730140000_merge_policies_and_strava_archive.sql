@@ -56,8 +56,10 @@
 -- on INFÈRE que prod et dépôt sont alignés pour sessions/users. C'est une
 -- inférence, pas un fait re-vérifiable dans cette session : elle repose sur une
 -- transcription faite ailleurs, d'où le contrôle pré-push obligatoire ci-dessous.
--- (Cette dérive exit_feedbacks est un défaut réel de 20260730120000, qui casse
--- `supabase db reset` ; traitée hors de cette migration, voir la PR.)
+-- (Cette dérive exit_feedbacks était un défaut réel de 20260730120000, qui
+-- cassait `supabase db reset`. Traitée hors de cette migration : la prod a été
+-- relue le 30/07/2026, le baseline reflète désormais la colonne et la policy
+-- constatées, et 20260730150000 les corrige.)
 --
 -- ----------------------------------------------------------------------------
 -- ANALYSE DE RISQUE DE LA FUSION (dans les deux sens)
@@ -278,9 +280,9 @@ END $$;
 --   - Configuration Auth (leaked password protection, MFA) : dashboard Supabase,
 --     pas de SQL possible.
 --   - Sort définitif de _archive_strava_activities : décision produit/RGPD.
---   - Dérive exit_feedbacks introduite par 20260730120000 (colonne user_id et
---     policy SELECT absentes du dépôt) : casse `supabase db reset`, à régulariser
---     dans le baseline. Voir la PR.
+--   - Dérive exit_feedbacks révélée par 20260730120000 (colonne user_id et
+--     policy SELECT absentes du dépôt) : RÉGULARISÉE le 30/07/2026 dans le
+--     baseline, puis corrigée par 20260730150000.
 --   - Escalade de privilège préexistante sur users : les policies UPDATE/INSERT
 --     contrôlent la LIGNE, jamais les COLONNES. Un athlète peut donc passer son
 --     propre `role` à 'coach'. Inchangé par cette fusion (vérifié avant/après),
