@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import type { User, NotificationPreferences } from '../types';
 import { supabase } from '../lib/supabase';
-import { SUPER_ADMIN_EMAIL } from '../lib/constants';
 
 const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
   new_session: { in_app: true, email: true },
@@ -32,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [impersonatedUser, setImpersonatedUser] = useState<User | null>(null);
 
-  const isSuperAdmin = useMemo(() => user?.email === SUPER_ADMIN_EMAIL, [user?.email]);
+  const isSuperAdmin = useMemo(() => user?.is_super_admin === true, [user?.is_super_admin]);
   const isImpersonating = isSuperAdmin && impersonatedUser !== null;
   const effectiveUser = impersonatedUser ?? user;
 

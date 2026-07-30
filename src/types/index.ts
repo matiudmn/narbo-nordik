@@ -46,6 +46,7 @@ export interface User {
   license_number: string | null;
   photo_url: string | null;
   is_public: boolean;
+  is_super_admin: boolean;
   notification_preferences: NotificationPreferences;
   created_at: string;
 }

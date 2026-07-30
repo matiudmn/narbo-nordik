@@ -23,7 +23,6 @@ import type {
 } from '../types';
 import { filterSessionsForAthlete, getUserPrepIds } from './athleteSessions';
 import { pacePerKm } from './calculations';
-import { SUPER_ADMIN_EMAIL } from './constants';
 
 /* ============================================================
    Normalisation + matching
@@ -182,7 +181,7 @@ export function getScopedEntities(viewer: SearchViewer, data: SearchData): Scope
 
   const isStaff = viewer.role === 'coach' || viewer.isSuperAdmin;
   // Le super admin n'est jamais une cible de recherche (compte technique).
-  const members = data.users.filter(u => u.email !== SUPER_ADMIN_EMAIL);
+  const members = data.users.filter(u => !u.is_super_admin);
 
   if (isStaff) {
     return {

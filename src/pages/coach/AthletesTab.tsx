@@ -7,7 +7,6 @@ import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
 import { Button, Card } from '../../components/ui';
 import type { Role } from '../../types';
-import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { matchTokens } from '../../lib/search';
 import { filterSessionsForAthlete, getUserPrepIds } from '../../lib/athleteSessions';
 
@@ -50,7 +49,7 @@ export default function AthletesTab() {
   const athletes = useMemo(() => {
     return users
       .filter(u => {
-        if (isSuperAdmin) return u.email !== SUPER_ADMIN_EMAIL;
+        if (isSuperAdmin) return !u.is_super_admin;
         return u.role === 'athlete';
       })
       .filter(u => !debouncedSearch || matchTokens(`${u.firstname} ${u.lastname}`, debouncedSearch))
