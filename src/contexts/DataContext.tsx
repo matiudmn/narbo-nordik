@@ -522,6 +522,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // React, potentiellement obsolète) pour éviter une entrée perdue ou dupliquée en
   // cas de double-clic.
   const updateUserVma = useCallback(async (userId: string, vma: number, reason?: string): Promise<{ error: string | null }> => {
+    // Non atomique (select puis update) : une fenêtre de course résiduelle entre deux
+    // appareils différents reste possible. Limite acceptée, la garde anti double-clic
+    // côté UI (appelants) couvre le cas courant du double-tap sur un même appareil.
     const { data: existing, error: fetchError } = await supabase.from('users').select('vma_history').eq('id', userId).single();
     if (fetchError || !existing) {
       console.error('updateUserVma error:', fetchError?.message);
