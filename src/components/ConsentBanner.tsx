@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 
 const CONSENT_KEY = 'narbo_rgpd_consent';
@@ -80,9 +81,18 @@ export default function ConsentBanner() {
           </div>
         </div>
 
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-gray-600 mb-3">
           Narbo Nordik utilise le stockage local pour sauvegarder vos preferences et donnees d'entrainement.
           Aucune donnee n'est partagee avec des tiers.
+        </p>
+
+        <p className="text-sm mb-4">
+          <Link
+            to="/legal/privacy"
+            className="font-medium text-primary underline underline-offset-2 hover:text-neutral-600 transition-colors"
+          >
+            Lire la politique de confidentialité
+          </Link>
         </p>
 
         {showDetails && (
