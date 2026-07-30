@@ -7,7 +7,42 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const FROM_EMAIL = 'Narbo Nordik <club@2nc.fr>';
 const APP_URL = 'https://narbo-nordik.vercel.app';
 
-serve(async () => {
+// Appelant : uniquement le cron pg_cron 'daily-session-digest', qui porte le
+// GUC app.settings.service_role_key en Bearer. La passerelle Supabase
+// (verify_jwt=true) a deja verifie la signature avant d'invoquer la fonction :
+// on lit donc le role du JWT deja authentifie plutot que de comparer sa valeur
+// a SUPABASE_SERVICE_ROLE_KEY (le GUC et l'env peuvent diverger silencieusement
+// en cas de rotation). La cle anon du bundle porte role 'anon' et est rejetee.
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  try {
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) base64 += '=';
+    return JSON.parse(atob(base64));
+  } catch {
+    return null;
+  }
+}
+
+function isServiceRoleCaller(req: Request): boolean {
+  const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
+  if (!token) return false;
+  const payload = decodeJwtPayload(token);
+  return payload?.role === 'service_role';
+}
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? '').replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string
+  ));
+}
+
+serve(async (req) => {
+  if (!isServiceRoleCaller(req)) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+  }
+
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -111,7 +146,7 @@ function formatDate(dateStr: string): string {
 function buildHtml(firstname: string, sessions: Array<{ id: string; title: string; date: string }>): string {
   const sessionsList = sessions.map(s =>
     `<li style="margin-bottom:8px;">
-      <a href="${APP_URL}/session/${s.id}" style="color:#6CCBE6;text-decoration:none;font-weight:600;">${s.title}</a>
+      <a href="${APP_URL}/session/${encodeURIComponent(s.id)}" style="color:#6CCBE6;text-decoration:none;font-weight:600;">${escapeHtml(s.title)}</a>
       <span style="color:#6b7280;font-size:13px;"> — ${formatDate(s.date)}</span>
     </li>`
   ).join('');
@@ -126,7 +161,7 @@ function buildHtml(firstname: string, sessions: Array<{ id: string; title: strin
       <h1 style="margin:0;color:#6CCBE6;font-size:20px;">Narbo Nordik</h1>
     </div>
     <div style="padding:24px;">
-      <p style="margin:0 0 8px;color:#374151;font-size:15px;">Salut ${firstname},</p>
+      <p style="margin:0 0 8px;color:#374151;font-size:15px;">Salut ${escapeHtml(firstname)},</p>
       <h2 style="margin:0 0 12px;color:#111827;font-size:18px;">${sessions.length > 1 ? 'Nouvelles seances' : 'Nouvelle seance'}</h2>
       <p style="margin:0 0 12px;color:#4b5563;font-size:14px;">${sessions.length > 1 ? `${sessions.length} seances ont ete ajoutees aujourd'hui :` : 'Une seance a ete ajoutee aujourd\'hui :'}</p>
       <ul style="margin:0;padding:0 0 0 16px;color:#4b5563;font-size:14px;line-height:1.8;">

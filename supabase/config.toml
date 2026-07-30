@@ -1,0 +1,19 @@
+# Configuration Supabase CLI (partielle, versionnée).
+#
+# Épingle verify_jwt=true pour les fonctions email/digest : leur contrôle
+# d'appelant (isServiceRoleCaller) décode le payload du JWT SANS vérifier sa
+# signature, en s'appuyant sur le fait que la passerelle Supabase l'a déjà
+# validée. Ce réglage doit donc rester actif : un déploiement en
+# --no-verify-jwt (ou un toggle dashboard) rendrait le contrôle de rôle
+# contournable par un JWT forgé non signé portant role=service_role.
+
+project_id = "narbo-nordik"
+
+[functions.send-notification-email]
+verify_jwt = true
+
+[functions.weekly-digest]
+verify_jwt = true
+
+[functions.daily-session-digest]
+verify_jwt = true
