@@ -7,11 +7,29 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const FROM_EMAIL = 'Narbo Nordik <club@2nc.fr>';
 const APP_URL = 'https://narbo-nordik.vercel.app';
 
-// Appelant : uniquement le cron pg_cron 'weekly-digest-monday', qui porte deja
-// SUPABASE_SERVICE_ROLE_KEY en Bearer. Bloque la cle anon publique du bundle.
+// Appelant : uniquement le cron pg_cron 'weekly-digest-monday', qui porte le
+// GUC app.settings.service_role_key en Bearer. La passerelle Supabase
+// (verify_jwt=true) a deja verifie la signature avant d'invoquer la fonction :
+// on lit donc le role du JWT deja authentifie plutot que de comparer sa valeur
+// a SUPABASE_SERVICE_ROLE_KEY (le GUC et l'env peuvent diverger silencieusement
+// en cas de rotation). La cle anon du bundle porte role 'anon' et est rejetee.
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  try {
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) base64 += '=';
+    return JSON.parse(atob(base64));
+  } catch {
+    return null;
+  }
+}
+
 function isServiceRoleCaller(req: Request): boolean {
   const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '');
-  return token.length > 0 && token === SUPABASE_SERVICE_ROLE_KEY;
+  if (!token) return false;
+  const payload = decodeJwtPayload(token);
+  return payload?.role === 'service_role';
 }
 
 function escapeHtml(value: unknown): string {
