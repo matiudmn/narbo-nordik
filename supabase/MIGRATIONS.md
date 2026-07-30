@@ -52,8 +52,19 @@ désormais l'historique réel et reconstruit la base complète.
 | 10 | `20260317210000_strava_activities_update_policy.sql` | RLS update activités |
 | 11 | `20260317220000_strava_match_functions.sql` | RPC match/unmatch |
 | 12 | `20260317230000_strava_cron.sql` | extensions + cron sync Strava |
-| 13 | `20260514120000_session_templates.sql` | table `session_templates` + 10 seeds |
-| 14 | `20260606120000_notifications_email_and_crons.sql` | infra emails + crons (phase3/4/6) portée **sans secret** (GUC) |
+| 13 | `20260514085447_security_hardening.sql` | matérialisation d'un durcissement dashboard non capturé : `REVOKE EXECUTE` sur fonctions sensibles (`delete_auth_user`, `notify_*`, match/unmatch Strava) + policy insertion notifications |
+| 14 | `20260514120000_session_templates.sql` | table `session_templates` + 10 seeds |
+| 15 | `20260606120000_notifications_email_and_crons.sql` | infra emails + crons (phase3/4/6) portée **sans secret** (GUC) |
+| 16 | `20260606130000_session_metrics_fields.sql` | `session_validations` : colonnes métriques de séance (distance, durée, D+, FC, cadence, source) + bornes de cohérence |
+| 17 | `20260606140000_strava_export_backfill.sql` | archive `_archive_strava_activities` + backfill des métriques de compte-rendu depuis les activités Strava déjà matchées |
+| 18 | `20260606150000_remove_strava.sql` | retrait total de Strava (DESTRUCTIF) : cron, RPC, policies, tables `strava_connections`/`strava_activities`, colonne `users.strava_id` |
+| 19 | `20260606160000_security_metrics_fixes.sql` | RLS sur `_archive_strava_activities` (non héritée du `CREATE TABLE AS`), `WITH CHECK` manquant sur l'UPDATE de `session_validations`, borne `duration_s` élargie (150h, ultra-trails) |
+| 20 | `20260606170000_validation_reactions.sql` | table `validation_reactions` (kudos sur un compte-rendu) + RLS |
+| 21 | `20260606180000_club_featured_validation.sql` | `club_settings` : `featured_validation_id` + `featured_at` (coup de coeur du coach) |
+| 22 | `20260606190000_reaction_notif_and_policy_fixes.sql` | type `reaction` dans `notifications` (exclu de l'email transactionnel) + `WITH CHECK` sur l'UPDATE de `club_settings` |
+| 23 | `20260606200000_validation_rpe.sql` | `session_validations.rpe` (ressenti d'effort 1-10 de l'athlète) |
+| 24 | `20260608100000_sessions_personal_read_rls.sql` | durcissement RLS : lecture des séances perso (`sessions.is_personal`) limitée au créateur et aux coachs |
+| 25 | `20260608110000_session_rpe.sql` | `sessions.session_rpe` (difficulté attendue de la séance, posée par le coach) |
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 

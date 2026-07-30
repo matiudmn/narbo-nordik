@@ -33,3 +33,6 @@ supabase/.branches/
 
 # Worktree git imbriqué (sessions Claude parallèles)
 priceless-kare-a8eb2d/
+
+# Permissions locales Claude Code (specifiques a la machine)
+.claude/settings.local.json
