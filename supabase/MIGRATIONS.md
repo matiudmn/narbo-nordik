@@ -68,7 +68,8 @@ désormais l'historique réel et reconstruit la base complète.
 | 26 | `20260730120000_security_perf_hardening.sql` | durcissement issu des advisors : `search_path` figé sur 2 fonctions, `increment_template_usage` retirée à anon, `WITH CHECK` resserré sur l'insert de `notifications`, SELECT du bucket `session-attachments` limité au dossier de l'utilisateur, 6 index de FK manquants, 44 policies encapsulées en `(select auth.uid())` (`auth_rls_initplan`) |
 | 27 | `20260730140000_merge_policies_and_strava_archive.sql` | fin des advisors : fusion des policies permissives doublées (`sessions` INSERT/UPDATE/DELETE, `users` INSERT/UPDATE) en une policy par action, deny-all RESTRICTIVE explicite + clé primaire sur `_archive_strava_activities` |
 
-> **Les entrées 26 et 27 ne sont PAS appliquées en prod** (rédigées sans écriture,
+> **État réel en prod** (vérifié le 2026-07-30 via `supabase migration list --linked`) :
+> l'entrée **26 est appliquée**, l'entrée **27 ne l'est pas** (rédigée sans écriture,
 > en attente d'un `supabase db push` explicite après revue).
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
@@ -89,10 +90,13 @@ supabase db reset            # applique baseline puis toutes les migrations CLI
 > Un reset s'arrête donc là en erreur (`42703` colonne inexistante / `42704`
 > policy inexistante), et les migrations suivantes ne sont jamais jouées.
 >
-> Cela révèle une **dérive prod ↔ dépôt** : ces deux policies ont été relevées
-> depuis les advisors de la prod, donc la prod possède bien une colonne `user_id`
-> et une policy SELECT que le dépôt n'a jamais capturées (le baseline signalait
-> déjà ce doute, § dérives « dashboard »). À régulariser dans le baseline après
+> Cela révèle une **dérive prod ↔ dépôt**, et c'est prouvé, pas supposé : cette
+> migration a été appliquée avec succès en prod le 30/07, or un `ALTER POLICY`
+> sur une colonne ou une policy absente échoue. La prod possède donc bien une
+> colonne `user_id` et une policy SELECT `"Users can read their own feedback"`
+> que le dépôt n'a jamais capturées (le baseline signalait déjà ce doute,
+> § dérives « dashboard »). Autrement dit : le chemin prod fonctionne, c'est la
+> reconstruction depuis zéro qui est cassée. À régulariser dans le baseline après
 > une lecture réelle de la prod (`\d exit_feedbacks` + `pg_policies`), en
 > tranchant au passage la question de sécurité restée ouverte : si la policy
 > SELECT live est permissive, les retours de sortie sont sur-exposés.

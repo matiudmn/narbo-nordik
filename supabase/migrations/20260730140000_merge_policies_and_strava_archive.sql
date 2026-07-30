@@ -7,7 +7,9 @@
 --      et public.users (INSERT/UPDATE) : fusion en une policy par action.
 --   2. public._archive_strava_activities : rls_enabled_no_policy + no_primary_key.
 --
--- ORDRE : cette migration suppose 20260730120000 déjà appliquée. Les expressions
+-- ORDRE : cette migration suppose 20260730120000 déjà appliquée, ce qui est le
+-- cas en prod (vérifié le 2026-07-30 via `supabase migration list --linked` :
+-- 20260730120000 est appliquée, 20260730140000 ne l'est pas). Les expressions
 -- reprises ci-dessous sont celles que cette migration laisse en place, c'est à
 -- dire avec auth.uid() encapsulé en (select auth.uid()). Recréer les policies
 -- fusionnées sous la forme non encapsulée réintroduirait l'advisor
@@ -21,7 +23,9 @@
 -- ----------------------------------------------------------------------------
 -- Contrairement à 20260730120000, aucune relecture directe de pg_policies n'a pu
 -- être faite pour cette migration : le serveur MCP Supabase n'était pas connecté
--- à la session et l'accès au token du CLI a été refusé. Les EXPRESSIONS
+-- à la session et l'accès au token du CLI a été refusé. Seul
+-- `supabase migration list --linked` a pu être interrogé (il ne lit que le
+-- registre des migrations, pas les policies). Les EXPRESSIONS
 -- proviennent de deux sources concordantes, (a) et (b). Une troisième source,
 -- (c), ne dit rien des expressions mais confirme l'INVENTAIRE et les RÔLES :
 --   (a) les migrations du dépôt, source de vérité déclarée (cf. MIGRATIONS.md) :
@@ -46,7 +50,9 @@
 -- exit_feedbacks, (b) écrit `auth.uid() = user_id` alors que le dépôt n'a ni
 -- colonne user_id ni policy « Users can read their own feedback » (baseline
 -- lignes 172-177 et 361-377). Sur ce point précis, (b) suit donc la prod contre
--- le dépôt. Sur les 10 policies fusionnées ici, (b) et (a) coïncident, ce dont
+-- le dépôt. Ce n'est pas une supposition : 20260730120000 a été appliquée avec
+-- succès en prod, et un `ALTER POLICY` sur une colonne ou une policy absente
+-- échoue. La prod possède donc bel et bien cette colonne et cette policy. Sur les 10 policies fusionnées ici, (b) et (a) coïncident, ce dont
 -- on INFÈRE que prod et dépôt sont alignés pour sessions/users. C'est une
 -- inférence, pas un fait re-vérifiable dans cette session : elle repose sur une
 -- transcription faite ailleurs, d'où le contrôle pré-push obligatoire ci-dessous.
@@ -62,12 +68,19 @@
 --   l'ancienne policy survivrait à côté de la fusionnée : les policies
 --   permissives s'additionnant en OR, l'accès effectif resterait (A OR B), donc
 --   identique. Seul l'advisor continuerait d'être signalé.
--- Sens 2, restriction : possible en théorie, c'est LE risque résiduel. Si la
---   prod portait une policy de MÊME NOM mais d'expression dérivée (plus large
---   que celle du dépôt), le DROP réussirait et la fusion, construite sur les
---   expressions du dépôt, serait plus restrictive : perte d'accès silencieuse
---   sur les écritures de sessions/users. La source (b) rend ce cas peu probable
---   pour ces 10 policies, mais elle ne le clôt pas formellement.
+-- Sens 2, restriction : c'était LE risque résiduel. Une policy prod de MÊME NOM
+--   mais d'expression plus large que celle du dépôt serait remplacée en silence
+--   par une version plus restrictive, d'où une perte d'accès sur les écritures
+--   de sessions/users. Ce risque est désormais très réduit par un fait
+--   vérifiable : 20260730120000 EST appliquée en prod, or ses 44 instructions
+--   de section 6 sont des `ALTER POLICY`, qui n'acceptent pas de `IF EXISTS` et
+--   échouent sur une policy inexistante. Son application réussie prouve donc
+--   (i) que les 10 policies visées ici existent bien en prod sous ces noms
+--   exacts, et (ii) que leurs `qual`/`with_check` en prod sont exactement ceux
+--   que 20260730120000 y a écrits, c'est à dire la source (b) reprise ici.
+--   Ce qui reste NON prouvé : les RÔLES, qu'un `ALTER POLICY` ne modifie pas et
+--   que (b) ne documente donc pas. C'est la partie la plus utile du contrôle
+--   ci-dessous.
 --   MITIGATION OBLIGATOIRE : AVANT le `db push`, exécuter en lecture seule
 --     SELECT policyname, permissive, roles, cmd, qual, with_check
 --       FROM pg_policies
