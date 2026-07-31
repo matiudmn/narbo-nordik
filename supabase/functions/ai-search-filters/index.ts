@@ -112,7 +112,7 @@ serve(async (req) => {
       }),
     });
     if (!r.ok) {
-      console.error('ai-search-filters provider error', r.status, (await r.text()).slice(0, 300));
+      console.error(JSON.stringify({ fn: 'ai-search-filters', stage: 'provider', message: `${r.status} ${(await r.text()).slice(0, 300)}` }));
       return json({ error: 'Fournisseur IA indisponible.' }, 502);
     }
     const data = await r.json();
@@ -125,7 +125,7 @@ serve(async (req) => {
     }
     return json({ filters, model: AI_MODEL });
   } catch (e) {
-    console.error('ai-search-filters error', String(e));
+    console.error(JSON.stringify({ fn: 'ai-search-filters', stage: 'handler', message: String(e) }));
     return json({ error: 'Erreur interne.' }, 500);
   }
 });

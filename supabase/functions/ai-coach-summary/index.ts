@@ -74,7 +74,7 @@ serve(async (req) => {
       }),
     });
     if (!r.ok) {
-      console.error('ai-coach-summary provider error', r.status, (await r.text()).slice(0, 300));
+      console.error(JSON.stringify({ fn: 'ai-coach-summary', stage: 'provider', message: `${r.status} ${(await r.text()).slice(0, 300)}` }));
       return json({ error: 'Fournisseur IA indisponible.' }, 502);
     }
     const data = await r.json();
@@ -82,7 +82,7 @@ serve(async (req) => {
     if (!summary) return json({ error: 'Réponse IA vide.' }, 502);
     return json({ summary, model: AI_MODEL });
   } catch (e) {
-    console.error('ai-coach-summary error', String(e));
+    console.error(JSON.stringify({ fn: 'ai-coach-summary', stage: 'handler', message: String(e) }));
     return json({ error: 'Erreur interne.' }, 500);
   }
 });

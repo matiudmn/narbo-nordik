@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import * as Sentry from '@sentry/react';
 import { isChunkLoadError, reloadForChunkError } from '../lib/chunkReload';
 
 interface Props {
@@ -39,8 +40,10 @@ export class ErrorBoundary extends Component<Props, State> {
       this.setState({ reloading: true });
       return;
     }
-    // Log local pour le debug. Un futur Sentry.captureException viendrait ici.
+    // Log local pour le debug + remontée Sentry (no-op tant que Sentry.init
+    // n'a pas été appelé, voir src/main.tsx).
     console.error('ErrorBoundary a capturé une erreur :', error, info.componentStack);
+    Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
   }
 
   handleReload = () => {

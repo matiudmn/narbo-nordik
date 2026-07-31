@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 import type { Session, SessionValidation, RaceResult, RaceNordik, SessionNordik, ValidationReaction, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation, ObjectiveReached, Sensations, SessionMetricsInput, ClubSettings, RacePaceConfig, AllureZoneConfig } from '../types';
 import { supabase, createEphemeralClient } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { captureError } from '../lib/monitoring';
 
 interface AddUserResult {
   userId: string;
@@ -158,7 +159,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addSession = useCallback(async (session: Omit<Session, 'id' | 'created_at'>): Promise<{ id: string } | { error: string }> => {
     const { data, error } = await supabase.from('sessions').insert(session).select().single();
     if (error) {
-      console.error('addSession error:', error.message, error.details, error.code, error.hint);
+      captureError('addSession error', error);
       return { error: `${error.message}${error.hint ? ' (' + error.hint + ')' : ''}${error.code ? ' [' + error.code + ']' : ''}` };
     }
     if (data) {
@@ -178,7 +179,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (rows.length === 0) return { created: 0 };
     const { data, error } = await supabase.from('sessions').insert(rows).select();
     if (error) {
-      console.error('addSessionsBulk error:', error.message, error.details, error.code, error.hint);
+      captureError('addSessionsBulk error', error);
       return { error: `${error.message}${error.hint ? ' (' + error.hint + ')' : ''}${error.code ? ' [' + error.code + ']' : ''}` };
     }
     if (data) {
@@ -192,7 +193,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const updateSession = useCallback(async (id: string, updates: Partial<Session>): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('sessions').update(updates).eq('id', id);
     if (error) {
-      console.error('updateSession error:', error.message);
+      captureError('updateSession error', error);
       return { error: error.message };
     }
     setSessions(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
@@ -202,7 +203,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const deleteSession = useCallback(async (id: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('sessions').delete().eq('id', id);
     if (error) {
-      console.error('deleteSession error:', error.message);
+      captureError('deleteSession error', error);
       return { error: error.message };
     }
     setSessions(prev => prev.filter(s => s.id !== id));
@@ -223,7 +224,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         .from('session-attachments')
         .upload(filePath, file, { cacheControl: '3600', upsert: false });
       if (uploadError) {
-        console.error('Upload error:', uploadError.message);
+        captureError('Upload error', uploadError);
         return { error: uploadError.message };
       }
       attachmentPath = filePath;
@@ -256,7 +257,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     ).select().single();
 
     if (error || !data) {
-      console.error('Validation error:', error?.message);
+      captureError('Validation error', error);
       return { error: error?.message ?? 'Unknown error' };
     }
 
@@ -286,7 +287,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         .from('session-attachments')
         .upload(filePath, file, { cacheControl: '3600', upsert: false });
       if (uploadError) {
-        console.error('Upload error:', uploadError.message);
+        captureError('Upload error', uploadError);
         return { error: uploadError.message };
       }
       attachmentPath = filePath;
@@ -311,7 +312,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const { data, error } = await supabase.from('session_validations').update(row).eq('id', validationId).select().single();
     if (error || !data) {
-      console.error('updateValidation error:', error?.message);
+      captureError('updateValidation error', error);
       return { error: error?.message ?? 'Erreur inconnue' };
     }
     setValidations(prev => prev.map(v => v.id === validationId ? data : v));
@@ -323,7 +324,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addRaceResult = useCallback(async (result: Omit<RaceResult, 'id' | 'created_at'>): Promise<{ error: string | null }> => {
     const { data, error } = await supabase.from('race_results').insert(result).select().single();
     if (error || !data) {
-      console.error('addRaceResult error:', error?.message);
+      captureError('addRaceResult error', error);
       return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
     }
     setRaceResults(prev => [...prev, data]);
@@ -364,7 +365,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .from('sessions').insert(sessionPayload).select().single();
 
     if (sessionError || !sessionData) {
-      console.error('addRaceResult (auto-session) error:', sessionError?.message);
+      captureError('addRaceResult (auto-session) error', sessionError);
       return { error: null };
     }
     setSessions(prev => [...prev, { ...sessionData, blocks: sessionData.blocks || [] }].sort((a, b) => a.date.localeCompare(b.date)));
@@ -385,7 +386,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .from('session_validations').insert(validationRow).select().single();
 
     if (valError || !valData) {
-      console.error('addRaceResult (auto-validation) error:', valError?.message);
+      captureError('addRaceResult (auto-validation) error', valError);
       return { error: null };
     }
     setValidations(prev => [...prev, valData]);
@@ -396,7 +397,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setRaceResults(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
     const { error } = await supabase.from('race_results').update(updates).eq('id', id);
     if (error) {
-      console.error('updateRaceResult error:', error.message);
+      captureError('updateRaceResult error', error);
       const { data } = await supabase.from('race_results').select('*');
       if (data) setRaceResults(data);
       return { error: error.message };
@@ -407,7 +408,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const deleteRaceResult = useCallback(async (id: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('race_results').delete().eq('id', id);
     if (error) {
-      console.error('deleteRaceResult error:', error.message);
+      captureError('deleteRaceResult error', error);
       return { error: error.message };
     }
     setRaceResults(prev => prev.filter(r => r.id !== id));
@@ -422,14 +423,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (existing) {
       const { error } = await supabase.from('race_nordiks').delete().eq('id', existing.id);
       if (error) {
-        console.error('toggleNordik error:', error.message);
+        captureError('toggleNordik error', error);
         return { error: error.message };
       }
       setRaceNordiks(prev => prev.filter(n => n.id !== existing.id));
     } else {
       const { data, error } = await supabase.from('race_nordiks').insert({ race_id: raceId, user_id: userId }).select().single();
       if (error || !data) {
-        console.error('toggleNordik error:', error?.message);
+        captureError('toggleNordik error', error);
         return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
       }
       setRaceNordiks(prev => [...prev, data]);
@@ -442,14 +443,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (existing) {
       const { error } = await supabase.from('session_nordiks').delete().eq('id', existing.id);
       if (error) {
-        console.error('toggleSessionNordik error:', error.message);
+        captureError('toggleSessionNordik error', error);
         return { error: error.message };
       }
       setSessionNordiks(prev => prev.filter(n => n.id !== existing.id));
     } else {
       const { data, error } = await supabase.from('session_nordiks').insert({ session_id: sessionId, user_id: userId }).select().single();
       if (error || !data) {
-        console.error('toggleSessionNordik error:', error?.message);
+        captureError('toggleSessionNordik error', error);
         return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
       }
       setSessionNordiks(prev => [...prev, data]);
@@ -464,7 +465,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           title: 'Nordik !',
           body: `${actor.firstname} a aime ta seance "${session.title}"`,
         });
-        if (notifError) console.error('Notification error:', notifError.message);
+        if (notifError) captureError('Notification error', notifError);
       }
     }
     return { error: null };
@@ -476,14 +477,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (existing) {
       const { error } = await supabase.from('validation_reactions').delete().eq('id', existing.id);
       if (error) {
-        console.error('toggleValidationReaction error:', error.message);
+        captureError('toggleValidationReaction error', error);
         return { error: error.message };
       }
       setValidationReactions(prev => prev.filter(r => r.id !== existing.id));
     } else {
       const { data, error } = await supabase.from('validation_reactions').insert({ validation_id: validationId, author_id: authorId, emoji }).select().single();
       if (error || !data) {
-        console.error('toggleValidationReaction error:', error?.message);
+        captureError('toggleValidationReaction error', error);
         return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
       }
       setValidationReactions(prev => [...prev, data]);
@@ -500,7 +501,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           title: 'Réaction !',
           body: `${actor?.firstname ?? "Quelqu'un"} a réagi ${emoji} à ton compte-rendu${sess?.title ? ` "${sess.title}"` : ''}`,
         });
-        if (notifError) console.error('Notification error:', notifError.message);
+        if (notifError) captureError('Notification error', notifError);
       }
     }
     return { error: null };
@@ -511,7 +512,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const patchUser = useCallback(async (userId: string, updates: Partial<User>): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('users').update(updates).eq('id', userId);
     if (error) {
-      console.error('patchUser error:', error.message);
+      captureError('patchUser error', error);
       return { error: error.message };
     }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
@@ -527,7 +528,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // côté UI (appelants) couvre le cas courant du double-tap sur un même appareil.
     const { data: existing, error: fetchError } = await supabase.from('users').select('vma_history').eq('id', userId).single();
     if (fetchError || !existing) {
-      console.error('updateUserVma error:', fetchError?.message);
+      captureError('updateUserVma error', fetchError);
       return { error: fetchError?.message ?? 'Utilisateur introuvable' };
     }
     const entry: { vma: number; date: string; reason?: string } = { vma, date: new Date().toISOString().split('T')[0] };
@@ -568,7 +569,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     });
 
     if (signUpError || !signUpData.user) {
-      console.error('SignUp error:', signUpError?.message);
+      captureError('SignUp error', signUpError);
       return null;
     }
 
@@ -589,7 +590,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }).select().single();
 
     if (insertError || !data) {
-      console.error('Insert profile error:', insertError?.message);
+      captureError('Insert profile error', insertError);
       return null;
     }
 
@@ -600,7 +601,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const deleteUser = useCallback(async (id: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('users').delete().eq('id', id);
     if (error) {
-      console.error('deleteUser error:', error.message);
+      captureError('deleteUser error', error);
       return { error: error.message };
     }
     setUsers(prev => prev.filter(u => u.id !== id));
@@ -616,7 +617,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addGroup = useCallback(async (name: string): Promise<{ error: string | null }> => {
     const { data, error } = await supabase.from('groups').insert({ name }).select().single();
     if (error || !data) {
-      console.error('addGroup error:', error?.message);
+      captureError('addGroup error', error);
       return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
     }
     setGroups(prev => [...prev, data]);
@@ -626,7 +627,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const updateGroup = useCallback(async (id: string, name: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('groups').update({ name }).eq('id', id);
     if (error) {
-      console.error('updateGroup error:', error.message);
+      captureError('updateGroup error', error);
       return { error: error.message };
     }
     setGroups(prev => prev.map(g => g.id === id ? { ...g, name } : g));
@@ -636,7 +637,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const deleteGroup = useCallback(async (id: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('groups').delete().eq('id', id);
     if (error) {
-      console.error('deleteGroup error:', error.message);
+      captureError('deleteGroup error', error);
       return { error: error.message };
     }
     setGroups(prev => prev.filter(g => g.id !== id));
@@ -660,7 +661,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       name, event_date: eventDate, description, created_by: authUser?.id,
     }).select().single();
     if (error || !data) {
-      console.error('addPreparation error:', error?.message);
+      captureError('addPreparation error', error);
       return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
     }
     setPreparations(prev => [...prev, data].sort((a, b) => a.event_date.localeCompare(b.event_date)));
@@ -670,7 +671,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const updatePreparation = useCallback(async (id: string, updates: Partial<SpecificPreparation>): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('specific_preparations').update(updates).eq('id', id);
     if (error) {
-      console.error('updatePreparation error:', error.message);
+      captureError('updatePreparation error', error);
       return { error: error.message };
     }
     setPreparations(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
@@ -680,7 +681,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const deletePreparation = useCallback(async (id: string): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('specific_preparations').delete().eq('id', id);
     if (error) {
-      console.error('deletePreparation error:', error.message);
+      captureError('deletePreparation error', error);
       return { error: error.message };
     }
     setPreparations(prev => prev.filter(p => p.id !== id));
@@ -692,7 +693,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addUserToPreparation = useCallback(async (userId: string, preparationId: string): Promise<{ error: string | null }> => {
     const { data, error } = await supabase.from('user_preparations').insert({ user_id: userId, preparation_id: preparationId }).select().single();
     if (error || !data) {
-      console.error('addUserToPreparation error:', error?.message);
+      captureError('addUserToPreparation error', error);
       return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
     }
     setUserPreparations(prev => [...prev, data]);
@@ -703,7 +704,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.from('user_preparations').delete()
       .eq('user_id', userId).eq('preparation_id', preparationId);
     if (error) {
-      console.error('removeUserFromPreparation error:', error.message);
+      captureError('removeUserFromPreparation error', error);
       return { error: error.message };
     }
     setUserPreparations(prev => prev.filter(up => !(up.user_id === userId && up.preparation_id === preparationId)));
@@ -722,14 +723,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (clubSettings) {
       const { error } = await supabase.from('club_settings').update(payload).eq('id', clubSettings.id);
       if (error) {
-        console.error('updateClubSettings error:', error.message);
+        captureError('updateClubSettings error', error);
         return { error: error.message };
       }
       setClubSettings(prev => prev ? { ...prev, race_paces: racePaces, allure_zones: allureZones } : prev);
     } else {
       const { data, error } = await supabase.from('club_settings').insert(payload).select().single();
       if (error || !data) {
-        console.error('updateClubSettings error:', error?.message);
+        captureError('updateClubSettings error', error);
         return { error: error?.message ?? 'Aucune donnee retournee par Supabase' };
       }
       setClubSettings(data as ClubSettings);
@@ -746,7 +747,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       .update({ featured_validation_id: validationId, featured_at })
       .eq('id', clubSettings.id);
     if (error) {
-      console.error('setFeaturedValidation error:', error.message);
+      captureError('setFeaturedValidation error', error);
       return { error: error.message };
     }
     setClubSettings(prev => prev ? { ...prev, featured_validation_id: validationId, featured_at } : prev);
