@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X, FileText, Calendar, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence, VARIANTS, SPRING } from '../../lib/motion';
 import { TemplateCard } from './TemplateCard';
-import { Button } from '../ui';
+import { Button, ConfirmDialog } from '../ui';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import {
   fetchTemplates,
   instantiateTemplate,
@@ -46,6 +47,11 @@ export function SessionSourceModal({
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<TemplateCategory | 'all'>('all');
+  const [deleteTarget, setDeleteTarget] = useState<SessionTemplate | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useModalA11y(open, panelRef, onClose);
 
   useEffect(() => {
     if (!open) return;
@@ -57,16 +63,6 @@ export function SessionSourceModal({
       setLoading(false);
     });
   }, [open]);
-
-  // Escape closes
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
 
   const filteredTemplates = useMemo(() => {
     return templates.filter((t) => {
@@ -87,11 +83,18 @@ export function SessionSourceModal({
     void incrementUsage(tpl.id);
   };
 
-  const handleDeleteTemplate = async (tpl: SessionTemplate) => {
+  const handleDeleteTemplate = (tpl: SessionTemplate) => {
     if (tpl.is_seed) return;
-    if (!window.confirm(`Supprimer le template « ${tpl.name} » ?`)) return;
-    const ok = await deleteTemplate(tpl.id);
-    if (ok) setTemplates((prev) => prev.filter((t) => t.id !== tpl.id));
+    setDeleteTarget(tpl);
+  };
+
+  const confirmDeleteTemplate = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const ok = await deleteTemplate(deleteTarget.id);
+    setDeleting(false);
+    if (ok) setTemplates((prev) => prev.filter((t) => t.id !== deleteTarget.id));
+    setDeleteTarget(null);
   };
 
   const handleUseLastWeek = (session: SessionSourceModalProps['lastWeekSessions'][number]) => {
@@ -106,6 +109,7 @@ export function SessionSourceModal({
   };
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <motion.div
@@ -121,6 +125,7 @@ export function SessionSourceModal({
           aria-labelledby="session-source-title"
         >
           <motion.div
+            ref={panelRef}
             key="sheet"
             variants={VARIANTS.bottomSheet}
             initial="hidden"
@@ -284,5 +289,17 @@ export function SessionSourceModal({
         </motion.div>
       )}
     </AnimatePresence>
+
+    <ConfirmDialog
+      open={deleteTarget !== null}
+      title={`Supprimer le template « ${deleteTarget?.name ?? ''} » ?`}
+      description="Cette action est définitive."
+      confirmLabel="Supprimer"
+      destructive
+      loading={deleting}
+      onConfirm={confirmDeleteTemplate}
+      onCancel={() => setDeleteTarget(null)}
+    />
+    </>
   );
 }
