@@ -39,7 +39,7 @@ interface DataContextType {
   updateUserLicense: (userId: string, licenseNumber: string | null) => Promise<{ error: string | null }>;
   updateUserBirthDate: (userId: string, birthDate: string | null) => Promise<{ error: string | null }>;
   updateUserPhoto: (userId: string, file: File | null) => Promise<{ error: string | null }>;
-  addUser: (user: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date' | 'notification_preferences'>) => Promise<AddUserResult | null>;
+  addUser: (user: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date' | 'notification_preferences' | 'email'> & { email: string }) => Promise<AddUserResult | null>;
   deleteUser: (id: string) => Promise<{ error: string | null }>;
   addGroup: (name: string) => Promise<{ error: string | null }>;
   updateGroup: (id: string, name: string) => Promise<{ error: string | null }>;
@@ -74,6 +74,14 @@ const DEFAULT_NOTIF_PREFS: NotificationPreferences = {
   vma_update: { in_app: true, email: false },
   weekly_digest: { email: true },
 };
+
+// Colonnes de `users` accordees a un athlete (role authenticated) depuis la
+// migration 20260731120000. email/phone/license_number/birth_date/
+// notification_preferences n'en font plus partie : un SELECT direct qui les
+// demanderait echouerait en 42501. Seul get_own_profile() (soi-meme) et
+// get_users_for_coach() (coach/super-admin, cf. fetchAll ci-dessous) les
+// renvoient encore.
+const ATHLETE_USER_COLUMNS = 'id, role, firstname, lastname, vma, vma_history, group_id, photo_url, is_public, created_at, is_super_admin';
 
 // Extrait le chemin storage (`<user_id>/avatar.<ext>`) d'une URL publique du
 // bucket avatars. Renvoie null pour un base64 `data:` historique ou toute
@@ -110,6 +118,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
+    // Un coach (ou le super-admin) recoit les lignes completes de tout le club
+    // via get_users_for_coach() (RPC SECURITY DEFINER) ; un athlete recoit la
+    // liste club mais sans les colonnes PII, retirees par le GRANT de
+    // 20260731120000 (sa propre valeur reste disponible via useAuth().user,
+    // alimente par get_own_profile()).
+    const isStaff = authUser?.role === 'coach' || authUser?.is_super_admin === true;
+    const usersQuery = isStaff
+      ? supabase.rpc('get_users_for_coach')
+      : supabase.from('users').select(ATHLETE_USER_COLUMNS);
+
     const [s, v, rr, rn, sn, g, u, p, up, vr] = await Promise.all([
       supabase.from('sessions').select('*').order('date'),
       supabase.from('session_validations').select('*'),
@@ -117,7 +135,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       supabase.from('race_nordiks').select('*'),
       supabase.from('session_nordiks').select('*'),
       supabase.from('groups').select('*'),
-      supabase.from('users').select('*'),
+      usersQuery,
       supabase.from('specific_preparations').select('*').order('event_date'),
       supabase.from('user_preparations').select('*'),
       supabase.from('validation_reactions').select('*'),
@@ -135,7 +153,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const cs = await supabase.from('club_settings').select('*').limit(1).maybeSingle();
     if (cs.data) setClubSettings(cs.data as ClubSettings);
     else if (cs.error && cs.error.code !== 'PGRST116') console.error('club_settings fetch error:', cs.error.message);
-  }, []);
+  }, [authUser?.role, authUser?.is_super_admin]);
 
   const refreshAll = useCallback(async () => {
     setLoading(true);
@@ -593,7 +611,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [patchUser]);
 
   const addUser = useCallback(async (
-    userData: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date' | 'notification_preferences'>
+    userData: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date' | 'notification_preferences' | 'email'> & { email: string }
   ): Promise<AddUserResult | null> => {
     const tempPassword = generateTempPassword();
     const ephemeral = createEphemeralClient();

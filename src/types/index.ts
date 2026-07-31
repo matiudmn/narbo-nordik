@@ -37,19 +37,27 @@ export interface User {
   role: Role;
   firstname: string;
   lastname: string;
-  email: string;
+  // PII (email, phone, birth_date, license_number, notification_preferences) :
+  // optionnelles depuis la migration 20260731120000. Le GRANT colonne de
+  // `authenticated` sur `public.users` ne les accorde plus qu'a soi-meme
+  // (via get_own_profile) et aux coachs/super-admin (via get_users_for_coach).
+  // Un athlete qui recoit la liste club (DataContext.fetchAll) ne les recoit
+  // JAMAIS pour les autres, meme pas pour sa propre ligne dans cette liste
+  // (le grant est par colonne, pas par ligne) : sa propre valeur reste
+  // disponible via useAuth().user, jamais via useData().users.
+  email?: string;
   vma: number | null;
   vma_history: VmaEntry[];
   group_id: string | null;
-  phone: string | null;
-  birth_date: string | null;
-  license_number: string | null;
+  phone?: string | null;
+  birth_date?: string | null;
+  license_number?: string | null;
   photo_url: string | null;
   is_public: boolean;
   // Optionnel : la colonne n'existe qu'apres la migration 20260731081000 ;
   // le front doit tolerer son absence (undefined => pas super-admin).
   is_super_admin?: boolean;
-  notification_preferences: NotificationPreferences;
+  notification_preferences?: NotificationPreferences;
   created_at: string;
 }
 

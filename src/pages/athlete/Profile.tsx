@@ -617,7 +617,7 @@ export default function Profile() {
           <div className="mt-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-900">Profil public</p>
-              <p className="text-xs text-gray-400">VMA et telephone visibles par les athletes</p>
+              <p className="text-xs text-gray-400">Visible dans l'annuaire et la recherche par les autres athletes</p>
             </div>
             <button
               onClick={async () => { await updateUserPublic(user.id, !user.is_public); await refreshUser(); }}
@@ -886,11 +886,11 @@ export default function Profile() {
                             refreshUser();
                           }}
                           className={`w-9 h-5 rounded-full relative transition-colors ${
-                            (user?.notification_preferences[key] as { in_app?: boolean })?.in_app ? 'bg-primary' : 'bg-gray-300'
+                            (user?.notification_preferences?.[key] as { in_app?: boolean })?.in_app ? 'bg-primary' : 'bg-gray-300'
                           }`}
                         >
                           <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform shadow ${
-                            (user?.notification_preferences[key] as { in_app?: boolean })?.in_app ? 'left-4.5' : 'left-0.5'
+                            (user?.notification_preferences?.[key] as { in_app?: boolean })?.in_app ? 'left-4.5' : 'left-0.5'
                           }`} />
                         </button>
                       </label>
@@ -908,11 +908,11 @@ export default function Profile() {
                             refreshUser();
                           }}
                           className={`w-9 h-5 rounded-full relative transition-colors ${
-                            (user?.notification_preferences[key] as { email?: boolean })?.email ? 'bg-primary' : 'bg-gray-300'
+                            (user?.notification_preferences?.[key] as { email?: boolean })?.email ? 'bg-primary' : 'bg-gray-300'
                           }`}
                         >
                           <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform shadow ${
-                            (user?.notification_preferences[key] as { email?: boolean })?.email ? 'left-4.5' : 'left-0.5'
+                            (user?.notification_preferences?.[key] as { email?: boolean })?.email ? 'left-4.5' : 'left-0.5'
                           }`} />
                         </button>
                       </label>

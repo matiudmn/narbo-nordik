@@ -9,7 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
 import { getRacePaces, calculateRacePace, getVmaLevelIndex } from '../../lib/calculations';
 import { filterSessionsForAthlete } from '../../lib/athleteSessions';
-import { matchTokens } from '../../lib/search';
+import { matchTokens, isAthleteVisible } from '../../lib/search';
 import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
 import { getSeasonRange } from '../../lib/date-utils';
@@ -270,11 +270,18 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
 
 export default function Directory() {
   const { users, groups, preparations, userPreparations } = useData();
+  const { user: currentUser, isSuperAdmin } = useAuth();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 250);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const visibleUsers = useMemo(() => users.filter(u => !u.is_super_admin), [users]);
+  // Un profil is_public=false n'apparait pas pour les autres athletes (toujours
+  // visible pour soi-meme, les coachs et le super-admin) : cf. isAthleteVisible.
+  const visibleUsers = useMemo(() => {
+    if (!currentUser) return [];
+    const viewer = { id: currentUser.id, role: currentUser.role, isSuperAdmin };
+    return users.filter(u => !u.is_super_admin && isAthleteVisible(u, viewer));
+  }, [users, currentUser, isSuperAdmin]);
 
   const groupMap = useMemo(() => {
     const map = new Map<string, string>();

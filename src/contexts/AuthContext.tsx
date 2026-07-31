@@ -35,28 +35,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isImpersonating = isSuperAdmin && impersonatedUser !== null;
   const effectiveUser = impersonatedUser ?? user;
 
-  const loadProfile = useCallback(async (authId: string) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', authId)
-      .single();
+  // Passe par le RPC get_own_profile() (SECURITY DEFINER) plutot qu'un SELECT
+  // direct : depuis la migration 20260731120000, `authenticated` n'a plus
+  // l'email/le telephone/la licence/la date de naissance/les preferences de
+  // notif en GRANT colonne sur `users`. auth.uid() identifie deja l'appelant
+  // cote serveur, l'id client n'est plus necessaire ici.
+  const loadProfile = useCallback(async () => {
+    const { data, error } = await supabase.rpc('get_own_profile').single();
     if (error || !data) {
       setUser(null);
       return;
     }
+    // Le client Supabase n'est pas type sur un schema (pas de generique
+    // Database) : le retour d'un RPC s'infere en `{}`, d'ou ce cast (meme
+    // motif que normalizeUser dans DataContext).
+    const row = data as Record<string, unknown>;
     setUser({
-      ...data,
-      vma_history: data.vma_history || [],
-      photo_url: data.photo_url || null,
-      notification_preferences: data.notification_preferences || DEFAULT_NOTIFICATION_PREFS,
-    });
+      ...row,
+      vma_history: row.vma_history || [],
+      photo_url: row.photo_url || null,
+      notification_preferences: row.notification_preferences || DEFAULT_NOTIFICATION_PREFS,
+    } as User);
   }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        loadProfile(session.user.id).finally(() => setLoading(false));
+        loadProfile().finally(() => setLoading(false));
       } else {
         setLoading(false);
       }
@@ -68,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (session?.user) {
-        loadProfile(session.user.id);
+        loadProfile();
       } else {
         setUser(null);
       }
@@ -134,25 +139,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const userId = user?.id;
   const refreshUser = useCallback(async () => {
-    if (userId) await loadProfile(userId);
+    if (userId) await loadProfile();
   }, [userId, loadProfile]);
 
+  // Passe par get_users_for_coach() : impersonate est reserve au super-admin
+  // (bouton visible uniquement pour lui dans AthletesTab), et cette fonction
+  // SECURITY DEFINER l'impose aussi cote serveur (42501 sinon). C'est la meme
+  // fonction que celle qui alimente la liste club des vues coach, on y
+  // retrouve donc directement la cible.
   const impersonate = useCallback(async (userId: string | null) => {
     if (!userId) {
       setImpersonatedUser(null);
       return;
     }
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const { data, error } = await supabase.rpc('get_users_for_coach');
     if (error || !data) return;
+    const target = data.find((u: { id: string }) => u.id === userId);
+    if (!target) return;
     setImpersonatedUser({
-      ...data,
-      vma_history: data.vma_history || [],
-      photo_url: data.photo_url || null,
-      notification_preferences: data.notification_preferences || DEFAULT_NOTIFICATION_PREFS,
+      ...target,
+      vma_history: target.vma_history || [],
+      photo_url: target.photo_url || null,
+      notification_preferences: target.notification_preferences || DEFAULT_NOTIFICATION_PREFS,
     });
   }, []);
 
