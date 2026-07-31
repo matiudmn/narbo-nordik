@@ -17,7 +17,7 @@ export default function Sidebar() {
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
-      isActive ? 'bg-accent/10 text-accent' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+      isActive ? 'bg-accent/10 text-accent-text' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
     }`;
 
   const coachLinks = [
