@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import type { Session, SessionValidation, RaceResult, RaceNordik, SessionNordik, ValidationReaction, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation, ObjectiveReached, Sensations, SessionMetricsInput, ClubSettings, RacePaceConfig, AllureZoneConfig } from '../types';
 import { supabase, createEphemeralClient } from '../lib/supabase';
 import { useAuth } from './AuthContext';
@@ -753,14 +753,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return { error: null };
   }, [clubSettings]);
 
+  const value = useMemo<DataContextType>(() => ({
+    sessions, validations, raceResults, raceNordiks, sessionNordiks, validationReactions, groups, users, preparations, userPreparations, clubSettings, loading,
+    addSession, addSessionsBulk, updateSession, deleteSession, validateSession, updateValidation,
+    addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, toggleValidationReaction, updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto,
+    addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
+    addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, setFeaturedValidation, refreshAll,
+  }), [
+    sessions, validations, raceResults, raceNordiks, sessionNordiks, validationReactions, groups, users, preparations, userPreparations, clubSettings, loading,
+    addSession, addSessionsBulk, updateSession, deleteSession, validateSession, updateValidation,
+    addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, toggleValidationReaction, updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto,
+    addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
+    addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, setFeaturedValidation, refreshAll,
+  ]);
+
   return (
-    <DataContext.Provider value={{
-      sessions, validations, raceResults, raceNordiks, sessionNordiks, validationReactions, groups, users, preparations, userPreparations, clubSettings, loading,
-      addSession, addSessionsBulk, updateSession, deleteSession, validateSession, updateValidation,
-      addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, toggleValidationReaction, updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto,
-      addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
-      addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, setFeaturedValidation, refreshAll,
-    }}>
+    <DataContext.Provider value={value}>
       {children}
     </DataContext.Provider>
   );
