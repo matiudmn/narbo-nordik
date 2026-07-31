@@ -82,7 +82,7 @@ serve(async (req) => {
       }),
     });
     if (!r.ok) {
-      console.error('ai-ocr provider error', r.status, (await r.text()).slice(0, 300));
+      console.error(JSON.stringify({ fn: 'ai-ocr', stage: 'provider', message: `${r.status} ${(await r.text()).slice(0, 300)}` }));
       return json({ error: 'Fournisseur IA indisponible.' }, 502);
     }
     const data = await r.json();
