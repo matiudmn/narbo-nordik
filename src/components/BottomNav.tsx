@@ -7,8 +7,8 @@ export default function BottomNav() {
   const isCoach = user?.role === 'coach';
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex flex-col items-center justify-center gap-0.5 text-xs transition-colors min-w-[44px] min-h-[44px] ${
-      isActive ? 'text-accent font-semibold' : 'text-gray-500'
+    `flex flex-col items-center justify-center gap-0.5 text-xs transition-colors min-w-[44px] min-h-[44px] rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+      isActive ? 'text-accent-text font-semibold' : 'text-gray-500'
     }`;
 
   if (isCoach) {

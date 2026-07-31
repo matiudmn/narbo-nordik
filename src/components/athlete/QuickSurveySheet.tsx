@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { useRef } from 'react';
+import type { KeyboardEvent } from 'react';
 import { motion, AnimatePresence, VARIANTS } from '../../lib/motion';
 import { X, Target, Smile, MessageCircle } from 'lucide-react';
 import { Button } from '../ui';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { ObjectiveReached, Sensations } from '../../types';
 
 interface QuickSurveySheetProps {
@@ -33,6 +35,26 @@ const SENSATIONS_OPTIONS: { value: Sensations; label: string; emoji: string }[] 
   { value: 'mauvaises', label: 'Mauvaises', emoji: '😓' },
 ];
 
+/**
+ * Navigation clavier d'un radiogroup custom : flèches gauche/droite (et
+ * haut/bas) déplacent la sélection et le focus, Home/End vont aux extrêmes.
+ */
+function useRadioGroupNav<T extends string>(options: readonly { value: T }[], onChange: (v: T) => void) {
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let next = -1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (index + 1) % options.length;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (index - 1 + options.length) % options.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = options.length - 1;
+    else return;
+    e.preventDefault();
+    onChange(options[next].value);
+    itemRefs.current[next]?.focus();
+  };
+  return { itemRefs, onKeyDown };
+}
+
 const PUNCHLINE_SUGGESTIONS = [
   "J'ai tout donné",
   "Les jambes ont dit non",
@@ -59,15 +81,11 @@ export function QuickSurveySheet({
   onClose,
   loading = false,
 }: QuickSurveySheetProps) {
-  // Escape ferme
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(open, panelRef, onClose);
+
+  const objectiveNav = useRadioGroupNav(OBJECTIVE_OPTIONS, onObjectiveChange);
+  const sensationsNav = useRadioGroupNav(SENSATIONS_OPTIONS, onSensationsChange);
 
   return (
     <AnimatePresence>
@@ -85,6 +103,7 @@ export function QuickSurveySheet({
           aria-labelledby="quicksurvey-title"
         >
           <motion.div
+            ref={panelRef}
             key="sheet"
             variants={VARIANTS.bottomSheet}
             initial="hidden"
@@ -123,13 +142,16 @@ export function QuickSurveySheet({
                   <span className="label-micro text-neutral-500">Objectif atteint ?</span>
                 </div>
                 <div className="flex gap-2" role="radiogroup" aria-label="Objectif atteint">
-                  {OBJECTIVE_OPTIONS.map((opt) => {
+                  {OBJECTIVE_OPTIONS.map((opt, i) => {
                     const selected = objective === opt.value;
                     return (
                       <button
                         key={opt.value}
+                        ref={(el) => { objectiveNav.itemRefs.current[i] = el; }}
                         role="radio"
                         aria-checked={selected}
+                        tabIndex={selected || (!objective && i === 0) ? 0 : -1}
+                        onKeyDown={(e) => objectiveNav.onKeyDown(e, i)}
                         onClick={() => onObjectiveChange(opt.value)}
                         className={[
                           'flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border transition-all',
@@ -153,13 +175,16 @@ export function QuickSurveySheet({
                   <span className="label-micro text-neutral-500">Tes sensations</span>
                 </div>
                 <div className="flex gap-2" role="radiogroup" aria-label="Tes sensations">
-                  {SENSATIONS_OPTIONS.map((opt) => {
+                  {SENSATIONS_OPTIONS.map((opt, i) => {
                     const selected = sensations === opt.value;
                     return (
                       <button
                         key={opt.value}
+                        ref={(el) => { sensationsNav.itemRefs.current[i] = el; }}
                         role="radio"
                         aria-checked={selected}
+                        tabIndex={selected || (!sensations && i === 0) ? 0 : -1}
+                        onKeyDown={(e) => sensationsNav.onKeyDown(e, i)}
                         onClick={() => onSensationsChange(opt.value)}
                         className={[
                           'flex-1 flex flex-col items-center gap-1 py-3 rounded-xl border transition-all',

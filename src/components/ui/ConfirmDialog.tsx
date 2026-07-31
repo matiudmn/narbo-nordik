@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import type { ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from './Button';
 import type { ButtonVariant } from './Button';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -21,8 +22,9 @@ interface ConfirmDialogProps {
  * Confirmation modal harmonisée — remplace les alert() natifs
  * et les bannières inline disparates de l'app.
  *
- * Focus trap basique (premier bouton focusé à l'ouverture),
- * Escape ferme, click sur backdrop ferme.
+ * Scroll de fond verrouillé, focus piégé (bouton confirmer focusé à
+ * l'ouverture), Escape ferme, click sur backdrop ferme, focus restauré
+ * au déclencheur à la fermeture (cf. useModalA11y).
  */
 export function ConfirmDialog({
   open,
@@ -37,16 +39,9 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    confirmRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !loading) onCancel();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, loading, onCancel]);
+  useModalA11y(open, panelRef, onCancel, { disableEscape: loading, initialFocusRef: confirmRef });
 
   if (!open) return null;
 
@@ -62,6 +57,7 @@ export function ConfirmDialog({
       onClick={() => !loading && onCancel()}
     >
       <div
+        ref={panelRef}
         onClick={(e) => e.stopPropagation()}
         className="w-full lg:max-w-md bg-white rounded-t-2xl lg:rounded-2xl shadow-lg animate-slide-up lg:animate-scale-in"
       >
