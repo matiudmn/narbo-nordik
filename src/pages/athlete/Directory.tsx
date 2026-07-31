@@ -233,7 +233,7 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
                 <span className="text-xs text-amber-600 font-medium">{prepName}</span>
               )}
               {category && (
-                <span className="text-xs text-accent font-medium">{category.code}</span>
+                <span className="text-xs text-accent-text font-medium">{category.code}</span>
               )}
               {birthday && (
                 <span className="text-xs text-gray-400 flex items-center gap-0.5">

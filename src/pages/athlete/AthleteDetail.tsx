@@ -151,7 +151,7 @@ export default function AthleteDetail() {
               {member.vma && <span className="text-sm text-primary font-bold">VMA {member.vma}</span>}
               {groupName && <span className="text-xs text-gray-500">{groupName}</span>}
               {prepName && <span className="text-xs text-amber-600 font-medium">{prepName}</span>}
-              {category && <span className="text-xs text-accent font-medium">{category.code}</span>}
+              {category && <span className="text-xs text-accent-text font-medium">{category.code}</span>}
               {birthday && (
                 <span className="text-xs text-gray-400 flex items-center gap-0.5">
                   <Cake size={11} />

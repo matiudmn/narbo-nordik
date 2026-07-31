@@ -698,7 +698,7 @@ export default function Profile() {
         title="Palmarès"
         icon={<Trophy size={18} className="text-accent" />}
         defaultOpen={false}
-        badge={userRaces.length > 0 ? <span className="text-xs bg-accent/10 text-accent px-1.5 py-0.5 rounded-full font-medium">{userRaces.length}</span> : undefined}
+        badge={userRaces.length > 0 ? <span className="text-xs bg-accent/10 text-accent-text px-1.5 py-0.5 rounded-full font-medium">{userRaces.length}</span> : undefined}
         action={
           <button
             onClick={() => setShowAddRace(!showAddRace)}
