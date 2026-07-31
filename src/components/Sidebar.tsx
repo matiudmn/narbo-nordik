@@ -16,7 +16,7 @@ export default function Sidebar() {
   const isCoach = user?.role === 'coach';
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+    `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
       isActive ? 'bg-accent/10 text-accent' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
     }`;
 
@@ -59,7 +59,7 @@ export default function Sidebar() {
       <div className="px-3 pt-4">
         <button
           onClick={openSearch}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-gray-500 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-gray-500 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:text-gray-700 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           aria-label="Rechercher"
         >
           <Search size={16} className="flex-shrink-0" />
@@ -95,7 +95,7 @@ export default function Sidebar() {
           href="https://chat.whatsapp.com/JwBh6hcJ7o00aBqonTAtD8?mode=hqctcli"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <MessageCircle size={18} />
           <span>WhatsApp</span>
@@ -115,7 +115,7 @@ export default function Sidebar() {
           </div>
           <button
             onClick={logout}
-            className="p-2 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-red-500 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             aria-label="Se deconnecter"
           >
             <LogOut size={16} />

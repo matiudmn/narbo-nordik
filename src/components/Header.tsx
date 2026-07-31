@@ -23,7 +23,7 @@ export default function Header() {
           <span>Vue en tant que {effectiveUser.firstname} {effectiveUser.lastname}</span>
           <button
             onClick={handleStopImpersonating}
-            className="flex items-center gap-0.5 bg-yellow-600 text-white px-2 py-0.5 rounded-full text-[10px] hover:bg-yellow-700 transition-colors"
+            className="flex items-center gap-0.5 bg-yellow-600 text-white px-2 py-0.5 rounded-full text-[10px] hover:bg-yellow-700 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <X size={10} />
             Quitter
@@ -33,7 +33,7 @@ export default function Header() {
       <header className={`fixed left-0 right-0 bg-primary text-white z-50 lg:hidden pt-[env(safe-area-inset-top)] ${isImpersonating ? 'top-8' : 'top-0'}`}>
         <div className="flex items-center justify-between h-14 px-4 max-w-5xl mx-auto">
           <div className="flex items-center gap-2 lg:hidden">
-            <button onClick={() => navigate('/')} className="flex-shrink-0">
+            <button onClick={() => navigate('/')} className="flex-shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
               <img src="/logo-club.png" alt="Narbo Nordik Club" className="h-10 w-10 rounded-full" />
             </button>
             <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
@@ -49,7 +49,7 @@ export default function Header() {
             )}
             <button
               onClick={openSearch}
-              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               aria-label="Rechercher"
             >
               <Search size={18} />
@@ -58,14 +58,14 @@ export default function Header() {
               href="https://chat.whatsapp.com/JwBh6hcJ7o00aBqonTAtD8?mode=hqctcli"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               aria-label="Groupe WhatsApp"
             >
               <MessageCircle size={18} />
             </a>
             <button
               onClick={() => navigate('/notifications')}
-              className="relative flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+              className="relative flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} non lues` : ''}`}
             >
               <Bell size={18} />
@@ -77,21 +77,21 @@ export default function Header() {
             </button>
             <button
               onClick={() => navigate('/aide')}
-              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               aria-label="Aide"
             >
               <HelpCircle size={18} />
             </button>
             <button
               onClick={() => navigate('/profile')}
-              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-full transition-colors"
+              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               aria-label="Mon profil"
             >
               {user && <Avatar user={user} size="sm" />}
             </button>
             <button
               onClick={logout}
-              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors"
+              className="flex items-center justify-center w-10 h-10 hover:bg-white/10 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               aria-label="Se deconnecter"
             >
               <LogOut size={18} />
