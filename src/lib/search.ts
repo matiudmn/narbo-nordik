@@ -112,6 +112,21 @@ export interface SearchViewer {
   isSuperAdmin: boolean;
 }
 
+/**
+ * Vrai si l'athlete `u` est visible par `viewer` dans l'annuaire et la
+ * recherche. Un profil `is_public=false` reste visible pour soi-meme, les
+ * coachs et le super-admin ; il disparait pour les AUTRES athletes.
+ *
+ * C'est un filtre applicatif, pas une frontiere RLS : la ligne reste
+ * techniquement lisible en base par tout `authenticated` (cf. migration
+ * 20260731120000). Utilise par `getScopedEntities` ci-dessous ainsi que par
+ * Directory et AthleteDetail, pour ne pas dupliquer la regle a 3 endroits.
+ */
+export function isAthleteVisible(u: User, viewer: Pick<SearchViewer, 'id' | 'role' | 'isSuperAdmin'>): boolean {
+  if (viewer.role === 'coach' || viewer.isSuperAdmin) return true;
+  return u.id === viewer.id || u.is_public;
+}
+
 /* ============================================================
    Libellés
    ============================================================ */
@@ -181,7 +196,9 @@ export function getScopedEntities(viewer: SearchViewer, data: SearchData): Scope
 
   const isStaff = viewer.role === 'coach' || viewer.isSuperAdmin;
   // Le super admin n'est jamais une cible de recherche (compte technique).
-  const members = data.users.filter(u => !u.is_super_admin);
+  // isAthleteVisible ne retire personne pour un viewer staff (toujours vrai) ;
+  // pour un athlete, elle masque les profils is_public=false des AUTRES.
+  const members = data.users.filter(u => !u.is_super_admin && isAthleteVisible(u, viewer));
 
   if (isStaff) {
     return {

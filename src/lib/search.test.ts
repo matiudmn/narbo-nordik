@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   normalize, matchTokens, scoreMatch,
-  buildSearchIndex, runSearch, applyAiFilters, sanitizeAiFilters, hasAnyFilter,
+  buildSearchIndex, runSearch, applyAiFilters, sanitizeAiFilters, hasAnyFilter, isAthleteVisible,
   type SearchData, type SearchViewer,
 } from './search';
 import type {
@@ -54,6 +54,7 @@ const G1: Group = { id: 'g1', name: 'Compétition' };
 const coach = makeUser({ id: 'coach', firstname: 'David', lastname: 'Nunez', role: 'coach' });
 const amelie = makeUser({ id: 'a1', firstname: 'Amélie', lastname: 'Dupont', vma: 16.5, group_id: 'g1' });
 const herve = makeUser({ id: 'a2', firstname: 'Hervé', lastname: 'Martin', vma: 14, group_id: 'g1' });
+const damien = makeUser({ id: 'a3', firstname: 'Damien', lastname: 'Prive', vma: 15, group_id: 'g1', is_public: false });
 
 const sGroup = makeSession({ id: 's_grp', title: 'Fractionné au seuil', group_id: 'g1', blocks: [
   { id: 'b1', type: 'travail', allure: 'sv1', duration_seconds: 600, distance_meters: null, repetitions: 4, rest_seconds: 60, rest_distance_meters: null },
@@ -66,13 +67,14 @@ const vHerve = makeValidation({ id: 'v_a2', session_id: 's_grp', user_id: 'a2', 
 const rAmelie = makeRace({ id: 'r1', user_id: 'a1', race_name: 'Marathon de Paris' });
 
 const data: SearchData = {
-  users: [coach, amelie, herve], sessions: [sGroup, sPersoHerve],
+  users: [coach, amelie, herve, damien], sessions: [sGroup, sPersoHerve],
   validations: [vAmelie, vHerve], raceResults: [rAmelie],
   preparations: [], groups: [G1], userPreparations: [],
 };
 
 const coachViewer: SearchViewer = { id: 'coach', role: 'coach', group_id: null, isSuperAdmin: false };
 const amelieViewer: SearchViewer = { id: 'a1', role: 'athlete', group_id: 'g1', isSuperAdmin: false };
+const damienViewer: SearchViewer = { id: 'a3', role: 'athlete', group_id: 'g1', isSuperAdmin: false };
 
 describe('normalize', () => {
   it('lowercases and strips accents', () => {
@@ -138,6 +140,40 @@ describe('persona scope (security)', () => {
   it('a coach sees all validations matching a distance filter', () => {
     const res = applyAiFilters(coachViewer, data, sanitizeAiFilters({ entity: 'validation', distance_km_min: 10 }));
     expect(res.map(r => r.id)).toEqual(['v_a2']);
+  });
+});
+
+describe('is_public gating (annuaire et recherche)', () => {
+  it('isAthleteVisible: un coach ou le super-admin voient tout le monde', () => {
+    expect(isAthleteVisible(damien, coachViewer)).toBe(true);
+    expect(isAthleteVisible(damien, { id: 'x', role: 'athlete', isSuperAdmin: true })).toBe(true);
+  });
+  it('isAthleteVisible: un athlete ne voit pas un profil is_public=false autre que le sien', () => {
+    expect(isAthleteVisible(damien, amelieViewer)).toBe(false);
+  });
+  it('isAthleteVisible: un athlete se voit toujours lui-meme, meme is_public=false', () => {
+    expect(isAthleteVisible(damien, damienViewer)).toBe(true);
+  });
+  it('isAthleteVisible: un profil is_public=true reste visible pour les autres athletes', () => {
+    const herveViewer: SearchViewer = { id: 'a2', role: 'athlete', group_id: 'g1', isSuperAdmin: false };
+    expect(isAthleteVisible(amelie, herveViewer)).toBe(true);
+  });
+
+  it("un athlete ne trouve pas dans l'annuaire/la recherche un membre is_public=false", () => {
+    const index = buildSearchIndex(amelieViewer, data);
+    expect(index.some(item => item.base.kind === 'athlete' && item.base.id === 'a3')).toBe(false);
+  });
+  it('ce meme membre is_public=false se trouve lui-meme dans sa propre recherche', () => {
+    const index = buildSearchIndex(damienViewer, data);
+    expect(index.some(item => item.base.kind === 'athlete' && item.base.id === 'a3')).toBe(true);
+  });
+  it('un coach trouve un membre is_public=false dans la recherche', () => {
+    const index = buildSearchIndex(coachViewer, data);
+    expect(index.some(item => item.base.kind === 'athlete' && item.base.id === 'a3')).toBe(true);
+  });
+  it('applyAiFilters (entite athlete) respecte le meme gating pour les autres athletes', () => {
+    const res = applyAiFilters(amelieViewer, data, sanitizeAiFilters({ entity: 'athlete' }));
+    expect(res.some(r => r.id === 'a3')).toBe(false);
   });
 });
 

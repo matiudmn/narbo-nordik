@@ -10,6 +10,7 @@ import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
 import { getRacePaces, calculateRacePace, getVmaLevelIndex } from '../../lib/calculations';
 import { getSeasonRange } from '../../lib/date-utils';
 import { filterSessionsForAthlete } from '../../lib/athleteSessions';
+import { isAthleteVisible } from '../../lib/search';
 import Avatar from '../../components/Avatar';
 import YearlyHeatmap from '../../components/YearlyHeatmap';
 import ExpandableText from '../../components/ExpandableText';
@@ -17,10 +18,19 @@ import ExpandableText from '../../components/ExpandableText';
 export default function AthleteDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isSuperAdmin } = useAuth();
   const { users, sessions, validations, raceResults, userPreparations, preparations, groups, clubSettings } = useData();
 
-  const member = useMemo(() => users.find(u => u.id === id), [users, id]);
+  // Un profil is_public=false n'est pas accessible aux autres athletes, meme
+  // par acces direct a l'URL (toujours visible pour soi-meme, les coachs et
+  // le super-admin) : cf. isAthleteVisible. Traite comme "introuvable" plutot
+  // qu'un etat "acces refuse" distinct, pour ne pas confirmer l'existence du
+  // profil a qui n'a pas a le voir.
+  const member = useMemo(() => {
+    const found = users.find(u => u.id === id);
+    if (!found || !currentUser) return undefined;
+    return isAthleteVisible(found, { id: currentUser.id, role: currentUser.role, isSuperAdmin }) ? found : undefined;
+  }, [users, id, currentUser, isSuperAdmin]);
   const racePaces = getRacePaces(clubSettings?.race_paces);
   const isCoach = currentUser?.role === 'coach';
 
