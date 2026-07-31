@@ -71,12 +71,14 @@ désormais l'historique réel et reconstruit la base complète.
 | 29 | `20260730160000_users_role_escalation_guard.sql` | **correctif de sécurité** : fermeture de l'escalade de privilège sur `users`. Les policies d'écriture contrôlaient la ligne et jamais les colonnes, donc un athlète pouvait passer son propre `role` à `coach` puis écrire tous les profils. Trigger `BEFORE INSERT OR UPDATE` qui fige `role` hors coach et hors service_role |
 | 30 | `20260730170000_drop_strava_archive.sql` | **DESTRUCTIF** : `DROP TABLE _archive_strava_activities`. Clôt la décision RGPD laissée ouverte par l'entrée 27 (finalité disparue avec le retrait de Strava le 06/06, aucune durée de conservation définie). Rend caduque la section 3 de l'entrée 27 |
 | 31 | `20260731081000_users_super_admin_flag.sql` | **correctif de sécurité** : `users.is_super_admin`, colonne dédiée remplaçant la dérivation par email (`isSuperAdmin` valait `user.email === SUPER_ADMIN_EMAIL`, or `email` était modifiable par PATCH client). Trigger `enforce_user_role_change` étendu : `is_super_admin` figé pour tout appelant client (INSERT comme UPDATE), `email` figé à l'UPDATE. Seed du compte existant |
+| 32 | `20260731100000_avatars_bucket.sql` | **perf** : bucket storage public `avatars` + policies INSERT/UPDATE/DELETE par utilisateur sur son dossier (même motif que `session-attachments`), pas de SELECT (accès par URL publique). Permet à `updateUserPhoto` (`DataContext`) de stocker les photos de profil en fichier au lieu du base64 embarqué dans `users.photo_url` (transféré à tout le club à chaque `fetchAll`) |
+| 33 | `20260731101000_unschedule_daily_digest.sql` | **correctif** : `cron.unschedule('daily-session-digest')`. La fonction Edge correspondante ne sera pas déployée (décision 2026-07-31) et le job frappait un 404 quotidien (`0 18 * * *`) |
 
-> **État réel en prod** (revérifié le 2026-07-30 au soir, après le `supabase db push`
-> appliquant les entrées 28, 29 et 30) : **toutes les entrées jusqu'à la 30 sont
-> appliquées**, registre Local = Remote. Vérifié dans la foulée : trigger
-> `on_user_role_change` actif, `exit_feedbacks.user_id` supprimée,
-> `_archive_strava_activities` n'existe plus.
+> **État réel en prod** (revérifié le 2026-07-31, via `execute_sql` en lecture
+> seule sur `cron.job`) : **toutes les entrées jusqu'à la 31 sont appliquées**.
+> Les entrées **32 et 33 sont en attente de `db push`** (rédigées mais non
+> appliquées ; le job `daily-session-digest` est encore actif en prod au
+> moment de l'écriture de cette note).
 >
 > Cette note a déjà dérivé deux fois (état d'application annoncé faux après un
 > `db push`) : **toujours revérifier avec `supabase migration list --linked`**
@@ -85,6 +87,12 @@ désormais l'historique réel et reconstruit la base complète.
 > **Séquencement obligatoire pour l'entrée 31** : appliquer cette migration
 > avant de déployer le front correspondant (le front qui lit
 > `users.is_super_admin` au lieu de comparer `email` à `SUPER_ADMIN_EMAIL`).
+>
+> **Séquencement recommandé pour l'entrée 32** : appliquer avant (ou en même
+> temps que) le déploiement du front correspondant (`updateUserPhoto` qui
+> uploade désormais vers le bucket `avatars` au lieu d'écrire du base64) :
+> sans le bucket, l'upload échoue silencieusement côté UI (erreur retournée
+> par `updateUserPhoto`, à surveiller au déploiement).
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 
