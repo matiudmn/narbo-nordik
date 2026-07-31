@@ -101,6 +101,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       is_public: true,
     });
     if (insertError) return insertError.message;
+
+    const { data: coaches } = await supabase.from('users').select('id').eq('role', 'coach');
+    if (coaches && coaches.length > 0) {
+      const { error: notifError } = await supabase.from('notifications').insert(
+        coaches.map((coach) => ({
+          user_id: coach.id,
+          type: 'system',
+          title: `Nouvelle inscription : ${firstname} ${lastname}`,
+          body: `${firstname} ${lastname} (${email}) vient de créer son compte.`,
+          link: '/coach',
+        }))
+      );
+      if (notifError) console.error('Notification inscription error:', notifError.message);
+    }
+
     return null;
   }, []);
 
