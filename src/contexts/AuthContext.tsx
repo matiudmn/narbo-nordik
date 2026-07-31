@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           user_id: coach.id,
           type: 'system',
           title: `Nouvelle inscription : ${firstname} ${lastname}`,
-          body: `${firstname} ${lastname} (${email}) vient de creer son compte.`,
+          body: `${firstname} ${lastname} (${email}) vient de créer son compte.`,
           link: '/coach',
         }))
       );
