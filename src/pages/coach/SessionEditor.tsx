@@ -674,7 +674,7 @@ export default function SessionEditor() {
         </button>
         <p className="text-sm text-gray-600">
           {format(weekStart, 'd MMM', { locale: fr })} - {format(weekEnd, 'd MMM yyyy', { locale: fr })}
-          {weekOffset === 0 && <span className="ml-1 text-accent font-medium">(cette semaine)</span>}
+          {weekOffset === 0 && <span className="ml-1 text-accent-text font-medium">(cette semaine)</span>}
         </p>
         <button onClick={() => setWeekOffset(o => o + 1)} className="p-2 hover:bg-gray-100 rounded-lg">
           <ChevronRight size={20} />
@@ -784,7 +784,7 @@ export default function SessionEditor() {
                   </div>
                 </div>
                 {duplicatedId === session.id && (
-                  <p className="text-xs text-accent mt-2">Séance copiée dans le formulaire ci-dessus.</p>
+                  <p className="text-xs text-accent-text mt-2">Séance copiée dans le formulaire ci-dessus.</p>
                 )}
                 {confirmDeleteId === session.id && (
                   <div className="bg-danger-50 border border-danger-100 rounded-lg p-3 mt-3">

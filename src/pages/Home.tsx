@@ -564,7 +564,7 @@ export default function Home() {
             <h2 className="text-lg font-bold text-gray-900">Ta semaine d'entraînement</h2>
             <p className="text-sm text-gray-500">
               {format(weekStart, 'd MMM', { locale: fr })} - {format(weekEnd, 'd MMM yyyy', { locale: fr })}
-              {weekOffset === 0 && <span className="ml-1 text-accent font-medium">(cette semaine)</span>}
+              {weekOffset === 0 && <span className="ml-1 text-accent-text font-medium">(cette semaine)</span>}
             </p>
           </div>
           <button onClick={() => setWeekOffset(o => o + 1)} className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Semaine suivante">

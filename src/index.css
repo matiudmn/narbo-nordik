@@ -17,6 +17,10 @@
   --color-accent: #6CCBE6;
   --color-accent-light: #8DD8ED;
   --color-accent-dark: #4ABDD9;
+  /* Texte cyan accessible : #6CCBE6 en texte sur blanc ne fait que ~1.9:1 (AA exige 4.5:1).
+     #14748F (même teinte ~193°, assombrie) atteint 5.35:1 sur blanc et 5.05:1 sur le fond
+     bg-accent/10 le plus clair utilisé sous ce texte. Reserve aux usages TEXTE sur fond clair. */
+  --color-accent-text: #14748F;
 
   /* Surfaces étagées (au-delà du --color-surface plat) */
   --color-bg-base: #fafbfc;       /* fond global */

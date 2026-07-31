@@ -305,7 +305,7 @@ export default function SessionDetail() {
         {hasBlocks && (
           <div className="mx-4 -mt-3 bg-accent/5 border-2 border-accent/20 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="flex items-center gap-2 text-accent font-bold text-sm uppercase">
+              <h2 className="flex items-center gap-2 text-accent-text font-bold text-sm uppercase">
                 <Gauge size={18} />
                 Programme
               </h2>
@@ -363,7 +363,7 @@ export default function SessionDetail() {
         {/* Legacy pace card (old sessions without blocks) */}
         {!hasBlocks && paces && (
           <div className="mx-4 -mt-3 bg-accent/5 border-2 border-accent/20 rounded-xl p-4">
-            <h2 className="flex items-center gap-2 text-accent font-bold text-sm uppercase mb-3">
+            <h2 className="flex items-center gap-2 text-accent-text font-bold text-sm uppercase mb-3">
               <Gauge size={18} />
               Mes Allures Cibles
             </h2>
@@ -391,7 +391,7 @@ export default function SessionDetail() {
                   <Timer size={14} className="inline mr-1" />
                   Chrono cible
                 </p>
-                <p className="text-xl font-bold text-accent">
+                <p className="text-xl font-bold text-accent-text">
                   {paces.timeMinDisplay} - {paces.timeMaxDisplay}
                 </p>
               </div>
@@ -633,7 +633,7 @@ export default function SessionDetail() {
                         type="button"
                         onClick={() => ocrInputRef.current?.click()}
                         disabled={ocrLoading}
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-dark hover:text-accent disabled:opacity-60 transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-dark hover:text-accent-text disabled:opacity-60 transition-colors"
                       >
                         <Sparkles size={13} aria-hidden="true" />
                         {ocrLoading ? 'Lecture de la capture…' : 'Importer une capture (remplir par IA)'}
@@ -688,7 +688,7 @@ export default function SessionDetail() {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-accent transition-colors"
+                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-accent-text transition-colors"
                       >
                         <Paperclip size={16} />
                         {isEditing && validation?.attachment_path ? 'Remplacer la piece jointe' : 'Ajouter un fichier (photo, PDF)'}
