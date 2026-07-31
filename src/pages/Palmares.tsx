@@ -8,7 +8,6 @@ import ExpandableText from '../components/ExpandableText';
 import { Card, EmptyState } from '../components/ui';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { SUPER_ADMIN_EMAIL } from '../lib/constants';
 import type { RaceType } from '../types';
 
 function formatDuration(duration: string): string {
@@ -158,7 +157,7 @@ export default function Palmares() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const sortedUsers = useMemo(() =>
-    [...users].filter(u => u.email !== SUPER_ADMIN_EMAIL).sort((a, b) => a.firstname.localeCompare(b.firstname)),
+    [...users].filter(u => !u.is_super_admin).sort((a, b) => a.firstname.localeCompare(b.firstname)),
     [users]
   );
 
@@ -168,7 +167,7 @@ export default function Palmares() {
         const u = users.find(u => u.id === r.user_id);
         return { ...r, user: u };
       })
-      .filter(r => r.user && r.user.email !== SUPER_ADMIN_EMAIL)
+      .filter(r => r.user && !r.user.is_super_admin)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [raceResults, users]);
 

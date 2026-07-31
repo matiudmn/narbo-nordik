@@ -19,6 +19,7 @@ function makeUser(o: Partial<User> & { id: string; firstname: string; lastname: 
   return {
     role: 'athlete', email: `${o.id}@test.fr`, vma: null, vma_history: [], group_id: null,
     phone: null, birth_date: null, license_number: null, photo_url: null, is_public: true,
+    is_super_admin: false,
     notification_preferences: NP, created_at: '2026-01-01T00:00:00Z', ...o,
   };
 }

@@ -5,7 +5,6 @@ import { fr } from 'date-fns/locale';
 import { TrendingUp, Users, MessageSquare, CheckCircle, AlertTriangle, ChevronRight, Settings, Paperclip, FileText, Star, Sparkles } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { getAttachmentUrl } from '../../lib/storage';
 import { supabase } from '../../lib/supabase';
 import { getSessionCode } from '../../lib/calculations';
@@ -36,7 +35,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { sessions, validations, users, groups, validationReactions, toggleValidationReaction, clubSettings, setFeaturedValidation } = useData();
 
-  const members = useMemo(() => users.filter(u => u.email !== SUPER_ADMIN_EMAIL && u.role !== 'coach'), [users]);
+  const members = useMemo(() => users.filter(u => !u.is_super_admin && u.role !== 'coach'), [users]);
 
   const stats = useMemo(() => {
     const weekSessions = sessions.filter(s => !s.is_personal && isThisWeek(new Date(s.date), { weekStartsOn: 1 }));

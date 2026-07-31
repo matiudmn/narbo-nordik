@@ -6,7 +6,6 @@ import { fr } from 'date-fns/locale';
 import { Card, EmptyState } from '../../components/ui';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { SUPER_ADMIN_EMAIL } from '../../lib/constants';
 import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
 import { getRacePaces, calculateRacePace, getVmaLevelIndex } from '../../lib/calculations';
 import { filterSessionsForAthlete } from '../../lib/athleteSessions';
@@ -275,7 +274,7 @@ export default function Directory() {
   const debouncedSearch = useDebounce(search, 250);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const visibleUsers = useMemo(() => users.filter(u => u.email !== SUPER_ADMIN_EMAIL), [users]);
+  const visibleUsers = useMemo(() => users.filter(u => !u.is_super_admin), [users]);
 
   const groupMap = useMemo(() => {
     const map = new Map<string, string>();
