@@ -10,6 +10,7 @@ import { Button } from './ui';
 import {
   nodeToPngBlob, downloadBlob, pngBlobToPdf, canShareImage, shareImage, whatsappLink,
 } from '../lib/shareExport';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface ShareSheetProps {
   open: boolean;
@@ -24,6 +25,7 @@ interface ShareSheetProps {
 
 export default function ShareSheet({ open, onClose, filenameBase, shareTitle, shareText, scopeLabel, children }: ShareSheetProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [pngUrl, setPngUrl] = useState<string | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [status, setStatus] = useState<'generating' | 'ready' | 'error'>('generating');
@@ -52,11 +54,7 @@ export default function ShareSheet({ open, onClose, filenameBase, shareTitle, sh
 
   useEffect(() => () => { if (pngUrl) URL.revokeObjectURL(pngUrl); }, [pngUrl]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    if (open) window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  useModalA11y(open, panelRef, onClose);
 
   if (!open) return null;
 
@@ -91,7 +89,10 @@ export default function ShareSheet({ open, onClose, filenameBase, shareTitle, sh
       </div>
 
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="absolute inset-x-0 bottom-0 lg:inset-0 lg:m-auto lg:h-fit lg:max-w-md bg-white rounded-t-2xl lg:rounded-2xl p-4 max-h-[90vh] overflow-y-auto safe-bottom">
+      <div
+        ref={panelRef}
+        className="absolute inset-x-0 bottom-0 lg:inset-0 lg:m-auto lg:h-fit lg:max-w-md bg-white rounded-t-2xl lg:rounded-2xl p-4 max-h-[90vh] overflow-y-auto safe-bottom"
+      >
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-bold text-neutral-900">Partager</h2>
           <button onClick={onClose} aria-label="Fermer" className="flex items-center justify-center w-9 h-9 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg">
