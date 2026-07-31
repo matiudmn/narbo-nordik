@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import type { Session, SessionValidation, RaceResult, RaceNordik, SessionNordik, ValidationReaction, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation, ObjectiveReached, Sensations, SessionMetricsInput, ClubSettings, RacePaceConfig, AllureZoneConfig } from '../types';
 import { supabase, createEphemeralClient } from '../lib/supabase';
 import { useAuth } from './AuthContext';
@@ -38,7 +38,7 @@ interface DataContextType {
   updateUserPhone: (userId: string, phone: string | null) => Promise<{ error: string | null }>;
   updateUserLicense: (userId: string, licenseNumber: string | null) => Promise<{ error: string | null }>;
   updateUserBirthDate: (userId: string, birthDate: string | null) => Promise<{ error: string | null }>;
-  updateUserPhoto: (userId: string, photoUrl: string | null) => Promise<{ error: string | null }>;
+  updateUserPhoto: (userId: string, file: File | null) => Promise<{ error: string | null }>;
   addUser: (user: Omit<User, 'id' | 'created_at' | 'vma_history' | 'photo_url' | 'license_number' | 'birth_date' | 'notification_preferences'>) => Promise<AddUserResult | null>;
   deleteUser: (id: string) => Promise<{ error: string | null }>;
   addGroup: (name: string) => Promise<{ error: string | null }>;
@@ -74,6 +74,16 @@ const DEFAULT_NOTIF_PREFS: NotificationPreferences = {
   vma_update: { in_app: true, email: false },
   weekly_digest: { email: true },
 };
+
+// Extrait le chemin storage (`<user_id>/avatar.<ext>`) d'une URL publique du
+// bucket avatars. Renvoie null pour un base64 `data:` historique ou toute
+// autre valeur qui n'est pas une URL du bucket.
+function storagePathFromAvatarUrl(url: string): string | null {
+  const marker = '/avatars/';
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return url.slice(idx + marker.length).split('?')[0];
+}
 
 function normalizeUser(u: Record<string, unknown>): User {
   return {
@@ -553,8 +563,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return patchUser(userId, { birth_date: birthDate });
   }, [patchUser]);
 
-  const updateUserPhoto = useCallback(async (userId: string, photoUrl: string | null) => {
-    return patchUser(userId, { photo_url: photoUrl });
+  // Ancien objet supprimé seulement s'il s'agit d'une URL de storage (pas d'un
+  // base64 `data:` historique, qui n'a jamais eu d'objet à nettoyer).
+  const updateUserPhoto = useCallback(async (userId: string, file: File | null): Promise<{ error: string | null }> => {
+    const { data: existing } = await supabase.from('users').select('photo_url').eq('id', userId).single();
+    const previousUrl = existing?.photo_url as string | null | undefined;
+    const previousPath = previousUrl ? storagePathFromAvatarUrl(previousUrl) : null;
+
+    if (!file) {
+      if (previousPath) await supabase.storage.from('avatars').remove([previousPath]);
+      return patchUser(userId, { photo_url: null });
+    }
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const filePath = `${userId}/avatar.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { cacheControl: '3600', upsert: true });
+    if (uploadError) {
+      console.error('updateUserPhoto upload error:', uploadError.message);
+      return { error: uploadError.message };
+    }
+    if (previousPath && previousPath !== filePath) {
+      await supabase.storage.from('avatars').remove([previousPath]);
+    }
+
+    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    return patchUser(userId, { photo_url: `${urlData.publicUrl}?t=${Date.now()}` });
   }, [patchUser]);
 
   const addUser = useCallback(async (
@@ -754,14 +789,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return { error: null };
   }, [clubSettings]);
 
+  const value = useMemo<DataContextType>(() => ({
+    sessions, validations, raceResults, raceNordiks, sessionNordiks, validationReactions, groups, users, preparations, userPreparations, clubSettings, loading,
+    addSession, addSessionsBulk, updateSession, deleteSession, validateSession, updateValidation,
+    addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, toggleValidationReaction, updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto,
+    addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
+    addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, setFeaturedValidation, refreshAll,
+  }), [
+    sessions, validations, raceResults, raceNordiks, sessionNordiks, validationReactions, groups, users, preparations, userPreparations, clubSettings, loading,
+    addSession, addSessionsBulk, updateSession, deleteSession, validateSession, updateValidation,
+    addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, toggleValidationReaction, updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto,
+    addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
+    addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, setFeaturedValidation, refreshAll,
+  ]);
+
   return (
-    <DataContext.Provider value={{
-      sessions, validations, raceResults, raceNordiks, sessionNordiks, validationReactions, groups, users, preparations, userPreparations, clubSettings, loading,
-      addSession, addSessionsBulk, updateSession, deleteSession, validateSession, updateValidation,
-      addRaceResult, updateRaceResult, deleteRaceResult, toggleNordik, toggleSessionNordik, toggleValidationReaction, updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto,
-      addUser, deleteUser, addGroup, updateGroup, deleteGroup, updateUserGroup, updateNotificationPreferences,
-      addPreparation, updatePreparation, deletePreparation, addUserToPreparation, removeUserFromPreparation, updateClubSettings, setFeaturedValidation, refreshAll,
-    }}>
+    <DataContext.Provider value={value}>
       {children}
     </DataContext.Provider>
   );

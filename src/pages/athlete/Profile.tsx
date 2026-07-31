@@ -216,7 +216,9 @@ export default function Profile() {
         canvas.width = w;
         canvas.height = h;
         canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
-        updateUserPhoto(user.id, canvas.toDataURL('image/jpeg', 0.7));
+        canvas.toBlob(blob => {
+          if (blob) updateUserPhoto(user.id, new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.7);
       };
       img.src = reader.result as string;
     };
