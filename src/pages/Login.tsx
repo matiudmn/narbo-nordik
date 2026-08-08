@@ -8,6 +8,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [firstname, setFirstname] = useState('');
   const [lastname, setLastname] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
@@ -30,7 +31,7 @@ export default function Login() {
       return;
     }
     setLoading(true);
-    const err = await signup(email, password, firstname.trim(), lastname.trim());
+    const err = await signup(email, password, firstname.trim(), lastname.trim(), inviteCode.trim());
     setLoading(false);
     if (err) setError(err);
   };
@@ -152,6 +153,19 @@ export default function Login() {
                   aria-describedby={error ? 'signup-error' : undefined}
                   className={inputClass}
                 />
+                <div>
+                  <label htmlFor="signup-invite-code" className="sr-only">Code d'invitation</label>
+                  <input
+                    id="signup-invite-code"
+                    type="text" placeholder="Code d'invitation" required autoComplete="off"
+                    value={inviteCode} onChange={e => setInviteCode(e.target.value)}
+                    aria-describedby={error ? 'signup-invite-help signup-error' : 'signup-invite-help'}
+                    className={inputClass}
+                  />
+                  <p id="signup-invite-help" className="text-xs text-neutral-400 mt-1">
+                    Demande-le à ton coach.
+                  </p>
+                </div>
                 {error && <p id="signup-error" role="alert" className="text-danger text-sm">{error}</p>}
                 <Button
                   type="submit"
@@ -159,7 +173,7 @@ export default function Login() {
                   size="lg"
                   fullWidth
                   loading={loading}
-                  disabled={!firstname || !lastname}
+                  disabled={!firstname || !lastname || !inviteCode}
                 >
                   S'inscrire
                 </Button>

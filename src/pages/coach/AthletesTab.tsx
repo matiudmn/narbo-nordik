@@ -1,17 +1,25 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Trash2, Check, X, Search, Share2, Copy, Eye, UserPlus } from 'lucide-react';
+import { Plus, Trash2, Check, X, Search, Share2, Copy, Eye, UserPlus, KeyRound, RefreshCw } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
-import { Button, Card, useToast } from '../../components/ui';
+import { Button, Card, ConfirmDialog, useToast } from '../../components/ui';
 import type { Role } from '../../types';
 import { matchTokens } from '../../lib/search';
 import { filterSessionsForAthlete, getUserPrepIds } from '../../lib/athleteSessions';
 
+// 4 octets aleatoires en hexa majuscules, meme format que le code seede par
+// la migration 20260731130000 (encode(gen_random_bytes(4), 'hex')).
+function generateInviteCode(): string {
+  const bytes = new Uint8Array(4);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
 export default function AthletesTab() {
-  const { users, groups, validations, sessions, preparations, userPreparations, updateUserVma, updateUserLicense, updateUserGroup, addUser, deleteUser } = useData();
+  const { users, groups, validations, sessions, preparations, userPreparations, clubSettings, updateClubSettings, updateUserVma, updateUserLicense, updateUserGroup, addUser, deleteUser } = useData();
   const { isSuperAdmin, impersonate } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
@@ -20,6 +28,8 @@ export default function AthletesTab() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 250);
   const [showAdd, setShowAdd] = useState(false);
+  const [confirmRegenerateCode, setConfirmRegenerateCode] = useState(false);
+  const [regeneratingCode, setRegeneratingCode] = useState(false);
   // L'éditeur de VMA peut être pré-ouvert par un deep-link (?edit=<id>) venant
   // de la recherche universelle. On lit le param a l'init du state (robuste a un
   // remount du composant pendant la transition de route) ; le param reste tant
@@ -184,8 +194,60 @@ export default function AthletesTab() {
     setConfirmDeleteId(null);
   };
 
+  const handleCopyCode = async () => {
+    if (!clubSettings?.invite_code) return;
+    await navigator.clipboard.writeText(clubSettings.invite_code);
+    toast.success('Code copié.');
+  };
+
+  const handleRegenerateCode = async () => {
+    if (!clubSettings) return;
+    setRegeneratingCode(true);
+    const res = await updateClubSettings(clubSettings.race_paces, clubSettings.allure_zones, generateInviteCode());
+    setRegeneratingCode(false);
+    setConfirmRegenerateCode(false);
+    if (res.error) {
+      toast.error('Échec de la régénération du code.');
+      return;
+    }
+    toast.success('Nouveau code généré.');
+  };
+
   return (
     <div className="space-y-3">
+      {/* Invite code */}
+      <Card className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-gray-700">
+            <KeyRound size={16} className="text-primary" />
+            <span className="text-sm font-bold">Code d'invitation</span>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<RefreshCw size={14} aria-hidden="true" />}
+            onClick={() => setConfirmRegenerateCode(true)}
+          >
+            Régénérer
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-lg font-bold tracking-widest text-gray-900 bg-gray-50 rounded-lg px-3 py-1.5">
+            {clubSettings?.invite_code ?? '…'}
+          </span>
+          <button
+            onClick={handleCopyCode}
+            aria-label="Copier le code"
+            className="p-2 text-gray-300 hover:text-primary transition-colors"
+          >
+            <Copy size={16} />
+          </button>
+        </div>
+        <p className="text-xs text-gray-400">
+          Communique ce code aux nouveaux membres : il leur est demandé à l'inscription.
+        </p>
+      </Card>
+
       {/* Add button */}
       <div className="flex justify-end">
         <Button
@@ -454,6 +516,16 @@ export default function AthletesTab() {
           );
         })}
       </div>
+
+      <ConfirmDialog
+        open={confirmRegenerateCode}
+        title="Régénérer le code d'invitation ?"
+        description="L'ancien code cessera de fonctionner immédiatement. Les personnes qui ne se sont pas encore inscrites devront utiliser le nouveau code."
+        confirmLabel="Régénérer"
+        loading={regeneratingCode}
+        onConfirm={handleRegenerateCode}
+        onCancel={() => setConfirmRegenerateCode(false)}
+      />
     </div>
   );
 }

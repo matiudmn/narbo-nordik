@@ -74,6 +74,7 @@ désormais l'historique réel et reconstruit la base complète.
 | 32 | `20260731100000_avatars_bucket.sql` | **perf** : bucket storage public `avatars` + policies INSERT/UPDATE/DELETE par utilisateur sur son dossier (même motif que `session-attachments`), pas de SELECT (accès par URL publique). Permet à `updateUserPhoto` (`DataContext`) de stocker les photos de profil en fichier au lieu du base64 embarqué dans `users.photo_url` (transféré à tout le club à chaque `fetchAll`) |
 | 33 | `20260731101000_unschedule_daily_digest.sql` | **correctif** : `cron.unschedule('daily-session-digest')`. La fonction Edge correspondante ne sera pas déployée (décision 2026-07-31) et le job frappait un 404 quotidien (`0 18 * * *`) |
 | 34 | `20260731120000_users_pii_grants.sql` | **correctif de sécurité** : cloisonnement colonne par colonne de `users` pour `authenticated`. La policy SELECT `USING (true)` ouvrait email/téléphone/numéro de licence/date de naissance/préférences de notification de tout le club à tout membre authentifié (Directory/AthleteDetail les affichaient même à des non-coachs, sans lien avec `is_public`). REVOKE + GRANT colonne restreint aux non-PII (id, role, firstname, lastname, vma, vma_history, group_id, photo_url, is_public, is_super_admin, created_at) ; deux RPC `SECURITY DEFINER` (`get_own_profile`, `get_users_for_coach`) rendent les colonnes PII à soi-même et aux coachs/super-admin. Révise le volet téléphone/date de naissance de la décision « club-visible par design » du 2026-06-08. Gating réel de `is_public` côté app (Directory, recherche, AthleteDetail) dans le même chantier |
+| 35 | `20260731130000_invite_code.sql` | **changement produit** (décision Matthieu 2026-07-31) : l'inscription self-service exige désormais un code d'invitation, vérifié côté base. `club_settings.invite_code` (text NOT NULL, seedé par un code aléatoire généré dans la migration, jamais en dur) ; RPC `SECURITY DEFINER` `register_profile(invite_code, firstname, lastname, email)` qui vérifie le code (insensible casse/espaces) puis insère le profil (role athlete, is_public true, mêmes valeurs par défaut que l'ancien insert direct) ; la policy INSERT de `users` perd sa branche self-service et redevient coach-only (« Coaches can insert user profiles », reprend mot pour mot la branche coach de 20260730140000). Le flux coach `addUser` est inchangé (insert direct par un coach, toujours autorisé). Validé en PGlite (cf. PR) : bon code → profil créé role athlete ; mauvais code → 42501 FR, aucune ligne ; tentative de forcer `role` via le RPC → 42883 (paramètre inexistant) ; insert direct par un athlète → refusé (RLS) ; insert direct par un coach → passe ; rejeu du fichier seul → idempotent, code inchangé |
 
 > **État réel en prod** (revérifié le 2026-07-31, via `execute_sql` en lecture
 > seule sur `cron.job`) : **toutes les entrées jusqu'à la 31 sont appliquées**.
@@ -94,6 +95,16 @@ désormais l'historique réel et reconstruit la base complète.
 > uploade désormais vers le bucket `avatars` au lieu d'écrire du base64) :
 > sans le bucket, l'upload échoue silencieusement côté UI (erreur retournée
 > par `updateUserPhoto`, à surveiller au déploiement).
+>
+> **Entrée 35 : NON appliquée**, rédigée et validée en PGlite uniquement (voir
+> tableau ci-dessus). **Séquencement obligatoire** : appliquer AVANT de
+> déployer le front correspondant, `AuthContext.signup` appelant désormais
+> `rpc('register_profile')` au lieu d'un insert direct : sans la migration, le
+> RPC n'existe pas et **toute inscription self-service échoue** (42883). Une
+> fois appliquée : relancer `npm run gen:types` (le type manuel `ClubSettings`
+> a `invite_code`, mais `src/types/database.types.ts` ne le sait pas encore ;
+> `toClubSettings`/`asClubSettingsPayload`/le RPC `register_profile` côté
+> `AuthContext` portent des casts locaux documentés en attendant).
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 
