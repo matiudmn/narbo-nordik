@@ -19,15 +19,24 @@ export async function callEdgeFunction<T = unknown>(
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return { data: null, error: 'Non authentifie' };
 
-  const res = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-      'apikey': supabaseAnonKey,
-    },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+      },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    // fetch() rejette (pas de reponse HTTP) sur une coupure reseau, contrairement
+    // au client supabase-js qui catche ce cas en interne : on le convertit ici dans
+    // la meme forme { data: null, error } que les autres echecs pour que les
+    // appelants (ex. useUniversalSearch.runAi) n'aient jamais a gerer une exception.
+    return { data: null, error: 'Connexion indisponible' };
+  }
 
   let json: Record<string, unknown>;
   try {

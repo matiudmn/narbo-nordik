@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
 import type { Session, SessionValidation, RaceResult, RaceNordik, SessionNordik, ValidationReaction, Group, User, NotificationPreferences, SpecificPreparation, UserPreparation, ObjectiveReached, Sensations, SessionMetricsInput, ClubSettings, RacePaceConfig, AllureZoneConfig } from '../types';
+import type { OfflineState } from '../lib/offline-cache';
 import { useAuth } from './AuthContext';
 import { useDataBootstrap } from './data/bootstrap';
 import { useSessionActions } from './data/sessions';
@@ -57,6 +58,7 @@ interface DataContextType {
   updateClubSettings: (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>) => Promise<{ error: string | null }>;
   setFeaturedValidation: (validationId: string | null) => Promise<{ error: string | null }>;
   refreshAll: () => Promise<void>;
+  offline: OfflineState;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
@@ -75,11 +77,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [userPreparations, setUserPreparations] = useState<UserPreparation[]>([]);
   const [clubSettings, setClubSettings] = useState<ClubSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [offline, setOffline] = useState<OfflineState>({ isOffline: false, cachedAt: null });
 
   const { refreshAll } = useDataBootstrap(authUser, {
     setSessions, setValidations, setRaceResults, setRaceNordiks, setSessionNordiks,
     setValidationReactions, setGroups, setUsers, setPreparations, setUserPreparations,
-    setClubSettings, setLoading,
+    setClubSettings, setLoading, setOffline,
   });
 
   const sessionActions = useSessionActions({ setSessions, setValidations });
@@ -94,11 +97,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const value = useMemo<DataContextType>(() => ({
     sessions, validations, raceResults, raceNordiks, sessionNordiks, validationReactions, groups, users, preparations, userPreparations, clubSettings, loading,
     ...sessionActions, ...validationActions, ...raceActions, ...nordikActions, ...userActions, ...groupActions, ...preparationActions, ...clubSettingsActions,
-    refreshAll,
+    refreshAll, offline,
   }), [
     sessions, validations, raceResults, raceNordiks, sessionNordiks, validationReactions, groups, users, preparations, userPreparations, clubSettings, loading,
     sessionActions, validationActions, raceActions, nordikActions, userActions, groupActions, preparationActions, clubSettingsActions,
-    refreshAll,
+    refreshAll, offline,
   ]);
 
   return (
