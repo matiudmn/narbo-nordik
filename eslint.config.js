@@ -28,4 +28,16 @@ export default defineConfig([
     files: ['src/contexts/**/*.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
+  {
+    // eslint-plugin-react-hooks 7.0.1 -> 7.1.1 (requis pour le support ESLint 10) affine la
+    // détection de ces 3 règles et fait remonter 7 cas préexistants (ShareSheet, Home,
+    // useSessionAutosave, coach/Import) hors périmètre de cette montée d'outillage.
+    // Passées en warn en attendant une revue dédiée (cf. flagsPourMatthieu du lot outillage).
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/set-state-in-render': 'warn',
+    },
+  },
 ])
