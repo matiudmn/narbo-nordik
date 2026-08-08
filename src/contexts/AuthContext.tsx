@@ -1,6 +1,8 @@
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import type { User } from '../types';
 import { supabase } from '../lib/supabase';
+import { clearSnapshot } from '../lib/offline-cache';
+import { captureError } from '../lib/monitoring';
 import { toUser } from './data/rows';
 
 interface AuthContextType {
@@ -29,19 +31,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isImpersonating = isSuperAdmin && impersonatedUser !== null;
   const effectiveUser = impersonatedUser ?? user;
 
+  // Dernier id utilisateur charge (ref, pas de re-render) : sert uniquement
+  // a detecter un changement d'utilisateur au sein de la meme page (session
+  // Supabase remplacee sous nos pieds sans passer par logout(), ex.
+  // SIGNED_OUT/SIGNED_IN enchaines) pour purger le cache offline avant qu'il
+  // ne soit lu par un autre utilisateur. Le cas nominal (logout explicite)
+  // est purge directement dans logout() ci-dessous.
+  const lastUserIdRef = useRef<string | null>(null);
+
+  // Purge best-effort du cache offline (src/lib/offline-cache.ts). Import
+  // direct plutot qu'un event bus : offline-cache est un module feuille sans
+  // dependance sur AuthContext/DataContext (les deux l'importent
+  // directement, cf. contexts/data/bootstrap.ts), donc appeler clearSnapshot()
+  // ici n'introduit aucun couplage AuthContext -> DataContext.
+  const purgeOfflineCache = useCallback((scope: string) => {
+    clearSnapshot().catch((err) => captureError(`offline-cache.purge.${scope}`, err));
+  }, []);
+
   // Passe par le RPC get_own_profile() (SECURITY DEFINER) plutot qu'un SELECT
   // direct : depuis la migration 20260731120000, `authenticated` n'a plus
   // l'email/le telephone/la licence/la date de naissance/les preferences de
   // notif en GRANT colonne sur `users`. auth.uid() identifie deja l'appelant
   // cote serveur, l'id client n'est plus necessaire ici.
   const loadProfile = useCallback(async () => {
-    const { data, error } = await supabase.rpc('get_own_profile').single();
+    const { data, error, status } = await supabase.rpc('get_own_profile').single();
     if (error || !data) {
+      // Echec reseau (status 0, meme signature qu'isNetworkError dans
+      // contexts/data/bootstrap.ts) : ne pas deconnecter un utilisateur deja
+      // charge pour une simple coupure, sinon la coupure elle-meme renverrait
+      // l'app a l'ecran de connexion (impossible de se reconnecter hors
+      // ligne). On garde le profil deja en memoire tel quel et on ressort ;
+      // DataContext gere l'hydratation offline des collections de son cote.
+      if (error && status === 0) return;
+      if (lastUserIdRef.current) purgeOfflineCache('session-lost');
+      lastUserIdRef.current = null;
       setUser(null);
       return;
     }
+    // Le cache offline porte les donnees PII d'un coach (get_users_for_coach) :
+    // si l'id resolu differe du dernier connu (session remplacee sous nos
+    // pieds sans logout() explicite), purge avant de laisser quiconque lire
+    // le cache de l'utilisateur precedent.
+    if (lastUserIdRef.current && lastUserIdRef.current !== data.id) purgeOfflineCache('user-switch');
+    lastUserIdRef.current = data.id;
     setUser(toUser(data));
-  }, []);
+  }, [purgeOfflineCache]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -112,7 +146,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
-  }, []);
+    lastUserIdRef.current = null;
+    // Purge OBLIGATOIRE : le cache offline d'un coach porte les colonnes PII
+    // de get_users_for_coach (email, telephone, licence, date de naissance).
+    purgeOfflineCache('logout');
+  }, [purgeOfflineCache]);
 
   const resetPassword = useCallback(async (email: string): Promise<string | null> => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
