@@ -10,6 +10,27 @@ import {
   toValidationReaction, toPreparation, toClubSettings, toUser,
 } from './rows';
 
+// Cartographie des groupes de chargement (mesuree par grep sur `useData()`
+// puis rattachement aux routes de App.tsx) :
+//
+//   BLOQUANT (Home, "/", ecran d'atterrissage apres connexion, seule route
+//   qui lit `loading`) : sessions, validations, users, groups, preparations,
+//   userPreparations, club_settings.
+//   NON BLOQUANT (absentes de "/") : raceResults, raceNordiks,
+//   sessionNordiks, validationReactions.
+//
+// Aucune collection n'est coach-only : les 5 pages coach (Dashboard,
+// SessionEditor, Import, QuickAddSession, Settings) ne consomment aucune
+// collection hors des routes partagees. Le seul axe reellement differencie
+// par role est `users` (RPC vs GRANT colonne), deja gere par isStaff
+// ci-dessous. club_settings rejoint le lot bloquant : son fetch partait
+// auparavant APRES le Promise.all des 10 autres collections (un aller-retour
+// reseau serialise sur chaque boot et chaque refreshAll), pour une table
+// d'une ligne dont Home a besoin immediatement
+// (getRacePaces(clubSettings?.race_paces)) : le laisser hors du groupe
+// bloquant ferait peindre Home avec des allures par defaut puis re-peindre
+// (scintillement) des que le fetch tardif arrive.
+
 // Colonnes de `users` accordees a un athlete (role authenticated) depuis la
 // migration 20260731120000 (cf. UserRowLike dans rows.ts, qui code la meme
 // frontiere cote types). email/phone/license_number/birth_date/
@@ -38,10 +59,13 @@ interface DataBootstrapSetters {
 }
 
 /**
- * Bootstrap des donnees a la connexion : fetch parallele des 10 collections
- * (+ club_settings, hors Promise.all pour tolerer PGRST116) et remise a zero
- * a la deconnexion. Isole dans son propre hook car c'est le seul endroit qui
- * a besoin de la totalite des setters du provider.
+ * Bootstrap des donnees a la connexion : les 11 requetes partent toutes en
+ * meme temps (deux groupes de Promise.all lances sans await intermediaire),
+ * mais seul le groupe bloquant est attendu avant de lever `loading` ; le
+ * groupe non bloquant continue de renseigner son state en arriere-plan (cf.
+ * cartographie en tete de module). Remise a zero a la deconnexion. Isole
+ * dans son propre hook car c'est le seul endroit qui a besoin de la
+ * totalite des setters du provider.
  */
 export function useDataBootstrap(authUser: User | null, setters: DataBootstrapSetters) {
   const {
@@ -61,31 +85,43 @@ export function useDataBootstrap(authUser: User | null, setters: DataBootstrapSe
       ? supabase.rpc('get_users_for_coach')
       : supabase.from('users').select(ATHLETE_USER_COLUMNS);
 
-    const [s, v, rr, rn, sn, g, u, p, up, vr] = await Promise.all([
+    // Groupe bloquant : requis par Home ("/"), attendu avant de lever
+    // `loading`. club_settings y est inclus (cf. cartographie en tete de
+    // module) ; la tolerance PGRST116 (aucune ligne) est preservee.
+    const blocking = Promise.all([
       supabase.from('sessions').select('*').order('date'),
       supabase.from('session_validations').select('*'),
-      supabase.from('race_results').select('*'),
-      supabase.from('race_nordiks').select('*'),
-      supabase.from('session_nordiks').select('*'),
       supabase.from('groups').select('*'),
       usersQuery,
       supabase.from('specific_preparations').select('*').order('event_date'),
       supabase.from('user_preparations').select('*'),
+      supabase.from('club_settings').select('*').limit(1).maybeSingle(),
+    ]);
+    // Groupe non bloquant : absent de Home, continue de renseigner son state
+    // en arriere-plan sans retarder la levee de `loading`.
+    const nonBlocking = Promise.all([
+      supabase.from('race_results').select('*'),
+      supabase.from('race_nordiks').select('*'),
+      supabase.from('session_nordiks').select('*'),
       supabase.from('validation_reactions').select('*'),
     ]);
+
+    const [s, v, g, u, p, up, cs] = await blocking;
     if (s.data) setSessions(s.data.map(toSession));
     if (v.data) setValidations(v.data.map(toValidation));
-    if (rr.data) setRaceResults(rr.data.map(toRaceResult));
-    if (rn.data) setRaceNordiks(rn.data.map(toRaceNordik));
-    if (sn.data) setSessionNordiks(sn.data.map(toSessionNordik));
     if (g.data) setGroups(g.data);
     if (u.data) setUsers(u.data.map(toUser));
     if (p.data) setPreparations(p.data.map(toPreparation));
     if (up.data) setUserPreparations(up.data);
-    if (vr.data) setValidationReactions(vr.data.map(toValidationReaction));
-    const cs = await supabase.from('club_settings').select('*').limit(1).maybeSingle();
     if (cs.data) setClubSettings(toClubSettings(cs.data));
     else if (cs.error && cs.error.code !== 'PGRST116') console.error('club_settings fetch error:', cs.error.message);
+
+    nonBlocking.then(([rr, rn, sn, vr]) => {
+      if (rr.data) setRaceResults(rr.data.map(toRaceResult));
+      if (rn.data) setRaceNordiks(rn.data.map(toRaceNordik));
+      if (sn.data) setSessionNordiks(sn.data.map(toSessionNordik));
+      if (vr.data) setValidationReactions(vr.data.map(toValidationReaction));
+    });
   }, [
     authUser?.role, authUser?.is_super_admin,
     setSessions, setValidations, setRaceResults, setRaceNordiks, setSessionNordiks,
