@@ -1,13 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
-import type { User, NotificationPreferences } from '../types';
+import type { User } from '../types';
 import { supabase } from '../lib/supabase';
-
-const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
-  new_session: { in_app: true, email: true },
-  palmares: { in_app: true, email: true },
-  vma_update: { in_app: true, email: false },
-  weekly_digest: { email: true },
-};
+import { toUser } from './data/rows';
 
 interface AuthContextType {
   user: User | null;
@@ -46,16 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       return;
     }
-    // Le client Supabase n'est pas type sur un schema (pas de generique
-    // Database) : le retour d'un RPC s'infere en `{}`, d'ou ce cast (meme
-    // motif que normalizeUser dans DataContext).
-    const row = data as Record<string, unknown>;
-    setUser({
-      ...row,
-      vma_history: row.vma_history || [],
-      photo_url: row.photo_url || null,
-      notification_preferences: row.notification_preferences || DEFAULT_NOTIFICATION_PREFS,
-    } as User);
+    setUser(toUser(data));
   }, []);
 
   useEffect(() => {
@@ -154,14 +139,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const { data, error } = await supabase.rpc('get_users_for_coach');
     if (error || !data) return;
-    const target = data.find((u: { id: string }) => u.id === userId);
+    const target = data.find(u => u.id === userId);
     if (!target) return;
-    setImpersonatedUser({
-      ...target,
-      vma_history: target.vma_history || [],
-      photo_url: target.photo_url || null,
-      notification_preferences: target.notification_preferences || DEFAULT_NOTIFICATION_PREFS,
-    });
+    setImpersonatedUser(toUser(target));
   }, []);
 
   return (
