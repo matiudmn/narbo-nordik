@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Layers, Grid3x3, Check, AlertTriangle, Info, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -82,29 +82,28 @@ export default function Import() {
   const [paste, setPaste] = useState<string>(SAMPLES.canonical);
   const [defaultYear, setDefaultYear] = useState<number>(new Date().getFullYear());
   const [defaultGroupId, setDefaultGroupId] = useState<string>('');
-  const [parseTimeMs, setParseTimeMs] = useState<number>(0);
   const [importing, setImporting] = useState(false);
   // Que faire des séances qui semblent déjà exister : les ignorer (défaut) ou les créer quand même.
   const [onDuplicate, setOnDuplicate] = useState<'skip' | 'create'>('skip');
 
-  // Reparse à chaque changement
-  const result: ParseResult = useMemo(() => {
-    const start = performance.now();
-    const r = parseImport(paste, { defaultYear, groups, forceFormat: format });
-    setParseTimeMs(Math.round((performance.now() - start) * 10) / 10);
-    return r;
-  }, [paste, defaultYear, groups, format]);
-
   // Au changement de format : recharge l'échantillon correspondant, mais
   // seulement si la zone est vide ou contient un échantillon non modifié
-  // (on ne veut pas écraser un vrai tableau collé par le coach).
-  useEffect(() => {
+  // (on ne veut pas écraser un vrai tableau collé par le coach). Dérivé pendant
+  // le rendu (comparaison au format précédent) plutôt que dans un effect : évite
+  // un rendu intermédiaire avec l'ancien texte avant le nouvel échantillon.
+  const [prevFormat, setPrevFormat] = useState(format);
+  if (format !== prevFormat) {
+    setPrevFormat(format);
     if (paste === '' || SAMPLE_VALUES.includes(paste)) {
       setPaste(SAMPLES[format]);
     }
-    // `paste` lu mais hors deps : volontaire, on ne réagit qu'au changement de format.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [format]);
+  }
+
+  // Reparse à chaque changement
+  const result: ParseResult = useMemo(
+    () => parseImport(paste, { defaultYear, groups, forceFormat: format }),
+    [paste, defaultYear, groups, format]
+  );
 
   // Compteur de cellules par macro-type
   const macroDistribution = useMemo(() => {
@@ -285,9 +284,6 @@ export default function Import() {
             )}
           </div>
         )}
-        <div className="ml-auto text-xs text-gray-500">
-          Parsing : <span className="font-mono font-semibold">{parseTimeMs}</span> ms
-        </div>
       </div>
 
       {/* DETECTION BAR */}
