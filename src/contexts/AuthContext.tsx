@@ -12,13 +12,28 @@ interface AuthContextType {
   effectiveUser: User | null;
   impersonate: (userId: string | null) => Promise<void>;
   login: (email: string, password: string) => Promise<string | null>;
-  signup: (email: string, password: string, firstname: string, lastname: string) => Promise<string | null>;
+  signup: (email: string, password: string, firstname: string, lastname: string, inviteCode: string) => Promise<string | null>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<string | null>;
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+type RegisterProfileArgs = { invite_code: string; firstname: string; lastname: string; email: string };
+
+// RPC register_profile (migration 20260731130000) : absente des types generes
+// tant que la migration n'est pas appliquee en prod et que `npm run gen:types`
+// n'a pas tourne (voir flagsPourMatthieu). Cast local le temps du regen ; a
+// retirer ensuite pour retrouver l'inference normale de `supabase.rpc`.
+function registerProfile(args: RegisterProfileArgs) {
+  return (
+    supabase.rpc as unknown as (
+      fn: 'register_profile',
+      args: RegisterProfileArgs
+    ) => Promise<{ error: { message: string } | null }>
+  )('register_profile', args);
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -73,24 +88,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   }, []);
 
-  const signup = useCallback(async (email: string, password: string, firstname: string, lastname: string): Promise<string | null> => {
+  const signup = useCallback(async (email: string, password: string, firstname: string, lastname: string, inviteCode: string): Promise<string | null> => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return error.message;
     if (!data.user) return 'Erreur lors de la creation du compte';
 
-    const { error: insertError } = await supabase.from('users').insert({
-      id: data.user.id,
-      role: 'athlete',
-      firstname,
-      lastname,
-      email,
-      vma: null,
-      vma_history: [],
-      group_id: null,
-      phone: null,
-      is_public: true,
-    });
-    if (insertError) return insertError.message;
+    // Insert direct remplace par le RPC register_profile (SECURITY DEFINER) :
+    // il verifie le code d'invitation cote base avant de creer le profil (la
+    // policy INSERT de `users` n'a plus de branche self-service depuis
+    // 20260731130000_invite_code.sql).
+    const { error: rpcError } = await registerProfile({ invite_code: inviteCode, firstname, lastname, email });
+    if (rpcError) return rpcError.message;
 
     const { data: coaches } = await supabase.from('users').select('id').eq('role', 'coach');
     if (coaches && coaches.length > 0) {
