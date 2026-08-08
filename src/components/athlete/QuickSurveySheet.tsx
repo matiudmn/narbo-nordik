@@ -42,7 +42,7 @@ const SENSATIONS_OPTIONS: { value: Sensations; label: string; emoji: string }[] 
 function useRadioGroupNav<T extends string>(options: readonly { value: T }[], onChange: (v: T) => void) {
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
-    let next = -1;
+    let next: number;
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (index + 1) % options.length;
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (index - 1 + options.length) % options.length;
     else if (e.key === 'Home') next = 0;
