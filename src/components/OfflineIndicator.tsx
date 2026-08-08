@@ -20,7 +20,11 @@ export default function OfflineIndicator() {
     : 'Hors ligne : aucune donnée en cache';
 
   return (
-    <div className="fixed top-14 left-0 right-0 lg:left-60 bg-warning text-white text-center py-1.5 text-xs font-medium z-40 flex items-center justify-center gap-1.5">
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed top-14 left-0 right-0 lg:left-60 bg-warning text-white text-center py-1.5 text-xs font-medium z-40 flex items-center justify-center gap-1.5"
+    >
       <WifiOff size={14} />
       {label}
     </div>

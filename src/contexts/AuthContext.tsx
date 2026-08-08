@@ -94,12 +94,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         loadProfile();
       } else {
+        // Session absente rapportee par onAuthStateChange : supabase-js n'emet
+        // cet evenement avec session=null que lorsqu'il a lui-meme constate la
+        // fin de session (SIGNED_OUT explicite via logout() ci-dessous, ou
+        // refresh token expire/revoque detecte en interne par le client -
+        // invalid_grant sur l'auto-refresh). Une simple absence reseau (ou un
+        // echec reseau du refresh) ne declenche PAS ce callback avec session
+        // null : supabase-js conserve la session en memoire et reessaie en
+        // silence, cf. loadProfile ci-dessus qui gere ce cas (status === 0,
+        // pas de deconnexion). On peut donc purger ici sans risque de vider le
+        // cache offline pour un simple passage hors ligne : c'est justement le
+        // scenario ou le cache doit continuer a servir.
+        if (lastUserIdRef.current) purgeOfflineCache('session-ended');
+        lastUserIdRef.current = null;
         setUser(null);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [loadProfile]);
+  }, [loadProfile, purgeOfflineCache]);
 
   const login = useCallback(async (email: string, password: string): Promise<string | null> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
