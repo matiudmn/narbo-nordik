@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useRef, ty
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import type { AppNotification } from '../types';
+import { toNotification } from './data/rows';
 
 interface InAppNotificationContextType {
   notifications: AppNotification[];
@@ -32,7 +33,7 @@ export function InAppNotificationProvider({ children }: { children: ReactNode })
       .order('created_at', { ascending: false })
       .limit(50);
     if (!error && data) {
-      setNotifications(data);
+      setNotifications(data.map(toNotification));
     }
     setLoading(false);
   }, [user]);
