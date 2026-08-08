@@ -76,7 +76,13 @@ export default function Home() {
     } catch {
       return;
     }
-    setVmaCelebration({ previous: previousMax, current: latest.vma });
+    // La marque "vu" en localStorage reste synchrone dans l'effect (synchronisation
+    // externe légitime). Seul le déclenchement de la modale est différé d'un tick,
+    // pour ne pas appeler setState directement dans le corps synchrone de l'effect.
+    const t = window.setTimeout(() => {
+      setVmaCelebration({ previous: previousMax, current: latest.vma });
+    }, 0);
+    return () => window.clearTimeout(t);
   }, [user, isCoach]);
 
   const userPrepIds = useMemo(() => {

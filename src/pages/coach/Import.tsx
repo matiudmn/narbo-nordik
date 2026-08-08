@@ -87,24 +87,37 @@ export default function Import() {
   // Que faire des séances qui semblent déjà exister : les ignorer (défaut) ou les créer quand même.
   const [onDuplicate, setOnDuplicate] = useState<'skip' | 'create'>('skip');
 
-  // Reparse à chaque changement
-  const result: ParseResult = useMemo(() => {
-    const start = performance.now();
-    const r = parseImport(paste, { defaultYear, groups, forceFormat: format });
-    setParseTimeMs(Math.round((performance.now() - start) * 10) / 10);
-    return r;
-  }, [paste, defaultYear, groups, format]);
-
   // Au changement de format : recharge l'échantillon correspondant, mais
   // seulement si la zone est vide ou contient un échantillon non modifié
-  // (on ne veut pas écraser un vrai tableau collé par le coach).
-  useEffect(() => {
+  // (on ne veut pas écraser un vrai tableau collé par le coach). Dérivé pendant
+  // le rendu (comparaison au format précédent) plutôt que dans un effect : évite
+  // un rendu intermédiaire avec l'ancien texte avant le nouvel échantillon.
+  const [prevFormat, setPrevFormat] = useState(format);
+  if (format !== prevFormat) {
+    setPrevFormat(format);
     if (paste === '' || SAMPLE_VALUES.includes(paste)) {
       setPaste(SAMPLES[format]);
     }
-    // `paste` lu mais hors deps : volontaire, on ne réagit qu'au changement de format.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [format]);
+  }
+
+  // Reparse à chaque changement
+  const result: ParseResult = useMemo(
+    () => parseImport(paste, { defaultYear, groups, forceFormat: format }),
+    [paste, defaultYear, groups, format]
+  );
+
+  // Mesure du temps de parsing (affichage debug uniquement) : performance.now()
+  // est un appel impur interdit pendant le rendu, donc mesuré à part dans un
+  // effect. Le setState est différé d'un tick pour rester hors du corps
+  // synchrone de l'effect (le résultat affiché, `result`, n'est pas concerné :
+  // il reste dérivé de façon synchrone par le useMemo ci-dessus).
+  useEffect(() => {
+    const start = performance.now();
+    parseImport(paste, { defaultYear, groups, forceFormat: format });
+    const elapsed = Math.round((performance.now() - start) * 10) / 10;
+    const t = window.setTimeout(() => setParseTimeMs(elapsed), 0);
+    return () => window.clearTimeout(t);
+  }, [paste, defaultYear, groups, format]);
 
   // Compteur de cellules par macro-type
   const macroDistribution = useMemo(() => {
