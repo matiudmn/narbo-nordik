@@ -47,7 +47,7 @@ export default function GroupsTab() {
             value={newName}
             onChange={e => setNewName(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
-            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="flex-1 px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <button
             onClick={handleAdd}
@@ -81,32 +81,32 @@ export default function GroupsTab() {
                     onChange={e => setEditingName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleEdit(group.id)}
                     autoFocus
-                    className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    className="flex-1 px-3 py-1.5 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
-                  <button onClick={() => handleEdit(group.id)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg">
+                  <button onClick={() => handleEdit(group.id)} className="p-1.5 text-success-600 hover:bg-success-50 rounded-lg">
                     <Check size={18} />
                   </button>
-                  <button onClick={() => setEditingId(null)} className="p-1.5 text-gray-400 hover:bg-gray-50 rounded-lg">
+                  <button onClick={() => setEditingId(null)} className="p-1.5 text-neutral-400 hover:bg-neutral-50 rounded-lg">
                     <X size={18} />
                   </button>
                 </div>
               ) : (
                 <>
                   <div className="flex-1">
-                    <p className="font-bold text-gray-900">{group.name}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="font-bold text-neutral-900">{group.name}</p>
+                    <p className="text-xs text-neutral-400">
                       {groupMembers.length} membre{groupMembers.length !== 1 ? 's' : ''} · {sessionCount} seance{sessionCount !== 1 ? 's' : ''}
                     </p>
                   </div>
                   <button
                     onClick={() => { setEditingId(group.id); setEditingName(group.name); }}
-                    className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                    className="p-2 text-neutral-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                   >
                     <Pencil size={16} />
                   </button>
                   <button
                     onClick={() => setConfirmDeleteId(group.id)}
-                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-2 text-neutral-400 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -131,9 +131,9 @@ export default function GroupsTab() {
             {groupMembers.length > 0 ? (
               <div className="space-y-1.5">
                 {groupMembers.map(member => (
-                  <div key={member.id} className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+                  <div key={member.id} className="flex items-center gap-3 px-3 py-2 bg-neutral-50 rounded-lg">
                     <Avatar user={member} size="sm" />
-                    <span className="flex-1 text-sm font-medium text-gray-900 truncate flex items-center gap-1.5">
+                    <span className="flex-1 text-sm font-medium text-neutral-900 truncate flex items-center gap-1.5">
                       {member.firstname} {member.lastname}
                       {member.role === 'coach' && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
@@ -143,7 +143,7 @@ export default function GroupsTab() {
                     </span>
                     <button
                       onClick={() => updateUserGroup(member.id, null)}
-                      className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                      className="p-1.5 text-neutral-300 hover:text-danger-500 transition-colors"
                       title="Retirer du groupe"
                     >
                       <UserMinus size={14} />
@@ -152,7 +152,7 @@ export default function GroupsTab() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-400 text-center py-2">Aucun membre dans ce groupe.</p>
+              <p className="text-sm text-neutral-400 text-center py-2">Aucun membre dans ce groupe.</p>
             )}
 
             {unassigned.length > 0 && (
@@ -160,7 +160,7 @@ export default function GroupsTab() {
                 <select
                   value=""
                   onChange={e => { if (e.target.value) updateUserGroup(e.target.value, group.id); }}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm text-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
                   <option value="">+ Ajouter un membre...</option>
                   {unassigned.map(a => (
@@ -175,21 +175,21 @@ export default function GroupsTab() {
 
       {unassigned.length > 0 && (
         <Card>
-          <h2 className="flex items-center gap-2 font-bold text-gray-900 mb-3">
-            <UserMinus size={18} className="text-gray-400" />
+          <h2 className="flex items-center gap-2 font-bold text-neutral-900 mb-3">
+            <UserMinus size={18} className="text-neutral-400" />
             Sans groupe ({unassigned.length})
           </h2>
           <div className="space-y-1.5">
             {unassigned.map(athlete => (
-              <div key={athlete.id} className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+              <div key={athlete.id} className="flex items-center gap-3 px-3 py-2 bg-neutral-50 rounded-lg">
                 <Avatar user={athlete} size="sm" />
-                <span className="flex-1 text-sm font-medium text-gray-900 truncate">
+                <span className="flex-1 text-sm font-medium text-neutral-900 truncate">
                   {athlete.firstname} {athlete.lastname}
                 </span>
                 <select
                   value=""
                   onChange={e => { if (e.target.value) updateUserGroup(athlete.id, e.target.value); }}
-                  className="px-2 py-1 border border-gray-200 rounded-lg text-xs text-gray-500 focus:outline-none"
+                  className="px-2 py-1 border border-neutral-200 rounded-lg text-xs text-neutral-500 focus:outline-none"
                 >
                   <option value="">Assigner...</option>
                   {groups.map(g => (

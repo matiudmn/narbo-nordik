@@ -63,22 +63,22 @@ export default function PreparationsTab() {
           <input
             type="text" placeholder="Nom de la préparation" value={newName}
             onChange={e => setNewName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+            className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
           />
           <div className="flex items-center gap-2">
-            <Calendar size={14} className="text-gray-400" />
+            <Calendar size={14} className="text-neutral-400" />
             <input
               type="date" value={newDate} onChange={e => setNewDate(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="flex-1 px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
             />
           </div>
           <textarea
             placeholder="Description (optionnel)" value={newDesc}
             onChange={e => setNewDesc(e.target.value)} rows={2}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
+            className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
           />
           <div className="flex gap-2">
-            <button onClick={() => setShowAdd(false)} className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600">Annuler</button>
+            <button onClick={() => setShowAdd(false)} className="flex-1 py-2 border border-neutral-200 rounded-lg text-sm text-neutral-600">Annuler</button>
             <button onClick={handleAdd} className="flex-1 py-2 bg-accent text-white rounded-lg text-sm font-medium">Créer</button>
           </div>
         </Card>
@@ -104,28 +104,28 @@ export default function PreparationsTab() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-gray-900">{prep.name}</h3>
-                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">Specifique</span>
+                      <h3 className="font-bold text-neutral-900">{prep.name}</h3>
+                      <span className="text-[10px] font-bold text-warning-600 bg-warning-50 px-1.5 py-0.5 rounded-full">Specifique</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-neutral-500 mt-0.5">
                       {format(new Date(prep.event_date), 'd MMMM yyyy', { locale: fr })}
                       {days >= 0 && <span className="ml-1 text-primary font-medium">· J-{days}</span>}
-                      {days < 0 && days >= -3 && <span className="ml-1 text-red-500 font-medium">· Termine</span>}
+                      {days < 0 && days >= -3 && <span className="ml-1 text-danger-500 font-medium">· Termine</span>}
                     </p>
-                    {prep.description && <p className="text-xs text-gray-400 mt-1">{prep.description}</p>}
+                    {prep.description && <p className="text-xs text-neutral-400 mt-1">{prep.description}</p>}
                   </div>
                   <div className="flex items-center gap-1">
                     {confirmDeleteId === prep.id ? (
                       <div className="flex gap-1">
-                        <button onClick={() => handleDelete(prep.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+                        <button onClick={() => handleDelete(prep.id)} className="p-1.5 text-danger-500 hover:bg-danger-50 rounded-lg">
                           <Check size={14} />
                         </button>
-                        <button onClick={() => setConfirmDeleteId(null)} className="p-1.5 text-gray-400 hover:bg-gray-50 rounded-lg">
+                        <button onClick={() => setConfirmDeleteId(null)} className="p-1.5 text-neutral-400 hover:bg-neutral-50 rounded-lg">
                           <X size={14} />
                         </button>
                       </div>
                     ) : (
-                      <button onClick={() => setConfirmDeleteId(prep.id)} className="p-1.5 text-gray-300 hover:text-red-500 transition-colors">
+                      <button onClick={() => setConfirmDeleteId(prep.id)} className="p-1.5 text-neutral-300 hover:text-danger-500 transition-colors">
                         <Trash2 size={14} />
                       </button>
                     )}
@@ -134,18 +134,18 @@ export default function PreparationsTab() {
 
                 {/* Members */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 mb-1.5">{members.length} inscrit(s)</p>
+                  <p className="text-xs font-semibold text-neutral-500 mb-1.5">{members.length} inscrit(s)</p>
                   {members.length > 0 && (
                     <div className="space-y-1.5">
                       {members.map(member => (
-                        <div key={member.id} className="flex items-center gap-3 px-3 py-2 bg-amber-50/50 rounded-lg">
+                        <div key={member.id} className="flex items-center gap-3 px-3 py-2 bg-warning-50/50 rounded-lg">
                           <Avatar user={member} size="sm" />
-                          <span className="flex-1 text-sm font-medium text-gray-900 truncate">
+                          <span className="flex-1 text-sm font-medium text-neutral-900 truncate">
                             {member.firstname} {member.lastname}
                           </span>
                           <button
                             onClick={() => removeUserFromPreparation(member.id, prep.id)}
-                            className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                            className="p-1.5 text-neutral-300 hover:text-danger-500 transition-colors"
                             title="Retirer"
                           >
                             <UserMinus size={14} />
@@ -160,7 +160,7 @@ export default function PreparationsTab() {
                 {unassigned.length > 0 && (
                   <select
                     onChange={e => { if (e.target.value) addUserToPreparation(e.target.value, prep.id); e.target.value = ''; }}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-500 focus:outline-none"
+                    className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm text-neutral-500 focus:outline-none"
                     defaultValue=""
                   >
                     <option value="">+ Inscrire un membre...</option>

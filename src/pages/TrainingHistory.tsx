@@ -98,7 +98,7 @@ export default function TrainingHistory() {
   if (!targetUser) {
     return (
       <div className="py-8 text-center">
-        <p className="text-gray-500">Utilisateur introuvable</p>
+        <p className="text-neutral-500">Utilisateur introuvable</p>
         <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium">Retour</button>
       </div>
     );
@@ -107,7 +107,7 @@ export default function TrainingHistory() {
   if (!isOwnProfile && user?.role !== 'coach') {
     return (
       <div className="py-8 text-center">
-        <p className="text-gray-500">Accès non autorisé</p>
+        <p className="text-neutral-500">Accès non autorisé</p>
         <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium">Retour</button>
       </div>
     );
@@ -115,14 +115,14 @@ export default function TrainingHistory() {
 
   return (
     <div className="py-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-500 hover:text-gray-900 mb-4">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-neutral-500 hover:text-neutral-900 mb-4">
         <ArrowLeft size={20} aria-hidden="true" />
         <span className="text-sm">Retour</span>
       </button>
 
-      <h1 className="text-lg font-bold text-gray-900 mb-1">Historique des séances</h1>
+      <h1 className="text-lg font-bold text-neutral-900 mb-1">Historique des séances</h1>
       {!isOwnProfile && (
-        <p className="text-sm text-gray-500 mb-2">
+        <p className="text-sm text-neutral-500 mb-2">
           {targetUser.firstname} {targetUser.lastname}
         </p>
       )}

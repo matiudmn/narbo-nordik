@@ -8,12 +8,12 @@ export default function BottomNav() {
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex flex-col items-center justify-center gap-0.5 text-xs transition-colors min-w-[44px] min-h-[44px] rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
-      isActive ? 'text-accent-text font-semibold' : 'text-gray-500'
+      isActive ? 'text-accent-text font-semibold' : 'text-neutral-500'
     }`;
 
   if (isCoach) {
     return (
-      <nav aria-label="Navigation principale" className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pb-[env(safe-area-inset-bottom)] z-50 lg:hidden">
+      <nav aria-label="Navigation principale" className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 px-2 pb-[env(safe-area-inset-bottom)] z-50 lg:hidden">
         <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
           <NavLink to="/" end className={linkClass}>
             <House size={22} />
@@ -45,7 +45,7 @@ export default function BottomNav() {
   }
 
   return (
-    <nav aria-label="Navigation principale" className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 pb-[env(safe-area-inset-bottom)] z-50 lg:hidden">
+    <nav aria-label="Navigation principale" className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 px-2 pb-[env(safe-area-inset-bottom)] z-50 lg:hidden">
       <div className="flex justify-around items-center h-16 max-w-lg mx-auto">
         <NavLink to="/" end className={linkClass}>
           <House size={22} />

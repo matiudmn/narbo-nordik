@@ -76,12 +76,12 @@ export default function ConsentBanner() {
             <Shield size={20} className="text-primary" />
           </div>
           <div>
-            <h2 className="font-bold text-gray-900">Protection des données</h2>
-            <p className="text-xs text-gray-500">Conforme RGPD</p>
+            <h2 className="font-bold text-neutral-900">Protection des données</h2>
+            <p className="text-xs text-neutral-500">Conforme RGPD</p>
           </div>
         </div>
 
-        <p className="text-sm text-gray-600 mb-3">
+        <p className="text-sm text-neutral-600 mb-3">
           Narbo Nordik utilise le stockage local pour sauvegarder vos preferences et donnees d'entrainement.
           Aucune donnee n'est partagee avec des tiers.
         </p>
@@ -96,18 +96,18 @@ export default function ConsentBanner() {
         </p>
 
         {showDetails && (
-          <div className="space-y-3 mb-4 bg-gray-50 rounded-lg p-3">
+          <div className="space-y-3 mb-4 bg-neutral-50 rounded-lg p-3">
             <label className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-900">Essentiels</p>
-                <p className="text-xs text-gray-500">Connexion, preferences</p>
+                <p className="text-sm font-medium text-neutral-900">Essentiels</p>
+                <p className="text-xs text-neutral-500">Connexion, preferences</p>
               </div>
               <input type="checkbox" checked disabled className="rounded" />
             </label>
             <label className="flex items-center justify-between cursor-pointer">
               <div>
-                <p className="text-sm font-medium text-gray-900">Analytiques</p>
-                <p className="text-xs text-gray-500">Ameliorer l'application</p>
+                <p className="text-sm font-medium text-neutral-900">Analytiques</p>
+                <p className="text-xs text-neutral-500">Ameliorer l'application</p>
               </div>
               <input
                 type="checkbox"
@@ -118,8 +118,8 @@ export default function ConsentBanner() {
             </label>
             <label className="flex items-center justify-between cursor-pointer">
               <div>
-                <p className="text-sm font-medium text-gray-900">Notifications</p>
-                <p className="text-xs text-gray-500">Rappels de seances</p>
+                <p className="text-sm font-medium text-neutral-900">Notifications</p>
+                <p className="text-xs text-neutral-500">Rappels de seances</p>
               </div>
               <input
                 type="checkbox"
@@ -141,7 +141,7 @@ export default function ConsentBanner() {
           {showDetails ? (
             <button
               onClick={handleSaveChoices}
-              className="w-full bg-gray-100 text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+              className="w-full bg-neutral-100 text-neutral-700 font-medium py-2.5 rounded-lg hover:bg-neutral-200 transition-colors text-sm"
             >
               Sauvegarder mes choix
             </button>
@@ -149,13 +149,13 @@ export default function ConsentBanner() {
             <div className="flex gap-2">
               <button
                 onClick={handleAcceptEssential}
-                className="flex-1 bg-gray-100 text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                className="flex-1 bg-neutral-100 text-neutral-700 font-medium py-2.5 rounded-lg hover:bg-neutral-200 transition-colors text-sm"
               >
                 Essentiels uniquement
               </button>
               <button
                 onClick={() => setShowDetails(true)}
-                className="flex-1 bg-gray-100 text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                className="flex-1 bg-neutral-100 text-neutral-700 font-medium py-2.5 rounded-lg hover:bg-neutral-200 transition-colors text-sm"
               >
                 Personnaliser
               </button>
