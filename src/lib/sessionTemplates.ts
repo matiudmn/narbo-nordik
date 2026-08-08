@@ -11,6 +11,7 @@
 
 import { supabase } from './supabase';
 import type { SessionTemplate, SessionBlock, TemplateCategory } from '../types';
+import type { Json } from '../types/database.types';
 
 let templateBlockIdCounter = 0;
 function newBlockId(): string {
@@ -28,7 +29,7 @@ export async function fetchTemplates(): Promise<SessionTemplate[]> {
     console.error('fetchTemplates error:', error.message);
     return [];
   }
-  return (data ?? []) as SessionTemplate[];
+  return (data ?? []) as unknown as SessionTemplate[];
 }
 
 export interface InstantiatedTemplate {
@@ -69,7 +70,7 @@ export async function saveTemplate(
       category: template.category,
       session_type: template.session_type,
       terrain_options: template.terrain_options,
-      blocks: template.blocks,
+      blocks: template.blocks as unknown as Json,
       is_seed: false,
       created_by: template.created_by,
     })
