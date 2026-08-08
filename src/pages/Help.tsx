@@ -17,14 +17,14 @@ function Accordion({ section, isOpen, onToggle }: { section: Section; isOpen: bo
         onClick={onToggle}
         className="w-full flex items-center justify-between p-4 text-left"
       >
-        <span className="font-semibold text-gray-900 text-sm">{section.title}</span>
+        <span className="font-semibold text-neutral-900 text-sm">{section.title}</span>
         <ChevronDown
           size={16}
-          className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-neutral-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
       {isOpen && (
-        <div className="px-4 pb-4 text-sm text-gray-700 space-y-3 border-t border-gray-50 pt-3">
+        <div className="px-4 pb-4 text-sm text-neutral-700 space-y-3 border-t border-neutral-50 pt-3">
           {section.content}
         </div>
       )}
@@ -42,25 +42,25 @@ const athleteSections: Section[] = [
           La page d'accueil est ton tableau de bord personnel. Elle affiche en un coup d'oeil
           les informations essentielles de ta saison.
         </p>
-        <p className="font-semibold text-gray-900">VMA et allures</p>
+        <p className="font-semibold text-neutral-900">VMA et allures</p>
         <p>
           En haut de page, tu retrouves ta VMA actuelle ainsi que tes allures de référence
           calculées automatiquement. Ces allures correspondent aux différentes zones d'intensité
           utilisées lors des séances (endurance fondamentale, seuil, VMA, etc.).
         </p>
-        <p className="font-semibold text-gray-900">Assiduité</p>
+        <p className="font-semibold text-neutral-900">Assiduité</p>
         <p>
           Un indicateur affiche ton taux de présence aux séances sur la saison en cours.
           Il se met à jour automatiquement lorsque tu valides ta participation à une séance.
         </p>
-        <p className="font-semibold text-gray-900">Séances de la semaine</p>
+        <p className="font-semibold text-neutral-900">Séances de la semaine</p>
         <p>
           La partie principale liste les séances prévues pour la semaine en cours. Chaque carte
           de séance indique la date, le type de séance, le groupe concerné et un aperçu du contenu.
           Tu peux naviguer entre les semaines avec les flèches pour consulter les séances
           passées ou à venir.
         </p>
-        <p className="font-semibold text-gray-900">Demander une préparation spécifique</p>
+        <p className="font-semibold text-neutral-900">Demander une préparation spécifique</p>
         <p>
           En bas de la page d'accueil, un bouton te permet de demander au coach une préparation
           spécifique pour un objectif précis (course, trail, etc.). Renseigne le nom de l'épreuve,
@@ -78,48 +78,48 @@ const athleteSections: Section[] = [
         <p>
           En cliquant sur une séance, tu accèdès à son détail complet.
         </p>
-        <p className="font-semibold text-gray-900">Structure d'une séance</p>
+        <p className="font-semibold text-neutral-900">Structure d'une séance</p>
         <p>
           Chaque séance est composee de blocs d'entrainement. Un bloc peut etre une phase
           d'échauffement, un travail d'intervalle, du seuil, de la récupération, etc.
           Pour chaque bloc, tu vois la distance ou la durée, l'allure cible adaptee
           a ta VMA, et la zone d'intensité correspondante.
         </p>
-        <p className="font-semibold text-gray-900">Allures personnalisees</p>
+        <p className="font-semibold text-neutral-900">Allures personnalisees</p>
         <p>
           Les allures affichées dans les blocs sont calculées automatiquement à partir de
           ta VMA. Elles sont donc uniques et adaptees a ton niveau. Si ta VMA est
           mise à jour, toutes les allures se recalculent.
         </p>
-        <p className="font-semibold text-gray-900">Lieu de la séance</p>
+        <p className="font-semibold text-neutral-900">Lieu de la séance</p>
         <p>
           Si le coach a renseigne un lieu pour la séance, celui-ci est affiche avec un lien
           cliquable qui ouvre la localisation sur une carte.
         </p>
-        <p className="font-semibold text-gray-900">Valider sa participation</p>
+        <p className="font-semibold text-neutral-900">Valider sa participation</p>
         <p>
           Après la séance, tu peux indiquer si tu étais présent·e ("Validée") ou absent·e
           ("Ratée"). Cette validation alimente ton taux d'assiduité.
         </p>
-        <p className="font-semibold text-gray-900">Objectif atteint et sensations</p>
+        <p className="font-semibold text-neutral-900">Objectif atteint et sensations</p>
         <p>
           Lors de la validation, tu peux preciser si l'objectif de la séance a été atteint
           (Oui, Partiel ou Non) et qualifier tes sensations (Excellentes, Bonnes ou Mauvaises).
           Ces informations sont visibles par le coach et alimentent ton page de suivi.
         </p>
-        <p className="font-semibold text-gray-900">Bouton Nordik</p>
+        <p className="font-semibold text-neutral-900">Bouton Nordik</p>
         <p>
           Un bouton coeur est disponible sur chaque séance. Il tu permet de marquer une séance
           comme coup de coeur. C'est un moyen simple de signaler au coach les séances que tu
           avez particulierement appreciees.
         </p>
-        <p className="font-semibold text-gray-900">Mes chiffres</p>
+        <p className="font-semibold text-neutral-900">Mes chiffres</p>
         <p>
           Lors de la validation, tu peux saisir tes données réelles (distance, durée, dénivelé,
           fréquence cardiaque moyenne). L'allure au kilomètre est calculée automatiquement.
           Ces chiffres sont optionnels et visibles par le coach.
         </p>
-        <p className="font-semibold text-gray-900">Retour et photo</p>
+        <p className="font-semibold text-neutral-900">Retour et photo</p>
         <p>
           Tu peux ajouter un retour ecrit sur la séance (ressenti, difficulte, remarques)
           et joindre une photo (capture d'ecran montre, photo de groupe, etc.).
@@ -133,13 +133,13 @@ const athleteSections: Section[] = [
     title: 'VMA & Allures',
     content: (
       <>
-        <p className="font-semibold text-gray-900">Qu'est-ce que la VMA ?</p>
+        <p className="font-semibold text-neutral-900">Qu'est-ce que la VMA ?</p>
         <p>
           La Vitesse Maximale Aerobie (VMA) est la vitesse a laquelle ton consommation
           d'oxygene atteint son maximum. C'est un indicateur fondamental de ton potentiel
           en course a pied. Elle sert de base au calcul de toutes tes allures d'entrainement.
         </p>
-        <p className="font-semibold text-gray-900">Allures de référence (affichées sur ton profil)</p>
+        <p className="font-semibold text-neutral-900">Allures de référence (affichées sur ton profil)</p>
         <p>
           Les allures sont exprimees en min/km et calculées à partir d'un % de ta VMA :
         </p>
@@ -153,11 +153,11 @@ const athleteSections: Section[] = [
           <li><strong>AS10 — Allure 10 km (~89% VMA)</strong> : allure spécifique 10 km. Stimule la puissance aerobie en competition courte.</li>
           <li><strong>VMA (100% VMA)</strong> : effort maximal aerobie. Utilise pour les intervalles courts et le developpement de la VO2max.</li>
         </ul>
-        <p className="text-xs text-gray-500 italic">
+        <p className="text-xs text-neutral-500 italic">
           Les pourcentages ci-dessus sont des valeurs indicatives. Le coach peut ajuster ces valeurs
           depuis les parametres de l'application en fonction du niveau du groupe.
         </p>
-        <p className="font-semibold text-gray-900">Zones d'entrainement (dans les séances)</p>
+        <p className="font-semibold text-neutral-900">Zones d'entrainement (dans les séances)</p>
         <p>
           Dans les blocs de séance, les allures sont exprimees en fourchettes de % VMA :
         </p>
@@ -168,7 +168,7 @@ const athleteSections: Section[] = [
           <li><strong>AS21 (83-90% VMA)</strong> : allure semi et seuil anaerobie</li>
           <li><strong>VMA (95-105% VMA)</strong> : effort intense, intervalles courts</li>
         </ul>
-        <p className="font-semibold text-gray-900">Historique VMA</p>
+        <p className="font-semibold text-neutral-900">Historique VMA</p>
         <p>
           La page "Historique VMA" (accessible depuis l'accueil) retrace l'évolution de ton
           VMA au fil du temps. Chaque test ou mise à jour par le coach est enregistre avec
@@ -185,26 +185,26 @@ const athleteSections: Section[] = [
         <p>
           Le palmares regroupe les resultats de courses des membres du club.
         </p>
-        <p className="font-semibold text-gray-900">Ajouter un resultat</p>
+        <p className="font-semibold text-neutral-900">Ajouter un resultat</p>
         <p>
           Après une competition, tu peux ajouter ton resultat : nom de la course,
           date, distance, temps réalisé et type de course. Ce resultat sera visible par tous
           les membres du club. Tu peux ajouter un resultat depuis ton profil ou depuis
           la page Palmares.
         </p>
-        <p className="font-semibold text-gray-900">Modifier un resultat</p>
+        <p className="font-semibold text-neutral-900">Modifier un resultat</p>
         <p>
           Si tu as fait une erreur de saisie, tu peux modifier tes résultats à tout moment
           en cliquant sur l'icone crayon a cote du resultat. Le coach peut egalement modifier
           tes résultats si nécessaire.
         </p>
-        <p className="font-semibold text-gray-900">Course a label</p>
+        <p className="font-semibold text-neutral-900">Course a label</p>
         <p>
           Lors de l'ajout ou la modification d'un resultat, tu peux cocher la case "Course a label"
           si la course dispose d'un label officiel (FFA, World Athletics, etc.). Ces courses sont
           identifiees par une etoile dans le palmares.
         </p>
-        <p className="font-semibold text-gray-900">Consulter les resultats</p>
+        <p className="font-semibold text-neutral-900">Consulter les resultats</p>
         <p>
           Tu peux parcourir les resultats de tous les membres du club, filtrer par course
           ou par athlete. C'est un excellent moyen de suivre les performances du groupe
@@ -222,13 +222,13 @@ const athleteSections: Section[] = [
           La page Suivi est ton tableau de bord personnel d'entrainement. Elle est accessible
           depuis la barre de navigation en bas de l'ecran.
         </p>
-        <p className="font-semibold text-gray-900">Heatmap annuelle</p>
+        <p className="font-semibold text-neutral-900">Heatmap annuelle</p>
         <p>
           Une carte de chaleur affiche ton activite sur l'année : chaque jour ou tu as
           valide une séance est colore. Plus la couleur est intense, plus tu as été actif.
           Cela permet de visualiser d'un coup d'oeil ton regularite.
         </p>
-        <p className="font-semibold text-gray-900">Statistiques mensuelles</p>
+        <p className="font-semibold text-neutral-900">Statistiques mensuelles</p>
         <p>
           Pour chaque mois, tu retrouves le détail de tes séances validées avec :
         </p>
@@ -264,19 +264,19 @@ const athleteSections: Section[] = [
         <p>
           L'annuaire liste tous les membres du club avec leur fiche individuelle.
         </p>
-        <p className="font-semibold text-gray-900">Fiches membres</p>
+        <p className="font-semibold text-neutral-900">Fiches membres</p>
         <p>
           Chaque fiche affiche le prenom, la photo, le groupe d'entrainement, la VMA,
           ainsi que des statistiques d'assiduité. Tu peux rechercher un membre par son nom
           grâce à la barre de recherche.
         </p>
-        <p className="font-semibold text-gray-900">Groupe WhatsApp</p>
+        <p className="font-semibold text-neutral-900">Groupe WhatsApp</p>
         <p>
           Un lien direct vers le groupe WhatsApp du club est disponible dans le header
           (icone bulle de conversation). Il permet d'echanger facilement avec les autres membres
           en dehors de l'application.
         </p>
-        <p className="font-semibold text-gray-900">Navigation dans le header</p>
+        <p className="font-semibold text-neutral-900">Navigation dans le header</p>
         <p>
           Le header en haut de l'ecran contient plusieurs raccourcis : cliquez sur le logo du club
           pour revenir a l'accueil, sur ta photo de profil pour acceder a ton profil,
@@ -309,41 +309,41 @@ const athleteSections: Section[] = [
         <p>
           Ton profil personnel est accessible en cliquant sur ta photo de profil dans le header.
         </p>
-        <p className="font-semibold text-gray-900">Informations personnelles</p>
+        <p className="font-semibold text-neutral-900">Informations personnelles</p>
         <p>
           Tu peux modifier ton prenom, nom, adresse email, numéro de telephone
           et photo de profil. Ces informations sont visibles par les autres membres du club.
         </p>
-        <p className="font-semibold text-gray-900">Date de naissance et catégorie FFA</p>
+        <p className="font-semibold text-neutral-900">Date de naissance et catégorie FFA</p>
         <p>
           En renseignant ta date de naissance, l'application calculé automatiquement
           ton catégorie FFA (Espoir, Senior, Master, etc.). Cette information apparait
           sur ton fiche dans l'annuaire.
         </p>
-        <p className="font-semibold text-gray-900">Profil public</p>
+        <p className="font-semibold text-neutral-900">Profil public</p>
         <p>
           Un interrupteur tu permet de rendre ton profil public ou prive. Quand il est
           public, les autres membres du club peuvent voir ta VMA et ton telephone.
           Quand il est prive, seul le coach y a acces.
         </p>
-        <p className="font-semibold text-gray-900">Séances personnelles</p>
+        <p className="font-semibold text-neutral-900">Séances personnelles</p>
         <p>
           Depuis la section "Séances personnelles" de ton profil, tu peux créer
           tes propres séances d'entrainement (course, vélo, marche, renforcement, etc.)
           en dehors du planning du coach. Ces séances sont privees et n'apparaissent que
           pour tu.
         </p>
-        <p className="font-semibold text-gray-900">Mot de passe</p>
+        <p className="font-semibold text-neutral-900">Mot de passe</p>
         <p>
           Tu peux changer ton mot de passe à tout moment depuis la section dédiée
           de ton profil.
         </p>
-        <p className="font-semibold text-gray-900">Notifications</p>
+        <p className="font-semibold text-neutral-900">Notifications</p>
         <p>
           Gerez tes préférences de notifications push. Tu peux activer ou desactiver
           les notifications pour les nouvelles séances, les rappels, et les mises à jour du club.
         </p>
-        <p className="font-semibold text-gray-900">Supprimer son compte</p>
+        <p className="font-semibold text-neutral-900">Supprimer son compte</p>
         <p>
           En bas de ton profil, une option permet de supprimer definitivement ton compte.
           Cette action est irreversible. Un questionnaire de depart tu sera propose pour
@@ -360,14 +360,14 @@ const athleteSections: Section[] = [
         <p>
           L'application tu envoie des notifications pour tu tenir informe de l'activite du club.
         </p>
-        <p className="font-semibold text-gray-900">Types de notifications</p>
+        <p className="font-semibold text-neutral-900">Types de notifications</p>
         <ul className="list-disc pl-5 space-y-1">
           <li><strong>Nouvelle séance</strong> : quand le coach publié une nouvelle séance pour ton groupe</li>
           <li><strong>Modification de séance</strong> : quand une séance existante est modifiee</li>
           <li><strong>Rappel</strong> : rappel avant une séance à venir</li>
           <li><strong>Mise à jour VMA</strong> : quand ta VMA est mise à jour par le coach</li>
         </ul>
-        <p className="font-semibold text-gray-900">Gestion des préférences</p>
+        <p className="font-semibold text-neutral-900">Gestion des préférences</p>
         <p>
           Depuis ton profil, tu peux choisir quels types de notifications tu souhaites
           recevoir. Les notifications non lues sont signalees par un badge rouge sur l'icone
@@ -389,13 +389,13 @@ const coachSections: Section[] = [
           Le dashboard coach est ton centre de pilotage. Il regroupe les indicateurs
           cles pour suivre l'activite du club.
         </p>
-        <p className="font-semibold text-gray-900">KPIs</p>
+        <p className="font-semibold text-neutral-900">KPIs</p>
         <p>
           En haut de page, des compteurs affichent les statistiques essentielles :
           nombre d'athletes actifs, séances creees sur la saison, taux de présence global,
           et retours recents des athletes.
         </p>
-        <p className="font-semibold text-gray-900">Alertes d'inactivite</p>
+        <p className="font-semibold text-neutral-900">Alertes d'inactivite</p>
         <p>
           Le dashboard signale les athletes inactifs avec trois niveaux de severite :
         </p>
@@ -408,7 +408,7 @@ const coachSections: Section[] = [
           Cela tu permet de reprendre contact avec eux et de maintenir
           la dynamique du groupe.
         </p>
-        <p className="font-semibold text-gray-900">Retours athletes</p>
+        <p className="font-semibold text-neutral-900">Retours athletes</p>
         <p>
           Les derniers retours postes par les athletes sur leurs séances sont affiches
           directement sur le dashboard. Tu peux ainsi suivre le ressenti général
@@ -426,26 +426,26 @@ const coachSections: Section[] = [
         <p>
           L'editeur de séances tu permet de créer et gérer les entrainements du club.
         </p>
-        <p className="font-semibold text-gray-900">Créer une séance</p>
+        <p className="font-semibold text-neutral-900">Créer une séance</p>
         <p>
           Clique sur "Nouvelle séance" pour créer un entrainement. Renseigne la date,
           le titre, le groupe concerné et optionnellement un lieu avec un lien de localisation
           (Google Maps, etc.). Tu peux ensuite ajouter des blocs d'entrainement.
         </p>
-        <p className="font-semibold text-gray-900">Blocs d'entrainement</p>
+        <p className="font-semibold text-neutral-900">Blocs d'entrainement</p>
         <p>
           Chaque bloc définit une phase de la séance : échauffement, travail spécifique,
           récupération, retour au calme. Pour chaque bloc, tu définissez le type,
           la distance ou durée (heures, minutes, secondes), et le pourcentage de VMA.
           L'application calculera automatiquement l'allure personnalisee pour chaque athlete.
         </p>
-        <p className="font-semibold text-gray-900">Affecter a un groupe ou une préparation</p>
+        <p className="font-semibold text-neutral-900">Affecter a un groupe ou une préparation</p>
         <p>
           Une séance peut etre affectee a un ou plusieurs groupes d'entrainement,
           ou a une préparation spécifique. Les athletes des groupes/préparations concernés
           verront automatiquement la séance sur leur accueil.
         </p>
-        <p className="font-semibold text-gray-900">Modifier et supprimer</p>
+        <p className="font-semibold text-neutral-900">Modifier et supprimer</p>
         <p>
           Tu peux modifier une séance existante à tout moment. La suppression d'une séance
           est egalement possible mais irremediable : les validations et retours associes
@@ -463,17 +463,17 @@ const coachSections: Section[] = [
         <p>
           Les groupes permettent d'organiser tes athletes par niveau ou objectif.
         </p>
-        <p className="font-semibold text-gray-900">Créer un groupe</p>
+        <p className="font-semibold text-neutral-900">Créer un groupe</p>
         <p>
           Depuis l'onglet "Groupes" des parametres, cliquez sur "Ajouter" pour créer
           un nouveau groupe. Donnez-lui un nom explicite (ex: "Debutants", "Compet", "Trail").
         </p>
-        <p className="font-semibold text-gray-900">Assigner des membres</p>
+        <p className="font-semibold text-neutral-900">Assigner des membres</p>
         <p>
           Clique sur un groupe pour voir et modifier sa composition. Tu peux ajouter
           ou retirer des athletes. Un athlete peut appartenir a plusieurs groupes.
         </p>
-        <p className="font-semibold text-gray-900">Modifier et supprimer</p>
+        <p className="font-semibold text-neutral-900">Modifier et supprimer</p>
         <p>
           Le nom du groupe peut etre modifie à tout moment. La suppression d'un groupe
           ne supprime pas les athletes qui en faisaient partie, mais les séances
@@ -492,20 +492,20 @@ const coachSections: Section[] = [
           Les préparations spécifiques permettent de créer des plans d'entrainement
           dédiés a un objectif précis (marathon, trail, 10 km, etc.).
         </p>
-        <p className="font-semibold text-gray-900">Créer une préparation</p>
+        <p className="font-semibold text-neutral-900">Créer une préparation</p>
         <p>
           Depuis l'onglet "Prep. Spécifiques" des parametres, creez une nouvelle préparation
           en indiquant son nom, sa description et la date de l'événement. Un compte a rebours
           (J-X) s'affiche automatiquement pour visualiser le temps restant avant l'echeance.
           Exemple : "Préparation Marathon de Narbonne 2025".
         </p>
-        <p className="font-semibold text-gray-900">Inscrire des athletes</p>
+        <p className="font-semibold text-neutral-900">Inscrire des athletes</p>
         <p>
           Ajoute les athletes concernés a la préparation. Ils verront alors les séances
           specifiquement creees pour cette préparation sur leur accueil, en plus des séances
           de leur groupe habituel.
         </p>
-        <p className="font-semibold text-gray-900">Séances dédiées</p>
+        <p className="font-semibold text-neutral-900">Séances dédiées</p>
         <p>
           Lors de la création d'une séance, tu peux l'affecter a une préparation spécifique
           plutot qu'a un groupe. Seuls les athletes inscrits à cette préparation verront la séance.
@@ -522,13 +522,13 @@ const coachSections: Section[] = [
         <p>
           En tant que coach, tu as des droits etendus sur le palmares.
         </p>
-        <p className="font-semibold text-gray-900">Ajouter un resultat pour un athlete</p>
+        <p className="font-semibold text-neutral-900">Ajouter un resultat pour un athlete</p>
         <p>
           Depuis la page Palmares, cliquez sur "Ajouter un resultat". Sélectionne l'athlete
           concerné dans la liste deroulante, puis renseignez les informations de la course.
           Utile si un athlete n'a pas encore saisi son resultat.
         </p>
-        <p className="font-semibold text-gray-900">Modifier un resultat</p>
+        <p className="font-semibold text-neutral-900">Modifier un resultat</p>
         <p>
           Tu peux modifier le resultat de n'importe quel athlete en cliquant sur l'icone
           crayon a cote du resultat. Cela permet de corriger des erreurs de saisie ou d'ajouter
@@ -546,20 +546,20 @@ const coachSections: Section[] = [
         <p>
           L'onglet "Athletes" des parametres centralise la gestion de tous les membres du club.
         </p>
-        <p className="font-semibold text-gray-900">Ajouter un athlete</p>
+        <p className="font-semibold text-neutral-900">Ajouter un athlete</p>
         <p>
           Clique sur "Ajouter" pour créer un nouveau compte athlete. Renseigne le prenom,
           nom, email, et definissez un mot de passe initial. L'athlete pourra ensuite
           se connecter et modifier ses informations.
         </p>
-        <p className="font-semibold text-gray-900">VMA et licence</p>
+        <p className="font-semibold text-neutral-900">VMA et licence</p>
         <p>
           Depuis la fiche de chaque athlete, tu peux mettre à jour sa VMA (après un test
           par exemple) et son numéro de licence FFA. Lors de la mise à jour de la VMA, tu peux
           indiquer un motif (test piste, estimation, etc.) qui sera enregistre dans l'historique.
           La modification recalcule automatiquement toutes les allures de l'athlete.
         </p>
-        <p className="font-semibold text-gray-900">Partager les identifiants</p>
+        <p className="font-semibold text-neutral-900">Partager les identifiants</p>
         <p>
           Après avoir créé un compte athlete, tu peux copier et partager les identifiants
           de connexion (email + mot de passe initial) directement via WhatsApp ou un autre
@@ -578,19 +578,19 @@ const coachSections: Section[] = [
           L'onglet "Allures" des parametres tu permet de configurer les pourcentages de VMA
           utilisés pour calculer les allures de référence et les zones d'entrainement.
         </p>
-        <p className="font-semibold text-gray-900">Allures de référence</p>
+        <p className="font-semibold text-neutral-900">Allures de référence</p>
         <p>
           Ce sont les allures affichées sur la fiche de chaque athlete (accueil et annuaire).
           Chaque allure correspond a un pourcentage fixe de la VMA. En modifiant un pourcentage,
           les allures de tous les athletes se recalculent instantanement.
         </p>
-        <p className="font-semibold text-gray-900">Zones d'entrainement</p>
+        <p className="font-semibold text-neutral-900">Zones d'entrainement</p>
         <p>
           Les zones definissent les fourchettes de % VMA utilisées dans les blocs de séance
           (EF, Endurance, AS42, AS21, VMA). Elles determinent la plage d'allure affichée
           pour chaque bloc dans les séances.
         </p>
-        <p className="font-semibold text-gray-900">Valeurs par defaut</p>
+        <p className="font-semibold text-neutral-900">Valeurs par defaut</p>
         <p>
           Un bouton permet de reinitialiser tous les pourcentages aux valeurs par defaut.
           Ces valeurs correspondent a un profil coureur intermediaire (VMA 12-14 km/h).
@@ -614,10 +614,10 @@ export default function Help() {
     <div className="py-4 space-y-4">
       <div className="flex items-center gap-2">
         <HelpCircle size={22} className="text-primary" />
-        <h1 className="text-lg font-bold text-gray-900">Centre d'aide</h1>
+        <h1 className="text-lg font-bold text-neutral-900">Centre d'aide</h1>
       </div>
 
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-neutral-500">
         Retrouvez ici toutes les explications sur le fonctionnement de l'application.
         Clique sur une section pour la deployer.
       </p>
@@ -636,9 +636,9 @@ export default function Help() {
       {isCoach && (
         <>
           <div className="flex items-center gap-3 pt-2">
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-neutral-200" />
             <span className="text-xs font-bold text-primary uppercase tracking-wider">Espace Coach</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-neutral-200" />
           </div>
 
           <div className="space-y-2">

@@ -70,7 +70,7 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
       .slice(0, 4);
   }, [raceResults, member.id]);
 
-  const rateColor = (rate: number) => rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-red-400';
+  const rateColor = (rate: number) => rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-danger-500';
 
   return (
     <div className="px-4 pb-4 space-y-3">
@@ -79,18 +79,18 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
         <div className="bg-primary/5 rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <p className="text-xs text-gray-400">VMA</p>
+              <p className="text-xs text-neutral-400">VMA</p>
               <p className="text-xl font-bold text-primary">
                 {member.vma} <span className="text-sm font-normal">km/h</span>
               </p>
             </div>
             {lastVmaDate && (
-              <p className="text-[10px] text-gray-400">
+              <p className="text-[10px] text-neutral-400">
                 MAJ {format(new Date(lastVmaDate), 'd MMM yyyy', { locale: fr })}
               </p>
             )}
           </div>
-          <h3 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase mb-2">
+          <h3 className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 uppercase mb-2">
             <Gauge size={14} className="text-accent" />
             Allures
           </h3>
@@ -101,13 +101,13 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
                 const pct = zone.pctByLevel[levelIdx];
                 const { pace } = calculateRacePace(member.vma!, pct);
                 return (
-                  <div key={key} className="rounded-lg p-2 border border-gray-100 bg-white">
+                  <div key={key} className="rounded-lg p-2 border border-neutral-100 bg-white">
                     <div className="flex items-center gap-1 mb-0.5">
                       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
-                      <span className="text-[10px] font-bold text-gray-500">{zone.label}</span>
+                      <span className="text-[10px] font-bold text-neutral-500">{zone.label}</span>
                     </div>
-                    <p className="text-xs font-bold text-gray-900">{pace}</p>
-                    <p className="text-[9px] text-gray-400">{pct}%</p>
+                    <p className="text-xs font-bold text-neutral-900">{pace}</p>
+                    <p className="text-[9px] text-neutral-400">{pct}%</p>
                   </div>
                 );
               });
@@ -127,14 +127,14 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
           )}
         </div>
       ) : (
-        <div className="bg-gray-50 rounded-lg p-3 text-center">
-          <p className="text-xs text-gray-400">VMA non renseignee</p>
+        <div className="bg-neutral-50 rounded-lg p-3 text-center">
+          <p className="text-xs text-neutral-400">VMA non renseignee</p>
         </div>
       )}
 
       {/* Assiduite */}
-      <div className="bg-white rounded-lg border border-gray-100 p-3">
-        <h3 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase mb-2">
+      <div className="bg-white rounded-lg border border-neutral-100 p-3">
+        <h3 className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 uppercase mb-2">
           <Target size={14} className="text-primary" />
           Assiduite
         </h3>
@@ -145,14 +145,14 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
             { label: 'Saison', value: attendance.season },
           ] as const).map(stat => (
             <div key={stat.label} className="text-center">
-              <p className="text-lg font-bold text-gray-900">{stat.value}%</p>
-              <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden mt-0.5">
+              <p className="text-lg font-bold text-neutral-900">{stat.value}%</p>
+              <div className="w-full h-1 bg-neutral-100 rounded-full overflow-hidden mt-0.5">
                 <div
                   className={`h-full rounded-full ${rateColor(stat.value)}`}
                   style={{ width: `${stat.value}%` }}
                 />
               </div>
-              <p className="text-[10px] text-gray-400 mt-0.5">{stat.label}</p>
+              <p className="text-[10px] text-neutral-400 mt-0.5">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -160,8 +160,8 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
 
       {/* 4 derniers palmares */}
       {lastRaces.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-100 p-3">
-          <h3 className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase mb-2">
+        <div className="bg-white rounded-lg border border-neutral-100 p-3">
+          <h3 className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 uppercase mb-2">
             <Trophy size={14} className="text-accent" />
             Derniers palmares
           </h3>
@@ -169,13 +169,13 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
             {lastRaces.map(race => (
               <div key={race.id} className="flex items-center justify-between text-xs">
                 <div className="flex-1 min-w-0">
-                  <span className="font-medium text-gray-900 truncate block">{race.race_name}</span>
-                  <span className="text-gray-400">{format(new Date(race.date), 'd MMM yyyy', { locale: fr })}</span>
+                  <span className="font-medium text-neutral-900 truncate block">{race.race_name}</span>
+                  <span className="text-neutral-400">{format(new Date(race.date), 'd MMM yyyy', { locale: fr })}</span>
                 </div>
                 <div className="text-right flex-shrink-0 ml-2">
                   <span className="font-bold text-primary">{race.time_duration}</span>
                   {race.distance_km && (
-                    <span className="text-gray-400 ml-1">{race.distance_km} km</span>
+                    <span className="text-neutral-400 ml-1">{race.distance_km} km</span>
                   )}
                 </div>
               </div>
@@ -213,7 +213,7 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
         <div className="flex items-center gap-3">
           <Avatar user={member} size="md" />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 flex items-center gap-1.5">
+            <p className="font-semibold text-neutral-900 flex items-center gap-1.5">
               {member.firstname} {member.lastname}
               {member.role === 'coach' && (
                 <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
@@ -227,16 +227,16 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
                 <span className="text-xs text-primary font-bold">VMA {member.vma}</span>
               )}
               {groupName && (
-                <span className="text-xs text-gray-500">{groupName}</span>
+                <span className="text-xs text-neutral-500">{groupName}</span>
               )}
               {prepName && (
-                <span className="text-xs text-amber-600 font-medium">{prepName}</span>
+                <span className="text-xs text-warning-600 font-medium">{prepName}</span>
               )}
               {category && (
                 <span className="text-xs text-accent-text font-medium">{category.code}</span>
               )}
               {birthday && (
-                <span className="text-xs text-gray-400 flex items-center gap-0.5">
+                <span className="text-xs text-neutral-400 flex items-center gap-0.5">
                   <Cake size={11} />
                   {birthday}
                 </span>
@@ -249,7 +249,7 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
                 href={`https://wa.me/${member.phone.replace(/[^0-9]/g, '').replace(/^0/, '33')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                className="p-2 text-success-600 hover:bg-success-50 rounded-lg transition-colors"
                 title="WhatsApp"
                 onClick={e => e.stopPropagation()}
               >
@@ -258,7 +258,7 @@ function MemberCard({ member, groupName, prepName, isExpanded, onToggle }: {
             )}
             <ChevronDown
               size={18}
-              className={`text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+              className={`text-neutral-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
             />
           </div>
         </div>
@@ -309,19 +309,19 @@ export default function Directory() {
   return (
     <div className="py-4">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-lg font-bold text-gray-900">Athletes</h1>
-        <span className="text-xs text-gray-400 font-medium">{sorted.length} membre{sorted.length > 1 ? 's' : ''}</span>
+        <h1 className="text-lg font-bold text-neutral-900">Athletes</h1>
+        <span className="text-xs text-neutral-400 font-medium">{sorted.length} membre{sorted.length > 1 ? 's' : ''}</span>
       </div>
 
       <div className="relative mb-4 lg:max-w-md">
-        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
         <input
           type="text"
           placeholder="Rechercher un membre..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           aria-label="Rechercher un membre"
-          className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          className="w-full pl-10 pr-4 py-2.5 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
         />
       </div>
 

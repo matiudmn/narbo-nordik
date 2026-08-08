@@ -17,7 +17,7 @@ const paddingClasses: Record<CardPadding, string> = {
 
 /**
  * Card primitive — remplace le pattern dupliqué
- * "bg-white rounded-xl border border-gray-100 p-4" (60+ occurrences).
+ * "bg-white rounded-xl border border-neutral-100 p-4" (60+ occurrences).
  */
 export function Card({
   padding = 'md',

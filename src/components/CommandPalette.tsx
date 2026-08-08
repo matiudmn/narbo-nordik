@@ -64,18 +64,18 @@ function ResultRow({ result, optionId, selected, onActivate, onAction, onHover }
         onClick={onActivate}
         onMouseMove={onHover}
         className={`flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-          selected ? 'bg-accent/10' : 'hover:bg-gray-50'
+          selected ? 'bg-accent/10' : 'hover:bg-neutral-50'
         }`}
       >
-        <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg ${selected ? 'bg-accent/20 text-accent' : 'bg-gray-100 text-gray-500'}`}>
+        <span className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg ${selected ? 'bg-accent/20 text-accent' : 'bg-neutral-100 text-neutral-500'}`}>
           <Icon size={16} aria-hidden="true" />
         </span>
         <span className="flex-1 min-w-0">
-          <span className="block text-sm font-medium text-gray-900 truncate">{result.title}</span>
-          {result.subtitle && <span className="block text-xs text-gray-400 truncate">{result.subtitle}</span>}
+          <span className="block text-sm font-medium text-neutral-900 truncate">{result.title}</span>
+          {result.subtitle && <span className="block text-xs text-neutral-400 truncate">{result.subtitle}</span>}
         </span>
         {result.badge && (
-          <span className="flex-shrink-0 text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+          <span className="flex-shrink-0 text-[10px] font-medium text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded">
             {result.badge}
           </span>
         )}
@@ -193,8 +193,8 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
         onKeyDown={onKeyDown}
       >
         {/* Champ */}
-        <div className="flex items-center gap-2 px-4 border-b border-gray-100">
-          <Search size={18} className="text-gray-400 flex-shrink-0" aria-hidden="true" />
+        <div className="flex items-center gap-2 px-4 border-b border-neutral-100">
+          <Search size={18} className="text-neutral-400 flex-shrink-0" aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
@@ -208,12 +208,12 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
             aria-controls="cmdk-listbox"
             aria-activedescendant={flat[selectedIndex] ? optId(flat[selectedIndex]) : undefined}
             aria-autocomplete="list"
-            className="flex-1 py-4 text-sm bg-transparent focus:outline-none placeholder:text-gray-400"
+            className="flex-1 py-4 text-sm bg-transparent focus:outline-none placeholder:text-neutral-400"
           />
           <button
             type="button"
             onClick={onClose}
-            className="flex-shrink-0 flex items-center justify-center w-11 h-11 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex-shrink-0 flex items-center justify-center w-11 h-11 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors"
             aria-label="Fermer la recherche"
           >
             <X size={18} />
@@ -225,24 +225,24 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={() => runAi(query)}
-            className="flex items-center gap-2 px-4 py-2.5 text-left border-b border-gray-100 hover:bg-accent/5 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 text-left border-b border-neutral-100 hover:bg-accent/5 transition-colors"
           >
             <Sparkles size={16} className="text-accent flex-shrink-0" aria-hidden="true" />
-            <span className="text-sm text-gray-700">
-              Demander à l'IA : <span className="font-medium text-gray-900">{query.trim()}</span>
+            <span className="text-sm text-neutral-700">
+              Demander à l'IA : <span className="font-medium text-neutral-900">{query.trim()}</span>
             </span>
           </button>
         )}
         {ai.status === 'loading' && (
-          <div role="status" className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 text-sm text-gray-500">
+          <div role="status" className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100 text-sm text-neutral-500">
             <Loader2 size={16} className="text-accent animate-spin flex-shrink-0" aria-hidden="true" />
             L'IA analyse ta demande...
           </div>
         )}
         {ai.status === 'done' && (
-          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100">
             <Sparkles size={16} className="text-accent flex-shrink-0" aria-hidden="true" />
-            <span className="flex-1 text-xs text-gray-500 truncate">
+            <span className="flex-1 text-xs text-neutral-500 truncate">
               {ai.description ? `Filtré par IA : ${ai.description}` : 'Recherche IA'}
             </span>
             <button type="button" onClick={clearAi} className="text-xs font-medium text-accent-text hover:underline flex-shrink-0">
@@ -251,9 +251,9 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
           </div>
         )}
         {ai.status === 'error' && (
-          <div role="status" className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 text-sm text-danger">
+          <div role="status" className="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-100 text-sm text-danger">
             <span className="flex-1">Recherche IA indisponible.</span>
-            <button type="button" onClick={clearAi} className="text-xs font-medium text-gray-500 hover:underline flex-shrink-0">
+            <button type="button" onClick={clearAi} className="text-xs font-medium text-neutral-500 hover:underline flex-shrink-0">
               Fermer
             </button>
           </div>
@@ -266,10 +266,10 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
           </p>
           {showInitial && (
             <div className="px-3 py-8 text-center">
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-neutral-400">
                 Tape un nom d'athlète, un titre de séance, une course...
               </p>
-              <p className="mt-1 text-xs text-gray-300">
+              <p className="mt-1 text-xs text-neutral-300">
                 Astuce : pose une question à l'IA, par exemple « séances de seuil en juin ».
               </p>
             </div>
@@ -285,7 +285,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
 
           {sections.map(section => (
             <div key={section.kind} role="group" aria-label={KIND_LABELS[section.kind]} className="mb-1">
-              <p className="px-3 pt-2 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider" aria-hidden="true">
+              <p className="px-3 pt-2 pb-1 text-[10px] font-bold text-neutral-400 uppercase tracking-wider" aria-hidden="true">
                 {KIND_LABELS[section.kind]}
               </p>
               {section.items.map(item => {
@@ -307,7 +307,7 @@ export default function CommandPalette({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Pied : aides clavier (desktop) */}
-        <div className="hidden lg:flex items-center gap-4 px-4 py-2 border-t border-gray-100 text-[11px] text-gray-400">
+        <div className="hidden lg:flex items-center gap-4 px-4 py-2 border-t border-neutral-100 text-[11px] text-neutral-400">
           <span className="flex items-center gap-1"><CornerDownLeft size={12} /> ouvrir</span>
           <span>↑ ↓ naviguer</span>
           <span>échap fermer</span>

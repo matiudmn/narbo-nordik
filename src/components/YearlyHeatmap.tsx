@@ -42,12 +42,12 @@ function getCellType(sessions: HeatmapSession[]): CellType {
 }
 
 const CELL_STYLES: Record<CellType, string> = {
-  empty: 'bg-gray-100',
+  empty: 'bg-neutral-100',
   coach: 'bg-accent',
-  personal: 'bg-amber-400',
-  both: 'bg-gradient-to-br from-accent to-amber-400',
-  missed: 'bg-red-300',
-  mixed: 'bg-gradient-to-br from-accent to-red-300',
+  personal: 'bg-warning-500',
+  both: 'bg-gradient-to-br from-accent to-warning-500',
+  missed: 'bg-danger-500',
+  mixed: 'bg-gradient-to-br from-accent to-danger-500',
 };
 
 export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapProps) {
@@ -100,20 +100,20 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
   return (
     <Card>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-gray-900">Calendrier annuel</h3>
+        <h3 className="text-sm font-bold text-neutral-900">Calendrier annuel</h3>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setYear(y => y - 1)}
-            className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-neutral-100 text-neutral-500 transition-colors"
             aria-label="Annee precedente"
           >
             <ChevronLeft size={18} />
           </button>
-          <span className="text-sm font-bold text-gray-900 min-w-[3rem] text-center">{year}</span>
+          <span className="text-sm font-bold text-neutral-900 min-w-[3rem] text-center">{year}</span>
           <button
             onClick={() => setYear(y => y + 1)}
             disabled={year >= new Date().getFullYear()}
-            className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-neutral-100 text-neutral-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Annee suivante"
           >
             <ChevronRight size={18} />
@@ -121,18 +121,18 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
         </div>
       </div>
 
-      <p className="text-xs text-gray-400 mb-3">
+      <p className="text-xs text-neutral-400 mb-3">
         {counts.done} faite{counts.done > 1 ? 's' : ''}
-        {counts.missed > 0 && <span className="text-red-400"> · {counts.missed} non faite{counts.missed > 1 ? 's' : ''}</span>}
+        {counts.missed > 0 && <span className="text-danger-500"> · {counts.missed} non faite{counts.missed > 1 ? 's' : ''}</span>}
       </p>
 
       <div className="heatmap-container relative overflow-x-auto">
         <table className="w-full border-collapse" role="grid" aria-label={`Calendrier des seances ${year}`}>
           <thead>
             <tr>
-              <th className="text-[10px] text-gray-400 font-normal text-left pr-1 w-8" />
+              <th className="text-[10px] text-neutral-400 font-normal text-left pr-1 w-8" />
               {Array.from({ length: 31 }, (_, i) => (
-                <th key={i} className="text-[9px] text-gray-300 font-normal text-center p-0 w-[18px]">
+                <th key={i} className="text-[9px] text-neutral-300 font-normal text-center p-0 w-[18px]">
                   {i + 1}
                 </th>
               ))}
@@ -143,13 +143,13 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
               const daysInMonth = getDaysInMonth(year, month);
               return (
                 <tr key={month}>
-                  <td className="text-[10px] text-gray-400 font-medium pr-1 py-0">{label}</td>
+                  <td className="text-[10px] text-neutral-400 font-medium pr-1 py-0">{label}</td>
                   {Array.from({ length: 31 }, (_, i) => {
                     const day = i + 1;
                     if (day > daysInMonth) {
                       return (
                         <td key={i} className="p-[1px]">
-                          <div className="w-full aspect-square rounded-[2px] bg-gray-50" />
+                          <div className="w-full aspect-square rounded-[2px] bg-neutral-50" />
                         </td>
                       );
                     }
@@ -179,7 +179,7 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
 
         {tooltip && (
           <div
-            className="absolute z-10 px-2 py-1 bg-gray-900 text-white text-[10px] rounded-md whitespace-pre-line pointer-events-none max-w-[200px]"
+            className="absolute z-10 px-2 py-1 bg-neutral-900 text-white text-[10px] rounded-md whitespace-pre-line pointer-events-none max-w-[200px]"
             style={{
               left: tooltip.x,
               top: tooltip.y,
@@ -191,9 +191,9 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 mt-3 text-[10px] text-gray-400">
+      <div className="flex flex-wrap items-center gap-3 mt-3 text-[10px] text-neutral-400">
         <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-gray-100" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-neutral-100" />
           <span>Aucune</span>
         </div>
         <div className="flex items-center gap-1">
@@ -201,11 +201,11 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
           <span>Club</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-amber-400" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-warning-500" />
           <span>Perso</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-red-300" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-danger-500" />
           <span>Non faite</span>
         </div>
       </div>

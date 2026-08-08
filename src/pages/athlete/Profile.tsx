@@ -35,12 +35,12 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
       >
         <div className="flex items-center gap-2">
           {icon}
-          <span className="font-bold text-gray-900">{title}</span>
+          <span className="font-bold text-neutral-900">{title}</span>
           {badge}
         </div>
         <div className="flex items-center gap-2">
           {action && <div onClick={e => e.stopPropagation()}>{action}</div>}
-          <ChevronDown size={18} className={`text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown size={18} className={`text-neutral-400 transition-transform ${open ? 'rotate-180' : ''}`} />
         </div>
       </button>
       {open && <div className="px-4 pb-4 -mt-1">{children}</div>}
@@ -182,10 +182,10 @@ export default function Profile() {
 
   const PERSO_TYPE_COLOR: Record<string, string> = {
     entrainement: 'bg-primary/10 text-primary',
-    course: 'bg-amber-100 text-amber-700',
-    velo: 'bg-blue-100 text-blue-700',
-    marche: 'bg-green-100 text-green-700',
-    renfo: 'bg-orange-100 text-orange-700',
+    course: 'bg-warning-100 text-warning-700',
+    velo: 'bg-info-100 text-info-700',
+    marche: 'bg-success-100 text-success-700',
+    renfo: 'bg-warning-100 text-warning-700',
   };
 
   const getPersoSessionDuration = (s: Session) => {
@@ -289,7 +289,7 @@ export default function Profile() {
             {user.photo_url && (
               <button
                 onClick={() => updateUserPhoto(user.id, null)}
-                className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow"
+                className="absolute -top-1 -right-1 w-6 h-6 bg-danger-500 text-white rounded-full flex items-center justify-center shadow"
               >
                 <X size={12} />
               </button>
@@ -297,10 +297,10 @@ export default function Profile() {
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-gray-900 text-lg">{user.firstname} {user.lastname}</p>
-            <p className="text-sm text-gray-400">
+            <p className="font-bold text-neutral-900 text-lg">{user.firstname} {user.lastname}</p>
+            <p className="text-sm text-neutral-400">
               {group?.name || 'Aucun groupe'}
-              {currentPrep && <span className="text-amber-600 ml-2">| {currentPrep.name}</span>}
+              {currentPrep && <span className="text-warning-600 ml-2">| {currentPrep.name}</span>}
             </p>
             <div className="flex items-center gap-2 mt-1">
               {user.vma && (
@@ -309,7 +309,7 @@ export default function Profile() {
                 </span>
               )}
               {user.birth_date && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-xs bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full font-medium">
                   {getFFACategory(user.birth_date).code}
                 </span>
               )}
@@ -333,19 +333,19 @@ export default function Profile() {
         <div className="space-y-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-gray-400">Prenom</p>
-              <p className="font-medium text-gray-900">{user.firstname}</p>
+              <p className="text-xs text-neutral-400">Prenom</p>
+              <p className="font-medium text-neutral-900">{user.firstname}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-400">Nom</p>
-              <p className="font-medium text-gray-900">{user.lastname}</p>
+              <p className="text-xs text-neutral-400">Nom</p>
+              <p className="font-medium text-neutral-900">{user.lastname}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-400">Email</p>
-              <p className="font-medium text-gray-900 text-sm">{user.email}</p>
+              <p className="text-xs text-neutral-400">Email</p>
+              <p className="font-medium text-neutral-900 text-sm">{user.email}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-400">Groupe</p>
+              <p className="text-xs text-neutral-400">Groupe</p>
               {user.role === 'coach' ? (
                 <select
                   value={user.group_id || ''}
@@ -353,7 +353,7 @@ export default function Profile() {
                     await updateUserGroup(user.id, e.target.value || null);
                     await refreshUser();
                   }}
-                  className="font-medium text-gray-900 text-sm bg-transparent border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="font-medium text-neutral-900 text-sm bg-transparent border border-neutral-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">Aucun groupe</option>
                   {groups.map(g => (
@@ -361,7 +361,7 @@ export default function Profile() {
                   ))}
                 </select>
               ) : (
-                <p className="font-medium text-gray-900">{group?.name || '-'}</p>
+                <p className="font-medium text-neutral-900">{group?.name || '-'}</p>
               )}
             </div>
           </div>
@@ -369,7 +369,7 @@ export default function Profile() {
           {/* VMA */}
           <div className="mt-3 flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-400">VMA</p>
+              <p className="text-xs text-neutral-400">VMA</p>
               {editingVma && user.role === 'coach' ? (
                 <div className="space-y-1.5 mt-0.5">
                   <div className="flex items-center gap-1">
@@ -381,10 +381,10 @@ export default function Profile() {
                       value={vmaValue}
                       onChange={e => setVmaValue(e.target.value)}
                       disabled={submittingVma}
-                      className="w-20 px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
+                      className="w-20 px-2 py-1 border border-neutral-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
                       autoFocus
                     />
-                    <span className="text-xs text-gray-400">km/h</span>
+                    <span className="text-xs text-neutral-400">km/h</span>
                     <button
                       onClick={async () => {
                         if (submittingVma) return;
@@ -403,11 +403,11 @@ export default function Profile() {
                         }
                       }}
                       disabled={submittingVma}
-                      className="p-1 text-green-600 hover:text-green-700 disabled:opacity-60"
+                      className="p-1 text-success-600 hover:text-success-700 disabled:opacity-60"
                     >
                       <Check size={16} />
                     </button>
-                    <button onClick={() => { setEditingVma(false); setVmaReason(''); }} disabled={submittingVma} className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-60">
+                    <button onClick={() => { setEditingVma(false); setVmaReason(''); }} disabled={submittingVma} className="p-1 text-neutral-400 hover:text-neutral-600 disabled:opacity-60">
                       <X size={16} />
                     </button>
                   </div>
@@ -417,11 +417,11 @@ export default function Profile() {
                     onChange={e => setVmaReason(e.target.value)}
                     disabled={submittingVma}
                     placeholder="Raison (test piste, estimation...)"
-                    className="w-full px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
+                    className="w-full px-2 py-1 border border-neutral-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
                   />
                 </div>
               ) : (
-                <p className="font-medium text-gray-900">{user.vma ? `${user.vma} km/h` : 'Non renseignee'}</p>
+                <p className="font-medium text-neutral-900">{user.vma ? `${user.vma} km/h` : 'Non renseignee'}</p>
               )}
             </div>
             {user.role === 'coach' && !editingVma ? (
@@ -432,7 +432,7 @@ export default function Profile() {
                 Modifier
               </button>
             ) : user.role !== 'coach' ? (
-              <span className="text-xs text-gray-400 italic">Modifiable par le coach</span>
+              <span className="text-xs text-neutral-400 italic">Modifiable par le coach</span>
             ) : null}
           </div>
           {user.vma_history.length > 0 && (
@@ -449,9 +449,9 @@ export default function Profile() {
           {/* Phone */}
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Phone size={16} className="text-green-600" />
+              <Phone size={16} className="text-success-600" />
               <div>
-                <p className="text-xs text-gray-400">Telephone (WhatsApp)</p>
+                <p className="text-xs text-neutral-400">Telephone (WhatsApp)</p>
                 {editingPhone ? (
                   <div className="flex items-center gap-1 mt-0.5">
                     <input
@@ -468,7 +468,7 @@ export default function Profile() {
                           setEditingPhone(false);
                         }
                       }}
-                      className="w-36 px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="w-36 px-2 py-1 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                       autoFocus
                     />
                     <button
@@ -478,23 +478,23 @@ export default function Profile() {
                         updateUserPhone(user.id, v).then(() => refreshUser());
                         setEditingPhone(false);
                       }}
-                      className="p-1 text-green-600 hover:bg-green-50 rounded"
+                      className="p-1 text-success-600 hover:bg-success-50 rounded"
                     >
                       <Check size={14} />
                     </button>
-                    <button onClick={() => setEditingPhone(false)} className="p-1 text-gray-400 hover:bg-gray-100 rounded">
+                    <button onClick={() => setEditingPhone(false)} className="p-1 text-neutral-400 hover:bg-neutral-100 rounded">
                       <X size={14} />
                     </button>
                   </div>
                 ) : (
-                  <p className="font-medium text-gray-900 text-sm">{user.phone ? `+${user.phone}` : 'Non renseigne'}</p>
+                  <p className="font-medium text-neutral-900 text-sm">{user.phone ? `+${user.phone}` : 'Non renseigne'}</p>
                 )}
               </div>
             </div>
             {!editingPhone && (
               <button
                 onClick={() => { setPhoneValue(user.phone || ''); setEditingPhone(true); setEditingLicense(false); setEditingBirthDate(false); }}
-                className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                className="p-2 text-neutral-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
               >
                 <Pencil size={14} />
               </button>
@@ -506,7 +506,7 @@ export default function Profile() {
             <div className="flex items-center gap-2">
               <IdCard size={16} className="text-primary" />
               <div>
-                <p className="text-xs text-gray-400">Numero de licence</p>
+                <p className="text-xs text-neutral-400">Numero de licence</p>
                 {editingLicense ? (
                   <div className="flex items-center gap-1 mt-0.5">
                     <input
@@ -521,7 +521,7 @@ export default function Profile() {
                           setEditingLicense(false);
                         }
                       }}
-                      className="w-36 px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="w-36 px-2 py-1 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                       autoFocus
                     />
                     <button
@@ -534,19 +534,19 @@ export default function Profile() {
                     >
                       <Check size={14} />
                     </button>
-                    <button onClick={() => setEditingLicense(false)} className="p-1 text-gray-400 hover:bg-gray-100 rounded">
+                    <button onClick={() => setEditingLicense(false)} className="p-1 text-neutral-400 hover:bg-neutral-100 rounded">
                       <X size={14} />
                     </button>
                   </div>
                 ) : (
-                  <p className="font-medium text-gray-900 text-sm">{user.license_number || 'Non renseigne'}</p>
+                  <p className="font-medium text-neutral-900 text-sm">{user.license_number || 'Non renseigne'}</p>
                 )}
               </div>
             </div>
             {!editingLicense && (
               <button
                 onClick={() => { setLicenseValue(user.license_number || ''); setEditingLicense(true); setEditingPhone(false); setEditingBirthDate(false); }}
-                className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                className="p-2 text-neutral-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
               >
                 <Pencil size={14} />
               </button>
@@ -558,7 +558,7 @@ export default function Profile() {
             <div className="flex items-center gap-2">
               <Cake size={16} className="text-pink-500" />
               <div>
-                <p className="text-xs text-gray-400">Date de naissance</p>
+                <p className="text-xs text-neutral-400">Date de naissance</p>
                 {editingBirthDate ? (
                   <div className="flex items-center gap-1 mt-0.5">
                     <input
@@ -572,7 +572,7 @@ export default function Profile() {
                           setEditingBirthDate(false);
                         }
                       }}
-                      className="px-2 py-1 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="px-2 py-1 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                       autoFocus
                     />
                     <button
@@ -585,13 +585,13 @@ export default function Profile() {
                     >
                       <Check size={14} />
                     </button>
-                    <button onClick={() => setEditingBirthDate(false)} className="p-1 text-gray-400 hover:bg-gray-100 rounded">
+                    <button onClick={() => setEditingBirthDate(false)} className="p-1 text-neutral-400 hover:bg-neutral-100 rounded">
                       <X size={14} />
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-gray-900 text-sm">
+                    <p className="font-medium text-neutral-900 text-sm">
                       {user.birth_date ? format(new Date(user.birth_date), 'dd/MM/yyyy') : 'Non renseigne'}
                     </p>
                     {user.birth_date && (
@@ -606,7 +606,7 @@ export default function Profile() {
             {!editingBirthDate && (
               <button
                 onClick={() => { setBirthDateValue(user.birth_date || ''); setEditingBirthDate(true); setEditingPhone(false); setEditingLicense(false); }}
-                className="p-2 text-gray-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                className="p-2 text-neutral-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
               >
                 <Pencil size={14} />
               </button>
@@ -616,12 +616,12 @@ export default function Profile() {
           {/* Toggle public */}
           <div className="mt-4 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-900">Profil public</p>
-              <p className="text-xs text-gray-400">Visible dans l'annuaire et la recherche par les autres athletes</p>
+              <p className="text-sm font-medium text-neutral-900">Profil public</p>
+              <p className="text-xs text-neutral-400">Visible dans l'annuaire et la recherche par les autres athletes</p>
             </div>
             <button
               onClick={async () => { await updateUserPublic(user.id, !user.is_public); await refreshUser(); }}
-              className={`w-11 h-6 rounded-full relative transition-colors ${user.is_public ? 'bg-primary' : 'bg-gray-300'}`}
+              className={`w-11 h-6 rounded-full relative transition-colors ${user.is_public ? 'bg-primary' : 'bg-neutral-300'}`}
             >
               <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow ${user.is_public ? 'left-5.5' : 'left-0.5'}`} />
             </button>
@@ -657,34 +657,34 @@ export default function Profile() {
         )}
 
         {personalSessions.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">Aucune séance perso ajoutée pour l'instant.</p>
+          <p className="text-sm text-neutral-400 text-center py-4">Aucune séance perso ajoutée pour l'instant.</p>
         ) : (
           <div className="space-y-2">
             {personalSessions.map(s => {
               const dur = getPersoSessionDuration(s);
               return (
-                <div key={s.id} className="flex items-center gap-3 border border-gray-100 rounded-lg p-3">
+                <div key={s.id} className="flex items-center gap-3 border border-neutral-100 rounded-lg p-3">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 text-sm truncate">{s.title}</p>
+                    <p className="font-medium text-neutral-900 text-sm truncate">{s.title}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${PERSO_TYPE_COLOR[s.session_type] || 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${PERSO_TYPE_COLOR[s.session_type] || 'bg-neutral-100 text-neutral-600'}`}>
                         {PERSO_TYPE_LABEL[s.session_type] || s.session_type}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-neutral-400">
                         {format(new Date(s.date), 'dd/MM/yyyy', { locale: fr })}
                       </span>
-                      {dur && <span className="text-xs text-gray-500 font-medium">{dur}</span>}
+                      {dur && <span className="text-xs text-neutral-500 font-medium">{dur}</span>}
                     </div>
                   </div>
                   <button
                     onClick={() => { setEditingPersoSession(s); setShowAddPerso(false); }}
-                    className="p-1.5 text-gray-300 hover:text-primary transition-colors"
+                    className="p-1.5 text-neutral-300 hover:text-primary transition-colors"
                   >
                     <Pencil size={16} />
                   </button>
                   <button
                     onClick={() => deleteSession(s.id)}
-                    className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                    className="p-1.5 text-neutral-300 hover:text-danger-500 transition-colors"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -712,19 +712,19 @@ export default function Profile() {
       >
         {/* Add race form */}
         {showAddRace && (
-          <div className="bg-gray-50 rounded-lg p-3 mb-4 space-y-3">
+          <div className="bg-neutral-50 rounded-lg p-3 mb-4 space-y-3">
             <input
               type="text"
               placeholder="Nom de la course"
               value={raceName}
               onChange={e => setRaceName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
             />
             <div className="grid grid-cols-2 gap-2">
               <select
                 value={raceType}
                 onChange={e => setRaceType(e.target.value as RaceType)}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+                className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
               >
                 <option value="route">Route</option>
                 <option value="trail">Trail</option>
@@ -736,7 +736,7 @@ export default function Profile() {
                 placeholder="Distance (km)"
                 value={raceDistance}
                 onChange={e => setRaceDistance(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+                className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
               />
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -744,7 +744,7 @@ export default function Profile() {
                 type="date"
                 value={raceDate}
                 onChange={e => setRaceDate(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+                className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
               />
               <input
                 type="text"
@@ -758,7 +758,7 @@ export default function Profile() {
                   else if (digits.length > 2) formatted = `${digits.slice(0, 2)}:${digits.slice(2)}`;
                   setRaceTime(formatted);
                 }}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+                className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
               />
             </div>
             <textarea
@@ -766,14 +766,14 @@ export default function Profile() {
               value={raceComment}
               onChange={e => setRaceComment(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
+              className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 resize-none"
             />
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={raceLabel} onChange={e => setRaceLabel(e.target.checked)} className="rounded border-gray-300 text-accent focus:ring-accent/30" />
-              <span className="text-sm text-gray-700">Course a label</span>
+              <input type="checkbox" checked={raceLabel} onChange={e => setRaceLabel(e.target.checked)} className="rounded border-neutral-300 text-accent focus:ring-accent/30" />
+              <span className="text-sm text-neutral-700">Course a label</span>
             </label>
             <div className="flex gap-2">
-              <button onClick={resetRaceForm} className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600">Annuler</button>
+              <button onClick={resetRaceForm} className="flex-1 py-2 border border-neutral-200 rounded-lg text-sm text-neutral-600">Annuler</button>
               <button onClick={handleAddRace} className="flex-1 py-2 bg-accent text-white rounded-lg text-sm font-medium">{editingRaceId ? 'Modifier' : 'Ajouter'}</button>
             </div>
           </div>
@@ -781,40 +781,40 @@ export default function Profile() {
 
         {/* Race list */}
         {userRaces.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">Aucune course enregistrée pour l'instant.</p>
+          <p className="text-sm text-neutral-400 text-center py-4">Aucune course enregistrée pour l'instant.</p>
         ) : (
           <div className="space-y-2">
             {userRaces.map(race => (
-              <div key={race.id} className="flex items-center gap-3 border border-gray-100 rounded-lg p-3">
+              <div key={race.id} className="flex items-center gap-3 border border-neutral-100 rounded-lg p-3">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 text-sm truncate">
+                  <p className="font-medium text-neutral-900 text-sm truncate">
                     {race.race_name}
-                    {race.is_label && <span className="ml-1 text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">Label</span>}
+                    {race.is_label && <span className="ml-1 text-[10px] px-1.5 py-0.5 bg-warning-100 text-warning-700 rounded-full font-medium">Label</span>}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={`text-xs px-1.5 py-0.5 rounded ${raceTypeColor[race.race_type]}`}>
                       {raceTypeLabel[race.race_type]}
                     </span>
-                    <span className="text-xs text-gray-400">{race.distance_km} km</span>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-neutral-400">{race.distance_km} km</span>
+                    <span className="text-xs text-neutral-400">
                       {format(new Date(race.date), 'dd/MM/yyyy', { locale: fr })}
                     </span>
                   </div>
                   {race.comment && (
-                    <ExpandableText text={race.comment} maxLines={2} className="text-xs text-gray-500 italic mt-1" />
+                    <ExpandableText text={race.comment} maxLines={2} className="text-xs text-neutral-500 italic mt-1" />
                   )}
                 </div>
                 <span className="text-sm font-bold text-primary tabular-nums">{formatDuration(race.time_duration)}</span>
                 <NordikButton raceId={race.id} />
                 <button
                   onClick={() => startEditRace(race)}
-                  className="p-1.5 text-gray-300 hover:text-accent transition-colors"
+                  className="p-1.5 text-neutral-300 hover:text-accent transition-colors"
                 >
                   <Pencil size={16} />
                 </button>
                 <button
                   onClick={() => deleteRaceResult(race.id)}
-                  className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                  className="p-1.5 text-neutral-300 hover:text-danger-500 transition-colors"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -837,20 +837,20 @@ export default function Profile() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-900">Notifications push</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm font-medium text-neutral-900">Notifications push</p>
+              <p className="text-xs text-neutral-400">
                 {permission === 'granted' ? 'Actives' : permission === 'denied' ? 'Bloquees par le navigateur' : 'Non activees'}
               </p>
             </div>
             {permission === 'granted' ? (
               <button
                 onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className={`w-11 h-6 rounded-full relative transition-colors ${notificationsEnabled ? 'bg-primary' : 'bg-gray-300'}`}
+                className={`w-11 h-6 rounded-full relative transition-colors ${notificationsEnabled ? 'bg-primary' : 'bg-neutral-300'}`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow ${notificationsEnabled ? 'left-5.5' : 'left-0.5'}`} />
               </button>
             ) : permission === 'denied' ? (
-              <BellOff size={20} className="text-gray-400" />
+              <BellOff size={20} className="text-neutral-400" />
             ) : (
               <button
                 onClick={requestPermission}
@@ -861,8 +861,8 @@ export default function Profile() {
             )}
           </div>
 
-          <div className="border-t border-gray-100 pt-3">
-            <p className="text-sm font-medium text-gray-900 mb-3">Preferences par type</p>
+          <div className="border-t border-neutral-100 pt-3">
+            <p className="text-sm font-medium text-neutral-900 mb-3">Preferences par type</p>
             <div className="space-y-3">
               {([
                 { key: 'new_session', label: 'Nouvelle seance', hasInApp: true, hasEmail: true },
@@ -871,11 +871,11 @@ export default function Profile() {
                 { key: 'weekly_digest', label: 'Digest hebdo', hasInApp: false, hasEmail: true },
               ] as const).map(({ key, label, hasInApp, hasEmail }) => (
                 <div key={key} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">{label}</span>
+                  <span className="text-sm text-neutral-700">{label}</span>
                   <div className="flex items-center gap-3">
                     {hasInApp && (
                       <label className="flex items-center gap-1.5 cursor-pointer">
-                        <span className="text-xs text-gray-400">In-app</span>
+                        <span className="text-xs text-neutral-400">In-app</span>
                         <button
                           onClick={async () => {
                             if (!user) return;
@@ -886,7 +886,7 @@ export default function Profile() {
                             refreshUser();
                           }}
                           className={`w-9 h-5 rounded-full relative transition-colors ${
-                            (user?.notification_preferences?.[key] as { in_app?: boolean })?.in_app ? 'bg-primary' : 'bg-gray-300'
+                            (user?.notification_preferences?.[key] as { in_app?: boolean })?.in_app ? 'bg-primary' : 'bg-neutral-300'
                           }`}
                         >
                           <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform shadow ${
@@ -897,7 +897,7 @@ export default function Profile() {
                     )}
                     {hasEmail && (
                       <label className="flex items-center gap-1.5 cursor-pointer">
-                        <span className="text-xs text-gray-400">Email</span>
+                        <span className="text-xs text-neutral-400">Email</span>
                         <button
                           onClick={async () => {
                             if (!user) return;
@@ -908,7 +908,7 @@ export default function Profile() {
                             refreshUser();
                           }}
                           className={`w-9 h-5 rounded-full relative transition-colors ${
-                            (user?.notification_preferences?.[key] as { email?: boolean })?.email ? 'bg-primary' : 'bg-gray-300'
+                            (user?.notification_preferences?.[key] as { email?: boolean })?.email ? 'bg-primary' : 'bg-neutral-300'
                           }`}
                         >
                           <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform shadow ${
@@ -931,23 +931,23 @@ export default function Profile() {
         icon={<Lock size={18} className="text-primary" />}
       >
         <div className="space-y-3">
-          <p className="text-sm text-gray-500">Modifier ton mot de passe</p>
+          <p className="text-sm text-neutral-500">Modifier ton mot de passe</p>
           <input
             type="password"
             placeholder="Nouveau mot de passe"
             value={newPassword}
             onChange={e => setNewPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
           <input
             type="password"
             placeholder="Confirmer le mot de passe"
             value={confirmPassword}
             onChange={e => setConfirmPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
-          {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
-          {passwordSuccess && <p className="text-green-600 text-sm">Mot de passe modifié avec succès</p>}
+          {passwordError && <p className="text-danger-500 text-sm">{passwordError}</p>}
+          {passwordSuccess && <p className="text-success-600 text-sm">Mot de passe modifié avec succès</p>}
           <button
             onClick={handleChangePassword}
             disabled={!newPassword || !confirmPassword || passwordLoading}
@@ -980,7 +980,7 @@ export default function Profile() {
               a.click();
               URL.revokeObjectURL(url);
             }}
-            className="flex items-center gap-2 w-full text-left px-3 py-2.5 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex items-center gap-2 w-full text-left px-3 py-2.5 text-sm bg-neutral-50 hover:bg-neutral-100 rounded-lg transition-colors"
           >
             <Download size={16} className="text-primary" />
             <span>Exporter mes données (JSON)</span>
@@ -992,7 +992,7 @@ export default function Profile() {
               setExitComment('');
               setShowDeleteModal(true);
             }}
-            className="flex items-center gap-2 w-full text-left px-3 py-2.5 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+            className="flex items-center gap-2 w-full text-left px-3 py-2.5 text-sm text-danger-600 bg-danger-50 hover:bg-danger-100 rounded-lg transition-colors"
           >
             <UserX size={16} />
             <span>Supprimer mon compte et mes donnees</span>
@@ -1004,7 +1004,7 @@ export default function Profile() {
             <FileText size={16} className="text-primary" />
             <span>Lire la politique de confidentialité</span>
           </Link>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-neutral-400">
             Conforme RGPD. Tes données sont stockées de manière sécurisée.
           </p>
         </div>
@@ -1018,24 +1018,24 @@ export default function Profile() {
           <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
             <div className="p-5 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle size={20} className="text-red-600" />
+                <div className="w-10 h-10 bg-danger-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle size={20} className="text-danger-600" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">Supprimer mon compte</h3>
-                  <p className="text-xs text-gray-500">Action irreversible</p>
+                  <h3 className="font-bold text-neutral-900">Supprimer mon compte</h3>
+                  <p className="text-xs text-neutral-500">Action irreversible</p>
                 </div>
               </div>
 
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-sm text-red-800">
+              <div className="bg-danger-50 border border-danger-100 rounded-lg p-3">
+                <p className="text-sm text-danger-700">
                   Cette action supprimera definitivement votre compte, vos resultats de courses, vos validations de seances et toutes vos donnees personnelles. Aucune recuperation ne sera possible.
                 </p>
               </div>
 
               {isSoleCoach && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <p className="text-sm text-amber-800 font-medium">
+                <div className="bg-warning-50 border border-warning-100 rounded-lg p-3">
+                  <p className="text-sm text-warning-700 font-medium">
                     Vous etes le seul coach du club. Veuillez d'abord nommer un autre coach avant de supprimer votre compte.
                   </p>
                 </div>
@@ -1044,7 +1044,7 @@ export default function Profile() {
               {!isSoleCoach && (
                 <>
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">
+                    <p className="text-sm font-medium text-neutral-700 mb-2">
                       Pourquoi souhaitez-vous partir ?
                     </p>
                     <div className="space-y-2">
@@ -1056,16 +1056,16 @@ export default function Profile() {
                             value={r.value}
                             checked={exitReason === r.value}
                             onChange={e => setExitReason(e.target.value)}
-                            className="w-4 h-4 text-red-600 focus:ring-red-500"
+                            className="w-4 h-4 text-danger-600 focus:ring-danger-500"
                           />
-                          <span className="text-sm text-gray-700">{r.label}</span>
+                          <span className="text-sm text-neutral-700">{r.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-sm text-gray-500 block mb-1">
+                    <label className="text-sm text-neutral-500 block mb-1">
                       Commentaire (optionnel)
                     </label>
                     <textarea
@@ -1073,20 +1073,20 @@ export default function Profile() {
                       onChange={e => setExitComment(e.target.value)}
                       placeholder="Un retour pour nous aider a nous ameliorer..."
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-200"
+                      className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-danger-100"
                     />
                   </div>
 
                   <div>
-                    <label className="text-sm text-gray-700 block mb-1">
-                      Tapez <span className="font-bold text-red-600">SUPPRIMER</span> pour confirmer
+                    <label className="text-sm text-neutral-700 block mb-1">
+                      Tapez <span className="font-bold text-danger-600">SUPPRIMER</span> pour confirmer
                     </label>
                     <input
                       type="text"
                       value={deleteConfirmText}
                       onChange={e => setDeleteConfirmText(e.target.value)}
                       placeholder="SUPPRIMER"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-200"
+                      className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-danger-100"
                       autoComplete="off"
                     />
                   </div>
@@ -1096,7 +1096,7 @@ export default function Profile() {
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 font-medium hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-2.5 border border-neutral-200 rounded-lg text-sm text-neutral-600 font-medium hover:bg-neutral-50 transition-colors"
                 >
                   Annuler
                 </button>
@@ -1104,7 +1104,7 @@ export default function Profile() {
                   <button
                     onClick={handleDeleteAccount}
                     disabled={deleteConfirmText !== 'SUPPRIMER' || !exitReason || deleteLoading}
-                    className="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 bg-danger-600 text-white rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-danger-700 transition-colors flex items-center justify-center gap-2"
                   >
                     {deleteLoading && <Loader2 size={14} className="animate-spin" />}
                     Supprimer

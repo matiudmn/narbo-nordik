@@ -126,7 +126,7 @@ export default function QuickAddSession() {
 
   if (user?.role !== 'coach') {
     return (
-      <div className="py-8 text-center text-gray-500">
+      <div className="py-8 text-center text-neutral-500">
         Cette page est réservée au coach.
       </div>
     );
@@ -136,11 +136,11 @@ export default function QuickAddSession() {
     <div className="pt-4 pb-28 max-w-lg mx-auto px-4">
       {/* HEADER */}
       <div className="mb-5">
-        <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">
+        <div className="text-xs uppercase tracking-wider text-neutral-500 font-semibold mb-1">
           Saisie rapide
         </div>
-        <h1 className="text-xl font-bold text-gray-900">Nouvelle séance</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-xl font-bold text-neutral-900">Nouvelle séance</h1>
+        <p className="text-sm text-neutral-500 mt-1">
           Pour un ajout ponctuel. Pour un plan complet, utilise{' '}
           <button onClick={() => navigate('/coach/import')} className="text-primary hover:underline">
             l'import Excel
@@ -151,20 +151,20 @@ export default function QuickAddSession() {
       <div className="space-y-5">
         {/* DATE + HEURE */}
         <div>
-          <label className="block text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
+          <label className="block text-xs uppercase tracking-wider text-neutral-500 font-semibold mb-2">
             Date et heure
           </label>
           <input
             type="datetime-local"
             value={datetime}
             onChange={e => setDatetime(e.target.value)}
-            className="w-full px-3 py-3 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-3 py-3 border border-neutral-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
         {/* CIBLE */}
         <div>
-          <label className="block text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
+          <label className="block text-xs uppercase tracking-wider text-neutral-500 font-semibold mb-2">
             Pour quel(s) groupe(s)
           </label>
           <div className="flex flex-wrap gap-2">
@@ -174,7 +174,7 @@ export default function QuickAddSession() {
               className={`px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
                 targetAll
                   ? 'bg-primary text-white border-primary'
-                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                  : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50'
               }`}
             >
               Tous
@@ -189,7 +189,7 @@ export default function QuickAddSession() {
                   className={`px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors ${
                     active
                       ? 'bg-primary text-white border-primary'
-                      : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                      : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50'
                   }`}
                 >
                   {g.name}
@@ -198,7 +198,7 @@ export default function QuickAddSession() {
             })}
           </div>
           <div className="flex items-center justify-between mt-2">
-            <p className="text-xs text-gray-400">{summary}</p>
+            <p className="text-xs text-neutral-400">{summary}</p>
             <button
               type="button"
               onClick={() => navigate('/coach/settings?tab=preparations')}
@@ -211,7 +211,7 @@ export default function QuickAddSession() {
 
         {/* TYPE */}
         <div>
-          <label className="block text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
+          <label className="block text-xs uppercase tracking-wider text-neutral-500 font-semibold mb-2">
             Type
           </label>
           <div className="flex flex-wrap gap-2">
@@ -223,7 +223,7 @@ export default function QuickAddSession() {
                 className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
                   sessionType === t.value
                     ? 'bg-accent/15 text-primary border-accent'
-                    : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'
                 }`}
               >
                 {t.label}
@@ -234,38 +234,38 @@ export default function QuickAddSession() {
 
         {/* TITRE */}
         <div>
-          <label className="block text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
-            Titre <span className="text-gray-400 normal-case">(optionnel)</span>
+          <label className="block text-xs uppercase tracking-wider text-neutral-500 font-semibold mb-2">
+            Titre <span className="text-neutral-400 normal-case">(optionnel)</span>
           </label>
           <input
             type="text"
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="ex : VMA courte, Sortie Clape…"
-            className="w-full px-3 py-3 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-3 py-3 border border-neutral-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
         {/* LIEU */}
         <div>
-          <label className="block text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
-            Lieu <span className="text-gray-400 normal-case">(optionnel)</span>
+          <label className="block text-xs uppercase tracking-wider text-neutral-500 font-semibold mb-2">
+            Lieu <span className="text-neutral-400 normal-case">(optionnel)</span>
           </label>
           <div className="relative">
-            <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               type="text"
               value={location}
               onChange={e => setLocation(e.target.value)}
               placeholder="ex : Stade, Moujan, Chapelle Auzils…"
-              className="w-full pl-9 pr-3 py-3 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full pl-9 pr-3 py-3 border border-neutral-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>
 
         {/* CONTENU */}
         <div>
-          <label className="block text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
+          <label className="block text-xs uppercase tracking-wider text-neutral-500 font-semibold mb-2">
             Contenu de la séance
           </label>
           <textarea
@@ -273,20 +273,20 @@ export default function QuickAddSession() {
             onChange={e => setContent(e.target.value)}
             rows={5}
             placeholder="ex : 20' EF | 8 x 200m | 10' retour au calme"
-            className="w-full px-3 py-3 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+            className="w-full px-3 py-3 border border-neutral-200 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
           />
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-neutral-400 mt-1">
             Sépare les phases avec « | » — elles s'afficheront en étapes côté athlète.
           </p>
         </div>
       </div>
 
       {/* CTA STICKY */}
-      <div className="fixed bottom-0 left-0 right-0 lg:left-60 bg-white border-t border-gray-200 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-2 z-40">
+      <div className="fixed bottom-0 left-0 right-0 lg:left-60 bg-white border-t border-neutral-200 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-2 z-40">
         <button
           type="button"
           onClick={() => navigate('/coach')}
-          className="px-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-600"
+          className="px-4 py-3 border border-neutral-200 rounded-lg text-sm text-neutral-600"
           disabled={saving}
         >
           Annuler
