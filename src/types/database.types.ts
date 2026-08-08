@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       club_settings: {
@@ -666,6 +641,60 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_own_profile: {
+        Args: never
+        Returns: {
+          birth_date: string | null
+          created_at: string | null
+          email: string
+          firstname: string
+          group_id: string | null
+          id: string
+          is_public: boolean | null
+          is_super_admin: boolean
+          lastname: string
+          license_number: string | null
+          notification_preferences: Json | null
+          phone: string | null
+          photo_url: string | null
+          role: string
+          vma: number | null
+          vma_history: Json | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "users"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_users_for_coach: {
+        Args: never
+        Returns: {
+          birth_date: string | null
+          created_at: string | null
+          email: string
+          firstname: string
+          group_id: string | null
+          id: string
+          is_public: boolean | null
+          is_super_admin: boolean
+          lastname: string
+          license_number: string | null
+          notification_preferences: Json | null
+          phone: string | null
+          photo_url: string | null
+          role: string
+          vma: number | null
+          vma_history: Json | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "users"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       increment_template_usage: {
         Args: { template_id: string }
         Returns: undefined
@@ -798,9 +827,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
