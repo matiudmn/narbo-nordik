@@ -25,9 +25,19 @@
 --
 -- Idempotent : ADD COLUMN IF NOT EXISTS ne fait rien au 2e passage : l'UPDATE
 -- ne cible que les lignes encore NULL (donc no-op si déjà seedée, un rejeu ne
--- régénère PAS le code d'un club déjà provisionné) : SET NOT NULL est sans
--- effet si déjà posé.
+-- régénère PAS le code d'un club déjà provisionné) : SET NOT NULL et SET
+-- DEFAULT sont sans effet (idempotents) si déjà posés.
+--
+-- DEFAULT sur la colonne (même générateur que l'UPDATE de seed ci-dessous) :
+-- protège l'INSERT de repli de `updateClubSettings` (DataContext), qui
+-- n'envoie pas `invite_code` quand aucune ligne `club_settings` n'existe
+-- encore côté client (payload sans cette colonne, la contrainte NOT NULL
+-- lèverait sinon une erreur). Un rejeu de cette migration ne régénère pas non
+-- plus le DEFAULT existant : `SET DEFAULT` réécrit la même expression.
 ALTER TABLE public.club_settings ADD COLUMN IF NOT EXISTS invite_code text;
+
+ALTER TABLE public.club_settings ALTER COLUMN invite_code
+  SET DEFAULT upper(encode(gen_random_bytes(4), 'hex'));
 
 UPDATE public.club_settings
 SET invite_code = upper(encode(gen_random_bytes(4), 'hex'))
@@ -111,8 +121,8 @@ $$;
 --
 -- Anonyme exclu : `auth.uid()` doit être non-nul pour que l'INSERT réussisse
 -- (la colonne `id` de `users` est NOT NULL et sans DEFAULT). Un appel `anon`
--- lèverait donc une erreur NOT NULL après avoir consommé un essai de code —
--- inutilement bruyant. Signup (`supabase.auth.signUp`) crée déjà une session
+-- lèverait donc une erreur NOT NULL après avoir consommé un essai de code
+-- (inutilement bruyant). Signup (`supabase.auth.signUp`) crée déjà une session
 -- authentifiée avant cet appel (confirmation email désactivée sur ce projet,
 -- comportement inchangé par ce chantier), donc l'appelant réel est toujours
 -- `authenticated` en usage normal ; le REVOKE ci-dessous ferme le chemin direct.

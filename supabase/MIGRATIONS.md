@@ -99,10 +99,10 @@ désormais l'historique réel et reconstruit la base complète.
 > **Entrée 35 : NON appliquée**, rédigée et validée en PGlite uniquement (voir
 > tableau ci-dessus). **Séquencement obligatoire** : appliquer AVANT de
 > déployer le front correspondant, `AuthContext.signup` appelant désormais
-> `rpc('register_profile')` au lieu d'un insert direct — sans la migration, le
+> `rpc('register_profile')` au lieu d'un insert direct : sans la migration, le
 > RPC n'existe pas et **toute inscription self-service échoue** (42883). Une
 > fois appliquée : relancer `npm run gen:types` (le type manuel `ClubSettings`
-> a `invite_code`, mais `src/types/database.types.ts` ne le sait pas encore —
+> a `invite_code`, mais `src/types/database.types.ts` ne le sait pas encore ;
 > `toClubSettings`/`asClubSettingsPayload`/le RPC `register_profile` côté
 > `AuthContext` portent des casts locaux documentés en attendant).
 

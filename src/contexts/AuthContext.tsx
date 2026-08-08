@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import type { User } from '../types';
 import { supabase } from '../lib/supabase';
+import { captureError } from '../lib/monitoring';
 import { toUser } from './data/rows';
 
 interface AuthContextType {
@@ -31,8 +32,24 @@ function registerProfile(args: RegisterProfileArgs) {
     supabase.rpc as unknown as (
       fn: 'register_profile',
       args: RegisterProfileArgs
-    ) => Promise<{ error: { message: string } | null }>
+    ) => Promise<{ error: { message: string; code?: string } | null }>
   )('register_profile', args);
+}
+
+// Mappe l'erreur brute du RPC register_profile vers un message FR affichable.
+// - 42501 (insufficient_privilege) : levee volontairement par le RPC pour un
+//   code d'invitation invalide (cf. 20260731130000_invite_code.sql), message
+//   deja propre en FR, on le garde tel quel.
+// - 23505 (unique_violation) : la ligne `users` existe deja (ex. reprise
+//   d'une inscription partielle : signUp avait deja reussi une 1re fois),
+//   message dedie pour rediriger vers la connexion.
+// - reste : erreur Postgres brute non destinee a l'ecran, detail envoye a
+//   captureError, message generique affiche.
+function mapRegisterProfileError(error: { message: string; code?: string }): string {
+  if (error.code === '42501') return error.message;
+  if (error.code === '23505') return 'Ton compte existe déjà, connecte-toi.';
+  captureError('AuthContext.signup register_profile error', error);
+  return 'Une erreur est survenue lors de la création du compte, réessaie plus tard.';
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -98,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // policy INSERT de `users` n'a plus de branche self-service depuis
     // 20260731130000_invite_code.sql).
     const { error: rpcError } = await registerProfile({ invite_code: inviteCode, firstname, lastname, email });
-    if (rpcError) return rpcError.message;
+    if (rpcError) return mapRegisterProfileError(rpcError);
 
     const { data: coaches } = await supabase.from('users').select('id').eq('role', 'coach');
     if (coaches && coaches.length > 0) {
