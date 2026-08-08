@@ -25,9 +25,6 @@ export default function Home() {
   const allureZones = getAllureZones(clubSettings?.allure_zones);
   const [weekOffset, setWeekOffset] = useState(0);
 
-  // VMA record celebration state
-  const [vmaCelebration, setVmaCelebration] = useState<{ previous: number; current: number } | null>(null);
-
   // Quick-validate state
   const [surveySheet, setSurveySheet] = useState<{
     sessionId: string;
@@ -56,34 +53,56 @@ export default function Home() {
 
   const isCoach = user?.role === 'coach';
 
-  // Détecte un record VMA non encore célébré (athlète uniquement)
-  useEffect(() => {
-    if (!user || isCoach) return;
+  // Record VMA le plus récent (athlète uniquement), dérivé pendant le rendu :
+  // pas d'effect, pas de setState différé.
+  const latestVmaRecord = useMemo(() => {
+    if (!user || isCoach) return null;
     const history = user.vma_history ?? [];
-    if (history.length < 2) return;
+    if (history.length < 2) return null;
     const sorted = [...history].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
     const latest = sorted[sorted.length - 1];
     const previousValues = sorted.slice(0, -1).map((e) => e.vma);
     const previousMax = Math.max(...previousValues);
-    if (latest.vma <= previousMax) return;
-
-    const seenKey = `vma_record_seen:${user.id}:${latest.date}`;
-    try {
-      if (window.localStorage.getItem(seenKey)) return;
-      window.localStorage.setItem(seenKey, '1');
-    } catch {
-      return;
-    }
-    // La marque "vu" en localStorage reste synchrone dans l'effect (synchronisation
-    // externe légitime). Seul le déclenchement de la modale est différé d'un tick,
-    // pour ne pas appeler setState directement dans le corps synchrone de l'effect.
-    const t = window.setTimeout(() => {
-      setVmaCelebration({ previous: previousMax, current: latest.vma });
-    }, 0);
-    return () => window.clearTimeout(t);
+    if (latest.vma <= previousMax) return null;
+    return {
+      key: `vma_record_seen:${user.id}:${latest.date}`,
+      previous: previousMax,
+      current: latest.vma,
+    };
   }, [user, isCoach]);
+
+  // Dernière clé de record fermée par l'athlète dans cette session (avant même
+  // que l'écriture localStorage ne soit re-lue). Permet de fermer la modale
+  // sans attendre un nouveau rendu déclenché ailleurs.
+  const [dismissedVmaKey, setDismissedVmaKey] = useState<string | null>(null);
+
+  // Célébration à afficher : uniquement si le dernier record n'a encore jamais
+  // été vu (ni marqué en localStorage lors d'une session précédente, ni fermé
+  // dans cette session). La clé "vu" n'est écrite qu'à la fermeture réelle de
+  // la modale (handleCloseVmaCelebration), donc un record n'est jamais perdu
+  // s'il n'a pas été montré.
+  const vmaCelebration = useMemo(() => {
+    if (!latestVmaRecord || latestVmaRecord.key === dismissedVmaKey) return null;
+    try {
+      if (window.localStorage.getItem(latestVmaRecord.key)) return null;
+    } catch {
+      return null;
+    }
+    return latestVmaRecord;
+  }, [latestVmaRecord, dismissedVmaKey]);
+
+  const handleCloseVmaCelebration = () => {
+    if (!vmaCelebration) return;
+    try {
+      window.localStorage.setItem(vmaCelebration.key, '1');
+    } catch {
+      // stockage indisponible : la modale ne réapparaîtra pas dans cette session
+      // grâce à dismissedVmaKey, mais pourra revenir à la prochaine visite.
+    }
+    setDismissedVmaKey(vmaCelebration.key);
+  };
 
   const userPrepIds = useMemo(() => {
     if (!user) return [];
@@ -794,7 +813,7 @@ export default function Home() {
         open={vmaCelebration !== null}
         previousVma={vmaCelebration?.previous ?? 0}
         newVma={vmaCelebration?.current ?? 0}
-        onClose={() => setVmaCelebration(null)}
+        onClose={handleCloseVmaCelebration}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Layers, Grid3x3, Check, AlertTriangle, Info, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -82,7 +82,6 @@ export default function Import() {
   const [paste, setPaste] = useState<string>(SAMPLES.canonical);
   const [defaultYear, setDefaultYear] = useState<number>(new Date().getFullYear());
   const [defaultGroupId, setDefaultGroupId] = useState<string>('');
-  const [parseTimeMs, setParseTimeMs] = useState<number>(0);
   const [importing, setImporting] = useState(false);
   // Que faire des séances qui semblent déjà exister : les ignorer (défaut) ou les créer quand même.
   const [onDuplicate, setOnDuplicate] = useState<'skip' | 'create'>('skip');
@@ -105,19 +104,6 @@ export default function Import() {
     () => parseImport(paste, { defaultYear, groups, forceFormat: format }),
     [paste, defaultYear, groups, format]
   );
-
-  // Mesure du temps de parsing (affichage debug uniquement) : performance.now()
-  // est un appel impur interdit pendant le rendu, donc mesuré à part dans un
-  // effect. Le setState est différé d'un tick pour rester hors du corps
-  // synchrone de l'effect (le résultat affiché, `result`, n'est pas concerné :
-  // il reste dérivé de façon synchrone par le useMemo ci-dessus).
-  useEffect(() => {
-    const start = performance.now();
-    parseImport(paste, { defaultYear, groups, forceFormat: format });
-    const elapsed = Math.round((performance.now() - start) * 10) / 10;
-    const t = window.setTimeout(() => setParseTimeMs(elapsed), 0);
-    return () => window.clearTimeout(t);
-  }, [paste, defaultYear, groups, format]);
 
   // Compteur de cellules par macro-type
   const macroDistribution = useMemo(() => {
@@ -298,9 +284,6 @@ export default function Import() {
             )}
           </div>
         )}
-        <div className="ml-auto text-xs text-gray-500">
-          Parsing : <span className="font-mono font-semibold">{parseTimeMs}</span> ms
-        </div>
       </div>
 
       {/* DETECTION BAR */}
