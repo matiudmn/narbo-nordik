@@ -54,7 +54,7 @@ interface DataContextType {
   addUserToPreparation: (userId: string, preparationId: string) => Promise<{ error: string | null }>;
   removeUserFromPreparation: (userId: string, preparationId: string) => Promise<{ error: string | null }>;
   clubSettings: ClubSettings | null;
-  updateClubSettings: (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>) => Promise<{ error: string | null }>;
+  updateClubSettings: (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>, inviteCode?: string) => Promise<{ error: string | null }>;
   setFeaturedValidation: (validationId: string | null) => Promise<{ error: string | null }>;
   refreshAll: () => Promise<void>;
 }

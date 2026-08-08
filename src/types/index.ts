@@ -245,6 +245,7 @@ export interface ClubSettings {
   allure_zones: Record<string, AllureZoneConfig>;
   featured_validation_id: string | null;
   featured_at: string | null;
+  invite_code: string;
   updated_at: string;
   updated_by: string | null;
 }
