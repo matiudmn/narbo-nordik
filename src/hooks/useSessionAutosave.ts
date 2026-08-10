@@ -79,21 +79,26 @@ export function useSessionAutosave<T>(draft: T, options: AutosaveOptions): Autos
   const dismissedRef = useRef(false);
   const timeoutRef = useRef<number | null>(null);
 
-  // Au mount : check si un brouillon existe
-  useEffect(() => {
-    if (!skey) return;
-    try {
-      const raw = window.localStorage.getItem(skey);
-      if (!raw) return;
-      const parsed = deserialize(raw);
-      if (parsed && !isEmptyDraft(parsed)) {
-        setPendingDraft(parsed);
+  // Check si un brouillon existe déjà pour cette clé, une seule fois par clé.
+  // Dérivé pendant le rendu (comparaison à la clé précédente) plutôt que dans un
+  // effect : c'est une simple lecture de localStorage (pure, sans écriture ni
+  // autre effet de bord), donc sûre à exécuter pendant le rendu — y compris en
+  // double-invocation StrictMode, où relire deux fois la même clé est idempotent.
+  const [checkedKey, setCheckedKey] = useState<string | null | undefined>(undefined);
+  if (skey !== checkedKey) {
+    setCheckedKey(skey);
+    if (skey) {
+      try {
+        const raw = window.localStorage.getItem(skey);
+        const parsed = raw ? deserialize(raw) : null;
+        if (parsed && !isEmptyDraft(parsed)) {
+          setPendingDraft(parsed);
+        }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [skey]);
+  }
 
   // Auto-save debounced quand draft change
   useEffect(() => {

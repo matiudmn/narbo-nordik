@@ -5,7 +5,6 @@ import { DataProvider } from './contexts/DataContext';
 import Layout from './components/Layout';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import InstallPrompt from './components/InstallPrompt';
-import OfflineIndicator from './components/OfflineIndicator';
 import ConsentBanner from './components/ConsentBanner';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { InAppNotificationProvider } from './contexts/InAppNotificationContext';
@@ -87,7 +86,6 @@ function AuthenticatedApp() {
         <DataProvider>
           <InAppNotificationProvider>
             <NotificationProvider>
-              <OfflineIndicator />
               <AppRoutes />
               <InstallPrompt />
               <ConsentBanner />

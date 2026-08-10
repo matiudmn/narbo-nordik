@@ -25,9 +25,6 @@ export default function Home() {
   const allureZones = getAllureZones(clubSettings?.allure_zones);
   const [weekOffset, setWeekOffset] = useState(0);
 
-  // VMA record celebration state
-  const [vmaCelebration, setVmaCelebration] = useState<{ previous: number; current: number } | null>(null);
-
   // Quick-validate state
   const [surveySheet, setSurveySheet] = useState<{
     sessionId: string;
@@ -56,28 +53,56 @@ export default function Home() {
 
   const isCoach = user?.role === 'coach';
 
-  // Détecte un record VMA non encore célébré (athlète uniquement)
-  useEffect(() => {
-    if (!user || isCoach) return;
+  // Record VMA le plus récent (athlète uniquement), dérivé pendant le rendu :
+  // pas d'effect, pas de setState différé.
+  const latestVmaRecord = useMemo(() => {
+    if (!user || isCoach) return null;
     const history = user.vma_history ?? [];
-    if (history.length < 2) return;
+    if (history.length < 2) return null;
     const sorted = [...history].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
     const latest = sorted[sorted.length - 1];
     const previousValues = sorted.slice(0, -1).map((e) => e.vma);
     const previousMax = Math.max(...previousValues);
-    if (latest.vma <= previousMax) return;
-
-    const seenKey = `vma_record_seen:${user.id}:${latest.date}`;
-    try {
-      if (window.localStorage.getItem(seenKey)) return;
-      window.localStorage.setItem(seenKey, '1');
-    } catch {
-      return;
-    }
-    setVmaCelebration({ previous: previousMax, current: latest.vma });
+    if (latest.vma <= previousMax) return null;
+    return {
+      key: `vma_record_seen:${user.id}:${latest.date}`,
+      previous: previousMax,
+      current: latest.vma,
+    };
   }, [user, isCoach]);
+
+  // Dernière clé de record fermée par l'athlète dans cette session (avant même
+  // que l'écriture localStorage ne soit re-lue). Permet de fermer la modale
+  // sans attendre un nouveau rendu déclenché ailleurs.
+  const [dismissedVmaKey, setDismissedVmaKey] = useState<string | null>(null);
+
+  // Célébration à afficher : uniquement si le dernier record n'a encore jamais
+  // été vu (ni marqué en localStorage lors d'une session précédente, ni fermé
+  // dans cette session). La clé "vu" n'est écrite qu'à la fermeture réelle de
+  // la modale (handleCloseVmaCelebration), donc un record n'est jamais perdu
+  // s'il n'a pas été montré.
+  const vmaCelebration = useMemo(() => {
+    if (!latestVmaRecord || latestVmaRecord.key === dismissedVmaKey) return null;
+    try {
+      if (window.localStorage.getItem(latestVmaRecord.key)) return null;
+    } catch {
+      return null;
+    }
+    return latestVmaRecord;
+  }, [latestVmaRecord, dismissedVmaKey]);
+
+  const handleCloseVmaCelebration = () => {
+    if (!vmaCelebration) return;
+    try {
+      window.localStorage.setItem(vmaCelebration.key, '1');
+    } catch {
+      // stockage indisponible : la modale ne réapparaîtra pas dans cette session
+      // grâce à dismissedVmaKey, mais pourra revenir à la prochaine visite.
+    }
+    setDismissedVmaKey(vmaCelebration.key);
+  };
 
   const userPrepIds = useMemo(() => {
     if (!user) return [];
@@ -244,9 +269,9 @@ export default function Home() {
   };
 
   const getGroupColor = (groupId: string | null) => {
-    if (!groupId) return 'bg-gray-400';
+    if (!groupId) return 'bg-neutral-400';
     const colors: Record<string, string> = { g1: 'bg-blue-500', g2: 'bg-green-600', g3: 'bg-purple-500' };
-    return colors[groupId] || 'bg-gray-400';
+    return colors[groupId] || 'bg-neutral-400';
   };
 
   const [showPrepRequest, setShowPrepRequest] = useState(false);
@@ -260,7 +285,7 @@ export default function Home() {
   if (!user) return null;
   if (loading && sessions.length === 0) return <PageSkeleton />;
 
-  const rateColor = (rate: number) => rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-red-400';
+  const rateColor = (rate: number) => rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-danger-500';
 
   const prepMessage = prepRaceName && prepRaceDate && prepRaceDistance && prepFitness
     ? `Hello coach !\nJe m'inscris sur ${prepRaceName} qui aura lieu le ${format(new Date(prepRaceDate), 'd MMMM yyyy', { locale: fr })} sur ${prepRaceDistance}.\nMon état de forme est ${prepFitness.toLowerCase()}.\n${prepComments ? prepComments + '\n' : ''}Pourrais-tu me faire un plan spécifique ?\nSi cela est opportun bien sûr.\nMerci pour ton retour,\nBises,\n${user.firstname}`
@@ -346,7 +371,7 @@ export default function Home() {
           <div className="bg-primary/5 rounded-lg p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500">VMA</p>
+                <p className="text-xs text-neutral-500">VMA</p>
                 <p className="text-2xl font-bold text-primary">
                   {user.vma} <span className="text-sm font-normal">km/h</span>
                 </p>
@@ -357,11 +382,11 @@ export default function Home() {
                 const evolution = ((last.vma - first.vma) / first.vma) * 100;
                 return (
                   <div className="text-right">
-                    <div className={`flex items-center gap-1 text-sm font-bold ${evolution >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                    <div className={`flex items-center gap-1 text-sm font-bold ${evolution >= 0 ? 'text-success-600' : 'text-danger-500'}`}>
                       <TrendingUp size={16} />
                       {evolution >= 0 ? '+' : ''}{evolution.toFixed(1)}%
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-0.5">
+                    <p className="text-[10px] text-neutral-400 mt-0.5">
                       depuis {format(new Date(first.date), 'MMM yyyy', { locale: fr })}
                     </p>
                   </div>
@@ -371,7 +396,7 @@ export default function Home() {
           </div>
 
           {/* Allures Specifiques */}
-          <h2 className="flex items-center gap-2 font-bold text-gray-900 mt-4 mb-3">
+          <h2 className="flex items-center gap-2 font-bold text-neutral-900 mt-4 mb-3">
             <Gauge size={18} className="text-accent" />
             Mes Allures
           </h2>
@@ -382,22 +407,22 @@ export default function Home() {
                 const pct = zone.pctByLevel[levelIdx];
                 const { pace } = calculateRacePace(user.vma!, pct);
                 return (
-                  <div key={key} className="rounded-lg p-2 border border-gray-100" style={{ backgroundColor: `${zone.color}08` }}>
+                  <div key={key} className="rounded-lg p-2 border border-neutral-100" style={{ backgroundColor: `${zone.color}08` }}>
                     <div className="flex items-center gap-1 mb-0.5">
                       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
-                      <span className="text-[10px] font-bold text-gray-600">{zone.label}</span>
+                      <span className="text-[10px] font-bold text-neutral-600">{zone.label}</span>
                     </div>
-                    <p className="text-sm font-bold text-gray-900">{pace}</p>
-                    <p className="text-[9px] text-gray-400 leading-tight">{pct}% — {zone.description}</p>
+                    <p className="text-sm font-bold text-neutral-900">{pace}</p>
+                    <p className="text-[9px] text-neutral-400 leading-tight">{pct}% — {zone.description}</p>
                   </div>
                 );
               });
             })()}
           </div>
-          <p className="text-[10px] text-gray-400 mt-2">
+          <p className="text-[10px] text-neutral-400 mt-2">
             Niveau : {VMA_LEVELS[getVmaLevelIndex(user.vma!)].description}
           </p>
-          <div className="flex items-center gap-1 mt-3 text-xs text-gray-400">
+          <div className="flex items-center gap-1 mt-3 text-xs text-neutral-400">
             <Info size={12} />
             <span>{isCoach ? 'Modifiable depuis la fiche athlete' : 'Contacte ton coach pour modifier ta VMA'}</span>
           </div>
@@ -406,7 +431,7 @@ export default function Home() {
 
       {/* Assiduite */}
       <Card>
-        <h2 className="flex items-center gap-2 font-bold text-gray-900 mb-3">
+        <h2 className="flex items-center gap-2 font-bold text-neutral-900 mb-3">
           <Target size={18} className="text-primary" />
           Assiduité
           <StreakFlame weeks={weeklyStreak} size="sm" className="ml-auto" />
@@ -418,14 +443,14 @@ export default function Home() {
             { label: 'Saison', value: attendanceStats.season },
           ] as const).map(stat => (
             <div key={stat.label} className="text-center">
-              <p className="text-2xl font-bold text-gray-900">{stat.value}%</p>
-              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1">
+              <p className="text-2xl font-bold text-neutral-900">{stat.value}%</p>
+              <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden mt-1">
                 <div
                   className={`h-full rounded-full ${rateColor(stat.value)}`}
                   style={{ width: `${stat.value}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">{stat.label}</p>
+              <p className="text-xs text-neutral-500 mt-1">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -454,41 +479,41 @@ export default function Home() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 pb-3 flex-shrink-0">
-              <h2 id="prep-dialog-title" className="font-bold text-gray-900">Demande de préparation</h2>
-              <button onClick={resetPrepForm} className="flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 rounded-lg transition-colors" aria-label="Fermer">
+              <h2 id="prep-dialog-title" className="font-bold text-neutral-900">Demande de préparation</h2>
+              <button onClick={resetPrepForm} className="flex items-center justify-center w-8 h-8 text-neutral-400 hover:text-neutral-600 rounded-lg transition-colors" aria-label="Fermer">
                 <X size={20} />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 space-y-3">
               <div>
-                <label className="text-xs text-gray-500">Nom de la course *</label>
+                <label className="text-xs text-neutral-500">Nom de la course *</label>
                 <input type="text" value={prepRaceName} onChange={e => setPrepRaceName(e.target.value)}
                   placeholder="Ex: Trail des Music'Halle"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Date de la course *</label>
+                <label className="text-xs text-neutral-500">Date de la course *</label>
                 <input type="date" value={prepRaceDate} onChange={e => setPrepRaceDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Distance *</label>
+                <label className="text-xs text-neutral-500">Distance *</label>
                 <input type="text" value={prepRaceDistance} onChange={e => setPrepRaceDistance(e.target.value)}
                   placeholder="Ex: 10 km, Semi-marathon, 21 km..."
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                  className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
               <div>
-                <label className="text-xs text-gray-500">État de forme actuel *</label>
+                <label className="text-xs text-neutral-500">État de forme actuel *</label>
                 <div className="flex gap-2 mt-1">
                   {(['Excellent', 'Bon', 'Mauvais'] as const).map(val => (
                     <button key={val} type="button" onClick={() => setPrepFitness(prepFitness === val ? '' : val)}
                       className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
                         prepFitness === val
-                          ? val === 'Excellent' ? 'bg-green-100 text-green-700 border-green-300'
-                            : val === 'Bon' ? 'bg-blue-100 text-blue-700 border-blue-300'
-                            : 'bg-red-100 text-red-700 border-red-300'
-                          : 'bg-white border-gray-200 text-gray-500'
+                          ? val === 'Excellent' ? 'bg-success-100 text-success-700 border-success-500'
+                            : val === 'Bon' ? 'bg-info-100 text-info-700 border-info-500'
+                            : 'bg-danger-100 text-danger-700 border-danger-500'
+                          : 'bg-white border-neutral-200 text-neutral-500'
                       }`}>
                       {val}
                     </button>
@@ -496,23 +521,23 @@ export default function Home() {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-gray-500">Commentaires (facultatif)</label>
+                <label className="text-xs text-neutral-500">Commentaires (facultatif)</label>
                 <textarea value={prepComments} onChange={e => setPrepComments(e.target.value)} rows={2}
                   placeholder="Informations supplémentaires…"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+                  className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
               </div>
 
               {prepMessage && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs text-gray-500 mb-2 font-medium">Aperçu du message :</p>
-                  <p className="text-sm text-gray-700 whitespace-pre-line">{prepMessage}</p>
+                <div className="bg-neutral-50 rounded-lg p-3">
+                  <p className="text-xs text-neutral-500 mb-2 font-medium">Aperçu du message :</p>
+                  <p className="text-sm text-neutral-700 whitespace-pre-line">{prepMessage}</p>
                 </div>
               )}
             </div>
 
-            <div className="flex gap-2 p-5 pt-3 pb-8 flex-shrink-0 border-t border-gray-100">
+            <div className="flex gap-2 p-5 pt-3 pb-8 flex-shrink-0 border-t border-neutral-100">
               <button onClick={handleCopyPrep} disabled={!prepMessage}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 disabled:opacity-40 hover:bg-gray-50 transition-colors">
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-neutral-200 rounded-lg text-sm font-medium text-neutral-700 disabled:opacity-40 hover:bg-neutral-50 transition-colors">
                 <Copy size={14} />
                 {prepCopied ? 'Copie !' : 'Copier'}
               </button>
@@ -533,23 +558,23 @@ export default function Home() {
             <span className="flex items-center justify-center w-7 h-7 rounded-full bg-warning-100 flex-shrink-0">
               <Star size={15} className="text-warning-700" fill="currentColor" aria-hidden="true" />
             </span>
-            <h2 className="font-bold text-gray-900">Coup de coeur du coach</h2>
+            <h2 className="font-bold text-neutral-900">Coup de coeur du coach</h2>
             {isCoach && (
               <button
                 type="button"
                 onClick={() => setFeaturedValidation(null)}
-                className="ml-auto text-xs text-gray-400 hover:text-gray-700 transition-colors"
+                className="ml-auto text-xs text-neutral-400 hover:text-neutral-700 transition-colors"
               >
                 Retirer
               </button>
             )}
           </div>
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-neutral-700">
             <span className="font-semibold">{featured.athlete?.firstname ?? 'Un athlète'}</span>
-            {featured.sess?.title && <span className="text-gray-500"> — {featured.sess.title}</span>}
+            {featured.sess?.title && <span className="text-neutral-500"> — {featured.sess.title}</span>}
           </p>
           {featured.v.feedback && (
-            <p className="text-sm text-gray-600 italic mt-1">« {featured.v.feedback} »</p>
+            <p className="text-sm text-neutral-600 italic mt-1">« {featured.v.feedback} »</p>
           )}
         </div>
       )}
@@ -557,17 +582,17 @@ export default function Home() {
       {/* Seances de la semaine */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <button onClick={() => setWeekOffset(o => o - 1)} className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Semaine precedente">
+          <button onClick={() => setWeekOffset(o => o - 1)} className="flex items-center justify-center w-10 h-10 hover:bg-neutral-100 rounded-lg transition-colors" aria-label="Semaine precedente">
             <ChevronLeft size={20} />
           </button>
           <div className="text-center">
-            <h2 className="text-lg font-bold text-gray-900">Ta semaine d'entraînement</h2>
-            <p className="text-sm text-gray-500">
+            <h2 className="text-lg font-bold text-neutral-900">Ta semaine d'entraînement</h2>
+            <p className="text-sm text-neutral-500">
               {format(weekStart, 'd MMM', { locale: fr })} - {format(weekEnd, 'd MMM yyyy', { locale: fr })}
               {weekOffset === 0 && <span className="ml-1 text-accent-text font-medium">(cette semaine)</span>}
             </p>
           </div>
-          <button onClick={() => setWeekOffset(o => o + 1)} className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Semaine suivante">
+          <button onClick={() => setWeekOffset(o => o + 1)} className="flex items-center justify-center w-10 h-10 hover:bg-neutral-100 rounded-lg transition-colors" aria-label="Semaine suivante">
             <ChevronRight size={20} />
           </button>
         </div>
@@ -660,7 +685,7 @@ export default function Home() {
                             {format(obj.date, 'EEEE d MMM', { locale: fr })}
                           </span>
                         </div>
-                        <p className="font-bold text-gray-900 truncate">{obj.name}</p>
+                        <p className="font-bold text-neutral-900 truncate">{obj.name}</p>
                       </div>
                       {obj.daysUntil > 0 && (
                         <span className="flex-shrink-0 text-sm font-bold text-warning-700">J-{obj.daysUntil}</span>
@@ -679,8 +704,8 @@ export default function Home() {
                 <Link
                   key={session.id}
                   to={`/session/${session.id}`}
-                  className={`block rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden ${
-                    session.preparation_id ? 'bg-amber-50' : session.group_id ? 'bg-blue-50' : 'bg-white'
+                  className={`block rounded-xl border border-neutral-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden ${
+                    session.preparation_id ? 'bg-warning-50' : session.group_id ? 'bg-info-50' : 'bg-white'
                   } ${
                     sessionPast && !validation ? 'border-l-4 border-l-warning' : ''
                   } ${validation?.status === 'done' ? 'border-l-4 border-l-success' : ''} ${
@@ -694,23 +719,23 @@ export default function Home() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`w-2 h-2 rounded-full ${session.preparation_id ? 'bg-amber-500' : getGroupColor(session.group_id)}`} />
-                          <span className="text-xs text-gray-500 font-medium">
+                          <span className={`w-2 h-2 rounded-full ${session.preparation_id ? 'bg-warning-500' : getGroupColor(session.group_id)}`} />
+                          <span className="text-xs text-neutral-500 font-medium">
                             {getGroupName(session)}
                           </span>
                         </div>
-                        <h3 className="font-semibold text-gray-900 truncate">
+                        <h3 className="font-semibold text-neutral-900 truncate">
                           {session.title}
-                          <span className="text-xs font-normal text-gray-400 ml-1.5">{getSessionCode(session, sessions)}</span>
+                          <span className="text-xs font-normal text-neutral-400 ml-1.5">{getSessionCode(session, sessions)}</span>
                         </h3>
-                        <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                        <div className="flex items-center gap-3 mt-1 text-sm text-neutral-500">
                           <span className="font-medium">
                             {format(sessionDate, 'EEEE d MMM', { locale: fr })}
                           </span>
                           <span>{format(sessionDate, 'HH:mm')}</span>
                         </div>
                         {session.location && (
-                          <div className="flex items-center gap-1 mt-1 text-sm text-gray-400">
+                          <div className="flex items-center gap-1 mt-1 text-sm text-neutral-400">
                             <MapPin size={14} />
                             <span className="truncate">{session.location}</span>
                           </div>
@@ -736,7 +761,7 @@ export default function Home() {
                     {session.blocks.length === 0 && session.target_distance && session.vma_percent_min && (
                       <div className="mt-3 bg-primary/5 rounded-lg px-3 py-2 text-sm">
                         <span className="text-primary font-medium">{session.target_distance}m</span>
-                        <span className="text-gray-400 mx-1">à</span>
+                        <span className="text-neutral-400 mx-1">à</span>
                         <span className="text-primary font-medium">
                           {session.vma_percent_min}-{session.vma_percent_max}% VMA
                         </span>
@@ -788,7 +813,7 @@ export default function Home() {
         open={vmaCelebration !== null}
         previousVma={vmaCelebration?.previous ?? 0}
         newVma={vmaCelebration?.current ?? 0}
-        onClose={() => setVmaCelebration(null)}
+        onClose={handleCloseVmaCelebration}
       />
     </div>
   );

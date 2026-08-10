@@ -24,23 +24,23 @@ function DurationInput({ value, onChange, label }: { value: number; onChange: (v
 
   return (
     <div>
-      {label && <label className="text-xs text-gray-500">{label}</label>}
+      {label && <label className="text-xs text-neutral-500">{label}</label>}
       <div className="flex items-center gap-1">
         <input type="number" inputMode="numeric" min={0} max={23} value={hh}
           onChange={e => rebuild(Math.max(0, Math.min(23, parseInt(e.target.value) || 0)), mm, ss)}
-          className="w-12 px-1 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="w-12 px-1 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
-        <span className="text-xs text-gray-400">h</span>
+        <span className="text-xs text-neutral-400">h</span>
         <input type="number" inputMode="numeric" min={0} max={59} value={mm}
           onChange={e => rebuild(hh, Math.max(0, Math.min(59, parseInt(e.target.value) || 0)), ss)}
-          className="w-12 px-1 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="w-12 px-1 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
-        <span className="text-xs text-gray-400">m</span>
+        <span className="text-xs text-neutral-400">m</span>
         <input type="number" inputMode="numeric" min={0} max={59} value={ss}
           onChange={e => rebuild(hh, mm, Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
-          className="w-12 px-1 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="w-12 px-1 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
-        <span className="text-xs text-gray-400">s</span>
+        <span className="text-xs text-neutral-400">s</span>
       </div>
     </div>
   );
@@ -213,26 +213,26 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
 
   if (!activity) {
     return (
-      <div className="bg-gray-50 rounded-lg p-3 mb-4">
-        <p className="text-sm font-medium text-gray-700 mb-3">Type d'activite</p>
+      <div className="bg-neutral-50 rounded-lg p-3 mb-4">
+        <p className="text-sm font-medium text-neutral-700 mb-3">Type d'activite</p>
         <div className="grid grid-cols-4 gap-2">
           {ACTIVITY_TYPES.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => setActivity(key)}
-              className="flex flex-col items-center gap-1.5 p-3 bg-white rounded-xl border border-gray-100 hover:border-primary hover:bg-primary/5 transition-colors">
-              <Icon size={20} className="text-gray-500" />
-              <span className="text-xs font-medium text-gray-700">{label}</span>
+              className="flex flex-col items-center gap-1.5 p-3 bg-white rounded-xl border border-neutral-100 hover:border-primary hover:bg-primary/5 transition-colors">
+              <Icon size={20} className="text-neutral-500" />
+              <span className="text-xs font-medium text-neutral-700">{label}</span>
             </button>
           ))}
         </div>
-        <button onClick={onClose} className="w-full mt-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600">Annuler</button>
+        <button onClick={onClose} className="w-full mt-3 py-2 border border-neutral-200 rounded-lg text-sm text-neutral-600">Annuler</button>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-50 rounded-lg p-3 mb-4 space-y-3">
+    <div className="bg-neutral-50 rounded-lg p-3 mb-4 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-700">
+        <p className="text-sm font-medium text-neutral-700">
           {editSession ? 'Modifier la séance' : 'Nouvelle séance'} - {ACTIVITY_TYPES.find(a => a.key === activity)?.label}
         </p>
         {!editSession && (
@@ -241,10 +241,10 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
       </div>
 
       <input type="text" placeholder="Titre de la séance" value={title} onChange={e => setTitle(e.target.value)}
-        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+        className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
 
       <input type="datetime-local" value={date} onChange={e => setDate(e.target.value)}
-        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+        className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
 
       {activity === 'run' && (
         <div className="space-y-2">
@@ -262,7 +262,7 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
             />
           ))}
           <button onClick={addBlock}
-            className="w-full flex items-center justify-center gap-1 py-2 border border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-primary hover:text-primary transition-colors">
+            className="w-full flex items-center justify-center gap-1 py-2 border border-dashed border-neutral-300 rounded-xl text-sm text-neutral-500 hover:border-primary hover:text-primary transition-colors">
             <Plus size={16} /> Ajouter un bloc
           </button>
         </div>
@@ -272,9 +272,9 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
         <div className="grid grid-cols-2 gap-3">
           <DurationInput value={duration} onChange={setDuration} label="Durée" />
           <div>
-            <label className="text-xs text-gray-500">Distance (km)</label>
+            <label className="text-xs text-neutral-500">Distance (km)</label>
             <input type="number" step="0.1" min={0} placeholder="km" value={distanceKm} onChange={e => setDistanceKm(e.target.value)}
-              className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              className="w-full px-2 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20" />
           </div>
         </div>
       )}
@@ -283,23 +283,23 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
         <div className="space-y-3">
           <DurationInput value={duration} onChange={setDuration} label="Durée" />
           <div>
-            <label className="text-xs text-gray-500">Description (facultatif)</label>
+            <label className="text-xs text-neutral-500">Description (facultatif)</label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Détails de la séance..."
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+              className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
           </div>
         </div>
       )}
 
       {!editSession && (
-        <div className="space-y-3 border-t border-gray-200 pt-3">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Ressenti</p>
+        <div className="space-y-3 border-t border-neutral-200 pt-3">
+          <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">Ressenti</p>
 
           <div>
-            <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Target size={12} /> Objectif atteint ?</p>
+            <p className="text-xs text-neutral-500 mb-1 flex items-center gap-1"><Target size={12} /> Objectif atteint ?</p>
             <div className="flex gap-2">
-              {([['oui', 'Oui', 'bg-green-100 text-green-700 border-green-300'], ['partiel', 'Partiel', 'bg-yellow-100 text-yellow-700 border-yellow-300'], ['non', 'Non', 'bg-red-100 text-red-700 border-red-300']] as const).map(([val, label, colors]) => (
+              {([['oui', 'Oui', 'bg-success-100 text-success-700 border-success-500'], ['partiel', 'Partiel', 'bg-warning-100 text-warning-700 border-warning-500'], ['non', 'Non', 'bg-danger-100 text-danger-700 border-danger-500']] as const).map(([val, label, colors]) => (
                 <button key={val} type="button" onClick={() => setObjectiveReached(objectiveReached === val ? '' : val)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${objectiveReached === val ? colors : 'bg-white border-gray-200 text-gray-500'}`}>
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${objectiveReached === val ? colors : 'bg-white border-neutral-200 text-neutral-500'}`}>
                   {label}
                 </button>
               ))}
@@ -307,11 +307,11 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
           </div>
 
           <div>
-            <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Smile size={12} /> Sensations</p>
+            <p className="text-xs text-neutral-500 mb-1 flex items-center gap-1"><Smile size={12} /> Sensations</p>
             <div className="flex gap-2">
-              {([['excellentes', 'Excellentes', 'bg-green-100 text-green-700 border-green-300'], ['bonnes', 'Bonnes', 'bg-blue-100 text-blue-700 border-blue-300'], ['mauvaises', 'Mauvaises', 'bg-red-100 text-red-700 border-red-300']] as const).map(([val, label, colors]) => (
+              {([['excellentes', 'Excellentes', 'bg-success-100 text-success-700 border-success-500'], ['bonnes', 'Bonnes', 'bg-info-100 text-info-700 border-info-500'], ['mauvaises', 'Mauvaises', 'bg-danger-100 text-danger-700 border-danger-500']] as const).map(([val, label, colors]) => (
                 <button key={val} type="button" onClick={() => setSensations(sensations === val ? '' : val)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${sensations === val ? colors : 'bg-white border-gray-200 text-gray-500'}`}>
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${sensations === val ? colors : 'bg-white border-neutral-200 text-neutral-500'}`}>
                   {label}
                 </button>
               ))}
@@ -319,19 +319,19 @@ export default function PersonalSessionForm({ onClose, editSession }: Props) {
           </div>
 
           <div>
-            <label className="text-xs text-gray-500">Commentaire (facultatif)</label>
+            <label className="text-xs text-neutral-500">Commentaire (facultatif)</label>
             <textarea value={feedback} onChange={e => setFeedback(e.target.value)} rows={2} placeholder="Comment s'est passée la séance ?"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
+              className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
           </div>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-xs text-red-700">{error}</div>
+        <div className="bg-danger-50 border border-danger-100 rounded-lg p-2 text-xs text-danger-700">{error}</div>
       )}
 
       <div className="flex gap-2">
-        <button onClick={onClose} className="flex-1 py-2 border border-gray-200 rounded-lg text-sm text-gray-600">Annuler</button>
+        <button onClick={onClose} className="flex-1 py-2 border border-neutral-200 rounded-lg text-sm text-neutral-600">Annuler</button>
         <button onClick={handleSave} disabled={!canSave() || saving}
           className="flex-1 py-2 bg-primary text-white rounded-lg text-sm font-medium disabled:opacity-50">
           {saving ? 'Enregistrement...' : editSession ? 'Modifier' : 'Ajouter'}

@@ -86,7 +86,7 @@ export function VmaRecordCelebration({
               initial={{ scale: 0, rotate: -30, opacity: 0 }}
               animate={{ scale: 1, rotate: 0, opacity: 1 }}
               transition={{ duration: DUR.slow, ease: EASE.bounce, delay: 0.1 }}
-              className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 shadow-takeover mb-6"
+              className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-warning-500 to-warning-600 shadow-takeover mb-6"
             >
               <Trophy size={48} strokeWidth={2.5} className="text-white" aria-hidden="true" />
             </motion.div>

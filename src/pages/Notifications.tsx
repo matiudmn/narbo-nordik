@@ -10,10 +10,10 @@ import type { AppNotification } from '../types';
 function getNotifIcon(type: AppNotification['type']) {
   switch (type) {
     case 'new_session': return <CalendarPlus size={18} className="text-primary" />;
-    case 'palmares': return <Trophy size={18} className="text-yellow-500" />;
-    case 'vma_update': return <TrendingUp size={18} className="text-green-500" />;
-    case 'weekly_digest': return <Mail size={18} className="text-blue-500" />;
-    case 'system': return <Info size={18} className="text-gray-500" />;
+    case 'palmares': return <Trophy size={18} className="text-warning-500" />;
+    case 'vma_update': return <TrendingUp size={18} className="text-success-500" />;
+    case 'weekly_digest': return <Mail size={18} className="text-info-500" />;
+    case 'system': return <Info size={18} className="text-neutral-500" />;
   }
 }
 
@@ -85,7 +85,7 @@ export default function Notifications() {
   return (
     <div className="py-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold text-gray-900">
+        <h1 className="text-lg font-bold text-neutral-900">
           Notifications
           {unreadCount > 0 && (
             <span className="ml-2 text-xs font-medium bg-accent/15 text-accent-dark px-2 py-0.5 rounded-full tabular">
@@ -115,7 +115,7 @@ export default function Notifications() {
         <div className="space-y-4">
           {grouped.map(group => (
             <div key={group.date}>
-              <p className="text-xs font-bold text-gray-400 uppercase mb-2">
+              <p className="text-xs font-bold text-neutral-400 uppercase mb-2">
                 {formatGroupDate(group.items[0].created_at)}
               </p>
               <div className="space-y-2">
@@ -125,8 +125,8 @@ export default function Notifications() {
                     ref={el => setItemRef(el, notif)}
                     data-notif-id={notif.id}
                     onClick={() => notif.link && navigate(notif.link)}
-                    className={`flex items-start gap-3 bg-white rounded-xl border border-gray-100 p-3.5 transition-colors ${
-                      notif.link ? 'cursor-pointer hover:bg-gray-50' : ''
+                    className={`flex items-start gap-3 bg-white rounded-xl border border-neutral-100 p-3.5 transition-colors ${
+                      notif.link ? 'cursor-pointer hover:bg-neutral-50' : ''
                     }`}
                   >
                     <div className="mt-0.5 relative">
@@ -136,14 +136,14 @@ export default function Notifications() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm ${notif.read ? 'text-gray-600' : 'text-gray-900 font-semibold'}`}>
+                      <p className={`text-sm ${notif.read ? 'text-neutral-600' : 'text-neutral-900 font-semibold'}`}>
                         {notif.title}
                       </p>
                       {notif.body && (
-                        <p className="text-xs text-gray-400 mt-0.5 truncate">{notif.body}</p>
+                        <p className="text-xs text-neutral-400 mt-0.5 truncate">{notif.body}</p>
                       )}
                     </div>
-                    <span className="text-xs text-gray-300 whitespace-nowrap mt-0.5">
+                    <span className="text-xs text-neutral-300 whitespace-nowrap mt-0.5">
                       {format(new Date(notif.created_at), 'HH:mm')}
                     </span>
                   </div>

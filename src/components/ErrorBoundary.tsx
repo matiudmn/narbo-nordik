@@ -65,21 +65,21 @@ export class ErrorBoundary extends Component<Props, State> {
       // Rechargement one-shot en cours (chunk obsolète après déploiement) :
       // écran neutre transitoire, pas l'écran d'erreur.
       return (
-        <div className="min-h-screen flex items-center justify-center px-6 bg-gray-50">
+        <div className="min-h-screen flex items-center justify-center px-6 bg-neutral-50">
           <div className="text-center">
             <div className="text-4xl mb-3" aria-hidden="true">🔄</div>
-            <p className="text-sm text-gray-600">Mise à jour de l'application...</p>
+            <p className="text-sm text-neutral-600">Mise à jour de l'application...</p>
           </div>
         </div>
       );
     }
 
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center px-6 bg-neutral-50">
         <div className="max-w-sm w-full text-center">
           <div className="text-5xl mb-4" aria-hidden="true">🏃</div>
-          <h1 className="text-lg font-bold text-gray-900 mb-2">Oups, un petit faux départ</h1>
-          <p className="text-sm text-gray-600 mb-6">
+          <h1 className="text-lg font-bold text-neutral-900 mb-2">Oups, un petit faux départ</h1>
+          <p className="text-sm text-neutral-600 mb-6">
             Une erreur inattendue est survenue sur cette page. Pas de panique,
             tes données sont en sécurité. Recharge pour repartir.
           </p>
@@ -92,13 +92,13 @@ export class ErrorBoundary extends Component<Props, State> {
             </button>
             <button
               onClick={this.handleHome}
-              className="w-full py-3 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+              className="w-full py-3 border border-neutral-200 rounded-lg text-sm text-neutral-600 hover:bg-neutral-100 transition-colors"
             >
               Retour à l'accueil
             </button>
           </div>
           {import.meta.env.DEV && this.state.error && (
-            <pre className="mt-6 text-left text-[11px] text-gray-400 overflow-auto max-h-40 bg-gray-100 rounded-lg p-3">
+            <pre className="mt-6 text-left text-[11px] text-neutral-400 overflow-auto max-h-40 bg-neutral-100 rounded-lg p-3">
               {this.state.error.message}
               {'\n'}
               {this.state.error.stack}

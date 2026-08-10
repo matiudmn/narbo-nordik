@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Layers, Grid3x3, Check, AlertTriangle, Info, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -52,7 +52,7 @@ const SAMPLE_VALUES = Object.values(SAMPLES);
 /** Rend le contenu d'une séance, splittant sur `|` si présent. React échappe le texte automatiquement. */
 function ContentBlocks({ content }: { content: string }) {
   if (!content.includes('|')) {
-    return <div className="text-sm text-gray-700 leading-snug">{content}</div>;
+    return <div className="text-sm text-neutral-700 leading-snug">{content}</div>;
   }
   const parts = content.split('|').map(p => p.trim()).filter(Boolean);
   return (
@@ -60,9 +60,9 @@ function ContentBlocks({ content }: { content: string }) {
       {parts.map((p, i) => (
         <div
           key={i}
-          className="bg-white border border-gray-200 rounded px-2.5 py-1.5 text-sm text-gray-700 flex items-start gap-2"
+          className="bg-white border border-neutral-200 rounded px-2.5 py-1.5 text-sm text-neutral-700 flex items-start gap-2"
         >
-          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-900 text-white text-xs font-bold flex-shrink-0">
+          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-neutral-900 text-white text-xs font-bold flex-shrink-0">
             {i + 1}
           </span>
           <span>{p}</span>
@@ -82,29 +82,28 @@ export default function Import() {
   const [paste, setPaste] = useState<string>(SAMPLES.canonical);
   const [defaultYear, setDefaultYear] = useState<number>(new Date().getFullYear());
   const [defaultGroupId, setDefaultGroupId] = useState<string>('');
-  const [parseTimeMs, setParseTimeMs] = useState<number>(0);
   const [importing, setImporting] = useState(false);
   // Que faire des séances qui semblent déjà exister : les ignorer (défaut) ou les créer quand même.
   const [onDuplicate, setOnDuplicate] = useState<'skip' | 'create'>('skip');
 
-  // Reparse à chaque changement
-  const result: ParseResult = useMemo(() => {
-    const start = performance.now();
-    const r = parseImport(paste, { defaultYear, groups, forceFormat: format });
-    setParseTimeMs(Math.round((performance.now() - start) * 10) / 10);
-    return r;
-  }, [paste, defaultYear, groups, format]);
-
   // Au changement de format : recharge l'échantillon correspondant, mais
   // seulement si la zone est vide ou contient un échantillon non modifié
-  // (on ne veut pas écraser un vrai tableau collé par le coach).
-  useEffect(() => {
+  // (on ne veut pas écraser un vrai tableau collé par le coach). Dérivé pendant
+  // le rendu (comparaison au format précédent) plutôt que dans un effect : évite
+  // un rendu intermédiaire avec l'ancien texte avant le nouvel échantillon.
+  const [prevFormat, setPrevFormat] = useState(format);
+  if (format !== prevFormat) {
+    setPrevFormat(format);
     if (paste === '' || SAMPLE_VALUES.includes(paste)) {
       setPaste(SAMPLES[format]);
     }
-    // `paste` lu mais hors deps : volontaire, on ne réagit qu'au changement de format.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [format]);
+  }
+
+  // Reparse à chaque changement
+  const result: ParseResult = useMemo(
+    () => parseImport(paste, { defaultYear, groups, forceFormat: format }),
+    [paste, defaultYear, groups, format]
+  );
 
   // Compteur de cellules par macro-type
   const macroDistribution = useMemo(() => {
@@ -204,7 +203,7 @@ export default function Import() {
 
   if (user?.role !== 'coach') {
     return (
-      <div className="py-8 text-center text-gray-500">
+      <div className="py-8 text-center text-neutral-500">
         Cette page est réservée au coach.
       </div>
     );
@@ -214,13 +213,13 @@ export default function Import() {
     <div className="pt-4 pb-24 max-w-6xl mx-auto px-4 lg:px-6">
       {/* HEADER */}
       <div className="mb-5">
-        <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">
+        <div className="text-xs uppercase tracking-wider text-neutral-500 font-semibold mb-1">
           Import en lot
         </div>
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
+        <h1 className="text-xl lg:text-2xl font-bold text-neutral-900">
           Colle ton Excel — l'app crée les séances
         </h1>
-        <p className="text-sm text-gray-500 mt-2 max-w-3xl">
+        <p className="text-sm text-neutral-500 mt-2 max-w-3xl">
           Cmd-A puis Cmd-C sur ton tableau Excel, puis Cmd-V dans la zone ci-dessous.
           L'app détecte les jours, les groupes, et crée les séances d'un coup.
           Texte gardé tel quel, aucun découpage imposé.
@@ -239,12 +238,12 @@ export default function Import() {
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
                 active
                   ? 'bg-primary text-white font-semibold shadow-sm'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  : 'bg-white border border-neutral-200 text-neutral-600 hover:bg-neutral-50'
               }`}
             >
               <Icon size={16} />
               <span>{t.label}</span>
-              <span className={`text-xs ${active ? 'text-white/70' : 'text-gray-400'}`}>{t.hint}</span>
+              <span className={`text-xs ${active ? 'text-white/70' : 'text-neutral-400'}`}>{t.hint}</span>
             </button>
           );
         })}
@@ -253,25 +252,25 @@ export default function Import() {
       {/* OPTIONS GLOBALES */}
       <div className="flex items-center gap-4 mb-4 flex-wrap text-sm">
         <div className="flex items-center gap-2">
-          <label className="text-gray-500 text-xs uppercase tracking-wider font-semibold">Année (dates "DD/MM")</label>
+          <label className="text-neutral-500 text-xs uppercase tracking-wider font-semibold">Année (dates "DD/MM")</label>
           <input
             type="number"
             min={2020}
             max={2030}
             value={defaultYear}
             onChange={e => setDefaultYear(parseInt(e.target.value) || new Date().getFullYear())}
-            className="w-20 px-2 py-1 border border-gray-200 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-20 px-2 py-1 border border-neutral-200 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
         {needsDefaultGroup && (
           <div className="flex items-center gap-2">
-            <label className="text-gray-500 text-xs uppercase tracking-wider font-semibold">
+            <label className="text-neutral-500 text-xs uppercase tracking-wider font-semibold">
               Groupe cible
             </label>
             <select
               value={defaultGroupId}
               onChange={e => setDefaultGroupId(e.target.value)}
-              className="px-2 py-1 border border-gray-200 rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="px-2 py-1 border border-neutral-200 rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">— Sélectionner —</option>
               {groups.map(g => (
@@ -285,28 +284,25 @@ export default function Import() {
             )}
           </div>
         )}
-        <div className="ml-auto text-xs text-gray-500">
-          Parsing : <span className="font-mono font-semibold">{parseTimeMs}</span> ms
-        </div>
       </div>
 
       {/* DETECTION BAR */}
-      <div className="bg-white border border-gray-200 rounded-lg p-3 mb-4 flex items-center gap-4 flex-wrap text-sm">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-gray-500 font-semibold">
+      <div className="bg-white border border-neutral-200 rounded-lg p-3 mb-4 flex items-center gap-4 flex-wrap text-sm">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-neutral-500 font-semibold">
           <span className="w-2 h-2 rounded-full bg-success-500 animate-pulse" />
           Détection
         </div>
         <div>
-          <span className="text-gray-500">Format</span>{' '}
+          <span className="text-neutral-500">Format</span>{' '}
           <span className="font-semibold">{result.detectedFormat}</span>
         </div>
         <div>
-          <span className="text-gray-500">Séances</span>{' '}
+          <span className="text-neutral-500">Séances</span>{' '}
           <span className="font-semibold text-success-700 text-base">{result.sessions.length}</span>
         </div>
         <div>
-          <span className="text-gray-500">Ignorées</span>{' '}
-          <span className="font-mono font-semibold text-gray-600">{result.skipped}</span>
+          <span className="text-neutral-500">Ignorées</span>{' '}
+          <span className="font-mono font-semibold text-neutral-600">{result.skipped}</span>
         </div>
         {result.errors.length > 0 && (
           <div>
@@ -324,9 +320,9 @@ export default function Import() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* LEFT : TEXTAREA */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex items-center justify-between">
-            <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">Zone de collage</div>
+        <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+          <div className="bg-neutral-50 border-b border-neutral-200 px-3 py-2 flex items-center justify-between">
+            <div className="text-xs uppercase tracking-wider text-neutral-500 font-semibold">Zone de collage</div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -338,7 +334,7 @@ export default function Import() {
               <button
                 type="button"
                 onClick={() => setPaste('')}
-                className="text-xs text-gray-400 hover:text-danger-500"
+                className="text-xs text-neutral-400 hover:text-danger-500"
               >
                 Vider
               </button>
@@ -353,18 +349,18 @@ export default function Import() {
             className="w-full p-3 border-0 focus:outline-none resize-none font-mono text-xs leading-relaxed"
             style={{ tabSize: 16 }}
           />
-          <div className="bg-gray-50 border-t border-gray-200 px-3 py-2 text-xs text-gray-500 flex items-center justify-between">
+          <div className="bg-neutral-50 border-t border-neutral-200 px-3 py-2 text-xs text-neutral-500 flex items-center justify-between">
             <span>Cmd+V pour coller depuis Excel</span>
             <span className="font-mono">{paste.length} car.</span>
           </div>
         </div>
 
         {/* RIGHT : PREVIEW */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex items-center justify-between">
-            <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">Aperçu classé par semaine</div>
-            <div className="text-xs text-gray-500">
-              <span className="font-mono font-semibold text-gray-900">{result.sessions.length}</span> séance{result.sessions.length > 1 ? 's' : ''}
+        <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+          <div className="bg-neutral-50 border-b border-neutral-200 px-3 py-2 flex items-center justify-between">
+            <div className="text-xs uppercase tracking-wider text-neutral-500 font-semibold">Aperçu classé par semaine</div>
+            <div className="text-xs text-neutral-500">
+              <span className="font-mono font-semibold text-neutral-900">{result.sessions.length}</span> séance{result.sessions.length > 1 ? 's' : ''}
             </div>
           </div>
           <div className="p-3 max-h-[600px] overflow-y-auto space-y-4">
@@ -402,7 +398,7 @@ export default function Import() {
 
             {/* Sessions par semaine */}
             {result.sessions.length === 0 && result.errors.length === 0 && (
-              <div className="text-center py-8 text-gray-400 text-sm">
+              <div className="text-center py-8 text-neutral-400 text-sm">
                 Colle ton tableau pour voir l'aperçu
               </div>
             )}
@@ -410,10 +406,10 @@ export default function Import() {
             {sessionsByWeek.map(([week, sess]) => (
               <div key={week}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-gray-900 text-white px-2 py-0.5 rounded font-mono text-xs font-bold">
+                  <span className="bg-neutral-900 text-white px-2 py-0.5 rounded font-mono text-xs font-bold">
                     {week}
                   </span>
-                  <span className="text-xs text-gray-500">{sess.length} séance{sess.length > 1 ? 's' : ''}</span>
+                  <span className="text-xs text-neutral-500">{sess.length} séance{sess.length > 1 ? 's' : ''}</span>
                 </div>
                 <div className="space-y-2 ml-2">
                   {sess.map(s => {
@@ -421,7 +417,7 @@ export default function Import() {
                     return (
                       <div
                         key={`${s.lineNumber}-${s.targetGroupName || ''}`}
-                        className="bg-gray-50 rounded-lg p-2.5 border-l-4"
+                        className="bg-neutral-50 rounded-lg p-2.5 border-l-4"
                         style={{ borderLeftColor: macro.color }}
                       >
                         <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
@@ -433,16 +429,16 @@ export default function Import() {
                               {macro.label}
                             </span>
                             {s.subType && (
-                              <span className="text-xs text-gray-500 font-mono">{s.subType}</span>
+                              <span className="text-xs text-neutral-500 font-mono">{s.subType}</span>
                             )}
                             {s.targetGroupName && (
-                              <span className="text-xs text-gray-600 bg-white border border-gray-200 px-1.5 py-0.5 rounded">
+                              <span className="text-xs text-neutral-600 bg-white border border-neutral-200 px-1.5 py-0.5 rounded">
                                 {s.targetGroupName}
                                 {!s.groupId && <span className="text-warning-600"> ✗</span>}
                               </span>
                             )}
                           </div>
-                          <span className="text-xs text-gray-500 font-mono">
+                          <span className="text-xs text-neutral-500 font-mono">
                             {/* Évite "Lundi lundi 25 mai" : on n'ajoute le jour que si dateRaw ne le contient pas déjà */}
                             {s.day && !s.dateRaw.toLowerCase().startsWith(s.day.toLowerCase()) ? `${s.day} ` : ''}{s.dateRaw}
                           </span>
@@ -460,8 +456,8 @@ export default function Import() {
 
       {/* DISTRIBUTION */}
       {result.sessions.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4 mt-4">
-          <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">
+        <div className="bg-white border border-neutral-200 rounded-lg p-4 mt-4">
+          <div className="text-xs uppercase tracking-wider text-neutral-500 font-semibold mb-3">
             Distribution par macro-type
           </div>
           <div className="flex flex-wrap gap-2 mb-3">
@@ -483,7 +479,7 @@ export default function Import() {
               );
             })}
           </div>
-          <div className="h-2 rounded-full overflow-hidden flex bg-gray-100">
+          <div className="h-2 rounded-full overflow-hidden flex bg-neutral-100">
             {macroDistribution.map(([k, n]) => {
               const meta = MACRO_META[k as keyof typeof MACRO_META];
               const pct = (n / result.sessions.length) * 100;
@@ -508,7 +504,7 @@ export default function Import() {
               <div className="text-sm font-semibold text-warning-700">
                 {duplicateCount} séance{duplicateCount > 1 ? 's' : ''} semble{duplicateCount > 1 ? 'nt' : ''} déjà exister
               </div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-neutral-600 mt-1">
                 Même date, même groupe et même contenu qu'une séance déjà en base. Évite de créer des doublons.
               </p>
               <div className="flex flex-col sm:flex-row gap-2 mt-3">
@@ -520,8 +516,8 @@ export default function Import() {
                     onChange={() => setOnDuplicate('skip')}
                     style={{ accentColor: 'var(--color-warning)' }}
                   />
-                  <span className="text-gray-700">
-                    Ignorer les doublons <span className="text-gray-400">(créer {planned.length - duplicateCount} nouvelle{planned.length - duplicateCount > 1 ? 's' : ''})</span>
+                  <span className="text-neutral-700">
+                    Ignorer les doublons <span className="text-neutral-400">(créer {planned.length - duplicateCount} nouvelle{planned.length - duplicateCount > 1 ? 's' : ''})</span>
                   </span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
@@ -532,8 +528,8 @@ export default function Import() {
                     onChange={() => setOnDuplicate('create')}
                     style={{ accentColor: 'var(--color-warning)' }}
                   />
-                  <span className="text-gray-700">
-                    Importer quand même <span className="text-gray-400">(créer les {planned.length})</span>
+                  <span className="text-neutral-700">
+                    Importer quand même <span className="text-neutral-400">(créer les {planned.length})</span>
                   </span>
                 </label>
               </div>
@@ -543,7 +539,7 @@ export default function Import() {
       )}
 
       {/* CTA BAR */}
-      <div className="bg-gray-900 text-white rounded-xl p-4 mt-4 flex items-center justify-between gap-3 flex-wrap sticky bottom-2 shadow-lg">
+      <div className="bg-neutral-900 text-white rounded-xl p-4 mt-4 flex items-center justify-between gap-3 flex-wrap sticky bottom-2 shadow-lg">
         <div>
           <div className="text-xs uppercase tracking-wider text-accent font-semibold mb-1">Prêt à créer</div>
           <div className="text-base">
