@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format, isThisWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { TrendingUp, Users, MessageSquare, CheckCircle, AlertTriangle, ChevronRight, Settings, Paperclip, FileText, Star, Sparkles, History } from 'lucide-react';
+import { TrendingUp, Users, MessageSquare, CheckCircle, AlertTriangle, ChevronRight, Settings, Download, Paperclip, FileText, Star, Sparkles, History } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAttachmentUrl } from '../../lib/storage';
@@ -30,6 +30,16 @@ const SENSATION_META: Record<Sensations, { label: string; tone: BadgeTone }> = {
 
 // Set fermé de réactions positives (garde-fou : pas de pouce bas).
 const REACTIONS = ['👏', '🔥', '💪', '🎯'];
+
+// Raccourcis vers les pages coach absentes de la barre du bas (mobile) : sans
+// eux, l'historique et l'export ne seraient atteignables que depuis la sidebar
+// desktop. Teinte accent sur les deux pages de consultation, neutre sur les
+// réglages.
+const QUICK_ACTIONS = [
+  { to: '/coach/historique', label: 'Historique par mois', icon: History, tint: 'bg-accent/15', ink: 'text-accent-dark' },
+  { to: '/coach/export', label: 'Export tableur', icon: Download, tint: 'bg-accent/15', ink: 'text-accent-dark' },
+  { to: '/coach/settings', label: 'Paramètres du club', icon: Settings, tint: 'bg-primary/10', ink: 'text-primary' },
+] as const;
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -152,28 +162,21 @@ export default function Dashboard() {
         ]}
       />
 
-      {/* Quick actions — historique + paramètres */}
-      <div className="grid gap-3 lg:grid-cols-2">
-        <Link
-          to="/coach/historique"
-          className="flex items-center gap-3 bg-white rounded-xl border border-neutral-100 p-4 hover:shadow-card-hover transition-shadow"
-        >
-          <div className="w-9 h-9 bg-accent/15 rounded-full flex items-center justify-center">
-            <History size={18} className="text-accent-dark" aria-hidden="true" />
-          </div>
-          <span className="flex-1 text-sm font-medium text-neutral-900">Historique par mois</span>
-          <ChevronRight size={16} className="text-neutral-300" aria-hidden="true" />
-        </Link>
-        <Link
-          to="/coach/settings"
-          className="flex items-center gap-3 bg-white rounded-xl border border-neutral-100 p-4 hover:shadow-card-hover transition-shadow"
-        >
-          <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center">
-            <Settings size={18} className="text-primary" aria-hidden="true" />
-          </div>
-          <span className="flex-1 text-sm font-medium text-neutral-900">Paramètres du club</span>
-          <ChevronRight size={16} className="text-neutral-300" aria-hidden="true" />
-        </Link>
+      {/* Quick actions : historique, export tableur, réglages */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {QUICK_ACTIONS.map(({ to, label, icon: Icon, tint, ink }) => (
+          <Link
+            key={to}
+            to={to}
+            className="flex items-center gap-3 bg-white rounded-xl border border-neutral-100 p-4 hover:shadow-card-hover transition-shadow"
+          >
+            <div className={`w-9 h-9 ${tint} rounded-full flex items-center justify-center`}>
+              <Icon size={18} className={ink} aria-hidden="true" />
+            </div>
+            <span className="flex-1 text-sm font-medium text-neutral-900">{label}</span>
+            <ChevronRight size={16} className="text-neutral-300" aria-hidden="true" />
+          </Link>
+        ))}
       </div>
 
       {/* Résumé hebdo IA */}
