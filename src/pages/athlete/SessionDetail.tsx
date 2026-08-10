@@ -9,9 +9,11 @@ import { useState, useRef } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
 import { useToast, Button } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
+import { captureError } from '../../lib/monitoring';
 import { motion, DUR, EASE } from '../../lib/motion';
 import ShareSheet from '../../components/ShareSheet';
 import { SessionShareCard } from '../../components/ShareCard';
+import AnalysisCard from '../../components/athlete/AnalysisCard';
 import type { ObjectiveReached, Sensations, SessionMetricsInput } from '../../types';
 
 export default function SessionDetail() {
@@ -46,6 +48,7 @@ export default function SessionDetail() {
   const [ocrError, setOcrError] = useState<string | null>(null);
   const [ocrFilled, setOcrFilled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [analysisPending, setAnalysisPending] = useState(false);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'];
@@ -112,6 +115,20 @@ export default function SessionDetail() {
     ? calculatePaces(user.vma, session.vma_percent_min, session.vma_percent_max, session.target_distance)
     : null;
 
+  // Best-effort : demande le verdict IA à l'Edge Function analyze-validation
+  // après une validation réussie. Échec silencieux (loggé), n'affecte jamais
+  // la validation elle-même (déjà enregistrée). AnalysisCard lit le résultat
+  // directement dans session_analyses.
+  const requestAnalysis = (validationId: string) => {
+    setAnalysisPending(true);
+    supabase.functions.invoke('analyze-validation', { body: { validation_id: validationId } })
+      .then(({ error }) => {
+        if (error) captureError('analyze-validation invoke', error);
+      })
+      .catch(e => captureError('analyze-validation invoke', e))
+      .finally(() => setAnalysisPending(false));
+  };
+
   const handleValidate = async () => {
     if (!user || isSubmitting) return;
     setIsSubmitting(true);
@@ -127,6 +144,7 @@ export default function SessionDetail() {
     setSensations(null);
     resetMetrics();
     removeFile();
+    requestAnalysis(res.id);
   };
 
   const handleEditSave = async () => {
@@ -550,6 +568,7 @@ export default function SessionDetail() {
                   })}
                 </div>
               )}
+              <AnalysisCard validationId={validation.id} pending={analysisPending} />
               <div className="text-center mt-3">
                 <button
                   onClick={startEditing}
