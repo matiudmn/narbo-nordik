@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Card, useToast } from '../../components/ui';
+import { Card, Disclosure, useToast } from '../../components/ui';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, Trash2, Trophy, Bell, BellOff, Shield, Download, UserX, Camera, X, Lock, Loader2, Phone, Pencil, Check, IdCard, Cake, AlertTriangle, ChevronDown, User as UserIcon, History, Activity, FileText } from 'lucide-react';
@@ -18,6 +18,13 @@ import { ProfileTabs } from '../../components/athlete/ProfileTabs';
 import type { ProfileTab } from '../../components/athlete/ProfileTabs';
 import type { RaceType, NotificationPreferences, Session } from '../../types';
 
+/**
+ * Accordéon local historique. Ne reste utilisé que pour les sections qui ont
+ * besoin d'un badge (compteur) et/ou d'une action dans l'en-tête (Séances
+ * personnelles, Palmarès) : la primitive partagée `Disclosure` (C9,
+ * src/components/ui/Disclosure.tsx) ne supporte pas ces deux props. Toutes
+ * les autres sections du profil utilisent désormais `Disclosure`.
+ */
 function Accordion({ title, icon, children, defaultOpen = false, badge, action }: {
   title: string;
   icon: React.ReactNode;
@@ -325,11 +332,7 @@ export default function Profile() {
       {tab === 'infos' && (
       <>
       {/* Informations personnelles */}
-      <Accordion
-        title="Informations"
-        icon={<UserIcon size={18} className="text-primary" />}
-        defaultOpen={false}
-      >
+      <Disclosure title="Informations" icon={<UserIcon size={18} className="text-primary" />}>
         <div className="space-y-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -435,19 +438,44 @@ export default function Profile() {
               <span className="text-xs text-neutral-400 italic">Modifiable par le coach</span>
             ) : null}
           </div>
+
+          {/* Toggle public */}
+          <div className="mt-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-neutral-900">Profil public</p>
+              <p className="text-xs text-neutral-400">Visible dans l'annuaire et la recherche par les autres athletes</p>
+            </div>
+            <button
+              onClick={async () => { await updateUserPublic(user.id, !user.is_public); await refreshUser(); }}
+              className={`w-11 h-6 rounded-full relative transition-colors ${user.is_public ? 'bg-primary' : 'bg-neutral-300'}`}
+            >
+              <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow ${user.is_public ? 'left-5.5' : 'left-0.5'}`} />
+            </button>
+          </div>
+        </div>
+      </Disclosure>
+
+      {/* Historique (VMA + seances) */}
+      <Disclosure title="Historique" icon={<History size={18} className="text-primary" />}>
+        <div className="space-y-1">
           {user.vma_history.length > 0 && (
-            <Link to="/vma-history" className="flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+            <Link to="/vma-history" className="flex items-center gap-1 text-xs text-primary hover:underline">
               <History size={12} />
               Voir l'historique VMA
             </Link>
           )}
-          <Link to="/training-history" className="flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+          <Link to="/training-history" className="flex items-center gap-1 text-xs text-primary hover:underline">
             <History size={12} />
             Historique des seances
           </Link>
+        </div>
+      </Disclosure>
 
+      {/* Coordonnees (telephone, licence, date de naissance) */}
+      <Disclosure title="Coordonnées" icon={<IdCard size={18} className="text-primary" />}>
+        <div className="space-y-1">
           {/* Phone */}
-          <div className="mt-3 flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Phone size={16} className="text-success-600" />
               <div>
@@ -612,22 +640,8 @@ export default function Profile() {
               </button>
             )}
           </div>
-
-          {/* Toggle public */}
-          <div className="mt-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-neutral-900">Profil public</p>
-              <p className="text-xs text-neutral-400">Visible dans l'annuaire et la recherche par les autres athletes</p>
-            </div>
-            <button
-              onClick={async () => { await updateUserPublic(user.id, !user.is_public); await refreshUser(); }}
-              className={`w-11 h-6 rounded-full relative transition-colors ${user.is_public ? 'bg-primary' : 'bg-neutral-300'}`}
-            >
-              <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow ${user.is_public ? 'left-5.5' : 'left-0.5'}`} />
-            </button>
-          </div>
         </div>
-      </Accordion>
+      </Disclosure>
       </>
       )}
 
@@ -830,10 +844,7 @@ export default function Profile() {
       {tab === 'account' && (
       <>
       {/* Notifications */}
-      <Accordion
-        title="Notifications"
-        icon={<Bell size={18} className="text-primary" />}
-      >
+      <Disclosure title="Notifications" icon={<Bell size={18} className="text-primary" />}>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -923,13 +934,10 @@ export default function Profile() {
             </div>
           </div>
         </div>
-      </Accordion>
+      </Disclosure>
 
       {/* Securite */}
-      <Accordion
-        title="Sécurité"
-        icon={<Lock size={18} className="text-primary" />}
-      >
+      <Disclosure title="Sécurité" icon={<Lock size={18} className="text-primary" />}>
         <div className="space-y-3">
           <p className="text-sm text-neutral-500">Modifier ton mot de passe</p>
           <input
@@ -957,13 +965,10 @@ export default function Profile() {
             Modifier
           </button>
         </div>
-      </Accordion>
+      </Disclosure>
 
       {/* Donnees personnelles */}
-      <Accordion
-        title="Données personnelles"
-        icon={<Shield size={18} className="text-primary" />}
-      >
+      <Disclosure title="Données personnelles" icon={<Shield size={18} className="text-primary" />}>
         <div className="space-y-3">
           <button
             onClick={() => {
@@ -1008,7 +1013,7 @@ export default function Profile() {
             Conforme RGPD. Tes données sont stockées de manière sécurisée.
           </p>
         </div>
-      </Accordion>
+      </Disclosure>
       </>
       )}
 
