@@ -100,7 +100,7 @@ export function useUserActions({ setUsers, setValidations, setRaceResults, setRa
       .from('avatars')
       .upload(filePath, file, { cacheControl: '3600', upsert: true });
     if (uploadError) {
-      console.error('updateUserPhoto upload error:', uploadError.message);
+      captureError('updateUserPhoto upload error', uploadError);
       return { error: uploadError.message };
     }
     if (previousPath && previousPath !== filePath) {

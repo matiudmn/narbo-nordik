@@ -174,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           link: '/coach',
         }))
       );
-      if (notifError) console.error('Notification inscription error:', notifError.message);
+      if (notifError) captureError('AuthContext.signup notify_coaches error', notifError);
     }
 
     return null;
