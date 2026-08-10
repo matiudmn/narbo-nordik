@@ -19,9 +19,12 @@
 -- ============================================================================
 -- Colonne ajoutée sans DEFAULT permanent : le code doit être un secret
 -- généré au moment du seed, jamais une valeur en dur rejouable par quiconque
--- lit ce fichier. `pgcrypto` (gen_random_bytes) est disponible par défaut sur
--- tout projet Supabase, au même titre que gen_random_uuid() déjà utilisé dans
--- le baseline.
+-- lit ce fichier. Générateur : gen_random_uuid(), fonction du COEUR de
+-- Postgres (13+), sans dépendance d'extension. La première version utilisait
+-- gen_random_bytes (pgcrypto) et a échoué en prod le 2026-08-10 : sur
+-- Supabase, pgcrypto vit dans le schéma `extensions` et n'est pas résolue
+-- sans qualification depuis une migration (l'environnement de validation
+-- PGlite l'embarquait, ce qui a masqué l'écart).
 --
 -- Idempotent : ADD COLUMN IF NOT EXISTS ne fait rien au 2e passage : l'UPDATE
 -- ne cible que les lignes encore NULL (donc no-op si déjà seedée, un rejeu ne
@@ -37,10 +40,10 @@
 ALTER TABLE public.club_settings ADD COLUMN IF NOT EXISTS invite_code text;
 
 ALTER TABLE public.club_settings ALTER COLUMN invite_code
-  SET DEFAULT upper(encode(gen_random_bytes(4), 'hex'));
+  SET DEFAULT upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8));
 
 UPDATE public.club_settings
-SET invite_code = upper(encode(gen_random_bytes(4), 'hex'))
+SET invite_code = upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8))
 WHERE invite_code IS NULL;
 
 ALTER TABLE public.club_settings ALTER COLUMN invite_code SET NOT NULL;
