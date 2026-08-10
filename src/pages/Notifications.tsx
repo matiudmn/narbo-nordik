@@ -1,18 +1,21 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Bell, CalendarPlus, Trophy, TrendingUp, Mail, Info, CheckCheck } from 'lucide-react';
+import { Bell, CalendarPlus, Trophy, TrendingUp, Mail, Info, Heart, CheckCheck } from 'lucide-react';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
 import { EmptyState } from '../components/ui';
 import type { AppNotification } from '../types';
 
-function getNotifIcon(type: AppNotification['type']) {
+// Type de retour explicite : un `case` manquant devient une erreur de compilation
+// (le switch tomberait en fin de fonction avec `undefined`).
+function getNotifIcon(type: AppNotification['type']): ReactElement {
   switch (type) {
     case 'new_session': return <CalendarPlus size={18} className="text-primary" />;
     case 'palmares': return <Trophy size={18} className="text-warning-500" />;
     case 'vma_update': return <TrendingUp size={18} className="text-success-500" />;
     case 'weekly_digest': return <Mail size={18} className="text-info-500" />;
+    case 'reaction': return <Heart size={18} className="text-danger-500" />;
     case 'system': return <Info size={18} className="text-neutral-500" />;
   }
 }
