@@ -8,6 +8,8 @@ import { getDisclosureTriggerProps, getDisclosurePanelProps, toggleDisclosure } 
 export interface DisclosureProps {
   /** Titre toujours visible, affiché dans le bouton déclencheur */
   title: string;
+  /** Icône optionnelle, affichée avant le titre */
+  icon?: ReactNode;
   /** Sous-titre optionnel, sous le titre */
   subtitle?: string;
   /** Ouvert par défaut (replié sinon) */
@@ -26,7 +28,7 @@ export interface DisclosureProps {
  * région `role="region"` labellisée par le bouton, clavier natif (le
  * `<button>` gère Espace/Entrée sans handler dédié).
  */
-export function Disclosure({ title, subtitle, defaultOpen = false, className = '', children }: DisclosureProps) {
+export function Disclosure({ title, icon, subtitle, defaultOpen = false, className = '', children }: DisclosureProps) {
   const [open, setOpen] = useState(defaultOpen);
   const id = useId();
   const triggerProps = getDisclosureTriggerProps(id, open);
@@ -40,6 +42,7 @@ export function Disclosure({ title, subtitle, defaultOpen = false, className = '
         onClick={() => setOpen(toggleDisclosure)}
         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50 transition-colors"
       >
+        {icon && <span aria-hidden="true">{icon}</span>}
         <div className="flex-1 min-w-0">
           <span className="text-sm font-semibold text-neutral-900">{title}</span>
           {subtitle && <p className="text-xs text-neutral-500 mt-0.5">{subtitle}</p>}
