@@ -201,6 +201,8 @@ export interface NotificationPreferences {
   palmares: { in_app: boolean; email: boolean };
   vma_update: { in_app: boolean; email: boolean };
   weekly_digest: { email: boolean };
+  // Jamais d'e-mail pour les kudos (cf. skip list du trigger notify_email_on_insert).
+  reaction?: { in_app: boolean };
 }
 
 export interface AppNotification {

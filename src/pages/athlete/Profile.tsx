@@ -879,6 +879,7 @@ export default function Profile() {
                 { key: 'new_session', label: 'Nouvelle seance', hasInApp: true, hasEmail: true },
                 { key: 'palmares', label: 'Palmares', hasInApp: true, hasEmail: false },
                 { key: 'vma_update', label: 'Mise a jour VMA', hasInApp: true, hasEmail: true },
+                { key: 'reaction', label: 'Kudos reçus', hasInApp: true, hasEmail: false },
                 { key: 'weekly_digest', label: 'Digest hebdo', hasInApp: false, hasEmail: true },
               ] as const).map(({ key, label, hasInApp, hasEmail }) => (
                 <div key={key} className="flex items-center justify-between">
@@ -891,17 +892,18 @@ export default function Profile() {
                           onClick={async () => {
                             if (!user) return;
                             const prefs = { ...user.notification_preferences };
-                            const current = prefs[key] as { in_app: boolean; email: boolean };
-                            (prefs as Record<string, unknown>)[key] = { ...current, in_app: !current.in_app };
+                            const current = prefs[key] as { in_app?: boolean; email?: boolean } | undefined;
+                            const enabled = current?.in_app !== false;
+                            (prefs as Record<string, unknown>)[key] = { ...current, in_app: !enabled };
                             await updateNotificationPreferences(user.id, prefs as NotificationPreferences);
                             refreshUser();
                           }}
                           className={`w-9 h-5 rounded-full relative transition-colors ${
-                            (user?.notification_preferences?.[key] as { in_app?: boolean })?.in_app ? 'bg-primary' : 'bg-neutral-300'
+                            (user?.notification_preferences?.[key] as { in_app?: boolean })?.in_app !== false ? 'bg-primary' : 'bg-neutral-300'
                           }`}
                         >
                           <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform shadow ${
-                            (user?.notification_preferences?.[key] as { in_app?: boolean })?.in_app ? 'left-4.5' : 'left-0.5'
+                            (user?.notification_preferences?.[key] as { in_app?: boolean })?.in_app !== false ? 'left-4.5' : 'left-0.5'
                           }`} />
                         </button>
                       </label>
