@@ -20,6 +20,7 @@ export type Database = {
           featured_at: string | null
           featured_validation_id: string | null
           id: string
+          invite_code: string
           race_paces: Json
           updated_at: string | null
           updated_by: string | null
@@ -29,6 +30,7 @@ export type Database = {
           featured_at?: string | null
           featured_validation_id?: string | null
           id?: string
+          invite_code?: string
           race_paces?: Json
           updated_at?: string | null
           updated_by?: string | null
@@ -38,6 +40,7 @@ export type Database = {
           featured_at?: string | null
           featured_validation_id?: string | null
           id?: string
+          invite_code?: string
           race_paces?: Json
           updated_at?: string | null
           updated_by?: string | null
@@ -211,6 +214,41 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_analyses: {
+        Row: {
+          created_at: string
+          id: string
+          input_hash: string
+          model: string
+          validation_id: string
+          verdict: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_hash: string
+          model: string
+          validation_id: string
+          verdict: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_hash?: string
+          model?: string
+          validation_id?: string
+          verdict?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_analyses_validation_id_fkey"
+            columns: ["validation_id"]
+            isOneToOne: true
+            referencedRelation: "session_validations"
             referencedColumns: ["id"]
           },
         ]
@@ -697,6 +735,15 @@ export type Database = {
       }
       increment_template_usage: {
         Args: { template_id: string }
+        Returns: undefined
+      }
+      register_profile: {
+        Args: {
+          email: string
+          firstname: string
+          invite_code: string
+          lastname: string
+        }
         Returns: undefined
       }
     }
