@@ -7,7 +7,7 @@ import { useData } from '../../contexts/DataContext';
 import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode, getAllureZones, pacePerKm, isEffortZone, blockEffortLabel } from '../../lib/calculations';
 import { useState, useRef } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
-import { useToast, Button } from '../../components/ui';
+import { useToast, Button, Disclosure } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/monitoring';
 import { motion, DUR, EASE } from '../../lib/motion';
@@ -114,6 +114,18 @@ export default function SessionDetail() {
   const paces = !hasBlocks && user?.vma && session.target_distance && session.vma_percent_min && session.vma_percent_max
     ? calculatePaces(user.vma, session.vma_percent_min, session.vma_percent_max, session.target_distance)
     : null;
+
+  // Resume d'abord, details en accordeon (C9) : le detail des blocs s'ouvre par
+  // defaut tant que la seance n'est pas terminee et validee, pour rester utile
+  // le jour J (avant/pendant la seance a venir, ou apres coup si pas encore validee).
+  const isUpcoming = new Date(session.date).getTime() > new Date().getTime();
+  const blocksDefaultOpen = isUpcoming || validation?.status !== 'done';
+
+  const hasReportDetails = !!validation && (
+    validation.distance_m != null || validation.duration_s != null || validation.elevation_m != null ||
+    validation.avg_hr != null || validation.max_hr != null || validation.rpe != null ||
+    !!validation.feedback || !!validation.attachment_path
+  );
 
   // Best-effort : demande le verdict IA à l'Edge Function analyze-validation
   // après une validation réussie. Échec silencieux (loggé), n'affecte jamais
@@ -331,50 +343,55 @@ export default function SessionDetail() {
                 {session.blocks.some(b => b.distance_meters) ? '~' : ''}{formatSeconds(calculateSessionTotalSeconds(session.blocks, user?.vma || undefined, allureZones))} au total
               </span>
             </div>
-            <div className="space-y-2">
-              {session.blocks.map(block => {
-                const zone = allureZones[block.allure] || ALLURE_ZONES[block.allure];
-                const blockType = BLOCK_TYPES[block.type];
-                const pace = user?.vma ? calculateBlockPace(user.vma, block.allure, allureZones) : null;
-                const blockDur = formatSeconds(calculateBlockTotalSeconds(block, user?.vma || undefined, allureZones));
+            <p className="text-sm text-neutral-700 mb-3">
+              {session.blocks.map(b => formatBlockSummary(b, allureZones)).join(' · ')}
+            </p>
+            <Disclosure title="Détail des blocs" subtitle="Allures personnalisées" defaultOpen={blocksDefaultOpen}>
+              <div className="space-y-2">
+                {session.blocks.map(block => {
+                  const zone = allureZones[block.allure] || ALLURE_ZONES[block.allure];
+                  const blockType = BLOCK_TYPES[block.type];
+                  const pace = user?.vma ? calculateBlockPace(user.vma, block.allure, allureZones) : null;
+                  const blockDur = formatSeconds(calculateBlockTotalSeconds(block, user?.vma || undefined, allureZones));
 
-                return (
-                  <div key={block.id} className="flex items-center gap-3 bg-white rounded-lg p-3">
-                    <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-neutral-400">{blockType.label}</span>
-                        <span className="text-xs px-1.5 py-0.5 rounded font-semibold text-white" style={{ backgroundColor: zone.color }}>
-                          {zone.label}
-                        </span>
-                      </div>
-                      <p className="text-sm font-medium text-neutral-900 mt-0.5">
-                        {formatBlockSummary(block, allureZones)}
-                        <span className="text-neutral-400 font-normal ml-2">({blockDur})</span>
-                      </p>
-                      {isEffortZone(block.allure) ? (
-                        <p className="text-xs mt-0.5" style={{ color: zone.color }}>
-                          {blockEffortLabel(block)}
-                          <span className="text-neutral-400 ml-1">(à l'effort, pas d'allure)</span>
-                        </p>
-                      ) : pace ? (
-                        <p className="text-xs mt-0.5" style={{ color: zone.color }}>
-                          {pace.paceMin} - {pace.paceMax} min/km
-                          <span className="text-neutral-400 ml-1">
-                            ({pace.speedMin.toFixed(1)}-{pace.speedMax.toFixed(1)} km/h)
+                  return (
+                    <div key={block.id} className="flex items-center gap-3 bg-white rounded-lg p-3">
+                      <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-neutral-400">{blockType.label}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded font-semibold text-white" style={{ backgroundColor: zone.color }}>
+                            {zone.label}
                           </span>
+                        </div>
+                        <p className="text-sm font-medium text-neutral-900 mt-0.5">
+                          {formatBlockSummary(block, allureZones)}
+                          <span className="text-neutral-400 font-normal ml-2">({blockDur})</span>
                         </p>
-                      ) : null}
+                        {isEffortZone(block.allure) ? (
+                          <p className="text-xs mt-0.5" style={{ color: zone.color }}>
+                            {blockEffortLabel(block)}
+                            <span className="text-neutral-400 ml-1">(à l'effort, pas d'allure)</span>
+                          </p>
+                        ) : pace ? (
+                          <p className="text-xs mt-0.5" style={{ color: zone.color }}>
+                            {pace.paceMin} - {pace.paceMax} min/km
+                            <span className="text-neutral-400 ml-1">
+                              ({pace.speedMin.toFixed(1)}-{pace.speedMax.toFixed(1)} km/h)
+                            </span>
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-            {user?.vma && (
-              <p className="text-xs text-neutral-400 mt-3">
-                Calcule pour ta VMA de {user.vma} km/h
-              </p>
-            )}
+                  );
+                })}
+              </div>
+              {user?.vma && (
+                <p className="text-xs text-neutral-400 mt-3">
+                  Calcule pour ta VMA de {user.vma} km/h
+                </p>
+              )}
+            </Disclosure>
           </div>
         )}
 
@@ -439,10 +456,11 @@ export default function SessionDetail() {
         {/* Description */}
         {session.description && (
           <div className="p-4">
-            <h2 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Consignes</h2>
-            <div className="text-neutral-700 whitespace-pre-line leading-relaxed">
-              {session.description}
-            </div>
+            <Disclosure title="Consignes">
+              <div className="text-neutral-700 whitespace-pre-line leading-relaxed">
+                {session.description}
+              </div>
+            </Disclosure>
           </div>
         )}
 
@@ -514,59 +532,65 @@ export default function SessionDetail() {
                   )}
                 </div>
               )}
-              {(validation.distance_m != null || validation.duration_s != null || validation.elevation_m != null || validation.avg_hr != null || validation.max_hr != null || validation.rpe != null) && (
-                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3 text-sm">
-                  {validation.distance_m != null && (
-                    <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{(validation.distance_m / 1000).toFixed(1)}</span> km</span>
+              {hasReportDetails && (
+                <Disclosure title="Compte-rendu détaillé" className="mt-3 text-left">
+                  {(validation.distance_m != null || validation.duration_s != null || validation.elevation_m != null || validation.avg_hr != null || validation.max_hr != null || validation.rpe != null) && (
+                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm">
+                      {validation.distance_m != null && (
+                        <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{(validation.distance_m / 1000).toFixed(1)}</span> km</span>
+                      )}
+                      {validation.duration_s != null && (
+                        <span className="font-semibold text-neutral-900">{formatSeconds(validation.duration_s)}</span>
+                      )}
+                      {pacePerKm(validation.distance_m, validation.duration_s) && (
+                        <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{pacePerKm(validation.distance_m, validation.duration_s)}</span> /km</span>
+                      )}
+                      {validation.elevation_m != null && (
+                        <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{validation.elevation_m}</span> m D+</span>
+                      )}
+                      {validation.avg_hr != null && (
+                        <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{validation.avg_hr}</span> bpm</span>
+                      )}
+                      {validation.max_hr != null && (
+                        <span className="text-neutral-600">max <span className="font-semibold text-neutral-900">{validation.max_hr}</span></span>
+                      )}
+                      {validation.rpe != null && (
+                        <span className="text-neutral-600">RPE <span className="font-semibold text-neutral-900">{validation.rpe}</span>/10</span>
+                      )}
+                    </div>
                   )}
-                  {validation.duration_s != null && (
-                    <span className="font-semibold text-neutral-900">{formatSeconds(validation.duration_s)}</span>
+                  {validation.feedback && (
+                    <p className="text-sm text-neutral-600 mt-3 italic text-center">"{validation.feedback}"</p>
                   )}
-                  {pacePerKm(validation.distance_m, validation.duration_s) && (
-                    <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{pacePerKm(validation.distance_m, validation.duration_s)}</span> /km</span>
+                  {validation.attachment_path && (
+                    <div className="text-center mt-2">
+                      <a
+                        href={getAttachmentUrl(validation.attachment_path)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                      >
+                        <Paperclip size={14} />
+                        Voir la piece jointe
+                      </a>
+                    </div>
                   )}
-                  {validation.elevation_m != null && (
-                    <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{validation.elevation_m}</span> m D+</span>
-                  )}
-                  {validation.avg_hr != null && (
-                    <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{validation.avg_hr}</span> bpm</span>
-                  )}
-                  {validation.max_hr != null && (
-                    <span className="text-neutral-600">max <span className="font-semibold text-neutral-900">{validation.max_hr}</span></span>
-                  )}
-                  {validation.rpe != null && (
-                    <span className="text-neutral-600">RPE <span className="font-semibold text-neutral-900">{validation.rpe}</span>/10</span>
-                  )}
-                </div>
-              )}
-              {validation.feedback && (
-                <p className="text-sm text-neutral-600 mt-3 italic text-center">"{validation.feedback}"</p>
-              )}
-              {validation.attachment_path && (
-                <div className="text-center mt-2">
-                  <a
-                    href={getAttachmentUrl(validation.attachment_path)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                  >
-                    <Paperclip size={14} />
-                    Voir la piece jointe
-                  </a>
-                </div>
+                </Disclosure>
               )}
               {validationReactions.filter(r => r.validation_id === validation?.id).length > 0 && (
-                <div className="flex flex-wrap justify-center gap-1.5 mt-3">
-                  {Array.from(new Set(validationReactions.filter(r => r.validation_id === validation?.id).map(r => r.emoji))).map(emoji => {
-                    const count = validationReactions.filter(r => r.validation_id === validation?.id && r.emoji === emoji).length;
-                    return (
-                      <span key={emoji} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-sm">
-                        <span aria-hidden="true">{emoji}</span>
-                        {count > 1 && <span className="text-xs font-medium text-neutral-600">{count}</span>}
-                      </span>
-                    );
-                  })}
-                </div>
+                <Disclosure title="Réactions" className="mt-3 text-left">
+                  <div className="flex flex-wrap justify-center gap-1.5">
+                    {Array.from(new Set(validationReactions.filter(r => r.validation_id === validation?.id).map(r => r.emoji))).map(emoji => {
+                      const count = validationReactions.filter(r => r.validation_id === validation?.id && r.emoji === emoji).length;
+                      return (
+                        <span key={emoji} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-sm">
+                          <span aria-hidden="true">{emoji}</span>
+                          {count > 1 && <span className="text-xs font-medium text-neutral-600">{count}</span>}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </Disclosure>
               )}
               <AnalysisCard validationId={validation.id} pending={analysisPending} />
               <div className="text-center mt-3">
