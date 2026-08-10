@@ -31,9 +31,9 @@ type NotifTypeRow = {
 // Chaque rôle ne liste que les types qu'il peut réellement recevoir (cf. triggers notify_*
 // et destinataires des fonctions weekly-digest / vma-missing-reminder).
 export const NOTIF_TYPES_ATHLETE: NotifTypeRow[] = [
-  { key: 'new_session', label: 'Nouvelle seance', hasInApp: true, hasEmail: true },
+  { key: 'new_session', label: 'Nouvelle séance', hasInApp: true, hasEmail: true },
   { key: 'palmares', label: 'Palmarès', hasInApp: true, hasEmail: false },
-  { key: 'vma_update', label: 'Mise a jour VMA', hasInApp: true, hasEmail: true },
+  { key: 'vma_update', label: 'Mise à jour VMA', hasInApp: true, hasEmail: true },
   { key: 'reaction', label: 'Kudos reçus', hasInApp: true, hasEmail: false },
   { key: 'weekly_digest', label: 'Digest hebdo', hasInApp: false, hasEmail: true },
 ];
