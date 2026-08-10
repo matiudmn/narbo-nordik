@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence, DUR, EASE } from '../../lib/motion';
+import { motion, AnimatePresence, DUR, EASE, useReducedMotion } from '../../lib/motion';
 import { Card } from '../ui';
 
 interface ZoneAccordionProps {
@@ -41,6 +41,7 @@ export function ZoneAccordion({
   const [open, setOpen] = useState(defaultOpen);
   const panelId = `zone-${id}-panel`;
   const buttonId = `zone-${id}-button`;
+  const reduceMotion = useReducedMotion();
 
   return (
     <Card padding="none" className="overflow-hidden">
@@ -85,8 +86,16 @@ export function ZoneAccordion({
             role="region"
             aria-labelledby={buttonId}
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1, transition: { duration: DUR.base, ease: EASE.out } }}
-            exit={{ height: 0, opacity: 0, transition: { duration: DUR.fast, ease: EASE.out } }}
+            animate={{
+              height: 'auto',
+              opacity: 1,
+              transition: reduceMotion ? { duration: 0.01 } : { duration: DUR.base, ease: EASE.out },
+            }}
+            exit={{
+              height: 0,
+              opacity: 0,
+              transition: reduceMotion ? { duration: 0.01 } : { duration: DUR.fast, ease: EASE.out },
+            }}
             style={{ overflow: 'hidden' }}
           >
             <div className="px-4 pb-4 pt-1 border-t border-neutral-100">
