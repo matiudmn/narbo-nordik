@@ -6,8 +6,8 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  // priceless-kare-a8eb2d : worktree git imbriqué (sessions Claude parallèles), hors périmètre du lint
-  globalIgnores(['dist', 'priceless-kare-a8eb2d']),
+  // .claude : worktrees git imbriqués (sessions Claude parallèles/workflows), hors périmètre du lint
+  globalIgnores(['dist', '.claude']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -27,17 +27,5 @@ export default defineConfig([
     // éclater les hooks toucherait ~50 fichiers importeurs pour un gain DX nul.
     files: ['src/contexts/**/*.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
-  },
-  {
-    // eslint-plugin-react-hooks 7.0.1 -> 7.1.1 (requis pour le support ESLint 10) affine la
-    // détection de ces 3 règles et fait remonter 7 cas préexistants (ShareSheet, Home,
-    // useSessionAutosave, coach/Import) hors périmètre de cette montée d'outillage.
-    // Passées en warn en attendant une revue dédiée (cf. flagsPourMatthieu du lot outillage).
-    files: ['**/*.{ts,tsx}'],
-    rules: {
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/purity': 'warn',
-      'react-hooks/set-state-in-render': 'warn',
-    },
   },
 ])

@@ -32,11 +32,21 @@ export default function ShareSheet({ open, onClose, filenameBase, shareTitle, sh
   const [pdfBusy, setPdfBusy] = useState(false);
   const [sharing, setSharing] = useState(false);
 
+  // Reinitialise l'etat de capture a l'ouverture. Derivation pendant le rendu
+  // (comparaison a la valeur precedente de `open`) plutot qu'un setState direct
+  // dans l'effect : aucun effet de bord externe, uniquement de l'etat React.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setStatus('generating'); setBlob(null); setPngUrl(null);
+    }
+  }
+
   // Capture a l'ouverture (apres rendu de la carte + chargement du logo).
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setStatus('generating'); setBlob(null); setPngUrl(null);
     const t = setTimeout(async () => {
       try {
         if (!cardRef.current) return;
