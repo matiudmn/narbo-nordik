@@ -8,12 +8,12 @@
 
 > ### État au 10/08/2026
 >
-> - **C6 — Upload photo / screenshot validation** : LIVRÉ, avec OCR en plus du scope initial.
-> - **C8 — Bridge WhatsApp** : LIVRÉ (architecture client, 3 surfaces dont Palmarès).
-> - **C7 — IA Claude, analyse de séance** : LIVRÉ EN VERSION MISTRAL (verdict par validation via la fonction `analyze-validation`, décision RGPD : pas d'Anthropic).
-> - **C9 — UX double persona** : LIVRÉ (Disclosure + SessionDetail/Profile/Suivi).
+> - **C6 (upload photo / screenshot validation)** : LIVRÉ, avec OCR en plus du scope initial.
+> - **C8 (Bridge WhatsApp)** : LIVRÉ (architecture client, 3 surfaces dont Palmarès).
+> - **C7 (IA, analyse de séance)** : LIVRÉ EN VERSION MISTRAL (verdict par validation via la fonction `analyze-validation`, décision RGPD : pas d'Anthropic).
+> - **C9 (UX double persona)** : LIVRÉ (Disclosure + SessionDetail/Profile/Suivi).
 > - **C1, C2, C4, C5** (refacto multi-provider, Coros, Suunto, sync auto) : ABANDONNÉS. Strava a été supprimé le 06/06 et l'OCR (cf. C6) couvre le besoin.
-> - **C3 — Garmin Connect** : ABANDONNÉ (décision Matthieu du 10/08). La candidature n'a jamais été déposée.
+> - **C3 (Garmin Connect)** : ABANDONNÉ (décision Matthieu du 10/08). La candidature n'a jamais été déposée.
 >
 > Le corps du document ci-dessous n'est pas réécrit (valeur historique) ; seuls les titres de chantier portent désormais un préfixe `[LIVRÉ]`, `[LIVRÉ MISTRAL]` ou `[ABANDONNÉ]`.
 
