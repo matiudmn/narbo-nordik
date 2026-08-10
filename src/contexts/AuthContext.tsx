@@ -125,11 +125,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return signupWithInviteCode(
       {
         signUp: (params) => supabase.auth.signUp(params),
+        signIn: (params) => supabase.auth.signInWithPassword(params),
         registerProfile: async (args) => supabase.rpc('register_profile', args),
+        loadProfile,
       },
       { email, password, firstname, lastname, inviteCode },
     );
-  }, []);
+  }, [loadProfile]);
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();

@@ -20,7 +20,10 @@ export interface AuthCallError {
 
 export interface SignupDeps {
   signUp: (creds: { email: string; password: string }) => Promise<{ data: { user: unknown }; error: AuthCallError | null }>;
+  signIn: (creds: { email: string; password: string }) => Promise<{ error: AuthCallError | null }>;
   registerProfile: (args: { invite_code: string; firstname: string; lastname: string; email: string }) => Promise<{ error: AuthCallError | null }>;
+  /** Relit le profil et le pose dans le contexte (get_own_profile -> setUser). */
+  loadProfile: () => Promise<void>;
 }
 
 export interface SignupCredentials {
@@ -31,18 +34,27 @@ export interface SignupCredentials {
   inviteCode: string;
 }
 
+// Codes renvoyes par GoTrue quand l'adresse a deja un compte Auth
+// (@supabase/auth-js, lib/error-codes.d.ts). Repli sur le message brut pour
+// les instances qui ne renvoient pas encore de code : ce chemin est le pivot
+// de la reprise d'inscription ci-dessous, il ne doit pas dependre d'une seule
+// forme de reponse.
+function isEmailAlreadyRegistered(error: AuthCallError): boolean {
+  if (error.code === 'user_already_exists' || error.code === 'email_exists') return true;
+  return /already registered/i.test(error.message);
+}
+
 // Mappe l'erreur brute du RPC register_profile vers un message FR affichable.
 // - 42501 (insufficient_privilege) : levee volontairement par le RPC pour un
 //   code d'invitation invalide (cf. 20260731130000_invite_code.sql), message
 //   deja propre en FR, on le garde tel quel.
-// - 23505 (unique_violation) : la ligne `users` existe deja (ex. reprise
-//   d'une inscription partielle : signUp avait deja reussi une 1re fois),
-//   message dedie pour rediriger vers la connexion.
+// - 23505 (unique_violation) : plus traite ici, l'appelant le lit comme un
+//   succes (voir signupWithInviteCode) et l'ancien message dedie
+//   ("Ton compte existe deja, connecte-toi.") n'a donc plus d'appelant.
 // - reste : erreur Postgres brute non destinee a l'ecran, detail envoye a
 //   captureError, message generique affiche.
 function mapRegisterProfileError(error: AuthCallError): string {
   if (error.code === '42501') return error.message;
-  if (error.code === '23505') return 'Ton compte existe déjà, connecte-toi.';
   captureError('AuthContext.signup register_profile error', error);
   return 'Une erreur est survenue lors de la création du compte, réessaie plus tard.';
 }
@@ -51,15 +63,44 @@ export async function signupWithInviteCode(deps: SignupDeps, creds: SignupCreden
   const { email, password, firstname, lastname, inviteCode } = creds;
 
   const { data, error } = await deps.signUp({ email, password });
-  if (error) return error.message;
-  if (!data.user) return 'Erreur lors de la creation du compte';
+  if (error) {
+    if (!isEmailAlreadyRegistered(error)) return error.message;
+
+    // Adresse deja prise : le cas de loin le plus probable ici est une
+    // inscription interrompue par un code d'invitation mal recopie (compte
+    // Auth cree, profil jamais insere), pas un doublon. On rejoue donc la
+    // connexion avec les identifiants saisis : si elle passe, c'est bien le
+    // proprietaire de l'adresse qui reprend son inscription, et le RPC
+    // ci-dessous peut creer le profil manquant. Sinon, l'adresse est vraiment
+    // celle de quelqu'un d'autre (ou le mot de passe differe) et on le dit.
+    const { error: signInError } = await deps.signIn({ email, password });
+    if (signInError) {
+      return "Cette adresse est déjà utilisée. Connecte-toi, ou réinitialise ton mot de passe si tu l'as oublié.";
+    }
+  } else if (!data.user) {
+    return 'Erreur lors de la creation du compte';
+  }
 
   // Insert direct remplace par le RPC register_profile (SECURITY DEFINER) :
   // il verifie le code d'invitation cote base avant de creer le profil (la
   // policy INSERT de `users` n'a plus de branche self-service depuis
   // 20260731130000_invite_code.sql).
   const { error: rpcError } = await deps.registerProfile({ invite_code: inviteCode, firstname, lastname, email });
-  if (rpcError) return mapRegisterProfileError(rpcError);
+  // 23505 (unique_violation) : la ligne `users` existe deja pour cet
+  // auth.uid(). L'appelant est donc a la fois authentifie et deja inscrit (son
+  // inscription avait en fait abouti, seule l'entree dans l'app avait echoue) :
+  // on continue comme apres un succes plutot que de l'arreter sur une erreur.
+  // Ce code ne peut arriver que par la reprise ci-dessus, un compte Auth tout
+  // juste cree n'ayant par construction aucune ligne `users`.
+  if (rpcError && rpcError.code !== '23505') return mapRegisterProfileError(rpcError);
+
+  // Rechargement explicite, sinon le compte est cree mais l'ecran reste sur le
+  // formulaire : signUp emet SIGNED_IN AVANT de rendre la main, donc le
+  // loadProfile() declenche par onAuthStateChange (AuthContext) tourne alors
+  // que la ligne `users` n'existe pas encore et retombe sur setUser(null).
+  // C'est ce setUser qui fait entrer l'athlete dans l'app (AppRoutes rend
+  // <Login /> tant que `user` est null).
+  await deps.loadProfile();
 
   // La notification aux coachs (type `new_athlete`) est posée par le trigger
   // `on_new_athlete` (20260810140000) : il couvre aussi la création par un
