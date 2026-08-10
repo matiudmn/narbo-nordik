@@ -55,11 +55,11 @@ export async function pngBlobToPdf(blob: Blob, filename: string): Promise<void> 
   pdf.save(filename);
 }
 
-/** Le navigateur peut-il partager un fichier image (Web Share API niveau 2) ? */
-export function canShareImage(blob: Blob): boolean {
+/** Le navigateur peut-il partager ce fichier (Web Share API niveau 2) ? */
+export function canShareFile(blob: Blob, filename: string, mimeType: string): boolean {
   if (typeof navigator === 'undefined' || typeof navigator.canShare !== 'function') return false;
   try {
-    const file = new File([blob], 'seance.png', { type: 'image/png' });
+    const file = new File([blob], filename, { type: mimeType });
     return navigator.canShare({ files: [file] });
   } catch {
     return false;
@@ -69,13 +69,15 @@ export function canShareImage(blob: Blob): boolean {
 export type ShareOutcome = 'shared' | 'cancelled' | 'unavailable';
 
 /**
- * Partage natif d'une image. 'shared' si envoye, 'cancelled' si l'utilisateur
+ * Partage natif d'un fichier. 'shared' si envoye, 'cancelled' si l'utilisateur
  * annule la feuille de partage (ne doit declencher aucun fallback), 'unavailable'
  * si l'API est absente ou echoue reellement (fallback telechargement).
  */
-export async function shareImage(blob: Blob, filename: string, opts: { title?: string; text?: string }): Promise<ShareOutcome> {
-  if (!canShareImage(blob)) return 'unavailable';
-  const file = new File([blob], filename, { type: 'image/png' });
+export async function shareFile(
+  blob: Blob, filename: string, mimeType: string, opts: { title?: string; text?: string }
+): Promise<ShareOutcome> {
+  if (!canShareFile(blob, filename, mimeType)) return 'unavailable';
+  const file = new File([blob], filename, { type: mimeType });
   try {
     await navigator.share({ files: [file], title: opts.title, text: opts.text });
     return 'shared';
@@ -83,6 +85,16 @@ export async function shareImage(blob: Blob, filename: string, opts: { title?: s
     if (err instanceof Error && err.name === 'AbortError') return 'cancelled';
     return 'unavailable';
   }
+}
+
+/** Le navigateur peut-il partager un fichier image (Web Share API niveau 2) ? */
+export function canShareImage(blob: Blob): boolean {
+  return canShareFile(blob, 'seance.png', 'image/png');
+}
+
+/** Partage natif d'une image. Voir `shareFile`. */
+export function shareImage(blob: Blob, filename: string, opts: { title?: string; text?: string }): Promise<ShareOutcome> {
+  return shareFile(blob, filename, 'image/png', opts);
 }
 
 /** Lien WhatsApp pre-rempli (ouvre WhatsApp, le coach choisit le groupe). */

@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { Card, Button, EmptyState, useToast } from '../../components/ui';
 import { getAllureZones } from '../../lib/calculations';
-import { downloadBlob } from '../../lib/shareExport';
+import { downloadBlob, shareFile } from '../../lib/shareExport';
 import { buildSessionExportRows, toCsvContent, exportFilename } from '../../lib/spreadsheetExport';
 
 type PeriodMode = 'mois' | 'plage';
@@ -16,6 +16,8 @@ const PREVIEW_LIMIT = 20;
 
 const inputClass =
   'px-3 py-2 border border-neutral-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20';
+
+const dateRangeErrorId = 'export-date-range-error';
 
 /** `yyyy-MM` vers une date locale. Repli sur le mois courant si la saisie est vide ou invalide. */
 function parseMonth(value: string): Date {
@@ -80,10 +82,13 @@ export default function Export() {
     setDeselectedGroupIds(prev => (prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]));
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const csv = toCsvContent(rows, columnGroups);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    downloadBlob(blob, exportFilename(start, end));
+    const filename = exportFilename(start, end);
+    const outcome = await shareFile(blob, filename, 'text/csv', { title: 'Export séances Narbo Nordik' });
+    if (outcome === 'cancelled') return;
+    if (outcome === 'unavailable') downloadBlob(blob, filename);
     toast.success(`${rows.length} séance${rows.length > 1 ? 's' : ''} exportée${rows.length > 1 ? 's' : ''}`);
   };
 
@@ -146,16 +151,32 @@ export default function Export() {
             <div className="flex flex-wrap items-end gap-3">
               <div>
                 <label htmlFor="export-from" className="block text-xs text-neutral-500 mb-1">Du</label>
-                <input id="export-from" type="date" value={from} onChange={e => setFrom(e.target.value)} className={inputClass} />
+                <input
+                  id="export-from"
+                  type="date"
+                  value={from}
+                  onChange={e => setFrom(e.target.value)}
+                  className={inputClass}
+                  aria-invalid={isRangeInverted}
+                  aria-describedby={isRangeInverted ? dateRangeErrorId : undefined}
+                />
               </div>
               <div>
                 <label htmlFor="export-to" className="block text-xs text-neutral-500 mb-1">Au</label>
-                <input id="export-to" type="date" value={to} onChange={e => setTo(e.target.value)} className={inputClass} />
+                <input
+                  id="export-to"
+                  type="date"
+                  value={to}
+                  onChange={e => setTo(e.target.value)}
+                  className={inputClass}
+                  aria-invalid={isRangeInverted}
+                  aria-describedby={isRangeInverted ? dateRangeErrorId : undefined}
+                />
               </div>
             </div>
           )}
 
-          <p className="text-xs text-neutral-500 mt-3">
+          <p id={dateRangeErrorId} className="text-xs text-neutral-500 mt-3">
             {isRangeInverted ? (
               <span className="text-danger-600 font-medium">
                 La date de fin précède la date de début.
@@ -172,9 +193,11 @@ export default function Export() {
         {/* GROUPES */}
         <Card>
           <fieldset>
-            <legend className="flex items-center gap-2 font-bold text-neutral-900 mb-3">
-              <Users size={18} className="text-primary" aria-hidden="true" />
-              Groupes
+            <legend>
+              <h2 className="flex items-center gap-2 font-bold text-neutral-900 mb-3">
+                <Users size={18} className="text-primary" aria-hidden="true" />
+                Groupes
+              </h2>
             </legend>
 
             {groups.length === 0 ? (
@@ -269,7 +292,7 @@ export default function Export() {
                       <td className="px-4 py-2 whitespace-nowrap text-neutral-600">{row.type}</td>
                       <td className="px-4 py-2 whitespace-nowrap text-neutral-600">{row.groupLabel}</td>
                       <td className="px-4 py-2 text-neutral-500 min-w-[18rem]">
-                        {row.content || <span className="text-neutral-300">texte libre</span>}
+                        {row.content || row.description || <span className="text-neutral-300">texte libre</span>}
                       </td>
                       <td className="px-4 py-2 text-right font-medium text-neutral-900">{row.validationsTotal}</td>
                     </tr>
