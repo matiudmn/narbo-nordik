@@ -14,15 +14,15 @@ export function useClubSettingsActions(
   { clubSettings, setClubSettings }: ClubSettingsActionsState,
   authUserId: string | undefined
 ) {
-  const updateClubSettings = useCallback(async (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>): Promise<{ error: string | null }> => {
-    const payload = asClubSettingsPayload(racePaces, allureZones, authUserId);
+  const updateClubSettings = useCallback(async (racePaces: Record<string, RacePaceConfig>, allureZones: Record<string, AllureZoneConfig>, inviteCode?: string): Promise<{ error: string | null }> => {
+    const payload = asClubSettingsPayload(racePaces, allureZones, authUserId, inviteCode);
     if (clubSettings) {
       const { error } = await supabase.from('club_settings').update(payload).eq('id', clubSettings.id);
       if (error) {
         captureError('updateClubSettings error', error);
         return { error: error.message };
       }
-      setClubSettings(prev => prev ? { ...prev, race_paces: racePaces, allure_zones: allureZones } : prev);
+      setClubSettings(prev => prev ? { ...prev, race_paces: racePaces, allure_zones: allureZones, ...(inviteCode !== undefined ? { invite_code: inviteCode } : {}) } : prev);
     } else {
       const { data, error } = await supabase.from('club_settings').insert(payload).select().single();
       if (error || !data) {
