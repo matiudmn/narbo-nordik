@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Narbo Nordik, guide de démarrage</title>
+<style>
+  @page {
+    size: A4;
+    margin: 16mm 15mm 14mm 15mm;
+  }
+  @page :first {
+    margin: 0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #000000;
+    --accent: #6CCBE6;
+    --accent-text: #14748F;
+    --accent-wash: #EAF7FB;
+    --grey-900: #171717;
+    --grey-600: #525252;
+    --grey-400: #A3A3A3;
+    --grey-200: #E5E5E5;
+    --grey-50: #FAFAFA;
+  }
+
+  html {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10.2pt;
+    line-height: 1.5;
+    color: var(--grey-900);
+    hyphens: none;
+  }
+
+  p { margin-bottom: 7pt; }
+  strong { font-weight: 650; color: var(--ink); }
+
+  /* ---------- Couverture ---------- */
+  .cover {
+    height: 297mm;
+    background: var(--ink);
+    color: #fff;
+    padding: 30mm 22mm 20mm 22mm;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+    position: relative;
+  }
+  .cover__logo {
+    width: 30mm;
+    height: 30mm;
+    border-radius: 50%;
+    margin-bottom: 16mm;
+  }
+  .cover__eyebrow {
+    font-size: 9.5pt;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 8mm;
+  }
+  .cover__title {
+    font-size: 40pt;
+    line-height: 1.04;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-bottom: 7mm;
+  }
+  .cover__title em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .cover__sub {
+    font-size: 13pt;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.66);
+    max-width: 118mm;
+    font-weight: 300;
+  }
+  .cover__rule {
+    width: 26mm;
+    height: 3px;
+    background: var(--accent);
+    margin: 11mm 0;
+  }
+  .cover__toc {
+    margin-top: auto;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding-top: 7mm;
+  }
+  .cover__toc h2 {
+    font-size: 8.5pt;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+    margin-bottom: 5mm;
+  }
+  .cover__toc ol {
+    list-style: none;
+    columns: 2;
+    column-gap: 12mm;
+  }
+  .cover__toc li {
+    font-size: 10.5pt;
+    color: rgba(255,255,255,0.85);
+    padding: 2.2mm 0;
+    display: flex;
+    gap: 4mm;
+  }
+  .cover__toc li span {
+    color: var(--accent);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Structure des pages ---------- */
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  .step-head {
+    display: flex;
+    align-items: baseline;
+    gap: 5mm;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 3.5mm;
+    margin-bottom: 6mm;
+  }
+  .step-head__num {
+    font-size: 27pt;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .step-head__txt h1 {
+    font-size: 17pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+  .step-head__txt p {
+    font-size: 9.6pt;
+    color: var(--grey-600);
+    margin: 1.5mm 0 0;
+  }
+
+  h2.sec {
+    font-size: 11.5pt;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 7mm 0 3mm;
+    padding-left: 3mm;
+    border-left: 3px solid var(--accent);
+  }
+  h2.sec:first-of-type { margin-top: 0; }
+
+  h3.sub {
+    font-size: 10pt;
+    font-weight: 650;
+    margin: 5mm 0 2mm;
+  }
+
+  /* ---------- Listes numérotées ---------- */
+  ol.steps {
+    list-style: none;
+    counter-reset: s;
+    margin: 3mm 0 0;
+  }
+  ol.steps > li {
+    counter-increment: s;
+    position: relative;
+    padding-left: 9mm;
+    padding-bottom: 4.5mm;
+    margin-bottom: 0.5mm;
+  }
+  ol.steps > li::before {
+    content: counter(s);
+    position: absolute;
+    left: 0;
+    top: -0.3mm;
+    width: 6mm;
+    height: 6mm;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    font-size: 8.5pt;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  ol.steps > li::after {
+    content: "";
+    position: absolute;
+    left: 3mm;
+    top: 6.6mm;
+    bottom: 1mm;
+    width: 1px;
+    background: var(--grey-200);
+  }
+  ol.steps > li:last-child { padding-bottom: 0; }
+  ol.steps > li:last-child::after { display: none; }
+  ol.steps > li p:last-child { margin-bottom: 0; }
+
+  ul.bullets {
+    list-style: none;
+    margin: 2mm 0 6mm;
+  }
+  ul.bullets li {
+    position: relative;
+    padding-left: 5mm;
+    margin-bottom: 2.2mm;
+  }
+  ul.bullets li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 1.9mm;
+    width: 2mm;
+    height: 2mm;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  ul.bullets li:last-child { margin-bottom: 0; }
+
+  /* ---------- Blocs ---------- */
+  .code-box {
+    background: var(--ink);
+    color: #fff;
+    border-radius: 4mm;
+    padding: 6mm 7mm;
+    margin: 4mm 0 5mm;
+    text-align: center;
+  }
+  .code-box__label {
+    font-size: 8.5pt;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 3mm;
+  }
+  .code-box__code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 27pt;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    line-height: 1;
+    margin-bottom: 3mm;
+  }
+  .code-box__hint {
+    font-size: 9pt;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.45;
+    max-width: 105mm;
+    margin: 0 auto;
+  }
+
+  .note {
+    background: var(--accent-wash);
+    border-radius: 3mm;
+    padding: 4.5mm 5mm;
+    margin: 4mm 0 5mm;
+    font-size: 9.6pt;
+    line-height: 1.48;
+  }
+  .note__t {
+    font-weight: 700;
+    color: var(--accent-text);
+    display: block;
+    margin-bottom: 1.5mm;
+    font-size: 9pt;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .note p:last-child { margin-bottom: 0; }
+
+  .warn {
+    border: 1.5px solid var(--ink);
+    border-radius: 3mm;
+    padding: 4.5mm 5mm;
+    margin: 4mm 0 5mm;
+    font-size: 9.6pt;
+    line-height: 1.48;
+  }
+  .warn__t {
+    font-weight: 700;
+    display: block;
+    margin-bottom: 1.5mm;
+    font-size: 9pt;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .warn p:last-child { margin-bottom: 0; }
+
+  .btn {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--ink);
+    font-weight: 650;
+    font-size: 9.4pt;
+    padding: 1.2mm 3.5mm;
+    border-radius: 2mm;
+    white-space: nowrap;
+  }
+  .ui {
+    display: inline-block;
+    background: var(--grey-50);
+    border: 1px solid var(--grey-200);
+    border-radius: 1.5mm;
+    padding: 0.4mm 1.8mm;
+    font-size: 9.4pt;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* ---------- Barre de navigation illustrée ---------- */
+  .nav {
+    display: flex;
+    border: 1px solid var(--grey-200);
+    border-radius: 3mm;
+    overflow: hidden;
+    margin: 4mm 0 5mm;
+  }
+  .nav__item {
+    flex: 1;
+    text-align: center;
+    padding: 4mm 1mm 3.5mm;
+    border-right: 1px solid var(--grey-200);
+  }
+  .nav__item:last-child { border-right: none; }
+  .nav__item svg {
+    width: 5.5mm;
+    height: 5.5mm;
+    stroke: var(--grey-400);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .nav__item--on svg { stroke: var(--ink); }
+  .nav__item span {
+    display: block;
+    font-size: 7.6pt;
+    font-weight: 650;
+    color: var(--grey-400);
+    margin-top: 1.5mm;
+  }
+  .nav__item--on span { color: var(--ink); }
+
+  .nav-legend { margin: 0 0 5mm; }
+  .nav-legend dt {
+    font-weight: 700;
+    font-size: 9.8pt;
+    margin-top: 6mm;
+    padding-left: 3mm;
+    border-left: 3px solid var(--grey-200);
+  }
+  .nav-legend dt:first-child { margin-top: 0; }
+  .nav-legend dd {
+    font-size: 9.6pt;
+    color: var(--grey-600);
+    line-height: 1.48;
+    margin-top: 1.2mm;
+    padding-left: 3mm;
+  }
+
+  /* ---------- Deux colonnes ---------- */
+  .cols {
+    display: flex;
+    gap: 7mm;
+    margin: 4mm 0 2mm;
+  }
+  .cols > div { flex: 1; }
+  .cols h3 {
+    font-size: 10pt;
+    font-weight: 700;
+    padding-bottom: 2mm;
+    margin-bottom: 3mm;
+    border-bottom: 1.5px solid var(--ink);
+  }
+
+  /* ---------- Tableau FAQ ---------- */
+  .faq { margin-top: 2mm; }
+  .faq__q {
+    font-weight: 700;
+    font-size: 10pt;
+    margin-top: 5mm;
+    margin-bottom: 1.2mm;
+  }
+  .faq__q:first-child { margin-top: 0; }
+  .faq__a {
+    font-size: 9.7pt;
+    color: var(--grey-600);
+    line-height: 1.47;
+  }
+
+  .end {
+    margin-top: 8mm;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 4mm;
+    padding: 7mm 8mm;
+  }
+  .end h2 {
+    font-size: 14pt;
+    font-weight: 700;
+    margin-bottom: 3mm;
+    letter-spacing: -0.02em;
+  }
+  .end h2 span { color: var(--accent); }
+  .end p {
+    color: rgba(255,255,255,0.72);
+    font-size: 10pt;
+    margin-bottom: 0;
+    max-width: 130mm;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== COUVERTURE =================== -->
+<section class="cover">
+  <img class="cover__logo" src="../../public/logo-club.png" alt="">
+  <div class="cover__eyebrow">Section running et trail</div>
+  <h1 class="cover__title">Bienvenue<br>dans l'appli<br><em>du club.</em></h1>
+  <div class="cover__rule"></div>
+  <p class="cover__sub">
+    Ton programme, tes allures, ton suivi. Tout est là, dans ta poche.
+    Ce guide te fait faire le tour en quinze minutes, montre en main.
+  </p>
+
+  <div class="cover__toc">
+    <h2>Au programme</h2>
+    <ol>
+      <li><span>1</span> Créer ton compte</li>
+      <li><span>2</span> L'installer sur ton téléphone</li>
+      <li><span>3</span> Le tour du propriétaire</li>
+      <li><span>4</span> Valider ta première séance</li>
+      <li><span>5</span> VMA et allures</li>
+      <li><span>6</span> En cas de pépin</li>
+    </ol>
+  </div>
+</section>
+
+<!-- =================== ÉTAPE 1 =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">1</div>
+    <div class="step-head__txt">
+      <h1>Créer ton compte</h1>
+      <p>Trois minutes, une adresse e-mail, et le code du club.</p>
+    </div>
+  </div>
+
+  <p>
+    L'appli est réservée aux membres du Narbo Nordik. Pour éviter que n'importe qui s'y
+    inscrive, la création de compte demande un <strong>code d'invitation</strong>, partagé
+    par le club. Le voici.
+  </p>
+
+  <div class="code-box">
+    <div class="code-box__label">Code d'invitation du club</div>
+    <div class="code-box__code">{{CODE_INVITATION}}</div>
+    <div class="code-box__hint">
+      Il ne contient que des chiffres et les lettres A à F. Le caractère rond est donc
+      toujours un zéro, jamais la lettre O. Majuscules, minuscules, espaces : aucune
+      importance, l'appli s'en arrange.
+    </div>
+  </div>
+
+  <h2 class="sec">Pas à pas</h2>
+  <ol class="steps">
+    <li>
+      <p>
+        Ouvre <strong>narbo-nordik.vercel.app</strong> dans le navigateur de ton téléphone.
+        Sur iPhone, utilise <strong>Safari</strong> : ça te servira à l'étape 2.
+      </p>
+    </li>
+    <li>
+      <p>En bas de l'écran de connexion, appuie sur <span class="ui">Rejoindre Narbo Nordik</span>.</p>
+    </li>
+    <li>
+      <p>
+        Renseigne ton <strong>prénom</strong>, ton <strong>nom</strong>, ton
+        <strong>e-mail</strong> et choisis un <strong>mot de passe</strong> d'au moins
+        six caractères. Prends-en un dont tu te souviendras, ou note-le.
+      </p>
+    </li>
+    <li>
+      <p>
+        Dans le dernier champ, <strong>Code d'invitation</strong>, saisis le code ci-dessus.
+        Relis-le avant de valider.
+      </p>
+    </li>
+    <li>
+      <p>
+        Appuie sur <span class="btn">S'inscrire</span>. Tu entres directement dans
+        l'appli, ton compte est créé.
+      </p>
+    </li>
+  </ol>
+
+  <div class="note">
+    <span class="note__t">Aucun e-mail à attendre</span>
+    <p>
+      Il n'y a pas de mail de confirmation à valider, pas de lien à cliquer. Une fois
+      inscrit, tu es dedans. Si tu attends un e-mail, tu attendras longtemps.
+    </p>
+  </div>
+
+  <h2 class="sec">Et si l'écran te paraît vide ?</h2>
+  <p>
+    C'est normal, et ça ne durera pas. Deux informations sont renseignées par le coach,
+    pas par toi : ta <strong>VMA</strong> et ton <strong>groupe d'entraînement</strong>.
+    Tant qu'il ne les a pas saisies, le bloc de tes allures n'apparaît pas sur l'accueil,
+    et tu ne vois que les séances ouvertes à tout le club.
+  </p>
+  <p>
+    Préviens ton coach que tu viens de t'inscrire, il reçoit aussi une notification de son
+    côté. En attendant, tu peux déjà compléter ton profil, ajouter tes résultats de course
+    et parcourir l'annuaire du club.
+  </p>
+</section>
+
+<!-- =================== ÉTAPE 2 =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">2</div>
+    <div class="step-head__txt">
+      <h1>L'installer sur ton téléphone</h1>
+      <p>Pour l'ouvrir d'un geste, comme une vraie appli.</p>
+    </div>
+  </div>
+
+  <p>
+    L'appli s'utilise dans le navigateur, mais tu peux l'ajouter à ton écran d'accueil.
+    Elle prend alors sa propre icône, s'ouvre en plein écran sans barre d'adresse, et tu
+    n'as plus à retaper l'adresse à chaque fois. C'est deux minutes, et ça change tout au
+    quotidien. L'icône s'appellera <strong>Narbo Nordik</strong>. Sur iPhone, le nom
+    proposé est modifiable avant de valider, si celui qui s'affiche te paraît trop long.
+  </p>
+
+  <div class="cols">
+    <div>
+      <h3>Sur iPhone et iPad</h3>
+      <p style="font-size:9.5pt;color:var(--grey-600);margin-bottom:3mm;">
+        À faire depuis <strong>Safari</strong>. Depuis Chrome ou Firefox, l'option n'existe pas.
+      </p>
+      <ol class="steps">
+        <li><p>Ouvre l'appli dans Safari.</p></li>
+        <li><p>Appuie sur le bouton <strong>Partager</strong>, le carré avec la flèche vers le haut, en bas de l'écran.</p></li>
+        <li><p>Fais défiler le menu et choisis <strong>Sur l'écran d'accueil</strong>.</p></li>
+        <li><p>Appuie sur <strong>Ajouter</strong>, en haut à droite.</p></li>
+      </ol>
+    </div>
+    <div>
+      <h3>Sur Android</h3>
+      <p style="font-size:9.5pt;color:var(--grey-600);margin-bottom:3mm;">
+        Depuis <strong>Chrome</strong>, le plus simple.
+      </p>
+      <ol class="steps">
+        <li><p>Ouvre l'appli dans Chrome.</p></li>
+        <li><p>Un bandeau <strong>Installer Narbo Nordik</strong> apparaît en bas de l'écran : appuie sur <span class="ui">Installer</span>.</p></li>
+        <li><p>Si le bandeau ne s'affiche pas, ouvre le menu des trois points en haut à droite, puis <strong>Installer l'application</strong> ou <strong>Ajouter à l'écran d'accueil</strong>.</p></li>
+        <li><p>Confirme.</p></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="warn">
+    <span class="warn__t">Pas de notification sur ton téléphone</span>
+    <p>
+      L'appli ne t'envoie rien quand elle est fermée, ni sur iPhone ni sur Android.
+      Les nouvelles séances, les mises à jour de VMA et les réactions de tes coéquipiers
+      t'attendent sagement derrière l'icône <strong>cloche</strong>, en haut de l'écran,
+      avec une pastille rouge quand il y a du neuf. Prends le réflexe d'ouvrir l'appli
+      en début de semaine pour voir le programme. Pour le reste, le groupe WhatsApp
+      continue de faire le travail.
+    </p>
+    <p>
+      Tu croiseras un réglage <strong>Notifications push</strong> dans ton profil, onglet
+      Compte. Il ne sert à rien pour l'instant : ce n'est pas toi, c'est le chantier
+      d'après.
+    </p>
+  </div>
+
+  <h2 class="sec">Se connecter les fois suivantes</h2>
+  <p>
+    Tu restes connecté d'une fois sur l'autre. Si l'appli te redemande tes identifiants,
+    ce sont l'<strong>e-mail</strong> et le <strong>mot de passe</strong> choisis à
+    l'inscription. Pas le code d'invitation : tu n'en as besoin qu'au moment de créer ton
+    compte, jamais pour te reconnecter.
+  </p>
+</section>
+
+<!-- =================== ÉTAPE 3 =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">3</div>
+    <div class="step-head__txt">
+      <h1>Le tour du propriétaire</h1>
+      <p>Cinq onglets en bas de l'écran, et c'est tout.</p>
+    </div>
+  </div>
+
+  <div class="nav">
+    <div class="nav__item nav__item--on">
+      <svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+      <span>Home</span>
+    </div>
+    <div class="nav__item">
+      <svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>
+      <span>Suivi</span>
+    </div>
+    <div class="nav__item">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-5"/><path d="M12 16V8"/><path d="M17 16v-3"/></svg>
+      <span>Club</span>
+    </div>
+    <div class="nav__item">
+      <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+      <span>Athletes</span>
+    </div>
+    <div class="nav__item">
+      <svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Profil</span>
+    </div>
+  </div>
+
+  <dl class="nav-legend">
+    <dt>Home, ton point de départ</dt>
+    <dd>
+      Ta VMA et tes allures de référence en haut, ton assiduité juste en dessous, puis
+      <strong>Ta semaine d'entraînement</strong>. Les flèches te font passer d'une semaine
+      à l'autre. Appuie sur une séance pour l'ouvrir. Entre ton assiduité et la liste des
+      séances, le bouton <span class="ui">Préparer ta prochaine course</span> prépare un
+      message pour le coach quand tu vises une épreuve précise.
+    </dd>
+
+    <dt>Suivi, ton bilan</dt>
+    <dd>
+      Mois par mois : combien de séances tu as validées, si les objectifs étaient atteints,
+      et comment tu t'es senti. Le lien <span class="ui">Voir le calendrier annuel</span>
+      déplie ta régularité sur toute la saison. Tout se remplit au fur et à mesure que tu
+      valides tes séances.
+    </dd>
+
+    <dt>Club, la vitrine</dt>
+    <dd>
+      Les chiffres collectifs du Narbo Nordik et les derniers résultats en compétition.
+      C'est la page à montrer quand on te demande ce que vaut ton club. Sur chaque
+      résultat, un cœur, le <strong>Nordik</strong>, te permet de féliciter un coéquipier.
+      C'est gratuit et ça fait toujours son effet.
+    </dd>
+
+    <dt>Athletes, l'annuaire</dt>
+    <dd>
+      Tous les membres, avec leur groupe et leurs allures. Pratique pour trouver quelqu'un
+      qui court au même rythme que toi. Si tu désactives l'option
+      <strong>Profil public</strong>, tu disparais de cet annuaire pour les autres athlètes,
+      mais toi et ton coach continuez de voir ta fiche.
+    </dd>
+
+    <dt>Profil, tes réglages</dt>
+    <dd>
+      Ta photo est tout en haut, au-dessus des onglets, quel que soit l'onglet ouvert.
+      Ensuite, trois onglets. <strong>Infos</strong> pour tes coordonnées, ta licence et ta
+      date de naissance, qui détermine ta catégorie FFA. <strong>Séances</strong> pour tes
+      sorties perso et ton palmarès. <strong>Compte</strong> pour tes notifications, ton
+      mot de passe et tes données, dans cet ordre.
+    </dd>
+  </dl>
+
+  <h2 class="sec">En haut de l'écran</h2>
+  <p>
+    Le bandeau du haut regroupe, de gauche à droite, la <strong>loupe</strong> pour chercher
+    un membre ou une séance, la <strong>bulle</strong> qui ouvre le groupe WhatsApp du club,
+    la <strong>cloche</strong> de tes notifications, le
+    <strong>point d'interrogation</strong> qui mène au centre d'aide, ta
+    <strong>photo</strong> qui ouvre ton profil, et tout au bout la
+    <strong>flèche de sortie</strong> qui te déconnecte sans rien demander. Évite celle-là,
+    tu devrais retaper ton mot de passe.
+  </p>
+
+  <div class="note">
+    <span class="note__t">Sur ordinateur, ça change de place</span>
+    <p>
+      Cette description est celle du téléphone. Sur un grand écran, les onglets du bas et
+      le bandeau du haut laissent la place à un menu vertical, sur la gauche. Le contenu,
+      lui, est identique.
+    </p>
+  </div>
+</section>
+
+<!-- =================== ÉTAPE 4 =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">4</div>
+    <div class="step-head__txt">
+      <h1>Valider ta première séance</h1>
+      <p>Le seul geste qui compte vraiment.</p>
+    </div>
+  </div>
+
+  <p>
+    Si tu ne devais retenir qu'une chose de ce guide, c'est celle-ci. Valider tes séances,
+    c'est ce qui fait vivre ton suivi, ton assiduité, et ce qui permet au coach d'ajuster
+    l'entraînement. Ça prend dix secondes après la sortie.
+  </p>
+
+  <ol class="steps">
+    <li>
+      <p>
+        Depuis <strong>Home</strong>, appuie sur la séance que tu viens de faire. Tu peux
+        aussi la valider directement depuis la liste, avec le bouton
+        <span class="btn">J'ai fait ma séance</span> qui apparaît sur les séances passées.
+      </p>
+    </li>
+    <li>
+      <p>
+        Dans le détail de la séance, appuie sur <span class="btn">J'ai fait ma séance</span>.
+      </p>
+    </li>
+    <li>
+      <p>
+        Réponds à <strong>Objectif atteint ?</strong> en choisissant
+        <span class="ui">Oui</span>, <span class="ui">Partiel</span> ou
+        <span class="ui">Non</span>. Sois honnête, personne ne te note.
+      </p>
+    </li>
+    <li>
+      <p>
+        Réponds à <strong>Sensations ?</strong> avec <span class="ui">Excellentes</span>,
+        <span class="ui">Bonnes</span> ou <span class="ui">Mauvaises</span>.
+      </p>
+    </li>
+    <li>
+      <p>
+        Facultatif mais précieux : la section <strong>Mes chiffres (optionnel)</strong>
+        accueille ta distance, ta durée, ton dénivelé, ta fréquence cardiaque et ton
+        ressenti sur dix. L'allure au kilomètre se calcule toute seule. Tu peux même
+        photographier l'écran de ta montre, l'appli lit les chiffres à ta place, sauf le
+        ressenti qui reste à toi.
+      </p>
+    </li>
+    <li>
+      <p>
+        Ajoute un mot sur ta sortie si tu veux, une photo si le cœur t'en dit, puis
+        <span class="btn">Enregistrer</span>. C'est plié.
+      </p>
+    </li>
+  </ol>
+
+  <div class="note">
+    <span class="note__t">Rien n'est gravé dans le marbre</span>
+    <p>
+      Tu t'es trompé de bouton, ou tu veux ajouter tes chiffres plus tard ? Rouvre la
+      séance : sous le bloc vert « Séance validée ! », un petit lien
+      <strong>Modifier</strong> te laisse tout reprendre, autant de fois que nécessaire.
+    </p>
+  </div>
+
+</section>
+
+<!-- =================== ÉTAPE 5 =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">5</div>
+    <div class="step-head__txt">
+      <h1>VMA et allures</h1>
+      <p>Deux minutes de théorie, pour ne plus jamais courir au hasard.</p>
+    </div>
+  </div>
+
+  <p>
+    La <strong>VMA</strong>, vitesse maximale aérobie, c'est la vitesse à laquelle ton
+    organisme consomme le maximum d'oxygène. Elle se mesure sur un test, en général sur
+    piste. C'est le point de repère à partir duquel toutes tes allures d'entraînement sont
+    calculées.
+  </p>
+  <p>
+    Concrètement : le coach écrit une séance en pourcentages d'effort, et l'appli traduit
+    ces pourcentages en minutes par kilomètre <strong>pour toi</strong>. Deux athlètes
+    ouvrant la même séance n'y lisent pas les mêmes allures. C'est tout l'intérêt, et
+    c'est ce qui évite au débutant de partir trop vite comme au confirmé de s'ennuyer.
+  </p>
+
+  <h2 class="sec">Tes allures de référence</h2>
+  <p>
+    Elles s'affichent sur l'accueil, sous ta VMA, dès que le coach l'a renseignée.
+  </p>
+  <ul class="bullets">
+    <li><strong>AER</strong>, aérobie léger : la plus lente de toutes, celle de l'échauffement et de la récupération.</li>
+    <li><strong>EF</strong>, endurance fondamentale : l'allure où tu peux tenir une conversation. La base de tout, et celle qu'on néglige le plus.</li>
+    <li><strong>SV1</strong> et <strong>SV2</strong>, les deux seuils : ça pique, mais ça tient. Le terrain du progrès.</li>
+    <li><strong>AS42</strong>, <strong>AS21</strong>, <strong>AS10</strong>, <strong>AS5</strong> : tes allures de course, respectivement sur marathon, semi, 10 km et 5 km.</li>
+    <li><strong>VMA</strong> : l'effort maximal, réservé aux intervalles courts.</li>
+  </ul>
+
+  <div class="note">
+    <span class="note__t">Pourquoi tes allures bougent</span>
+    <p>
+      Les pourcentages de VMA associés à chaque allure sont réglés par le coach pour
+      l'ensemble du club, et ils varient en plus selon ton niveau de VMA. C'est pour ça que
+      ton endurance fondamentale et celle d'un coéquipier plus rapide ne tombent pas au
+      même pourcentage. Si le coach ajuste ces réglages, ou s'il met ta VMA à jour après un
+      test, toutes tes allures se recalculent d'un coup, partout dans l'appli, y compris
+      sur les séances déjà publiées. Rien à faire de ton côté.
+    </p>
+  </div>
+
+  <h2 class="sec">Suivre ta progression</h2>
+  <p>
+    Chaque mise à jour de ta VMA est archivée avec sa date et son motif. Depuis
+    <strong>Profil</strong>, onglet <strong>Infos</strong>, section
+    <strong>Historique</strong>, le lien <span class="ui">Voir l'historique VMA</span>
+    ouvre la courbe de ton évolution. Il apparaît dès ton premier test enregistré.
+  </p>
+  <p>
+    Ta VMA est saisie par le coach, et par lui seul. C'est volontaire : elle conditionne
+    l'intégralité de ton entraînement, elle ne s'improvise pas. Si tu penses qu'elle n'est
+    plus à jour, parles-en, un test se programme facilement.
+  </p>
+</section>
+
+<!-- =================== ÉTAPE 6 =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">6</div>
+    <div class="step-head__txt">
+      <h1>En cas de pépin</h1>
+      <p>Mot de passe oublié, et autres classiques.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">J'ai oublié mon mot de passe</h2>
+  <ol class="steps">
+    <li><p>Sur l'écran de connexion, appuie sur <span class="ui">Mot de passe oublié ?</span></p></li>
+    <li>
+      <p>
+        Saisis l'adresse e-mail de ton compte, puis <span class="btn">Envoyer le lien</span>.
+        <strong>Relis bien l'adresse</strong> : l'appli confirme l'envoi même si tu t'es
+        trompé de lettre, et dans ce cas aucun mail ne part.
+      </p>
+    </li>
+    <li><p>Ouvre le mail reçu et clique sur le lien. Regarde aussi dans les indésirables.</p></li>
+    <li>
+      <p>
+        Choisis ton nouveau mot de passe, six caractères minimum, confirme-le, puis
+        <span class="btn">Enregistrer le nouveau mot de passe</span>. Tu es reconnecté
+        dans la foulée.
+      </p>
+    </li>
+  </ol>
+
+  <div class="warn">
+    <span class="warn__t">Le lien ne s'utilise qu'une fois</span>
+    <p>
+      Il expire au bout d'un moment. Si tu tombes sur un message d'erreur, souvent en
+      anglais, c'est simplement que le lien a déjà servi ou qu'il est périmé :
+      redemande un lien neuf. Évite d'enchaîner les demandes à la minute, l'envoi est
+      limité. Si rien n'arrive après une dizaine de minutes, préviens le coach plutôt que
+      de recliquer dix fois.
+    </p>
+  </div>
+
+  <h2 class="sec">Je veux juste changer mon mot de passe</h2>
+  <p>
+    Quand tu es déjà connecté, va dans <strong>Profil</strong>, onglet
+    <strong>Compte</strong>, section <strong>Sécurité</strong>. Saisis le nouveau mot de
+    passe, confirme-le, appuie sur <span class="ui">Modifier</span>. On ne te redemande pas
+    l'ancien : ne laisse pas ton téléphone déverrouillé n'importe où.
+  </p>
+
+  <h2 class="sec">Utiliser l'appli sur plusieurs appareils</h2>
+  <p>
+    Rien à faire de particulier : ouvre l'appli sur ton ordinateur ou ta tablette et
+    connecte-toi avec les mêmes identifiants. Tes séances, tes validations et ton suivi
+    sont les mêmes partout. Pense simplement à recharger la page pour voir sur un appareil
+    ce que tu viens de faire sur l'autre.
+  </p>
+</section>
+
+<!-- =================== FAQ =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">?</div>
+    <div class="step-head__txt">
+      <h1>Les questions qu'on nous pose</h1>
+      <p>Celles qui reviennent à chaque nouvelle vague d'inscriptions.</p>
+    </div>
+  </div>
+
+  <div class="faq">
+    <p class="faq__q">Le code d'invitation ne passe pas.</p>
+    <p class="faq__a">
+      Neuf fois sur dix, c'est un zéro pris pour un O. Le code n'utilise que des chiffres
+      et les lettres A à F. Recopie-le depuis le message WhatsApp plutôt que de le retaper.
+      S'il refuse encore, écris dans le groupe avant de multiplier les tentatives.
+    </p>
+
+    <p class="faq__q">Mon écran d'accueil est vide, il n'y a aucune séance.</p>
+    <p class="faq__a">
+      Tant que le coach ne t'a pas placé dans un groupe, tu ne vois que les séances ouvertes
+      à tout le club. Signale-toi, c'est réglé en deux clics de son côté.
+    </p>
+
+    <p class="faq__q">Je ne vois pas mes allures.</p>
+    <p class="faq__a">
+      Le bloc n'apparaît qu'une fois ta VMA renseignée par le coach. Sans test récent,
+      demande-lui quand se tient le prochain test.
+    </p>
+
+    <p class="faq__q">Je me suis trompé dans une validation.</p>
+    <p class="faq__a">
+      Rouvre la séance et appuie sur le petit lien <strong>Modifier</strong>, sous le bloc
+      vert. Tu peux corriger autant de fois que nécessaire.
+    </p>
+
+    <p class="faq__q">Qui voit mes informations ?</p>
+    <p class="faq__a">
+      Le coach voit tes données d'entraînement, toujours. Pour les autres membres, c'est
+      toi qui décides : l'interrupteur <strong>Profil public</strong>, dans Profil, onglet
+      Infos, fait apparaître ou disparaître ta fiche entière de l'annuaire et de la
+      recherche des autres athlètes. Toi, tu continues de te voir. Et tu peux exporter ou
+      supprimer toutes tes données depuis l'onglet Compte.
+    </p>
+
+    <p class="faq__q">Il me reste une question.</p>
+    <p class="faq__a">
+      Le point d'interrogation en haut de l'écran ouvre le centre d'aide, qui détaille
+      chaque écran. Sinon, le groupe WhatsApp, toujours.
+    </p>
+  </div>
+
+  <div class="end">
+    <h2>Maintenant, <span>on court.</span></h2>
+    <p>
+      L'appli n'a qu'un seul but : que tu saches quoi faire à l'entraînement, et que tu
+      voies tes progrès. Le reste, c'est du bitume et de la garrigue. On se voit à
+      l'entraînement.
+    </p>
+  </div>
+</section>
+
+</body>
+</html>
