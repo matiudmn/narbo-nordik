@@ -201,7 +201,7 @@ export function useDataBootstrap(authUser: User | null, setters: DataBootstrapSe
     if (p.data) setPreparations(p.data.map(toPreparation));
     if (up.data) setUserPreparations(up.data);
     if (cs.data) setClubSettings(toClubSettings(cs.data));
-    else if (cs.error && cs.error.code !== 'PGRST116') console.error('club_settings fetch error:', cs.error.message);
+    else if (cs.error && cs.error.code !== 'PGRST116') captureError('bootstrap.club_settings fetch error', cs.error);
     setOffline({ isOffline: false, cachedAt: null });
 
     // Snapshot best effort du groupe bloquant : ne bloque jamais l'affichage,

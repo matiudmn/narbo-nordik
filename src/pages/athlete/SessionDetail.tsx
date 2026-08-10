@@ -456,7 +456,7 @@ export default function SessionDetail() {
         {/* Description */}
         {session.description && (
           <div className="p-4">
-            <Disclosure title="Consignes">
+            <Disclosure title="Consignes" headingLevel={2}>
               <div className="text-neutral-700 whitespace-pre-line leading-relaxed">
                 {session.description}
               </div>
@@ -533,7 +533,7 @@ export default function SessionDetail() {
                 </div>
               )}
               {hasReportDetails && (
-                <Disclosure title="Compte-rendu détaillé" className="mt-3 text-left">
+                <Disclosure title="Compte-rendu détaillé" headingLevel={2} className="mt-3 text-left">
                   {(validation.distance_m != null || validation.duration_s != null || validation.elevation_m != null || validation.avg_hr != null || validation.max_hr != null || validation.rpe != null) && (
                     <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm">
                       {validation.distance_m != null && (
@@ -578,7 +578,7 @@ export default function SessionDetail() {
                 </Disclosure>
               )}
               {validationReactions.filter(r => r.validation_id === validation?.id).length > 0 && (
-                <Disclosure title="Réactions" className="mt-3 text-left">
+                <Disclosure title="Réactions" headingLevel={2} className="mt-3 text-left">
                   <div className="flex flex-wrap justify-center gap-1.5">
                     {Array.from(new Set(validationReactions.filter(r => r.validation_id === validation?.id).map(r => r.emoji))).map(emoji => {
                       const count = validationReactions.filter(r => r.validation_id === validation?.id && r.emoji === emoji).length;

@@ -82,6 +82,12 @@ export default defineConfig({
     }),
   ],
   build: {
+    modulePreload: {
+      // chart-vendor (~69 Ko gzip) n'est importé que par deux pages lazy
+      // (ClubProfile, VmaHistory) : il ne doit pas être modulepreloadé à
+      // chaque chargement de page, seulement chargé au moment du lazy import.
+      resolveDependencies: (_filename, deps) => deps.filter(dep => !dep.includes('chart-vendor')),
+    },
     rollupOptions: {
       output: {
         // Split heavy libs into their own chunks so the initial bundle

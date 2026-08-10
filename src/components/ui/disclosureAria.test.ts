@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getDisclosureTriggerProps, getDisclosurePanelProps, toggleDisclosure } from './disclosureAria';
+import { getDisclosureTriggerProps, getDisclosurePanelProps, toggleDisclosure, DISCLOSURE_HEADING_TAGS } from './disclosureAria';
 
 // NOTE : le repo n'a pas encore de fondation de test de composants React
 // (pas de @testing-library/react en dépendance, environnement vitest en
@@ -67,5 +67,15 @@ describe('getDisclosurePanelProps', () => {
     const trigger = getDisclosureTriggerProps('abc', false);
     const panel = getDisclosurePanelProps('abc');
     expect(trigger.id).toBe(panel['aria-labelledby']);
+  });
+});
+
+describe('DISCLOSURE_HEADING_TAGS', () => {
+  it('associe chaque niveau 2 à 6 à sa balise hN correspondante', () => {
+    expect(DISCLOSURE_HEADING_TAGS[2]).toBe('h2');
+    expect(DISCLOSURE_HEADING_TAGS[3]).toBe('h3');
+    expect(DISCLOSURE_HEADING_TAGS[4]).toBe('h4');
+    expect(DISCLOSURE_HEADING_TAGS[5]).toBe('h5');
+    expect(DISCLOSURE_HEADING_TAGS[6]).toBe('h6');
   });
 });

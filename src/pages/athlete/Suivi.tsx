@@ -151,7 +151,7 @@ export default function Suivi() {
       )}
 
       {!showingAthletes && (
-        <Disclosure title="Voir le calendrier annuel" className="mb-4">
+        <Disclosure title="Voir le calendrier annuel" headingLevel={2} className="mb-4">
           <YearlyHeatmap sessions={heatmapSessions} />
         </Disclosure>
       )}
@@ -223,6 +223,7 @@ export default function Suivi() {
         <Disclosure
           title={showingAthletes ? 'Voir le détail des retours athlètes' : 'Voir le détail des séances'}
           subtitle={`${currentList.length} séance${currentList.length > 1 ? 's' : ''}`}
+          headingLevel={2}
         >
           <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
             {currentList.map(({ session, validation, athlete }) => {
