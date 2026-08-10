@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  blockIntensityLabel, formatBlocksForExport, resolveSessionGroups,
+  blockIntensityLabel, formatBlocksForExport,
   buildSessionExportRows, toCsv, toCsvContent, exportFilename,
 } from './spreadsheetExport';
 import type { Session, SessionBlock, SessionValidation, User, Group } from '../types';
@@ -122,38 +122,6 @@ describe('formatBlocksForExport', () => {
 
   it('rend une chaîne vide sans blocs', () => {
     expect(formatBlocksForExport([])).toBe('');
-  });
-});
-
-describe('resolveSessionGroups', () => {
-  const groupIdByUserId = new Map<string, string | null>([
-    ['u1', 'g1'], ['u2', 'g1'], ['u3', 'g2'], ['u4', null],
-  ]);
-
-  it('utilise group_id quand il est renseigné', () => {
-    const resolved = resolveSessionGroups(session({ group_id: 'g2' }), [], groupIdByUserId);
-    expect(resolved).toEqual({ groupIds: ['g2'], attribution: 'explicite' });
-  });
-
-  it('reconstitue le rattachement par les validations quand group_id est NULL', () => {
-    const validations = [validation({ user_id: 'u1' }), validation({ id: 'v2', user_id: 'u3' })];
-    const resolved = resolveSessionGroups(session(), validations, groupIdByUserId);
-    expect(resolved.attribution).toBe('reconstituee');
-    expect([...resolved.groupIds].sort()).toEqual(['g1', 'g2']);
-  });
-
-  it('compte aussi les séances manquées dans la reconstitution', () => {
-    const validations = [validation({ user_id: 'u3', status: 'missed' })];
-    expect(resolveSessionGroups(session(), validations, groupIdByUserId)).toEqual({
-      groupIds: ['g2'], attribution: 'reconstituee',
-    });
-  });
-
-  it('ignore les validateurs sans groupe', () => {
-    const validations = [validation({ user_id: 'u4' })];
-    expect(resolveSessionGroups(session(), validations, groupIdByUserId)).toEqual({
-      groupIds: [], attribution: 'aucune',
-    });
   });
 });
 

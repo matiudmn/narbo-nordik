@@ -71,21 +71,22 @@ export default function SessionHistory() {
         if (prep) return { ...row, audience: { tone: 'warning' as const, label: prep.name } };
         if (group) return { ...row, audience: { tone: 'info' as const, label: group.name } };
         if (!row.groupsInferred) return { ...row, audience: { tone: 'neutral' as const, label: 'Tous' } };
-        // Lister les groupes déduits n'a d'intérêt que s'ils ne sont pas tous
-        // là : le détail chiffré est déjà dans les colonnes.
+        // Lister les groupes reconstitués n'a d'intérêt que s'ils ne sont pas
+        // tous là : le détail chiffré est déjà dans les colonnes.
         const names =
           row.groupIds.length === groups.length
             ? 'Tous les groupes'
             : row.groupIds
                 .map((id) => groups.find((g) => g.id === id)?.name)
-                .filter(Boolean)
+                .filter((name): name is string => Boolean(name))
+                .sort()
                 .join(', ');
         return {
           ...row,
           audience: {
             tone: 'neutral' as const,
-            label: `${names} (déduit)`,
-            title: "Aucun groupe n'est enregistré sur cette séance : l'audience est déduite des validations.",
+            label: `${names} (reconstitué)`,
+            title: "Aucun groupe n'est enregistré sur cette séance : l'audience est reconstituée à partir des validations.",
           },
         };
       }),
@@ -339,7 +340,7 @@ export default function SessionHistory() {
       <p className="text-xs text-neutral-400">
         La participation est reconstituée à partir des validations, chaque athlète étant compté dans
         son groupe actuel. Les séances créées avant mai 2026 n'ont pas de groupe enregistré en base :
-        leur audience est déduite des validations et signalée « déduit ».
+        leur audience est reconstituée à partir des validations et signalée « reconstitué ».
       </p>
     </div>
   );

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { computeSessionParticipation, sumParticipationByGroup, NO_GROUP_KEY } from './sessionGroups';
+import {
+  computeSessionParticipation, resolveSessionGroups, sumParticipationByGroup, NO_GROUP_KEY,
+} from './sessionGroups';
 import type { Session, SessionValidation, SessionStatus } from '../types';
 
 function session(over: Partial<Session>): Session {
@@ -121,6 +123,51 @@ describe('computeSessionParticipation', () => {
 
     expect(rows[0].doneTotal).toBe(1);
     expect(rows[1].doneTotal).toBe(2);
+  });
+
+  it("attribue la séance au groupe sur une validation 'missed' seule, sans la compter en participation", () => {
+    const [row] = computeSessionParticipation(
+      [session({ id: 'mars' })],
+      [validation('mars', 'a-ren', 'missed')],
+      USERS,
+    );
+
+    expect(row.groupIds).toEqual(['g-renforce']);
+    expect(row.groupsInferred).toBe(true);
+    expect(row.doneByGroup).toEqual({});
+    expect(row.doneTotal).toBe(0);
+  });
+});
+
+describe('resolveSessionGroups', () => {
+  const groupIdByUserId = new Map<string, string | null>([
+    ['u1', 'g1'], ['u2', 'g1'], ['u3', 'g2'], ['u4', null],
+  ]);
+
+  it('utilise group_id quand il est renseigné', () => {
+    const resolved = resolveSessionGroups(session({ group_id: 'g2' }), [], groupIdByUserId);
+    expect(resolved).toEqual({ groupIds: ['g2'], attribution: 'explicite' });
+  });
+
+  it('reconstitue le rattachement par les validations quand group_id est NULL', () => {
+    const validations = [validation('s1', 'u1'), validation('s1', 'u3')];
+    const resolved = resolveSessionGroups(session({}), validations, groupIdByUserId);
+    expect(resolved.attribution).toBe('reconstituee');
+    expect([...resolved.groupIds].sort()).toEqual(['g1', 'g2']);
+  });
+
+  it('compte aussi les séances manquées dans la reconstitution', () => {
+    const validations = [validation('s1', 'u3', 'missed')];
+    expect(resolveSessionGroups(session({}), validations, groupIdByUserId)).toEqual({
+      groupIds: ['g2'], attribution: 'reconstituee',
+    });
+  });
+
+  it('ignore les validateurs sans groupe', () => {
+    const validations = [validation('s1', 'u4')];
+    expect(resolveSessionGroups(session({}), validations, groupIdByUserId)).toEqual({
+      groupIds: [], attribution: 'aucune',
+    });
   });
 });
 

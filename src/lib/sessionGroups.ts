@@ -6,13 +6,18 @@
  * group_id NULL alors qu'elles ont bien été courues par les trois groupes. La
  * seule trace exploitable est `session_validations` : le groupe du validant.
  *
- * Règle appliquée ici : la participation par groupe est TOUJOURS déduite des
- * validations (c'est la réalité du terrain), `group_id` ne servant qu'à savoir
- * si l'audience a été posée explicitement par le coach ou reconstituée.
+ * Deux règles distinctes, à ne pas confondre :
+ * - Attribution (quels groupes ont eu cette séance au programme) : déduite de
+ *   TOUTES les validations, quel que soit leur statut. Une validation
+ *   `missed` prouve que la séance était bien au programme du groupe, au même
+ *   titre qu'une validation `done`.
+ * - Compteurs de participation (combien d'athlètes l'ont faite) : seules les
+ *   validations `done` comptent.
  *
  * Limite assumée : le groupe retenu est le groupe ACTUEL de l'athlète, la base
  * ne conservant pas d'historique d'appartenance. Un athlète ayant changé de
- * groupe depuis est donc compté dans son groupe d'aujourd'hui.
+ * groupe depuis est donc compté dans son groupe d'aujourd'hui, indépendamment
+ * de `session.group_id`.
  */
 
 import type { Session, SessionValidation } from '../types';
@@ -25,6 +30,20 @@ interface MinimalUser {
   group_id: string | null;
 }
 
+/** Rattachement d'une séance à un ou plusieurs groupes. */
+export type GroupAttribution =
+  /** `sessions.group_id` renseigné : rattachement porté par la donnée. */
+  | 'explicite'
+  /** `group_id` NULL mais des validations existent : rattachement déduit. */
+  | 'reconstituee'
+  /** Aucun rattachement déductible : séance « pour tous ». */
+  | 'aucune';
+
+export interface ResolvedGroups {
+  groupIds: string[];
+  attribution: GroupAttribution;
+}
+
 export interface SessionParticipation {
   session: Session;
   /** Participations (validations `done`) par group_id, NO_GROUP_KEY si l'athlète n'a pas de groupe. */
@@ -32,11 +51,36 @@ export interface SessionParticipation {
   doneTotal: number;
   /**
    * Groupes rattachés à la séance : `session.group_id` s'il est renseigné,
-   * sinon les groupes ayant au moins une participation.
+   * sinon les groupes ayant au moins une validation (`done` ou `missed`).
    */
   groupIds: string[];
   /** `groupIds` vient des validations et non de `session.group_id`. */
   groupsInferred: boolean;
+}
+
+/**
+ * Résout le ou les groupes d'une séance.
+ *
+ * Les séances antérieures à mai 2026 ont toutes `group_id` NULL sans être
+ * globales pour autant (le rattachement n'existait pas encore). On le
+ * reconstitue par les groupes des athlètes qui ont une validation sur la
+ * séance : toutes issues confondues, car une séance marquée « manquée » était
+ * au programme du groupe au même titre qu'une séance faite.
+ */
+export function resolveSessionGroups(
+  session: Session,
+  sessionValidations: SessionValidation[],
+  groupIdByUserId: Map<string, string | null>,
+): ResolvedGroups {
+  if (session.group_id) return { groupIds: [session.group_id], attribution: 'explicite' };
+
+  const ids = new Set<string>();
+  for (const validation of sessionValidations) {
+    const groupId = groupIdByUserId.get(validation.user_id);
+    if (groupId) ids.add(groupId);
+  }
+  if (ids.size === 0) return { groupIds: [], attribution: 'aucune' };
+  return { groupIds: [...ids], attribution: 'reconstituee' };
 }
 
 export function computeSessionParticipation(
@@ -54,10 +98,13 @@ export function computeSessionParticipation(
   });
 
   return sessions.map((session) => {
+    const sessionValidations = validationsBySession.get(session.id) ?? [];
+    const resolved = resolveSessionGroups(session, sessionValidations, groupByUser);
+
     const doneByGroup: Record<string, number> = {};
     let doneTotal = 0;
 
-    (validationsBySession.get(session.id) ?? []).forEach((v) => {
+    sessionValidations.forEach((v) => {
       if (v.status !== 'done') return;
       // Athlète inconnu (compte supprimé) ou sans groupe : même colonne.
       const key = groupByUser.get(v.user_id) ?? NO_GROUP_KEY;
@@ -65,14 +112,12 @@ export function computeSessionParticipation(
       doneTotal++;
     });
 
-    const inferredGroupIds = Object.keys(doneByGroup).filter((k) => k !== NO_GROUP_KEY);
-
     return {
       session,
       doneByGroup,
       doneTotal,
-      groupIds: session.group_id ? [session.group_id] : inferredGroupIds,
-      groupsInferred: !session.group_id && inferredGroupIds.length > 0,
+      groupIds: resolved.groupIds,
+      groupsInferred: resolved.attribution === 'reconstituee',
     };
   });
 }
