@@ -2,12 +2,14 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, Trophy, Medal, Pencil, Plus, X, Star, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trophy, Medal, Pencil, Plus, X, Star, Trash2, Share2 } from 'lucide-react';
 import NordikButton from '../components/NordikButton';
 import ExpandableText from '../components/ExpandableText';
 import { Card, EmptyState } from '../components/ui';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
+import ShareSheet from '../components/ShareSheet';
+import { RaceShareCard } from '../components/ShareCard';
 import type { RaceType } from '../types';
 
 function formatDuration(duration: string): string {
@@ -155,6 +157,7 @@ export default function Palmares() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCoachAdd, setShowCoachAdd] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [shareRaceId, setShareRaceId] = useState<string | null>(null);
 
   const sortedUsers = useMemo(() =>
     [...users].filter(u => !u.is_super_admin).sort((a, b) => a.firstname.localeCompare(b.firstname)),
@@ -172,6 +175,8 @@ export default function Palmares() {
   }, [raceResults, users]);
 
   const canEdit = (raceUserId: string) => raceUserId === user?.id || isCoach;
+
+  const shareRace = palmares.find(r => r.id === shareRaceId);
 
   // Mes records personnels par distance standard
   const personalRecords = useMemo(() => {
@@ -364,6 +369,15 @@ export default function Palmares() {
                         </span>
                       </div>
                     </div>
+                    {race.user_id === user?.id && (
+                      <button
+                        onClick={() => setShareRaceId(race.id)}
+                        aria-label="Partager ce résultat"
+                        className="p-1.5 text-neutral-300 hover:text-primary transition-colors"
+                      >
+                        <Share2 size={14} />
+                      </button>
+                    )}
                     <NordikButton raceId={race.id} />
                     {canEdit(race.user_id) && (
                       <>
@@ -396,6 +410,18 @@ export default function Palmares() {
             </div>
           ))}
         </div>
+      )}
+
+      {shareRace && (
+        <ShareSheet
+          open={!!shareRaceId}
+          onClose={() => setShareRaceId(null)}
+          filenameBase={`narbo-nordik-${format(new Date(shareRace.date), 'yyyy-MM-dd')}`}
+          shareTitle={shareRace.race_name}
+          shareText={`${shareRace.race_name}, ${format(new Date(shareRace.date), 'd MMMM yyyy', { locale: fr })}. ${formatDuration(shareRace.time_duration)} sur ${shareRace.distance_km}km (${raceTypeLabels[shareRace.race_type] || shareRace.race_type}). Palmarès Narbo Nordik : ${window.location.origin}/palmares`}
+        >
+          {ref => <RaceShareCard ref={ref} race={shareRace} athleteFirstname={shareRace.user?.firstname || ''} />}
+        </ShareSheet>
       )}
     </div>
   );

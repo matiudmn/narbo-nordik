@@ -14,7 +14,7 @@
 import { forwardRef, type ReactNode } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { Session, AllureZoneConfig, SessionType, Group, SpecificPreparation } from '../types';
+import type { Session, AllureZoneConfig, SessionType, Group, SpecificPreparation, RaceResult, RaceType } from '../types';
 import { formatBlockSummary, blockEffortLabel, isEffortZone, ALLURE_ZONES } from '../lib/calculations';
 
 const SESSION_TYPE_LABELS: Record<SessionType, string> = {
@@ -128,6 +128,58 @@ export const SessionShareCard = forwardRef<HTMLDivElement, {
     );
   },
 );
+
+const RACE_TYPE_LABELS: Record<RaceType, string> = {
+  route: 'Route', trail: 'Trail', piste: 'Piste',
+};
+
+// Couleurs alignees sur les badges route/trail/piste de src/pages/Palmares.tsx
+// (bg-blue-100/text-blue-700, bg-emerald-100/text-emerald-700, bg-violet-100/text-violet-700).
+const RACE_TYPE_COLORS: Record<RaceType, { background: string; color: string }> = {
+  route: { background: '#dbeafe', color: '#1d4ed8' },
+  trail: { background: '#d1fae5', color: '#047857' },
+  piste: { background: '#ede9fe', color: '#6d28d9' },
+};
+
+function formatRaceDuration(duration: string): string {
+  const parts = duration.split(':');
+  const h = parseInt(parts[0]);
+  const m = parseInt(parts[1]);
+  const s = parseInt(parts[2]);
+  if (h > 0) return `${h}h${String(m).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+export const RaceShareCard = forwardRef<HTMLDivElement, {
+  race: RaceResult; athleteFirstname: string;
+}>(function RaceShareCard({ race, athleteFirstname }, ref) {
+  const typeColors = RACE_TYPE_COLORS[race.race_type];
+  return (
+    <div ref={ref}>
+      <CardShell subtitle={format(new Date(race.date), 'EEEE d MMMM yyyy', { locale: fr })}>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 4 }}>
+            <span style={{
+              display: 'inline-block', fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 999,
+              background: typeColors.background, color: typeColors.color,
+              marginRight: 6, verticalAlign: 'middle',
+            }}>
+              {RACE_TYPE_LABELS[race.race_type]}
+            </span>
+            {race.is_label && (
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#b45309', verticalAlign: 'middle' }}>★ Label</span>
+            )}
+          </div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: C.ink, lineHeight: 1.3 }}>{race.race_name}</div>
+          <div style={{ fontSize: 12, color: C.sub, marginTop: 3 }}>{athleteFirstname} · {race.distance_km} km</div>
+        </div>
+        <div style={{ fontSize: 36, fontWeight: 800, color: C.ink, letterSpacing: -0.5 }}>
+          {formatRaceDuration(race.time_duration)}
+        </div>
+      </CardShell>
+    </div>
+  );
+});
 
 export const WeekShareCard = forwardRef<HTMLDivElement, {
   weekStart: Date; weekEnd: Date; sessions: Session[]; zones: Zones; groups: Group[]; preparations: SpecificPreparation[];
