@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import type { AppNotification } from '../types';
 import { toNotification } from './data/rows';
+import { filterVisibleNotifications } from '../lib/notificationPrefs';
 
 interface InAppNotificationContextType {
   notifications: AppNotification[];
@@ -33,7 +34,7 @@ export function InAppNotificationProvider({ children }: { children: ReactNode })
       .order('created_at', { ascending: false })
       .limit(50);
     if (!error && data) {
-      setNotifications(data.map(toNotification));
+      setNotifications(filterVisibleNotifications(data.map(toNotification), user.notification_preferences));
     }
     setLoading(false);
   }, [user]);
