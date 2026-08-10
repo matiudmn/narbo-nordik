@@ -5,7 +5,6 @@ import {
   NOTIF_TYPES_ATHLETE,
   NOTIF_TYPES_COACH,
 } from './notificationPrefs';
-import type { NotifTypeRow } from './notificationPrefs';
 import type { AppNotification, NotificationPreferences } from '../types';
 
 function notification(over: Partial<AppNotification>): AppNotification {
@@ -68,40 +67,37 @@ describe('isPrefChannelEnabled', () => {
 });
 
 // Réglages affichés par rôle dans le bloc Préférences du profil (PR #88).
-function channelsByKey(rows: NotifTypeRow[]) {
-  return Object.fromEntries(rows.map(({ key, hasInApp, hasEmail }) => [key, { hasInApp, hasEmail }]));
-}
-
+// Les labels sont volontairement hors assertion : ils peuvent changer sans toucher aux tests.
 describe('NOTIF_TYPES par rôle', () => {
   it('athlète : new_session, palmares, vma_update, reaction, weekly_digest avec leurs canaux', () => {
-    expect(NOTIF_TYPES_ATHLETE).toHaveLength(5);
-    expect(channelsByKey(NOTIF_TYPES_ATHLETE)).toEqual({
-      new_session: { hasInApp: true, hasEmail: true },
-      palmares: { hasInApp: true, hasEmail: false },
-      vma_update: { hasInApp: true, hasEmail: true },
-      reaction: { hasInApp: true, hasEmail: false },
-      weekly_digest: { hasInApp: false, hasEmail: true },
-    });
+    expect(NOTIF_TYPES_ATHLETE.map(({ key, hasInApp, hasEmail }) => ({ key, hasInApp, hasEmail }))).toEqual([
+      { key: 'new_session', hasInApp: true, hasEmail: true },
+      { key: 'palmares', hasInApp: true, hasEmail: false },
+      { key: 'vma_update', hasInApp: true, hasEmail: true },
+      { key: 'reaction', hasInApp: true, hasEmail: false },
+      { key: 'weekly_digest', hasInApp: false, hasEmail: true },
+    ]);
   });
 
   it('coach : new_athlete (in-app + email), vma_missing et palmares (in-app seul)', () => {
-    expect(NOTIF_TYPES_COACH).toHaveLength(3);
-    expect(channelsByKey(NOTIF_TYPES_COACH)).toEqual({
-      new_athlete: { hasInApp: true, hasEmail: true },
-      vma_missing: { hasInApp: true, hasEmail: false },
-      palmares: { hasInApp: true, hasEmail: false },
-    });
+    expect(NOTIF_TYPES_COACH.map(({ key, hasInApp, hasEmail }) => ({ key, hasInApp, hasEmail }))).toEqual([
+      { key: 'new_athlete', hasInApp: true, hasEmail: true },
+      { key: 'vma_missing', hasInApp: true, hasEmail: false },
+      { key: 'palmares', hasInApp: true, hasEmail: false },
+    ]);
   });
 
-  // Copie de la skip-list du trigger notify_email_on_insert
-  // (supabase/migrations/20260810140000_notify_coaches_new_athlete.sql) : ces types
-  // ne déclenchent pas l'e-mail transactionnel à l'insertion d'une notification.
+  // Copie assumée de la skip-list de la dernière redéfinition du trigger
+  // notify_email_on_insert (supabase/migrations) : ces types ne déclenchent pas
+  // l'e-mail transactionnel à l'insertion d'une notification.
   const EMAIL_SKIP_LIST = ['weekly_digest', 'palmares', 'new_session', 'reaction', 'vma_missing'];
-  // Types de la skip-list couverts par un envoi dédié qui relit la préférence e-mail
-  // (fonctions daily-session-digest et weekly-digest).
+  // Types de la skip-list dont l'e-mail passe par une fonction dédiée qui relit la
+  // préférence : weekly-digest (cron planifié) et daily-session-digest pour new_session
+  // (source présente dans le dépôt mais NI déployée NI planifiée, décision du 31/07/2026,
+  // cf. 20260731101000_unschedule_daily_digest.sql : câblage prévu, pas d'envoi actif).
   const DIGEST_EMAIL_TYPES = ['new_session', 'weekly_digest'];
 
-  it('hasEmail correspond exactement aux types ayant un envoi e-mail effectif', () => {
+  it('hasEmail reflète la skip-list du trigger complétée des digests dédiés', () => {
     for (const { key, hasEmail } of [...NOTIF_TYPES_ATHLETE, ...NOTIF_TYPES_COACH]) {
       const hasSender = !EMAIL_SKIP_LIST.includes(key) || DIGEST_EMAIL_TYPES.includes(key);
       expect(hasEmail, `canal e-mail du type ${key}`).toBe(hasSender);

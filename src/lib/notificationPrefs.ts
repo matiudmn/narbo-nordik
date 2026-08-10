@@ -21,7 +21,7 @@ export function filterVisibleNotifications(
   return notifications.filter(n => isPrefChannelEnabled(byType?.[n.type], 'in_app'));
 }
 
-export type NotifTypeRow = {
+type NotifTypeRow = {
   key: keyof NotificationPreferences;
   label: string;
   hasInApp: boolean;
