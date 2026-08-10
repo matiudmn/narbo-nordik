@@ -1,7 +1,7 @@
 # Politique de confidentialité — Application Narbo Nordik
 
-**Dernière mise à jour** : 31 juillet 2026
-**Version** : 1.2
+**Dernière mise à jour** : 10 août 2026
+**Version** : 1.3
 
 ---
 
@@ -59,17 +59,9 @@ Pour toute question relative au traitement de vos données, vous pouvez écrire 
 
 ### 3.3 Données collectées via des services tiers (avec votre consentement explicite)
 
-> **À ce jour, aucune connexion à un service tiers n'est disponible dans l'Application, et aucune donnée n'est récupérée par ce biais.** L'intégration Strava, active jusqu'au 6 juin 2026, a été retirée : les données associées ont été supprimées et Strava n'est plus destinataire d'aucune donnée. Les intégrations ci-dessous sont envisagées ; cette section sera mise à jour lors de leur mise en service effective.
+> **Aucune connexion à un service tiers n'est disponible dans l'Application, et aucune donnée n'est récupérée par ce biais.** L'intégration Strava, active jusqu'au 6 juin 2026, a été retirée : les données associées ont été supprimées et Strava n'est plus destinataire d'aucune donnée.
 
-Si vous choisissez à l'avenir de connecter votre montre ou votre compte sportif à l'Application, nous récupérerons depuis ces services les données suivantes :
-
-| Service connecté | Données récupérées | Statut |
-|---|---|---|
-| **Coros** | Activités sportives + métriques avancées (puissance, training load, VO2max estimé) | À venir |
-| **Garmin Connect** | Activités sportives + métriques avancées (VO2max, training load, recovery time) | À venir, sous réserve d'approbation Garmin |
-| **Suunto** | Activités sportives | À venir |
-
-La connexion à ces services sera **toujours optionnelle** et requerra votre **autorisation explicite** via la procédure officielle d'authentification (OAuth) propre à chaque prestataire. Vous pourrez révoquer cette autorisation à tout moment depuis votre profil ou directement chez le prestataire.
+Si une connexion à un service tiers (montre connectée, compte sportif) était mise en service à l'avenir, elle serait **toujours optionnelle** et requerrait votre **autorisation explicite** via la procédure officielle d'authentification (OAuth) propre au prestataire. Vous pourriez révoquer cette autorisation à tout moment depuis votre profil ou directement chez le prestataire. Cette section sera mise à jour en conséquence si une telle connexion était mise en service.
 
 ### 3.4 Données techniques
 
@@ -93,7 +85,6 @@ La connexion à ces services sera **toujours optionnelle** et requerra votre **a
 |---|---|---|
 | Gestion de votre compte utilisateur et accès à l'Application | Exécution du contrat (votre adhésion au Club et son service numérique) | Données d'identification, mot de passe |
 | Programmation et suivi des séances d'entraînement | Exécution du contrat | Séances, validations, ressenti, VMA |
-| Récupération automatique de vos activités sportives (à venir, aucun service actif à ce jour) | **Consentement explicite** via OAuth | Données Garmin / Coros / Suunto |
 | Génération d'analyses qualitatives post-séance par intelligence artificielle | **Consentement explicite** (opt-in dans les paramètres) | Données de séance + activité montre + ressenti |
 | Envoi de notifications (séances, palmarès, rappels) | Consentement (notifications) + intérêt légitime (notifications essentielles type "nouvelle séance programmée") | Identifiants, préférences |
 | Statistiques anonymisées d'usage de l'Application | Consentement (analytics) | Données techniques agrégées |
@@ -114,9 +105,6 @@ Elles sont traitées par les sous-traitants techniques suivants, choisis pour le
 |---|---|---|---|
 | **Supabase Inc.** (USA) | Hébergement base de données, authentification, fonctions serveurs, stockage des photos | Serveurs en UE — Francfort (Allemagne) | Clauses contractuelles types (CCT) de la Commission européenne |
 | **Vercel Inc.** (USA) | Hébergement de l'interface web et des fonctions de rendu | Serveurs en UE | CCT |
-| **Garmin Ltd.** (USA) | Fournisseur du service connecté Garmin Connect (sur votre demande, futur) | USA | Consentement explicite + CCT |
-| **Coros Wearables Inc.** (USA) | Fournisseur du service connecté Coros (sur votre demande, futur) | USA | Consentement explicite + CCT |
-| **Suunto Oy** (Finlande) | Fournisseur du service connecté Suunto (sur votre demande, futur) | UE | Consentement explicite |
 | **Mistral AI** (France, UE) | Fournisseur du modèle d'intelligence artificielle utilisé par défaut pour les traitements IA (résumé coach, OCR de capture, filtres de recherche) (sur votre consentement) | UE | Traitement au sein de l'Union européenne |
 | **Resend** (USA) | Envoi des emails transactionnels et des digests | USA | Encadrement par garanties appropriées (CCT) |
 
@@ -219,6 +207,7 @@ Cette politique peut être amenée à évoluer, notamment pour refléter les év
 
 | Version | Date | Modifications |
 |---|---|---|
+| 1.3 | 2026-08-10 | Remplacement des références à `app.narbo-nordik.fr` (domaine jamais acquis) par l'URL réelle de production `https://narbo-nordik.vercel.app`. Retrait des mentions présentant les intégrations montres (Garmin, Coros, Suunto) comme imminentes (section 3.3, tableau des finalités, tableau des sous-traitants) : la candidature Garmin Developer Program a été abandonnée le 10/08/2026 et aucune intégration montre n'est en cours de développement. |
 | 1.2 | 2026-07-31 | Correction du tableau des sous-traitants (section 5) : le fournisseur IA effectivement utilisé par défaut pour les traitements IA (résumé coach, OCR de capture, filtres de recherche) est Mistral AI (France, UE), et non Anthropic PBC. Correction de la section 10 (IA) en cohérence : le fournisseur mentionné pour l'analyse de séance est Mistral AI, et non Anthropic (Claude). Ajout de Resend (USA) comme sous-traitant pour l'envoi des emails transactionnels et des digests. |
 | 1.1 | 2026-07-30 | Retrait de l'intégration Strava, effective depuis le 6 juin 2026 : Strava n'est plus listé parmi les services connectés ni parmi les sous-traitants destinataires, et les données associées ont été supprimées. Les intégrations Garmin, Coros et Suunto sont désormais présentées comme à venir, aucune connexion à un service tiers n'étant disponible à ce jour. |
 | 1.0 | 2026-05-23 | Version initiale |
@@ -236,4 +225,4 @@ Cette politique peut être amenée à évoluer, notamment pour refléter les év
 
 ---
 
-*Document accessible publiquement à l'URL https://app.narbo-nordik.fr/legal/privacy*
+*Document accessible publiquement à l'URL https://narbo-nordik.vercel.app/legal/privacy*
