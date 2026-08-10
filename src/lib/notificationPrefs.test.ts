@@ -71,7 +71,7 @@ describe('isPrefChannelEnabled', () => {
 describe('NOTIF_TYPES par rôle', () => {
   it('athlète : new_session, palmares, vma_update, reaction, weekly_digest avec leurs canaux', () => {
     expect(NOTIF_TYPES_ATHLETE.map(({ key, hasInApp, hasEmail }) => ({ key, hasInApp, hasEmail }))).toEqual([
-      { key: 'new_session', hasInApp: true, hasEmail: true },
+      { key: 'new_session', hasInApp: true, hasEmail: false },
       { key: 'palmares', hasInApp: true, hasEmail: false },
       { key: 'vma_update', hasInApp: true, hasEmail: true },
       { key: 'reaction', hasInApp: true, hasEmail: false },
@@ -92,10 +92,11 @@ describe('NOTIF_TYPES par rôle', () => {
   // l'e-mail transactionnel à l'insertion d'une notification.
   const EMAIL_SKIP_LIST = ['weekly_digest', 'palmares', 'new_session', 'reaction', 'vma_missing'];
   // Types de la skip-list dont l'e-mail passe par une fonction dédiée qui relit la
-  // préférence : weekly-digest (cron planifié) et daily-session-digest pour new_session
-  // (source présente dans le dépôt mais NI déployée NI planifiée, décision du 31/07/2026,
-  // cf. 20260731101000_unschedule_daily_digest.sql : câblage prévu, pas d'envoi actif).
-  const DIGEST_EMAIL_TYPES = ['new_session', 'weekly_digest'];
+  // préférence : weekly-digest (cron planifié). daily-session-digest (new_session) n'est
+  // NI déployée NI planifiée (décision du 31/07/2026, cf.
+  // 20260731101000_unschedule_daily_digest.sql) : pas de toggle e-mail pour new_session
+  // tant que c'est le cas.
+  const DIGEST_EMAIL_TYPES = ['weekly_digest'];
 
   it('hasEmail reflète la skip-list du trigger complétée des digests dédiés', () => {
     for (const { key, hasEmail } of [...NOTIF_TYPES_ATHLETE, ...NOTIF_TYPES_COACH]) {

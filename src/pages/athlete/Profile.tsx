@@ -874,7 +874,7 @@ export default function Profile() {
           </div>
 
           <div className="border-t border-neutral-100 pt-3">
-            <p className="text-sm font-medium text-neutral-900 mb-3">Preferences par type</p>
+            <p className="text-sm font-medium text-neutral-900 mb-3">Préférences par type</p>
             <div className="space-y-3">
               {(user?.role === 'coach' ? NOTIF_TYPES_COACH : NOTIF_TYPES_ATHLETE).map(({ key, label, hasInApp, hasEmail }) => (
                 <div key={key} className="flex items-center justify-between">
