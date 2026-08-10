@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card } from '../../components/ui';
+import { Card, Disclosure } from '../../components/ui';
 import { format, startOfMonth, endOfMonth, addMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Check, Target, Smile, Dumbbell, Mountain, Battery, Bike, Footprints, Users, Trophy } from 'lucide-react';
@@ -150,7 +150,11 @@ export default function Suivi() {
         </div>
       )}
 
-      {!showingAthletes && <YearlyHeatmap sessions={heatmapSessions} />}
+      {!showingAthletes && (
+        <Disclosure title="Voir le calendrier annuel" className="mb-4">
+          <YearlyHeatmap sessions={heatmapSessions} />
+        </Disclosure>
+      )}
 
       {/* Month navigation */}
       <div className="flex items-center justify-between mb-4">
@@ -216,73 +220,78 @@ export default function Suivi() {
           </p>
         </div>
       ) : (
-        <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
-          {currentList.map(({ session, validation, athlete }) => {
-            const TypeIcon = SESSION_TYPE_ICON[session.session_type];
-            return (
-              <Link
-                key={`${session.id}-${validation.id}`}
-                to={`/session/${session.id}`}
-                className="block bg-white rounded-xl border border-neutral-100 p-4 hover:border-neutral-200 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2 min-w-0">
-                    {showingAthletes && athlete ? (
-                      <Avatar user={athlete} size="sm" />
-                    ) : (
-                      <TypeIcon size={16} className="text-neutral-400 mt-0.5 flex-shrink-0" />
-                    )}
-                    <div className="min-w-0">
-                      {showingAthletes && athlete && (
-                        <p className="text-xs font-medium text-primary mb-0.5">
-                          {athlete.firstname} {athlete.lastname}
-                        </p>
+        <Disclosure
+          title={showingAthletes ? 'Voir le détail des retours athlètes' : 'Voir le détail des séances'}
+          subtitle={`${currentList.length} séance${currentList.length > 1 ? 's' : ''}`}
+        >
+          <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+            {currentList.map(({ session, validation, athlete }) => {
+              const TypeIcon = SESSION_TYPE_ICON[session.session_type];
+              return (
+                <Link
+                  key={`${session.id}-${validation.id}`}
+                  to={`/session/${session.id}`}
+                  className="block bg-white rounded-xl border border-neutral-100 p-4 hover:border-neutral-200 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 min-w-0">
+                      {showingAthletes && athlete ? (
+                        <Avatar user={athlete} size="sm" />
+                      ) : (
+                        <TypeIcon size={16} className="text-neutral-400 mt-0.5 flex-shrink-0" />
                       )}
-                      <p className="font-semibold text-neutral-900 truncate">
-                        {session.title}
-                        <span className="text-xs font-normal text-neutral-400 ml-1.5">
-                          {getSessionCode(session, sessions)}
-                        </span>
-                      </p>
-                      <p className="text-xs text-neutral-400 mt-0.5">
-                        {format(new Date(session.date), 'EEEE d MMMM', { locale: fr })}
-                      </p>
+                      <div className="min-w-0">
+                        {showingAthletes && athlete && (
+                          <p className="text-xs font-medium text-primary mb-0.5">
+                            {athlete.firstname} {athlete.lastname}
+                          </p>
+                        )}
+                        <p className="font-semibold text-neutral-900 truncate">
+                          {session.title}
+                          <span className="text-xs font-normal text-neutral-400 ml-1.5">
+                            {getSessionCode(session, sessions)}
+                          </span>
+                        </p>
+                        <p className="text-xs text-neutral-400 mt-0.5">
+                          {format(new Date(session.date), 'EEEE d MMMM', { locale: fr })}
+                        </p>
+                      </div>
                     </div>
+                    <Check size={16} className="text-success-600 flex-shrink-0 mt-0.5" />
                   </div>
-                  <Check size={16} className="text-success-600 flex-shrink-0 mt-0.5" />
-                </div>
 
-                {(validation.objective_reached || validation.sensations) && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {validation.objective_reached && (
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        validation.objective_reached === 'oui' ? 'bg-success-100 text-success-700' :
-                        validation.objective_reached === 'partiel' ? 'bg-warning-100 text-warning-700' :
-                        'bg-danger-100 text-danger-700'
-                      }`}>
-                        {validation.objective_reached === 'oui' ? 'Objectif atteint' :
-                         validation.objective_reached === 'partiel' ? 'Objectif partiel' : 'Objectif non atteint'}
-                      </span>
-                    )}
-                    {validation.sensations && (
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        validation.sensations === 'excellentes' ? 'bg-success-100 text-success-700' :
-                        validation.sensations === 'bonnes' ? 'bg-info-100 text-info-700' :
-                        'bg-danger-100 text-danger-700'
-                      }`}>
-                        {validation.sensations.charAt(0).toUpperCase() + validation.sensations.slice(1)}
-                      </span>
-                    )}
-                  </div>
-                )}
+                  {(validation.objective_reached || validation.sensations) && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {validation.objective_reached && (
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          validation.objective_reached === 'oui' ? 'bg-success-100 text-success-700' :
+                          validation.objective_reached === 'partiel' ? 'bg-warning-100 text-warning-700' :
+                          'bg-danger-100 text-danger-700'
+                        }`}>
+                          {validation.objective_reached === 'oui' ? 'Objectif atteint' :
+                           validation.objective_reached === 'partiel' ? 'Objectif partiel' : 'Objectif non atteint'}
+                        </span>
+                      )}
+                      {validation.sensations && (
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          validation.sensations === 'excellentes' ? 'bg-success-100 text-success-700' :
+                          validation.sensations === 'bonnes' ? 'bg-info-100 text-info-700' :
+                          'bg-danger-100 text-danger-700'
+                        }`}>
+                          {validation.sensations.charAt(0).toUpperCase() + validation.sensations.slice(1)}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
-                {validation.feedback && (
-                  <p className="text-sm text-neutral-500 italic mt-2">"{validation.feedback}"</p>
-                )}
-              </Link>
-            );
-          })}
-        </div>
+                  {validation.feedback && (
+                    <p className="text-sm text-neutral-500 italic mt-2">"{validation.feedback}"</p>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </Disclosure>
       )}
     </div>
   );
