@@ -22,6 +22,7 @@ const SUBJECT_PREFIX: Record<string, string> = {
   palmares: 'Palmares',
   vma_update: 'VMA',
   system: 'Info',
+  new_athlete: 'Nouvel athlète',
 };
 
 // Appelant : uniquement le trigger DB (notify_email_on_insert), qui porte le

@@ -148,20 +148,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error: rpcError } = await supabase.rpc('register_profile', { invite_code: inviteCode, firstname, lastname, email });
     if (rpcError) return mapRegisterProfileError(rpcError);
 
-    const { data: coaches } = await supabase.from('users').select('id').eq('role', 'coach');
-    if (coaches && coaches.length > 0) {
-      const { error: notifError } = await supabase.from('notifications').insert(
-        coaches.map((coach) => ({
-          user_id: coach.id,
-          type: 'system',
-          title: `Nouvelle inscription : ${firstname} ${lastname}`,
-          body: `${firstname} ${lastname} (${email}) vient de créer son compte.`,
-          link: '/coach',
-        }))
-      );
-      if (notifError) captureError('AuthContext.signup notify_coaches error', notifError);
-    }
-
+    // La notification aux coachs (type `new_athlete`) est posée par le trigger
+    // `on_new_athlete` (20260810140000) : il couvre aussi la création par un
+    // coach (addUser), signale la VMA / la licence manquante et ne dépend plus
+    // de la bonne fin de cette fonction côté client.
     return null;
   }, []);
 

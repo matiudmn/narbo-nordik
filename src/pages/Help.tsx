@@ -559,6 +559,13 @@ const coachSections: Section[] = [
           indiquer un motif (test piste, estimation, etc.) qui sera enregistre dans l'historique.
           La modification recalcule automatiquement toutes les allures de l'athlete.
         </p>
+        <p className="font-semibold text-neutral-900">Notifications d'inscription</p>
+        <p>
+          À chaque nouvel athlète (inscription avec le code du club ou création depuis
+          cet onglet), tu reçois une notification qui précise si sa VMA ou son numéro
+          de licence reste à renseigner. Un rappel suit tant qu'un inscrit récent n'a
+          pas de VMA, au maximum une fois par semaine.
+        </p>
         <p className="font-semibold text-neutral-900">Partager les identifiants</p>
         <p>
           Après avoir créé un compte athlete, tu peux copier et partager les identifiants
