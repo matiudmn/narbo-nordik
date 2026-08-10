@@ -22,24 +22,12 @@ import {
   ALLURE_ZONES, BLOCK_TYPES, SESSION_TYPE_LABELS,
   formatBlockSummary, isEffortZone, blockEffortLabel, getSessionLabel,
 } from './calculations';
+import { resolveSessionGroups } from './sessionGroups';
+import type { GroupAttribution, ResolvedGroups } from './sessionGroups';
 import type {
   Session, SessionBlock, SessionValidation, User, Group, SpecificPreparation,
   AllureZoneConfig,
 } from '../types';
-
-/** Rattachement d'une séance à un ou plusieurs groupes. */
-export type GroupAttribution =
-  /** `sessions.group_id` renseigné : rattachement porté par la donnée. */
-  | 'explicite'
-  /** `group_id` NULL mais des validations existent : rattachement déduit. */
-  | 'reconstituee'
-  /** Aucun rattachement déductible : séance « pour tous ». */
-  | 'aucune';
-
-export interface ResolvedGroups {
-  groupIds: string[];
-  attribution: GroupAttribution;
-}
 
 export interface SessionExportRow {
   id: string;
@@ -102,31 +90,6 @@ export function formatBlocksForExport(blocks: SessionBlock[], zones?: Record<str
       return `${type} : ${summary}${intensity ? ` (${intensity})` : ''}`;
     })
     .join(' | ');
-}
-
-/**
- * Résout le ou les groupes d'une séance.
- *
- * Les séances antérieures à mai 2026 ont toutes `group_id` NULL sans être
- * globales pour autant (le rattachement n'existait pas encore). On le
- * reconstitue par les groupes des athlètes qui ont une validation sur la
- * séance : toutes issues confondues, car une séance marquée « manquée » était
- * au programme du groupe au même titre qu'une séance faite.
- */
-export function resolveSessionGroups(
-  session: Session,
-  sessionValidations: SessionValidation[],
-  groupIdByUserId: Map<string, string | null>,
-): ResolvedGroups {
-  if (session.group_id) return { groupIds: [session.group_id], attribution: 'explicite' };
-
-  const ids = new Set<string>();
-  for (const validation of sessionValidations) {
-    const groupId = groupIdByUserId.get(validation.user_id);
-    if (groupId) ids.add(groupId);
-  }
-  if (ids.size === 0) return { groupIds: [], attribution: 'aucune' };
-  return { groupIds: [...ids], attribution: 'reconstituee' };
 }
 
 /** Une séance sans rattachement déductible concerne tout le club : jamais filtrée. */
