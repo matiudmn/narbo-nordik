@@ -253,8 +253,8 @@ export default function ClubProfile() {
     <div className="py-4 space-y-6 pb-8">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-extrabold text-gray-900 tracking-tight">Profil Athletique du Club</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-xl font-extrabold text-neutral-900 tracking-tight">Profil Athletique du Club</h1>
+        <p className="text-sm text-neutral-500 mt-1">
           Vue d'ensemble des performances et de l'activite du club.
         </p>
       </div>
@@ -274,7 +274,7 @@ export default function ClubProfile() {
           className={`flex-shrink-0 rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
             !selectedGroupId
               ? 'bg-accent text-white shadow-sm'
-              : 'bg-white text-gray-600 border border-gray-200'
+              : 'bg-white text-neutral-600 border border-neutral-200'
           }`}
         >
           <div className="flex items-center gap-1.5">
@@ -294,7 +294,7 @@ export default function ClubProfile() {
               className={`flex-shrink-0 rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
                 isSelected
                   ? 'bg-accent text-white shadow-sm'
-                  : 'bg-white text-gray-600 border border-gray-200'
+                  : 'bg-white text-neutral-600 border border-neutral-200'
               }`}
             >
               <span>{g.name}</span>
@@ -307,8 +307,8 @@ export default function ClubProfile() {
       {/* Palmares collectif */}
       {palmares.length > 0 && (
         <section>
-          <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <Trophy size={18} className="text-amber-500" />
+          <h2 className="text-base font-bold text-neutral-900 mb-3 flex items-center gap-2">
+            <Trophy size={18} className="text-warning-500" />
             Palmares Collectif
           </h2>
           <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
@@ -317,36 +317,36 @@ export default function ClubProfile() {
                 key={race.id}
                 padding="sm"
                 className={`shadow-sm flex items-center gap-3 ${
-                  idx === 0 ? 'ring-2 ring-amber-200' : ''
+                  idx === 0 ? 'ring-2 ring-warning-100' : ''
                 }`}
               >
                 <div className="flex-shrink-0">
                   {idx < 3 ? (
                     <Medal size={20} className={
-                      idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-gray-400' : 'text-amber-700'
+                      idx === 0 ? 'text-warning-500' : idx === 1 ? 'text-neutral-400' : 'text-warning-700'
                     } />
                   ) : (
-                    <div className="w-5 h-5 flex items-center justify-center text-xs text-gray-400 font-bold">
+                    <div className="w-5 h-5 flex items-center justify-center text-xs text-neutral-400 font-bold">
                       {idx + 1}
                     </div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{race.race_name}</p>
+                  <p className="text-sm font-semibold text-neutral-900 truncate">{race.race_name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-neutral-500">
                       {race.user?.firstname} {race.user?.lastname.charAt(0)}.
                     </span>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-neutral-400">
                       {format(new Date(race.date), 'd MMM yyyy', { locale: fr })}
                     </span>
                   </div>
                 </div>
                 <div className="flex-shrink-0 text-right">
-                  <p className="text-sm font-bold text-gray-900">{formatDuration(race.time_duration)}</p>
+                  <p className="text-sm font-bold text-neutral-900">{formatDuration(race.time_duration)}</p>
                   <div className="flex items-center gap-1 justify-end mt-0.5">
-                    <span className="text-xs text-gray-400">{race.distance_km}km</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${raceTypeColors[race.race_type] || 'bg-gray-100 text-gray-600'}`}>
+                    <span className="text-xs text-neutral-400">{race.distance_km}km</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${raceTypeColors[race.race_type] || 'bg-neutral-100 text-neutral-600'}`}>
                       {raceTypeLabels[race.race_type] || race.race_type}
                     </span>
                   </div>
@@ -369,12 +369,12 @@ export default function ClubProfile() {
 
       {/* Distribution */}
       <section>
-        <h2 className="text-base font-bold text-gray-900 mb-3">Repartition & Distribution</h2>
+        <h2 className="text-base font-bold text-neutral-900 mb-3">Repartition & Distribution</h2>
 
         <div className="lg:grid lg:grid-cols-2 lg:gap-4">
         {/* Group donut */}
         <Card className="shadow-sm mb-3 lg:mb-0">
-          <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Repartition par Groupe</h3>
+          <h3 className="text-sm font-bold text-neutral-700 mb-3 text-center">Repartition par Groupe</h3>
           <div className="h-[220px]">
             <Doughnut data={donutData} options={donutOptions} />
           </div>
@@ -382,11 +382,11 @@ export default function ClubProfile() {
 
         {/* VMA Histogram */}
         <Card className="shadow-sm mb-3 lg:mb-0">
-          <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Distribution VMA par Tranche</h3>
+          <h3 className="text-sm font-bold text-neutral-700 mb-3 text-center">Distribution VMA par Tranche</h3>
           <div className="h-[220px]">
             <Bar data={histogramData} options={histogramOptions} />
           </div>
-          <p className="text-xs text-gray-400 mt-2 text-center">
+          <p className="text-xs text-neutral-400 mt-2 text-center">
             Repartition des {stats.count} coureurs par tranche de 1 km/h
           </p>
         </Card>
@@ -394,19 +394,19 @@ export default function ClubProfile() {
 
         {/* Box plot */}
         <Card className="shadow-sm">
-          <h3 className="text-sm font-bold text-gray-700 mb-3 text-center">Dispersion de la VMA</h3>
+          <h3 className="text-sm font-bold text-neutral-700 mb-3 text-center">Dispersion de la VMA</h3>
           <div className="px-2">
             {/* Scale */}
-            <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+            <div className="flex justify-between text-[10px] text-neutral-400 mb-1">
               <span>{stats.min}</span>
               <span>{stats.avg} (moy.)</span>
               <span>{stats.max}</span>
             </div>
             {/* Box plot visual */}
-            <div className="relative h-12 bg-gray-100 rounded-lg overflow-hidden">
+            <div className="relative h-12 bg-neutral-100 rounded-lg overflow-hidden">
               {/* Whisker line */}
               <div
-                className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-gray-400"
+                className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-neutral-400"
                 style={{ left: '0%', right: '0%' }}
               />
               {/* IQR Box */}
@@ -423,9 +423,9 @@ export default function ClubProfile() {
                 style={{ left: `${toPercent(stats.median)}%` }}
               />
               {/* Min whisker */}
-              <div className="absolute top-2 bottom-2 w-0.5 bg-gray-400" style={{ left: '0%' }} />
+              <div className="absolute top-2 bottom-2 w-0.5 bg-neutral-400" style={{ left: '0%' }} />
               {/* Max whisker */}
-              <div className="absolute top-2 bottom-2 w-0.5 bg-gray-400" style={{ right: '0%' }} />
+              <div className="absolute top-2 bottom-2 w-0.5 bg-neutral-400" style={{ right: '0%' }} />
               {/* Individual dots */}
               {vmaValues.map((v, i) => (
                 <div
@@ -437,13 +437,13 @@ export default function ClubProfile() {
               ))}
             </div>
             {/* Labels */}
-            <div className="flex justify-between mt-2 text-[10px] text-gray-500">
+            <div className="flex justify-between mt-2 text-[10px] text-neutral-500">
               <span>Q1: {stats.q1.toFixed(1)}</span>
               <span>Mediane: {stats.median.toFixed(1)}</span>
               <span>Q3: {stats.q3.toFixed(1)}</span>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-3 text-center">
+          <p className="text-xs text-neutral-400 mt-3 text-center">
             Amplitude: {stats.min} - {stats.max} km/h.
             Allures a 100%&nbsp;: de {formatPace(stats.min)}/km a {formatPace(stats.max)}/km
           </p>
@@ -452,12 +452,12 @@ export default function ClubProfile() {
 
       {/* Bar chart - Individual VMA */}
       <section>
-        <h2 className="text-base font-bold text-gray-900 mb-3">Profils VMA Individuels</h2>
+        <h2 className="text-base font-bold text-neutral-900 mb-3">Profils VMA Individuels</h2>
         <Card className="shadow-sm">
           <div className="h-[300px]">
             <Bar data={barData} options={barOptions} />
           </div>
-          <p className="text-xs text-gray-400 mt-3 text-center">
+          <p className="text-xs text-neutral-400 mt-3 text-center">
             Variable d'entree du moteur de calcul : VMA x Pourcentage cible
           </p>
         </Card>

@@ -39,8 +39,8 @@ export default function InstallPrompt() {
   if (!deferredPrompt || dismissed) return null;
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 max-w-md mx-auto animate-slide-up">
-      <button onClick={handleDismiss} className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600">
+    <div className="fixed bottom-20 left-4 right-4 bg-white rounded-xl shadow-2xl border border-neutral-200 p-4 z-50 max-w-md mx-auto animate-slide-up">
+      <button onClick={handleDismiss} className="absolute top-2 right-2 p-1 text-neutral-400 hover:text-neutral-600">
         <X size={16} />
       </button>
       <div className="flex items-center gap-3">
@@ -48,8 +48,8 @@ export default function InstallPrompt() {
           <Download size={24} className="text-primary" />
         </div>
         <div className="flex-1">
-          <p className="font-semibold text-gray-900 text-sm">Installer Narbo Nordik</p>
-          <p className="text-xs text-gray-500">Acces rapide depuis l'ecran d'accueil</p>
+          <p className="font-semibold text-neutral-900 text-sm">Installer Narbo Nordik</p>
+          <p className="text-xs text-neutral-500">Acces rapide depuis l'ecran d'accueil</p>
         </div>
         <button
           onClick={handleInstall}

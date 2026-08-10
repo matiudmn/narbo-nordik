@@ -17,7 +17,7 @@ export default function Sidebar() {
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
-      isActive ? 'bg-accent/10 text-accent-text' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+      isActive ? 'bg-accent/10 text-accent-text' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
     }`;
 
   const coachLinks = [
@@ -43,13 +43,13 @@ export default function Sidebar() {
   const links = isCoach ? coachLinks : athleteLinks;
 
   return (
-    <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-60 bg-white border-r border-gray-200 flex-col z-50">
+    <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-60 bg-white border-r border-neutral-200 flex-col z-50">
       {/* Logo + role */}
-      <div className="flex items-center gap-3 px-5 h-16 border-b border-gray-100">
+      <div className="flex items-center gap-3 px-5 h-16 border-b border-neutral-100">
         <img src="/logo-club.png" alt="Narbo Nordik" className="h-10 w-10 rounded-full" />
         <div>
-          <p className="text-sm font-bold text-gray-900">Narbo Nordik</p>
-          <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+          <p className="text-sm font-bold text-neutral-900">Narbo Nordik</p>
+          <span className="text-[10px] font-medium text-neutral-500 uppercase tracking-wider">
             {isCoach ? 'Coach' : 'Athlete'}
           </span>
         </div>
@@ -59,12 +59,12 @@ export default function Sidebar() {
       <div className="px-3 pt-4">
         <button
           onClick={openSearch}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-gray-500 bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:text-gray-700 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-neutral-500 bg-neutral-50 border border-neutral-200 hover:bg-neutral-100 hover:text-neutral-700 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           aria-label="Rechercher"
         >
           <Search size={16} className="flex-shrink-0" />
           <span className="flex-1 text-left">Rechercher...</span>
-          <kbd className="flex-shrink-0 text-[10px] font-sans font-medium text-gray-400 bg-white border border-gray-200 rounded px-1.5 py-0.5">{SHORTCUT_HINT}</kbd>
+          <kbd className="flex-shrink-0 text-[10px] font-sans font-medium text-neutral-400 bg-white border border-neutral-200 rounded px-1.5 py-0.5">{SHORTCUT_HINT}</kbd>
         </button>
       </div>
 
@@ -79,12 +79,12 @@ export default function Sidebar() {
       </nav>
 
       {/* Utility links */}
-      <div className="px-3 py-3 border-t border-gray-100 space-y-1">
+      <div className="px-3 py-3 border-t border-neutral-100 space-y-1">
         <NavLink to="/notifications" className={linkClass}>
           <div className="relative">
             <Bell size={18} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+              <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-danger-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -95,7 +95,7 @@ export default function Sidebar() {
           href="https://chat.whatsapp.com/JwBh6hcJ7o00aBqonTAtD8?mode=hqctcli"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <MessageCircle size={18} />
           <span>WhatsApp</span>
@@ -107,15 +107,15 @@ export default function Sidebar() {
       </div>
 
       {/* User + logout */}
-      <div className="px-3 py-4 border-t border-gray-100">
+      <div className="px-3 py-4 border-t border-neutral-100">
         <div className="flex items-center gap-3 px-2">
           {user && <Avatar user={user} size="sm" />}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{user?.firstname} {user?.lastname}</p>
+            <p className="text-sm font-medium text-neutral-900 truncate">{user?.firstname} {user?.lastname}</p>
           </div>
           <button
             onClick={logout}
-            className="p-2 text-gray-400 hover:text-red-500 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="p-2 text-neutral-400 hover:text-danger-500 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             aria-label="Se deconnecter"
           >
             <LogOut size={16} />

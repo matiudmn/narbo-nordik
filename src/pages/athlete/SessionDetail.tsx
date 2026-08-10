@@ -80,7 +80,7 @@ export default function SessionDetail() {
   if (!session) {
     return (
       <div className="py-8 text-center">
-        <p className="text-gray-500">Séance introuvable</p>
+        <p className="text-neutral-500">Séance introuvable</p>
         <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium">Retour</button>
       </div>
     );
@@ -99,7 +99,7 @@ export default function SessionDetail() {
   if (isRestricted) {
     return (
       <div className="py-8 text-center">
-        <p className="text-gray-500">Cette seance ne vous est pas attribuee</p>
+        <p className="text-neutral-500">Cette seance ne vous est pas attribuee</p>
         <button onClick={() => navigate('/')} className="mt-4 text-primary font-medium">Retour</button>
       </div>
     );
@@ -246,7 +246,7 @@ export default function SessionDetail() {
     <div className="py-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-500 hover:text-gray-900">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-neutral-500 hover:text-neutral-900">
           <ArrowLeft size={20} />
           <span className="text-sm">Retour</span>
         </button>
@@ -265,7 +265,7 @@ export default function SessionDetail() {
         {ref => <SessionShareCard ref={ref} session={session} zones={allureZones} groups={groups} preparations={preparations} />}
       </ShareSheet>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-neutral-100 shadow-sm overflow-hidden">
         {/* Title section */}
         <div className="bg-primary text-white p-5">
           <div className="flex items-center gap-2 mb-1">
@@ -309,7 +309,7 @@ export default function SessionDetail() {
                 <Gauge size={18} />
                 Programme
               </h2>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-neutral-400">
                 {session.blocks.some(b => b.distance_meters) ? '~' : ''}{formatSeconds(calculateSessionTotalSeconds(session.blocks, user?.vma || undefined, allureZones))} au total
               </span>
             </div>
@@ -325,24 +325,24 @@ export default function SessionDetail() {
                     <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: zone.color }} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-400">{blockType.label}</span>
+                        <span className="text-xs font-medium text-neutral-400">{blockType.label}</span>
                         <span className="text-xs px-1.5 py-0.5 rounded font-semibold text-white" style={{ backgroundColor: zone.color }}>
                           {zone.label}
                         </span>
                       </div>
-                      <p className="text-sm font-medium text-gray-900 mt-0.5">
+                      <p className="text-sm font-medium text-neutral-900 mt-0.5">
                         {formatBlockSummary(block, allureZones)}
-                        <span className="text-gray-400 font-normal ml-2">({blockDur})</span>
+                        <span className="text-neutral-400 font-normal ml-2">({blockDur})</span>
                       </p>
                       {isEffortZone(block.allure) ? (
                         <p className="text-xs mt-0.5" style={{ color: zone.color }}>
                           {blockEffortLabel(block)}
-                          <span className="text-gray-400 ml-1">(à l'effort, pas d'allure)</span>
+                          <span className="text-neutral-400 ml-1">(à l'effort, pas d'allure)</span>
                         </p>
                       ) : pace ? (
                         <p className="text-xs mt-0.5" style={{ color: zone.color }}>
                           {pace.paceMin} - {pace.paceMax} min/km
-                          <span className="text-gray-400 ml-1">
+                          <span className="text-neutral-400 ml-1">
                             ({pace.speedMin.toFixed(1)}-{pace.speedMax.toFixed(1)} km/h)
                           </span>
                         </p>
@@ -353,7 +353,7 @@ export default function SessionDetail() {
               })}
             </div>
             {user?.vma && (
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="text-xs text-neutral-400 mt-3">
                 Calcule pour ta VMA de {user.vma} km/h
               </p>
             )}
@@ -369,25 +369,25 @@ export default function SessionDetail() {
             </h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-gray-500 mb-0.5">Distance</p>
-                <p className="text-2xl font-bold text-gray-900">{session.target_distance}m</p>
+                <p className="text-xs text-neutral-500 mb-0.5">Distance</p>
+                <p className="text-2xl font-bold text-neutral-900">{session.target_distance}m</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-0.5">Intensite</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-xs text-neutral-500 mb-0.5">Intensite</p>
+                <p className="text-2xl font-bold text-neutral-900">
                   {session.vma_percent_min}-{session.vma_percent_max}%
-                  <span className="text-sm font-normal text-gray-500 ml-1">VMA</span>
+                  <span className="text-sm font-normal text-neutral-500 ml-1">VMA</span>
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-0.5">Allure cible</p>
+                <p className="text-xs text-neutral-500 mb-0.5">Allure cible</p>
                 <p className="text-xl font-bold text-primary">
                   {paces.paceMin} - {paces.paceMax}
-                  <span className="text-sm font-normal text-gray-500 ml-1">min/km</span>
+                  <span className="text-sm font-normal text-neutral-500 ml-1">min/km</span>
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-0.5">
+                <p className="text-xs text-neutral-500 mb-0.5">
                   <Timer size={14} className="inline mr-1" />
                   Chrono cible
                 </p>
@@ -396,7 +396,7 @@ export default function SessionDetail() {
                 </p>
               </div>
             </div>
-            <p className="text-xs text-gray-400 mt-3">
+            <p className="text-xs text-neutral-400 mt-3">
               Calcule pour ta VMA de {user?.vma} km/h
             </p>
           </div>
@@ -409,10 +409,10 @@ export default function SessionDetail() {
               <Gauge size={18} />
               Intensite cible
             </h2>
-            <p className="text-lg font-bold text-gray-900">
+            <p className="text-lg font-bold text-neutral-900">
               {session.vma_percent_min}-{session.vma_percent_max}% VMA
             </p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-neutral-500 mt-1">
               Soit {(user.vma * session.vma_percent_min / 100).toFixed(1)} - {(user.vma * session.vma_percent_max / 100).toFixed(1)} km/h
             </p>
           </div>
@@ -421,15 +421,15 @@ export default function SessionDetail() {
         {/* Description */}
         {session.description && (
           <div className="p-4">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase mb-2">Consignes</h2>
-            <div className="text-gray-700 whitespace-pre-line leading-relaxed">
+            <h2 className="text-sm font-semibold text-neutral-500 uppercase mb-2">Consignes</h2>
+            <div className="text-neutral-700 whitespace-pre-line leading-relaxed">
               {session.description}
             </div>
           </div>
         )}
 
         {/* Nordik or Validation */}
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-4 border-t border-neutral-100">
           {session.is_personal && session.created_by !== user?.id ? (() => {
             const hasNordiked = user ? sessionNordiks.some(n => n.session_id === session.id && n.user_id === user.id) : false;
             return (
@@ -438,8 +438,8 @@ export default function SessionDetail() {
                   onClick={() => user && toggleSessionNordik(session.id, user.id)}
                   className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-lg transition-all active:scale-110 ${
                     hasNordiked
-                      ? 'bg-red-50 text-red-500'
-                      : 'bg-gray-50 text-gray-400 hover:text-red-400 hover:bg-red-50'
+                      ? 'bg-danger-50 text-danger-500'
+                      : 'bg-neutral-50 text-neutral-400 hover:text-danger-500 hover:bg-danger-50'
                   }`}
                 >
                   <Heart
@@ -450,7 +450,7 @@ export default function SessionDetail() {
                   Nordik
                 </button>
                 {hasNordiked && (
-                  <p className="text-xs text-gray-400 mt-2">Tu as encourage cet athlete</p>
+                  <p className="text-xs text-neutral-400 mt-2">Tu as encourage cet athlete</p>
                 )}
               </div>
             );
@@ -471,11 +471,11 @@ export default function SessionDetail() {
                 <div className="flex justify-center gap-4 mt-3">
                   {validation.objective_reached && (
                     <div className="text-center">
-                      <p className="text-[10px] text-gray-400 uppercase">Objectif</p>
+                      <p className="text-[10px] text-neutral-400 uppercase">Objectif</p>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        validation.objective_reached === 'oui' ? 'bg-green-100 text-green-700' :
-                        validation.objective_reached === 'partiel' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
+                        validation.objective_reached === 'oui' ? 'bg-success-100 text-success-700' :
+                        validation.objective_reached === 'partiel' ? 'bg-warning-100 text-warning-700' :
+                        'bg-danger-100 text-danger-700'
                       }`}>
                         {validation.objective_reached === 'oui' ? 'Atteint' :
                          validation.objective_reached === 'partiel' ? 'Partiel' : 'Non atteint'}
@@ -484,11 +484,11 @@ export default function SessionDetail() {
                   )}
                   {validation.sensations && (
                     <div className="text-center">
-                      <p className="text-[10px] text-gray-400 uppercase">Sensations</p>
+                      <p className="text-[10px] text-neutral-400 uppercase">Sensations</p>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        validation.sensations === 'excellentes' ? 'bg-green-100 text-green-700' :
-                        validation.sensations === 'bonnes' ? 'bg-blue-100 text-blue-700' :
-                        'bg-red-100 text-red-700'
+                        validation.sensations === 'excellentes' ? 'bg-success-100 text-success-700' :
+                        validation.sensations === 'bonnes' ? 'bg-info-100 text-info-700' :
+                        'bg-danger-100 text-danger-700'
                       }`}>
                         {validation.sensations.charAt(0).toUpperCase() + validation.sensations.slice(1)}
                       </span>
@@ -499,30 +499,30 @@ export default function SessionDetail() {
               {(validation.distance_m != null || validation.duration_s != null || validation.elevation_m != null || validation.avg_hr != null || validation.max_hr != null || validation.rpe != null) && (
                 <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-3 text-sm">
                   {validation.distance_m != null && (
-                    <span className="text-gray-600"><span className="font-semibold text-gray-900">{(validation.distance_m / 1000).toFixed(1)}</span> km</span>
+                    <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{(validation.distance_m / 1000).toFixed(1)}</span> km</span>
                   )}
                   {validation.duration_s != null && (
-                    <span className="font-semibold text-gray-900">{formatSeconds(validation.duration_s)}</span>
+                    <span className="font-semibold text-neutral-900">{formatSeconds(validation.duration_s)}</span>
                   )}
                   {pacePerKm(validation.distance_m, validation.duration_s) && (
-                    <span className="text-gray-600"><span className="font-semibold text-gray-900">{pacePerKm(validation.distance_m, validation.duration_s)}</span> /km</span>
+                    <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{pacePerKm(validation.distance_m, validation.duration_s)}</span> /km</span>
                   )}
                   {validation.elevation_m != null && (
-                    <span className="text-gray-600"><span className="font-semibold text-gray-900">{validation.elevation_m}</span> m D+</span>
+                    <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{validation.elevation_m}</span> m D+</span>
                   )}
                   {validation.avg_hr != null && (
-                    <span className="text-gray-600"><span className="font-semibold text-gray-900">{validation.avg_hr}</span> bpm</span>
+                    <span className="text-neutral-600"><span className="font-semibold text-neutral-900">{validation.avg_hr}</span> bpm</span>
                   )}
                   {validation.max_hr != null && (
-                    <span className="text-gray-600">max <span className="font-semibold text-gray-900">{validation.max_hr}</span></span>
+                    <span className="text-neutral-600">max <span className="font-semibold text-neutral-900">{validation.max_hr}</span></span>
                   )}
                   {validation.rpe != null && (
-                    <span className="text-gray-600">RPE <span className="font-semibold text-gray-900">{validation.rpe}</span>/10</span>
+                    <span className="text-neutral-600">RPE <span className="font-semibold text-neutral-900">{validation.rpe}</span>/10</span>
                   )}
                 </div>
               )}
               {validation.feedback && (
-                <p className="text-sm text-gray-600 mt-3 italic text-center">"{validation.feedback}"</p>
+                <p className="text-sm text-neutral-600 mt-3 italic text-center">"{validation.feedback}"</p>
               )}
               {validation.attachment_path && (
                 <div className="text-center mt-2">
@@ -544,7 +544,7 @@ export default function SessionDetail() {
                     return (
                       <span key={emoji} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-sm">
                         <span aria-hidden="true">{emoji}</span>
-                        {count > 1 && <span className="text-xs font-medium text-gray-600">{count}</span>}
+                        {count > 1 && <span className="text-xs font-medium text-neutral-600">{count}</span>}
                       </span>
                     );
                   })}
@@ -553,7 +553,7 @@ export default function SessionDetail() {
               <div className="text-center mt-3">
                 <button
                   onClick={startEditing}
-                  className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-primary transition-colors"
+                  className="inline-flex items-center gap-1 text-xs text-neutral-400 hover:text-primary transition-colors"
                 >
                   <Pencil size={12} />
                   Modifier
@@ -575,23 +575,23 @@ export default function SessionDetail() {
               ) : (
                 <div className="space-y-3">
                   {isEditing && (
-                    <p className="text-sm font-medium text-gray-500">Modifier ta validation</p>
+                    <p className="text-sm font-medium text-neutral-500">Modifier ta validation</p>
                   )}
                   {/* Mini-survey */}
-                  <div className="bg-gray-50 rounded-xl p-3 space-y-3">
+                  <div className="bg-neutral-50 rounded-xl p-3 space-y-3">
                     <div>
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase mb-2">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-neutral-500 uppercase mb-2">
                         <Target size={14} className="text-primary" />
                         Objectif atteint ?
                       </label>
                       <div className="flex gap-2">
-                        {([['oui', 'Oui', 'bg-green-100 text-green-700 border-green-300'], ['partiel', 'Partiel', 'bg-yellow-100 text-yellow-700 border-yellow-300'], ['non', 'Non', 'bg-red-100 text-red-700 border-red-300']] as const).map(([val, label, colors]) => (
+                        {([['oui', 'Oui', 'bg-success-100 text-success-700 border-success-500'], ['partiel', 'Partiel', 'bg-warning-100 text-warning-700 border-warning-500'], ['non', 'Non', 'bg-danger-100 text-danger-700 border-danger-500']] as const).map(([val, label, colors]) => (
                           <button
                             key={val}
                             type="button"
                             onClick={() => setObjectiveReached(objectiveReached === val ? null : val)}
                             className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                              objectiveReached === val ? colors : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                              objectiveReached === val ? colors : 'bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50'
                             }`}
                           >
                             {label}
@@ -600,18 +600,18 @@ export default function SessionDetail() {
                       </div>
                     </div>
                     <div>
-                      <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase mb-2">
+                      <label className="flex items-center gap-1.5 text-xs font-semibold text-neutral-500 uppercase mb-2">
                         <Smile size={14} className="text-accent" />
                         Sensations ?
                       </label>
                       <div className="flex gap-2">
-                        {([['excellentes', 'Excellentes', 'bg-green-100 text-green-700 border-green-300'], ['bonnes', 'Bonnes', 'bg-blue-100 text-blue-700 border-blue-300'], ['mauvaises', 'Mauvaises', 'bg-red-100 text-red-700 border-red-300']] as const).map(([val, label, colors]) => (
+                        {([['excellentes', 'Excellentes', 'bg-success-100 text-success-700 border-success-500'], ['bonnes', 'Bonnes', 'bg-info-100 text-info-700 border-info-500'], ['mauvaises', 'Mauvaises', 'bg-danger-100 text-danger-700 border-danger-500']] as const).map(([val, label, colors]) => (
                           <button
                             key={val}
                             type="button"
                             onClick={() => setSensations(sensations === val ? null : val)}
                             className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                              sensations === val ? colors : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                              sensations === val ? colors : 'bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50'
                             }`}
                           >
                             {label}
@@ -622,8 +622,8 @@ export default function SessionDetail() {
                   </div>
 
                   {/* Métriques saisies (optionnel) */}
-                  <div className="bg-gray-50 rounded-xl p-3 space-y-3">
-                    <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase">
+                  <div className="bg-neutral-50 rounded-xl p-3 space-y-3">
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-neutral-500 uppercase">
                       <Activity size={14} className="text-primary" />
                       Mes chiffres (optionnel)
                     </label>
@@ -642,38 +642,38 @@ export default function SessionDetail() {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <label className="block">
-                        <span className="block text-[11px] text-gray-400 mb-1">Distance (km)</span>
+                        <span className="block text-[11px] text-neutral-400 mb-1">Distance (km)</span>
                         <input inputMode="decimal" value={distanceKm} onChange={e => { setDistanceKm(e.target.value); setOcrFilled(false); }} placeholder="8"
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                          className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                       </label>
                       <label className="block">
-                        <span className="block text-[11px] text-gray-400 mb-1">Durée (min)</span>
+                        <span className="block text-[11px] text-neutral-400 mb-1">Durée (min)</span>
                         <input inputMode="numeric" value={durationMin} onChange={e => { setDurationMin(e.target.value); setOcrFilled(false); }} placeholder="45"
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                          className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                       </label>
                       <label className="block">
-                        <span className="block text-[11px] text-gray-400 mb-1">D+ (m)</span>
+                        <span className="block text-[11px] text-neutral-400 mb-1">D+ (m)</span>
                         <input inputMode="numeric" value={elevationM} onChange={e => { setElevationM(e.target.value); setOcrFilled(false); }} placeholder="120"
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                          className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                       </label>
                       <label className="block">
-                        <span className="block text-[11px] text-gray-400 mb-1">FC moy (bpm)</span>
+                        <span className="block text-[11px] text-neutral-400 mb-1">FC moy (bpm)</span>
                         <input inputMode="numeric" value={avgHrV} onChange={e => { setAvgHrV(e.target.value); setOcrFilled(false); }} placeholder="148"
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                          className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                       </label>
                       <label className="block">
-                        <span className="block text-[11px] text-gray-400 mb-1">FC max (bpm)</span>
+                        <span className="block text-[11px] text-neutral-400 mb-1">FC max (bpm)</span>
                         <input inputMode="numeric" value={maxHrV} onChange={e => { setMaxHrV(e.target.value); setOcrFilled(false); }} placeholder="172"
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                          className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                       </label>
                       <label className="block">
-                        <span className="block text-[11px] text-gray-400 mb-1">Ressenti (/10)</span>
+                        <span className="block text-[11px] text-neutral-400 mb-1">Ressenti (/10)</span>
                         <input inputMode="numeric" value={rpeV} onChange={e => { setRpeV(e.target.value); setOcrFilled(false); }} placeholder="6"
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
+                          className="w-full border border-neutral-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent" />
                       </label>
                     </div>
                     {livePace && (
-                      <p className="text-xs text-gray-500">Allure estimée : <span className="font-semibold text-accent-dark">{livePace} /km</span></p>
+                      <p className="text-xs text-neutral-500">Allure estimée : <span className="font-semibold text-accent-dark">{livePace} /km</span></p>
                     )}
                   </div>
 
@@ -681,29 +681,29 @@ export default function SessionDetail() {
                     value={feedback}
                     onChange={e => setFeedback(e.target.value)}
                     placeholder="Comment t'es-tu senti ? (optionnel)"
-                    className="w-full border border-gray-200 rounded-xl p-3 text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+                    className="w-full border border-neutral-200 rounded-xl p-3 text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
                   />
                   <div>
                     {!attachedFile ? (
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-accent-text transition-colors"
+                        className="flex items-center gap-2 text-sm text-neutral-500 hover:text-accent-text transition-colors"
                       >
                         <Paperclip size={16} />
                         {isEditing && validation?.attachment_path ? 'Remplacer la piece jointe' : 'Ajouter un fichier (photo, PDF)'}
                       </button>
                     ) : (
-                      <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-2">
+                      <div className="flex items-center gap-3 bg-neutral-50 rounded-lg p-2">
                         {filePreview ? (
                           <img src={filePreview} alt="Preview" className="w-12 h-12 rounded object-cover flex-shrink-0" />
                         ) : (
-                          <div className="w-12 h-12 rounded bg-red-50 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold text-red-500">PDF</span>
+                          <div className="w-12 h-12 rounded bg-danger-50 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold text-danger-500">PDF</span>
                           </div>
                         )}
-                        <span className="text-sm text-gray-700 truncate flex-1 min-w-0">{attachedFile.name}</span>
-                        <button type="button" onClick={removeFile} className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0">
+                        <span className="text-sm text-neutral-700 truncate flex-1 min-w-0">{attachedFile.name}</span>
+                        <button type="button" onClick={removeFile} className="p-1 text-neutral-400 hover:text-danger-500 flex-shrink-0">
                           <X size={16} />
                         </button>
                       </div>
@@ -728,7 +728,7 @@ export default function SessionDetail() {
                         removeFile();
                       }}
                       disabled={isSubmitting}
-                      className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium disabled:opacity-60"
+                      className="flex-1 py-2.5 rounded-xl border border-neutral-200 text-neutral-600 font-medium disabled:opacity-60"
                     >
                       Annuler
                     </button>
