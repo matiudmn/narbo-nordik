@@ -6,10 +6,17 @@
  */
 import type { AppNotification, NotificationPreferences } from '../types';
 
+type ChannelFlags = { in_app?: boolean; email?: boolean } | undefined;
+
+/** Seule la valeur false explicite desactive un canal (absence de cle = active). */
+export function isPrefChannelEnabled(pref: unknown, channel: 'in_app' | 'email'): boolean {
+  return (pref as ChannelFlags)?.[channel] !== false;
+}
+
 export function filterVisibleNotifications(
   notifications: AppNotification[],
   preferences: NotificationPreferences | null | undefined,
 ): AppNotification[] {
-  const byType = preferences as Record<string, { in_app?: boolean } | undefined> | null | undefined;
-  return notifications.filter(n => byType?.[n.type]?.in_app !== false);
+  const byType = preferences as Record<string, ChannelFlags> | null | undefined;
+  return notifications.filter(n => isPrefChannelEnabled(byType?.[n.type], 'in_app'));
 }
