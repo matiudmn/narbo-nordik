@@ -9,8 +9,8 @@ import { parseMarkdown, type Block, type Inline } from '../../lib/markdown';
  *
  * Source unique : legal/privacy-policy.md (document versionné du dépôt), importé
  * en brut et rendu ici. Toute mise à jour du document se reflète sans toucher au
- * composant. URL attendue par le Garmin Connect Developer Program :
- * https://app.narbo-nordik.fr/legal/privacy
+ * composant. URL de production :
+ * https://narbo-nordik.vercel.app/legal/privacy
  */
 
 const BLOCKS = parseMarkdown(privacyMarkdown);
