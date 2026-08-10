@@ -11,6 +11,7 @@ import PersonalSessionForm from '../../components/PersonalSessionForm';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { formatDuration, formatSeconds } from '../../lib/calculations';
 import { getFFACategory } from '../../lib/ffa';
+import { isPrefChannelEnabled } from '../../lib/notificationPrefs';
 import Avatar from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
 import ExpandableText from '../../components/ExpandableText';
@@ -68,7 +69,7 @@ type NotifTypeRow = {
 // et destinataires des fonctions weekly-digest / vma-missing-reminder).
 const NOTIF_TYPES_ATHLETE: NotifTypeRow[] = [
   { key: 'new_session', label: 'Nouvelle seance', hasInApp: true, hasEmail: true },
-  { key: 'palmares', label: 'Palmares', hasInApp: true, hasEmail: false },
+  { key: 'palmares', label: 'Palmarès', hasInApp: true, hasEmail: false },
   { key: 'vma_update', label: 'Mise a jour VMA', hasInApp: true, hasEmail: true },
   { key: 'reaction', label: 'Kudos reçus', hasInApp: true, hasEmail: false },
   { key: 'weekly_digest', label: 'Digest hebdo', hasInApp: false, hasEmail: true },
@@ -908,18 +909,18 @@ export default function Profile() {
                           onClick={async () => {
                             if (!user) return;
                             const prefs = { ...user.notification_preferences };
-                            const current = prefs[key] as { in_app?: boolean; email?: boolean } | undefined;
-                            const enabled = current?.in_app !== false;
+                            const current = prefs[key] as { in_app?: boolean } | undefined;
+                            const enabled = isPrefChannelEnabled(current, 'in_app');
                             (prefs as Record<string, unknown>)[key] = { ...current, in_app: !enabled };
                             await updateNotificationPreferences(user.id, prefs as NotificationPreferences);
                             refreshUser();
                           }}
                           className={`w-9 h-5 rounded-full relative transition-colors ${
-                            (user?.notification_preferences?.[key] as { in_app?: boolean })?.in_app !== false ? 'bg-primary' : 'bg-neutral-300'
+                            isPrefChannelEnabled(user?.notification_preferences?.[key], 'in_app') ? 'bg-primary' : 'bg-neutral-300'
                           }`}
                         >
                           <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform shadow ${
-                            (user?.notification_preferences?.[key] as { in_app?: boolean })?.in_app !== false ? 'left-4.5' : 'left-0.5'
+                            isPrefChannelEnabled(user?.notification_preferences?.[key], 'in_app') ? 'left-4.5' : 'left-0.5'
                           }`} />
                         </button>
                       </label>
@@ -931,18 +932,18 @@ export default function Profile() {
                           onClick={async () => {
                             if (!user) return;
                             const prefs = { ...user.notification_preferences };
-                            const current = prefs[key] as { in_app?: boolean; email?: boolean } | undefined;
-                            const enabled = current?.email !== false;
+                            const current = prefs[key] as { email?: boolean } | undefined;
+                            const enabled = isPrefChannelEnabled(current, 'email');
                             (prefs as Record<string, unknown>)[key] = { ...current, email: !enabled };
                             await updateNotificationPreferences(user.id, prefs as NotificationPreferences);
                             refreshUser();
                           }}
                           className={`w-9 h-5 rounded-full relative transition-colors ${
-                            (user?.notification_preferences?.[key] as { email?: boolean })?.email !== false ? 'bg-primary' : 'bg-neutral-300'
+                            isPrefChannelEnabled(user?.notification_preferences?.[key], 'email') ? 'bg-primary' : 'bg-neutral-300'
                           }`}
                         >
                           <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform shadow ${
-                            (user?.notification_preferences?.[key] as { email?: boolean })?.email !== false ? 'left-4.5' : 'left-0.5'
+                            isPrefChannelEnabled(user?.notification_preferences?.[key], 'email') ? 'left-4.5' : 'left-0.5'
                           }`} />
                         </button>
                       </label>
