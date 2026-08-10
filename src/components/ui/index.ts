@@ -49,3 +49,6 @@ export { AlluresBar } from './AlluresBar';
 
 export { Glossary } from './Glossary';
 export type { GlossaryTerm } from './Glossary';
+
+export { Disclosure } from './Disclosure';
+export type { DisclosureProps } from './Disclosure';
