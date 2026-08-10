@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, Zap, Pencil, Copy, Calendar, Share2 } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Eye, Trash2, X, Zap, Pencil, Copy, Calendar, Share2, History } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { EmptyState, Button, useToast, Card } from '../../components/ui';
 import { useSessionAutosave } from '../../hooks/useSessionAutosave';
@@ -668,7 +668,7 @@ export default function SessionEditor() {
       )}
 
       {/* Week navigation */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-1">
         <button onClick={() => setWeekOffset(o => o - 1)} className="p-2 hover:bg-neutral-100 rounded-lg">
           <ChevronLeft size={20} />
         </button>
@@ -679,6 +679,14 @@ export default function SessionEditor() {
         <button onClick={() => setWeekOffset(o => o + 1)} className="p-2 hover:bg-neutral-100 rounded-lg">
           <ChevronRight size={20} />
         </button>
+      </div>
+
+      {/* Les chevrons ne reculent que d'une semaine : passer par l'historique pour un mois passé. */}
+      <div className="text-right mb-3">
+        <Link to="/coach/historique" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+          <History size={14} aria-hidden="true" />
+          Voir un mois passé
+        </Link>
       </div>
 
       {/* Partage de la semaine (image PNG / PDF pour le groupe WhatsApp) */}
