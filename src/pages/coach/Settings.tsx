@@ -29,14 +29,14 @@ export default function Settings() {
 
   return (
     <div className="py-4 space-y-4">
-      <h1 className="text-lg font-bold text-gray-900">Parametres</h1>
+      <h1 className="text-lg font-bold text-neutral-900">Parametres</h1>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+      <div className="flex gap-1 bg-neutral-100 rounded-lg p-1">
         <button
           onClick={() => setTab('groups')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium transition-colors ${
-            tab === 'groups' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+            tab === 'groups' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500'
           }`}
         >
           <UsersRound size={14} />
@@ -45,7 +45,7 @@ export default function Settings() {
         <button
           onClick={() => setTab('preparations')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium transition-colors ${
-            tab === 'preparations' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+            tab === 'preparations' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500'
           }`}
         >
           <Target size={14} />
@@ -54,7 +54,7 @@ export default function Settings() {
         <button
           onClick={() => setTab('athletes')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium transition-colors ${
-            tab === 'athletes' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+            tab === 'athletes' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500'
           }`}
         >
           <Users size={14} />
@@ -63,7 +63,7 @@ export default function Settings() {
         <button
           onClick={() => setTab('allures')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium transition-colors ${
-            tab === 'allures' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+            tab === 'allures' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500'
           }`}
         >
           <Gauge size={14} />

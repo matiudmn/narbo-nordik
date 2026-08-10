@@ -19,11 +19,11 @@ export default function Header() {
   return (
     <>
       {isImpersonating && effectiveUser && (
-        <div className="fixed top-0 left-0 right-0 lg:left-60 bg-yellow-400 text-yellow-900 z-[60] h-8 flex items-center justify-center text-xs font-bold gap-2">
+        <div className="fixed top-0 left-0 right-0 lg:left-60 bg-warning-500 text-warning-700 z-[60] h-8 flex items-center justify-center text-xs font-bold gap-2">
           <span>Vue en tant que {effectiveUser.firstname} {effectiveUser.lastname}</span>
           <button
             onClick={handleStopImpersonating}
-            className="flex items-center gap-0.5 bg-yellow-600 text-white px-2 py-0.5 rounded-full text-[10px] hover:bg-yellow-700 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="flex items-center gap-0.5 bg-warning-600 text-white px-2 py-0.5 rounded-full text-[10px] hover:bg-warning-700 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             <X size={10} />
             Quitter
@@ -70,7 +70,7 @@ export default function Header() {
             >
               <Bell size={18} />
               {unreadCount > 0 && (
-                <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1" aria-hidden="true">
+                <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1" aria-hidden="true">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}

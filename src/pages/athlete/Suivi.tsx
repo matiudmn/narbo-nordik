@@ -124,16 +124,16 @@ export default function Suivi() {
 
   return (
     <div className="py-4">
-      <h1 className="text-lg font-bold text-gray-900 mb-4">
+      <h1 className="text-lg font-bold text-neutral-900 mb-4">
         {showingAthletes ? 'Suivi athletes' : 'Mon suivi'}
       </h1>
 
       {isCoach && (
-        <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-4">
+        <div className="flex gap-1 bg-neutral-100 rounded-lg p-1 mb-4">
           <button
             onClick={() => setView('athletes')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-sm font-medium transition-colors ${
-              view === 'athletes' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'
+              view === 'athletes' ? 'bg-white text-primary shadow-sm' : 'text-neutral-500'
             }`}
           >
             <Users size={14} />
@@ -142,7 +142,7 @@ export default function Suivi() {
           <button
             onClick={() => setView('personal')}
             className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
-              view === 'personal' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'
+              view === 'personal' ? 'bg-white text-primary shadow-sm' : 'text-neutral-500'
             }`}
           >
             Mon suivi
@@ -154,19 +154,19 @@ export default function Suivi() {
 
       {/* Month navigation */}
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setMonthOffset(p => p - 1)} className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Mois precedent">
-          <ChevronLeft size={20} className="text-gray-600" />
+        <button onClick={() => setMonthOffset(p => p - 1)} className="flex items-center justify-center w-10 h-10 hover:bg-neutral-100 rounded-lg transition-colors" aria-label="Mois precedent">
+          <ChevronLeft size={20} className="text-neutral-600" />
         </button>
-        <span className="font-semibold text-gray-900 capitalize">
+        <span className="font-semibold text-neutral-900 capitalize">
           {format(currentMonth, 'MMMM yyyy', { locale: fr })}
         </span>
         <button
           onClick={() => setMonthOffset(p => p + 1)}
           disabled={monthOffset >= 0}
-          className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-30"
+          className="flex items-center justify-center w-10 h-10 hover:bg-neutral-100 rounded-lg transition-colors disabled:opacity-30"
           aria-label="Mois suivant"
         >
-          <ChevronRight size={20} className="text-gray-600" />
+          <ChevronRight size={20} className="text-neutral-600" />
         </button>
       </div>
 
@@ -174,30 +174,30 @@ export default function Suivi() {
       {stats.total > 0 && (
         <Card className="mb-4">
           <div className="flex items-center gap-2 mb-3">
-            <Check size={16} className="text-green-600" />
-            <span className="font-semibold text-gray-900">
+            <Check size={16} className="text-success-600" />
+            <span className="font-semibold text-neutral-900">
               {stats.total} seance{stats.total > 1 ? 's' : ''} validee{stats.total > 1 ? 's' : ''}
             </span>
           </div>
 
           {(stats.objOui > 0 || stats.objPartiel > 0 || stats.objNon > 0) && (
             <div className="mb-2">
-              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Target size={12} /> Objectifs</p>
+              <p className="text-xs text-neutral-500 mb-1 flex items-center gap-1"><Target size={12} /> Objectifs</p>
               <div className="flex gap-2">
-                {stats.objOui > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">Atteint {stats.objOui}</span>}
-                {stats.objPartiel > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Partiel {stats.objPartiel}</span>}
-                {stats.objNon > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700">Non atteint {stats.objNon}</span>}
+                {stats.objOui > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success-100 text-success-700">Atteint {stats.objOui}</span>}
+                {stats.objPartiel > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-warning-100 text-warning-700">Partiel {stats.objPartiel}</span>}
+                {stats.objNon > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-danger-100 text-danger-700">Non atteint {stats.objNon}</span>}
               </div>
             </div>
           )}
 
           {(stats.sensExc > 0 || stats.sensBon > 0 || stats.sensMauv > 0) && (
             <div>
-              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Smile size={12} /> Sensations</p>
+              <p className="text-xs text-neutral-500 mb-1 flex items-center gap-1"><Smile size={12} /> Sensations</p>
               <div className="flex gap-2">
-                {stats.sensExc > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">Excellentes {stats.sensExc}</span>}
-                {stats.sensBon > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Bonnes {stats.sensBon}</span>}
-                {stats.sensMauv > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700">Mauvaises {stats.sensMauv}</span>}
+                {stats.sensExc > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success-100 text-success-700">Excellentes {stats.sensExc}</span>}
+                {stats.sensBon > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-info-100 text-info-700">Bonnes {stats.sensBon}</span>}
+                {stats.sensMauv > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-danger-100 text-danger-700">Mauvaises {stats.sensMauv}</span>}
               </div>
             </div>
           )}
@@ -207,11 +207,11 @@ export default function Suivi() {
       {/* Session list */}
       {currentList.length === 0 ? (
         <div className="text-center py-12">
-          <Check size={40} className="mx-auto mb-3 text-gray-300" />
-          <p className="font-medium text-gray-500">
+          <Check size={40} className="mx-auto mb-3 text-neutral-300" />
+          <p className="font-medium text-neutral-500">
             {showingAthletes ? 'Aucun retour athlete ce mois' : 'Aucune seance validee ce mois'}
           </p>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-neutral-400 mt-1">
             {showingAthletes ? 'Les validations des athletes apparaitront ici' : 'Validez vos seances pour les voir apparaitre ici'}
           </p>
         </div>
@@ -223,14 +223,14 @@ export default function Suivi() {
               <Link
                 key={`${session.id}-${validation.id}`}
                 to={`/session/${session.id}`}
-                className="block bg-white rounded-xl border border-gray-100 p-4 hover:border-gray-200 transition-colors"
+                className="block bg-white rounded-xl border border-neutral-100 p-4 hover:border-neutral-200 transition-colors"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-2 min-w-0">
                     {showingAthletes && athlete ? (
                       <Avatar user={athlete} size="sm" />
                     ) : (
-                      <TypeIcon size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                      <TypeIcon size={16} className="text-neutral-400 mt-0.5 flex-shrink-0" />
                     )}
                     <div className="min-w-0">
                       {showingAthletes && athlete && (
@@ -238,27 +238,27 @@ export default function Suivi() {
                           {athlete.firstname} {athlete.lastname}
                         </p>
                       )}
-                      <p className="font-semibold text-gray-900 truncate">
+                      <p className="font-semibold text-neutral-900 truncate">
                         {session.title}
-                        <span className="text-xs font-normal text-gray-400 ml-1.5">
+                        <span className="text-xs font-normal text-neutral-400 ml-1.5">
                           {getSessionCode(session, sessions)}
                         </span>
                       </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-neutral-400 mt-0.5">
                         {format(new Date(session.date), 'EEEE d MMMM', { locale: fr })}
                       </p>
                     </div>
                   </div>
-                  <Check size={16} className="text-green-600 flex-shrink-0 mt-0.5" />
+                  <Check size={16} className="text-success-600 flex-shrink-0 mt-0.5" />
                 </div>
 
                 {(validation.objective_reached || validation.sensations) && (
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {validation.objective_reached && (
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        validation.objective_reached === 'oui' ? 'bg-green-100 text-green-700' :
-                        validation.objective_reached === 'partiel' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
+                        validation.objective_reached === 'oui' ? 'bg-success-100 text-success-700' :
+                        validation.objective_reached === 'partiel' ? 'bg-warning-100 text-warning-700' :
+                        'bg-danger-100 text-danger-700'
                       }`}>
                         {validation.objective_reached === 'oui' ? 'Objectif atteint' :
                          validation.objective_reached === 'partiel' ? 'Objectif partiel' : 'Objectif non atteint'}
@@ -266,9 +266,9 @@ export default function Suivi() {
                     )}
                     {validation.sensations && (
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        validation.sensations === 'excellentes' ? 'bg-green-100 text-green-700' :
-                        validation.sensations === 'bonnes' ? 'bg-blue-100 text-blue-700' :
-                        'bg-red-100 text-red-700'
+                        validation.sensations === 'excellentes' ? 'bg-success-100 text-success-700' :
+                        validation.sensations === 'bonnes' ? 'bg-info-100 text-info-700' :
+                        'bg-danger-100 text-danger-700'
                       }`}>
                         {validation.sensations.charAt(0).toUpperCase() + validation.sensations.slice(1)}
                       </span>
@@ -277,7 +277,7 @@ export default function Suivi() {
                 )}
 
                 {validation.feedback && (
-                  <p className="text-sm text-gray-500 italic mt-2">"{validation.feedback}"</p>
+                  <p className="text-sm text-neutral-500 italic mt-2">"{validation.feedback}"</p>
                 )}
               </Link>
             );

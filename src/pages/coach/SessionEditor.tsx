@@ -312,7 +312,7 @@ export default function SessionEditor() {
     <div className="py-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-lg font-bold text-gray-900">Planning</h1>
+        <h1 className="text-lg font-bold text-neutral-900">Planning</h1>
         <button
           onClick={() => {
             if (showForm) {
@@ -382,7 +382,7 @@ export default function SessionEditor() {
       {showForm && (
         <Card className="shadow-sm mb-4 space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-bold text-gray-900">{editingSessionId ? 'Modifier la séance' : 'Créer une séance'}</h2>
+            <h2 className="font-bold text-neutral-900">{editingSessionId ? 'Modifier la séance' : 'Créer une séance'}</h2>
             {savedAt && !editingSessionId && (
               <span className="text-[10px] text-success-600 font-medium tabular">
                 ✓ Enregistré
@@ -393,13 +393,13 @@ export default function SessionEditor() {
           <input
             type="text" placeholder="Titre (ex: Fractionne court)"
             value={title} onChange={e => setTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
 
           <div className="grid grid-cols-2 gap-2">
             <input
               type="datetime-local" value={date} onChange={e => setDate(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <select
               value={preparationId ? `prep:${preparationId}` : groupId}
@@ -413,7 +413,7 @@ export default function SessionEditor() {
                   setPreparationId('');
                 }
               }}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">Tous les groupes</option>
               {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
@@ -430,13 +430,13 @@ export default function SessionEditor() {
           <div className="grid grid-cols-2 gap-2">
             <select
               value={sessionType} onChange={e => setSessionType(e.target.value as SessionType)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               {Object.entries(SESSION_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
             <div className="flex items-center gap-3 px-3 py-2">
               {Object.entries(TERRAIN_OPTIONS).map(([k, v]) => (
-                <label key={k} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
+                <label key={k} className="flex items-center gap-1.5 text-sm text-neutral-700 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={terrainOptions.includes(k as TerrainOption)}
@@ -444,7 +444,7 @@ export default function SessionEditor() {
                       if (e.target.checked) setTerrainOptions([...terrainOptions, k as TerrainOption]);
                       else setTerrainOptions(terrainOptions.filter(t => t !== k));
                     }}
-                    className="rounded border-gray-300 text-primary focus:ring-primary/20"
+                    className="rounded border-neutral-300 text-primary focus:ring-primary/20"
                   />
                   {v}
                 </label>
@@ -455,18 +455,18 @@ export default function SessionEditor() {
           <input
             type="text" placeholder="Lieu (optionnel)"
             value={location} onChange={e => setLocation(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
 
           {/* Block builder */}
-          <div className="bg-gray-50 rounded-xl p-3 space-y-3">
+          <div className="bg-neutral-50 rounded-xl p-3 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-gray-500 uppercase flex items-center gap-1">
+              <p className="text-xs font-semibold text-neutral-500 uppercase flex items-center gap-1">
                 <Zap size={14} />
                 Programme de la séance
               </p>
               {blocks.length > 0 && (
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-neutral-400">
                   {blocks.length} bloc{blocks.length > 1 ? 's' : ''} | {hasDistanceBlocks && !previewUser ? '?' : (hasDistanceBlocks ? '~' : '')}{hasDistanceBlocks && !previewUser ? '' : formatSeconds(totalSeconds)}
                 </span>
               )}
@@ -475,19 +475,19 @@ export default function SessionEditor() {
             {/* Quick-add buttons */}
             <div className="flex gap-2">
               <button onClick={() => addBlock('echauffement')}
-                className="flex-1 text-xs py-2 rounded-lg border border-dashed border-green-300 text-green-600 hover:bg-green-50 font-medium transition-colors">
+                className="flex-1 text-xs py-2 rounded-lg border border-dashed border-success-500 text-success-600 hover:bg-success-50 font-medium transition-colors">
                 + Échauffement
               </button>
               <button onClick={() => addBlock('travail')}
-                className="flex-1 text-xs py-2 rounded-lg border border-dashed border-red-300 text-red-500 hover:bg-red-50 font-medium transition-colors">
+                className="flex-1 text-xs py-2 rounded-lg border border-dashed border-danger-500 text-danger-500 hover:bg-danger-50 font-medium transition-colors">
                 + Travail
               </button>
               <button onClick={() => addBlock('retour_au_calme')}
-                className="flex-1 text-xs py-2 rounded-lg border border-dashed border-green-300 text-green-600 hover:bg-green-50 font-medium transition-colors">
+                className="flex-1 text-xs py-2 rounded-lg border border-dashed border-success-500 text-success-600 hover:bg-success-50 font-medium transition-colors">
                 + Retour
               </button>
               <button onClick={() => addBlock('recuperation')}
-                className="flex-1 text-xs py-2 rounded-lg border border-dashed border-orange-300 text-orange-500 hover:bg-orange-50 font-medium transition-colors">
+                className="flex-1 text-xs py-2 rounded-lg border border-dashed border-warning-500 text-warning-500 hover:bg-warning-50 font-medium transition-colors">
                 + Récup
               </button>
             </div>
@@ -511,11 +511,11 @@ export default function SessionEditor() {
                       <button
                         type="button"
                         onClick={() => insertRecovery(idx)}
-                        className="w-full flex items-center justify-center gap-1 py-1 my-1 text-[10px] text-orange-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors group"
+                        className="w-full flex items-center justify-center gap-1 py-1 my-1 text-[10px] text-warning-500 hover:text-warning-600 hover:bg-warning-50 rounded transition-colors group"
                       >
-                        <span className="flex-1 border-t border-dashed border-orange-200 group-hover:border-orange-400" />
+                        <span className="flex-1 border-t border-dashed border-warning-100 group-hover:border-warning-500" />
                         <span className="px-2 font-medium">+ Récup</span>
-                        <span className="flex-1 border-t border-dashed border-orange-200 group-hover:border-orange-400" />
+                        <span className="flex-1 border-t border-dashed border-warning-100 group-hover:border-warning-500" />
                       </button>
                     )}
                   </div>
@@ -524,20 +524,20 @@ export default function SessionEditor() {
             )}
 
             {blocks.length === 0 && (
-              <p className="text-center text-xs text-gray-400 py-4">
+              <p className="text-center text-xs text-neutral-400 py-4">
                 Ajoute des blocs pour composer ta séance
               </p>
             )}
 
             {/* Preview athlete */}
             {blocks.length > 0 && (
-              <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+              <div className="flex items-center gap-2 pt-2 border-t border-neutral-200">
                 <Eye size={14} className="text-primary flex-shrink-0" />
-                <span className="text-xs text-gray-500 flex-shrink-0">Preview :</span>
+                <span className="text-xs text-neutral-500 flex-shrink-0">Preview :</span>
                 <select
                   value={previewUserId || ''}
                   onChange={e => setPreviewUserId(e.target.value || null)}
-                  className="text-xs px-2 py-1 border border-gray-200 rounded flex-1"
+                  className="text-xs px-2 py-1 border border-neutral-200 rounded flex-1"
                 >
                   <option value="">Choisir un membre...</option>
                   {allMembers.map(a => (
@@ -553,13 +553,13 @@ export default function SessionEditor() {
           <textarea
             placeholder="Consignes (échauffement, récupération...)"
             value={description} onChange={e => setDescription(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
 
           {/* RPE de séance (optionnel) : difficulté globale attendue, sensible au volume */}
           <div className="flex items-center gap-2">
-            <label htmlFor="session-rpe" className="text-sm text-gray-600 flex-1">
-              RPE de la séance <span className="text-gray-400">(optionnel, difficulté globale)</span>
+            <label htmlFor="session-rpe" className="text-sm text-neutral-600 flex-1">
+              RPE de la séance <span className="text-neutral-400">(optionnel, difficulté globale)</span>
             </label>
             <input
               id="session-rpe"
@@ -567,9 +567,9 @@ export default function SessionEditor() {
               value={sessionRpe}
               onChange={e => { const v = e.target.value; setSessionRpe(v === '' ? '' : String(Math.min(10, Math.max(1, parseInt(v) || 1)))); }}
               placeholder="-"
-              className="w-16 px-2 py-1.5 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-16 px-2 py-1.5 border border-neutral-200 rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
-            <span className="text-xs text-gray-400">/10</span>
+            <span className="text-xs text-neutral-400">/10</span>
           </div>
 
           <div className="space-y-2">
@@ -669,14 +669,14 @@ export default function SessionEditor() {
 
       {/* Week navigation */}
       <div className="flex items-center justify-between mb-3">
-        <button onClick={() => setWeekOffset(o => o - 1)} className="p-2 hover:bg-gray-100 rounded-lg">
+        <button onClick={() => setWeekOffset(o => o - 1)} className="p-2 hover:bg-neutral-100 rounded-lg">
           <ChevronLeft size={20} />
         </button>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-neutral-600">
           {format(weekStart, 'd MMM', { locale: fr })} - {format(weekEnd, 'd MMM yyyy', { locale: fr })}
           {weekOffset === 0 && <span className="ml-1 text-accent-text font-medium">(cette semaine)</span>}
         </p>
-        <button onClick={() => setWeekOffset(o => o + 1)} className="p-2 hover:bg-gray-100 rounded-lg">
+        <button onClick={() => setWeekOffset(o => o + 1)} className="p-2 hover:bg-neutral-100 rounded-lg">
           <ChevronRight size={20} />
         </button>
       </div>
@@ -722,24 +722,24 @@ export default function SessionEditor() {
           {weekSessions.map(session => {
             const group = groups.find(g => g.id === session.group_id);
             const prep = preparations.find(p => p.id === session.preparation_id);
-            const borderColor = prep ? 'border-l-amber-400' : session.group_id ? 'border-l-blue-400' : 'border-l-gray-300';
+            const borderColor = prep ? 'border-l-warning-500' : session.group_id ? 'border-l-info-500' : 'border-l-neutral-300';
             return (
               <Card key={session.id} className={`border-l-4 ${borderColor} shadow-sm hover:shadow-md transition-shadow`}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${prep ? 'bg-amber-100 text-amber-700' : session.group_id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${prep ? 'bg-warning-100 text-warning-700' : session.group_id ? 'bg-info-100 text-info-700' : 'bg-neutral-100 text-neutral-600'}`}>
                         {prep?.name || group?.name || 'Tous'}
                       </span>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-neutral-900">
                         {session.title}
-                        <span className="text-xs font-normal text-gray-400 ml-1.5">{getSessionCode(session, sessions)}</span>
+                        <span className="text-xs font-normal text-neutral-400 ml-1.5">{getSessionCode(session, sessions)}</span>
                       </h3>
                     </div>
-                    <div className="flex items-center gap-4 mt-1.5 text-sm text-gray-500">
+                    <div className="flex items-center gap-4 mt-1.5 text-sm text-neutral-500">
                       <span>{format(new Date(session.date), 'EEEE d MMM - HH:mm', { locale: fr })}</span>
                       {session.location && (
-                        <span className="text-gray-400">{session.location}</span>
+                        <span className="text-neutral-400">{session.location}</span>
                       )}
                     </div>
                     {session.blocks.length > 0 && (
@@ -758,7 +758,7 @@ export default function SessionEditor() {
                   <div className="flex items-center gap-0.5 flex-shrink-0">
                     <button
                       onClick={() => loadSessionIntoForm(session, true)}
-                      className="p-2 text-gray-300 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors"
+                      className="p-2 text-neutral-300 hover:text-primary hover:bg-neutral-50 rounded-lg transition-colors"
                       title="Modifier"
                     >
                       <Pencil size={16} />
@@ -769,14 +769,14 @@ export default function SessionEditor() {
                         setDuplicatedId(session.id);
                         setTimeout(() => setDuplicatedId(null), 2000);
                       }}
-                      className={`p-2 rounded-lg transition-colors ${duplicatedId === session.id ? 'text-accent bg-accent/10' : 'text-gray-300 hover:text-accent hover:bg-gray-50'}`}
+                      className={`p-2 rounded-lg transition-colors ${duplicatedId === session.id ? 'text-accent bg-accent/10' : 'text-neutral-300 hover:text-accent hover:bg-neutral-50'}`}
                       title="Dupliquer"
                     >
                       <Copy size={16} />
                     </button>
                     <button
                       onClick={() => setConfirmDeleteId(session.id)}
-                      className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 text-neutral-300 hover:text-danger-500 hover:bg-danger-50 rounded-lg transition-colors"
                       title="Supprimer"
                     >
                       <Trash2 size={16} />

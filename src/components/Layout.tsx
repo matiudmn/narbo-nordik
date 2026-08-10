@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Header from './Header';
 import BottomNav from './BottomNav';
 import Sidebar from './Sidebar';
+import OfflineIndicator from './OfflineIndicator';
 import { GlobalSearchProvider } from '../contexts/GlobalSearchContext';
 import { motion, AnimatePresence, DUR, EASE } from '../lib/motion';
 
@@ -14,6 +15,7 @@ export default function Layout() {
     <GlobalSearchProvider>
       <div className="min-h-screen bg-surface">
         <Sidebar />
+        <OfflineIndicator />
         <div className="lg:ml-60">
           <Header />
           <main className={`${isImpersonating ? 'pt-[5.5rem]' : 'pt-14'} lg:pt-4 ${isImpersonating ? 'lg:pt-12' : ''} pb-20 lg:pb-8 px-4 lg:px-8 max-w-6xl mx-auto safe-bottom`}>
