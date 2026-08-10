@@ -3,6 +3,7 @@ import type { User } from '../types';
 import { supabase } from '../lib/supabase';
 import { clearSnapshot } from '../lib/offline-cache';
 import { captureError } from '../lib/monitoring';
+import { signupWithInviteCode } from '../lib/auth-signup';
 import { toUser } from './data/rows';
 
 interface AuthContextType {
@@ -21,22 +22,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
-
-// Mappe l'erreur brute du RPC register_profile vers un message FR affichable.
-// - 42501 (insufficient_privilege) : levee volontairement par le RPC pour un
-//   code d'invitation invalide (cf. 20260731130000_invite_code.sql), message
-//   deja propre en FR, on le garde tel quel.
-// - 23505 (unique_violation) : la ligne `users` existe deja (ex. reprise
-//   d'une inscription partielle : signUp avait deja reussi une 1re fois),
-//   message dedie pour rediriger vers la connexion.
-// - reste : erreur Postgres brute non destinee a l'ecran, detail envoye a
-//   captureError, message generique affiche.
-function mapRegisterProfileError(error: { message: string; code?: string }): string {
-  if (error.code === '42501') return error.message;
-  if (error.code === '23505') return 'Ton compte existe déjà, connecte-toi.';
-  captureError('AuthContext.signup register_profile error', error);
-  return 'Une erreur est survenue lors de la création du compte, réessaie plus tard.';
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -136,23 +121,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   }, []);
 
-  const signup = useCallback(async (email: string, password: string, firstname: string, lastname: string, inviteCode: string): Promise<string | null> => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) return error.message;
-    if (!data.user) return 'Erreur lors de la creation du compte';
-
-    // Insert direct remplace par le RPC register_profile (SECURITY DEFINER) :
-    // il verifie le code d'invitation cote base avant de creer le profil (la
-    // policy INSERT de `users` n'a plus de branche self-service depuis
-    // 20260731130000_invite_code.sql).
-    const { error: rpcError } = await supabase.rpc('register_profile', { invite_code: inviteCode, firstname, lastname, email });
-    if (rpcError) return mapRegisterProfileError(rpcError);
-
-    // La notification aux coachs (type `new_athlete`) est posée par le trigger
-    // `on_new_athlete` (20260810140000) : il couvre aussi la création par un
-    // coach (addUser), signale la VMA / la licence manquante et ne dépend plus
-    // de la bonne fin de cette fonction côté client.
-    return null;
+  const signup = useCallback((email: string, password: string, firstname: string, lastname: string, inviteCode: string): Promise<string | null> => {
+    return signupWithInviteCode(
+      {
+        signUp: (params) => supabase.auth.signUp(params),
+        registerProfile: async (args) => supabase.rpc('register_profile', args),
+      },
+      { email, password, firstname, lastname, inviteCode },
+    );
   }, []);
 
   const logout = useCallback(async () => {
