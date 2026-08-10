@@ -1,0 +1,6 @@
+# Livrables générés : ils contiennent le code d'invitation du club en clair.
+# Ce dépôt est public, ce code suffit à créer un compte athlète. On ne versionne
+# que les gabarits ({{CODE_INVITATION}}) et build.sh.
+guide-demarrage-athlete.pdf
+message-whatsapp-invitation.txt
+.guide.tmp.html
