@@ -11,7 +11,7 @@ import PersonalSessionForm from '../../components/PersonalSessionForm';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { formatDuration, formatSeconds } from '../../lib/calculations';
 import { getFFACategory } from '../../lib/ffa';
-import { isPrefChannelEnabled } from '../../lib/notificationPrefs';
+import { isPrefChannelEnabled, NOTIF_TYPES_ATHLETE, NOTIF_TYPES_COACH } from '../../lib/notificationPrefs';
 import Avatar from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
 import ExpandableText from '../../components/ExpandableText';
@@ -57,28 +57,6 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
 }
 
 const VALID_TABS = ['infos', 'sessions', 'account'] as const;
-
-type NotifTypeRow = {
-  key: keyof NotificationPreferences;
-  label: string;
-  hasInApp: boolean;
-  hasEmail: boolean;
-};
-
-// Chaque rôle ne liste que les types qu'il peut réellement recevoir (cf. triggers notify_*
-// et destinataires des fonctions weekly-digest / vma-missing-reminder).
-const NOTIF_TYPES_ATHLETE: NotifTypeRow[] = [
-  { key: 'new_session', label: 'Nouvelle seance', hasInApp: true, hasEmail: true },
-  { key: 'palmares', label: 'Palmarès', hasInApp: true, hasEmail: false },
-  { key: 'vma_update', label: 'Mise a jour VMA', hasInApp: true, hasEmail: true },
-  { key: 'reaction', label: 'Kudos reçus', hasInApp: true, hasEmail: false },
-  { key: 'weekly_digest', label: 'Digest hebdo', hasInApp: false, hasEmail: true },
-];
-const NOTIF_TYPES_COACH: NotifTypeRow[] = [
-  { key: 'new_athlete', label: 'Nouvel athlète inscrit', hasInApp: true, hasEmail: true },
-  { key: 'vma_missing', label: 'Rappel VMA manquantes', hasInApp: true, hasEmail: false },
-  { key: 'palmares', label: 'Palmarès', hasInApp: true, hasEmail: false },
-];
 
 /**
  * NOTE: file is large because state and handlers are intricately shared
