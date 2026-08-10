@@ -1,4 +1,5 @@
 import { Dumbbell, Trophy, Mountain, Battery, Bike, Footprints, Activity } from 'lucide-react';
+import { SESSION_TYPE_LABELS } from '../../lib/calculations';
 import type { SessionType } from '../../types';
 
 type Size = 'sm' | 'md';
@@ -12,13 +13,13 @@ interface SessionTypeBadgeProps {
 }
 
 const config: Record<SessionType, { label: string; icon: typeof Dumbbell; varKey: string }> = {
-  entrainement: { label: 'Entraînement', icon: Dumbbell, varKey: 'entrainement' },
-  course: { label: 'Course', icon: Trophy, varKey: 'course' },
-  sortie_longue: { label: 'Sortie longue', icon: Mountain, varKey: 'sortie-longue' },
-  recuperation: { label: 'Récupération', icon: Battery, varKey: 'recuperation' },
-  velo: { label: 'Vélo', icon: Bike, varKey: 'velo' },
-  marche: { label: 'Marche', icon: Footprints, varKey: 'marche' },
-  renfo: { label: 'Renfo', icon: Dumbbell, varKey: 'renfo' },
+  entrainement: { label: SESSION_TYPE_LABELS.entrainement, icon: Dumbbell, varKey: 'entrainement' },
+  course: { label: SESSION_TYPE_LABELS.course, icon: Trophy, varKey: 'course' },
+  sortie_longue: { label: SESSION_TYPE_LABELS.sortie_longue, icon: Mountain, varKey: 'sortie-longue' },
+  recuperation: { label: SESSION_TYPE_LABELS.recuperation, icon: Battery, varKey: 'recuperation' },
+  velo: { label: SESSION_TYPE_LABELS.velo, icon: Bike, varKey: 'velo' },
+  marche: { label: SESSION_TYPE_LABELS.marche, icon: Footprints, varKey: 'marche' },
+  renfo: { label: SESSION_TYPE_LABELS.renfo, icon: Dumbbell, varKey: 'renfo' },
 };
 
 /**

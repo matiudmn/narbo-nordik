@@ -1,5 +1,5 @@
 import { getISOWeek, getISOWeekYear } from 'date-fns';
-import type { PaceCalculation, AllureZone, AllureZoneConfig, RacePaceConfig, SessionBlock, Session, Group, SpecificPreparation } from '../types';
+import type { PaceCalculation, AllureZone, AllureZoneConfig, RacePaceConfig, SessionBlock, Session, SessionType, Group, SpecificPreparation } from '../types';
 
 export const DEFAULT_ALLURE_ZONES: Record<AllureZone, AllureZoneConfig> = {
   aer:  { label: 'AER',  pctMinByLevel: [50, 50, 50, 50, 50],    pctMaxByLevel: [60, 60, 60, 60, 60],    color: '#06b6d4' },
@@ -69,6 +69,16 @@ export const BLOCK_TYPES: Record<string, { label: string }> = {
   travail:         { label: 'Travail' },
   retour_au_calme: { label: 'Retour au calme' },
   recuperation:    { label: 'Récupération' },
+};
+
+export const SESSION_TYPE_LABELS: Record<SessionType, string> = {
+  entrainement:  'Entraînement',
+  course:        'Course',
+  sortie_longue: 'Sortie longue',
+  recuperation:  'Récupération',
+  velo:          'Vélo',
+  marche:        'Marche',
+  renfo:         'Renfo',
 };
 
 export function calculateBlockPace(vma: number, zone: AllureZone, zones?: Record<string, AllureZoneConfig>) {

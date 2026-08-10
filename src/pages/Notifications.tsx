@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Bell, CalendarPlus, Trophy, TrendingUp, Mail, Info, Heart, CheckCheck } from 'lucide-react';
+import { Bell, CalendarPlus, Trophy, TrendingUp, Mail, Info, Heart, CheckCheck, UserPlus, Gauge } from 'lucide-react';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
 import { EmptyState } from '../components/ui';
 import type { AppNotification } from '../types';
@@ -16,6 +16,8 @@ function getNotifIcon(type: AppNotification['type']): ReactElement {
     case 'vma_update': return <TrendingUp size={18} className="text-success-500" />;
     case 'weekly_digest': return <Mail size={18} className="text-info-500" />;
     case 'reaction': return <Heart size={18} className="text-danger-500" />;
+    case 'new_athlete': return <UserPlus size={18} className="text-accent-text" />;
+    case 'vma_missing': return <Gauge size={18} className="text-warning-500" />;
     case 'system': return <Info size={18} className="text-neutral-500" />;
   }
 }

@@ -194,7 +194,7 @@ export interface SessionWithValidation extends Session {
   group?: Group;
 }
 
-export type NotificationType = 'new_session' | 'palmares' | 'vma_update' | 'weekly_digest' | 'system' | 'reaction';
+export type NotificationType = 'new_session' | 'palmares' | 'vma_update' | 'weekly_digest' | 'system' | 'reaction' | 'new_athlete' | 'vma_missing';
 
 export interface NotificationPreferences {
   new_session: { in_app: boolean; email: boolean };
