@@ -332,7 +332,7 @@ export default function Profile() {
       {tab === 'infos' && (
       <>
       {/* Informations personnelles */}
-      <Disclosure title="Informations" icon={<UserIcon size={18} className="text-primary" />}>
+      <Disclosure title="Informations" headingLevel={2} icon={<UserIcon size={18} className="text-primary" />}>
         <div className="space-y-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -456,7 +456,7 @@ export default function Profile() {
       </Disclosure>
 
       {/* Historique (VMA + seances) */}
-      <Disclosure title="Historique" icon={<History size={18} className="text-primary" />}>
+      <Disclosure title="Historique" headingLevel={2} icon={<History size={18} className="text-primary" />}>
         <div className="space-y-1">
           {user.vma_history.length > 0 && (
             <Link to="/vma-history" className="flex items-center gap-1 text-xs text-primary hover:underline">
@@ -472,7 +472,7 @@ export default function Profile() {
       </Disclosure>
 
       {/* Coordonnees (telephone, licence, date de naissance) */}
-      <Disclosure title="Coordonnées" icon={<IdCard size={18} className="text-primary" />}>
+      <Disclosure title="Coordonnées" headingLevel={2} icon={<IdCard size={18} className="text-primary" />}>
         <div className="space-y-1">
           {/* Phone */}
           <div className="flex items-center justify-between">
@@ -844,7 +844,7 @@ export default function Profile() {
       {tab === 'account' && (
       <>
       {/* Notifications */}
-      <Disclosure title="Notifications" icon={<Bell size={18} className="text-primary" />}>
+      <Disclosure title="Notifications" headingLevel={2} icon={<Bell size={18} className="text-primary" />}>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -937,7 +937,7 @@ export default function Profile() {
       </Disclosure>
 
       {/* Securite */}
-      <Disclosure title="Sécurité" icon={<Lock size={18} className="text-primary" />}>
+      <Disclosure title="Sécurité" headingLevel={2} icon={<Lock size={18} className="text-primary" />}>
         <div className="space-y-3">
           <p className="text-sm text-neutral-500">Modifier ton mot de passe</p>
           <input
@@ -968,7 +968,7 @@ export default function Profile() {
       </Disclosure>
 
       {/* Donnees personnelles */}
-      <Disclosure title="Données personnelles" icon={<Shield size={18} className="text-primary" />}>
+      <Disclosure title="Données personnelles" headingLevel={2} icon={<Shield size={18} className="text-primary" />}>
         <div className="space-y-3">
           <button
             onClick={() => {
