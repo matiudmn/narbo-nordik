@@ -55,6 +55,18 @@ export async function pngBlobToPdf(blob: Blob, filename: string): Promise<void> 
   pdf.save(filename);
 }
 
+/**
+ * L'app tourne-t-elle en PWA installee (mode standalone) ? `display-mode` pour
+ * les navigateurs a jour, `navigator.standalone` pour l'ancien Safari iOS.
+ * Sert a ne privilegier le partage natif que la ou le telechargement classique
+ * est reellement fragile ; en navigateur normal, downloadBlob reste prioritaire.
+ */
+export function isStandaloneDisplay(): boolean {
+  if (typeof window !== 'undefined' && window.matchMedia?.('(display-mode: standalone)').matches) return true;
+  if (typeof navigator !== 'undefined' && (navigator as Navigator & { standalone?: boolean }).standalone) return true;
+  return false;
+}
+
 /** Le navigateur peut-il partager ce fichier (Web Share API niveau 2) ? */
 export function canShareFile(blob: Blob, filename: string, mimeType: string): boolean {
   if (typeof navigator === 'undefined' || typeof navigator.canShare !== 'function') return false;

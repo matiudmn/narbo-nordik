@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { Card, Button, EmptyState, useToast } from '../../components/ui';
 import { getAllureZones } from '../../lib/calculations';
-import { downloadBlob, shareFile } from '../../lib/shareExport';
+import { downloadBlob, shareFile, isStandaloneDisplay } from '../../lib/shareExport';
 import { buildSessionExportRows, toCsvContent, exportFilename } from '../../lib/spreadsheetExport';
 
 type PeriodMode = 'mois' | 'plage';
@@ -86,9 +86,16 @@ export default function Export() {
     const csv = toCsvContent(rows, columnGroups);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const filename = exportFilename(start, end);
-    const outcome = await shareFile(blob, filename, 'text/csv', { title: 'Export séances Narbo Nordik' });
-    if (outcome === 'cancelled') return;
-    if (outcome === 'unavailable') downloadBlob(blob, filename);
+    // Partage natif prioritaire seulement en PWA installee : la, le telechargement
+    // classique (Blob + a[download]) est fragile. En navigateur normal, le coach
+    // attend un fichier direct dans ses Telechargements, pas un popover de partage.
+    if (isStandaloneDisplay()) {
+      const outcome = await shareFile(blob, filename, 'text/csv', { title: 'Export séances Narbo Nordik' });
+      if (outcome === 'cancelled') return;
+      if (outcome === 'unavailable') downloadBlob(blob, filename);
+    } else {
+      downloadBlob(blob, filename);
+    }
     toast.success(`${rows.length} séance${rows.length > 1 ? 's' : ''} exportée${rows.length > 1 ? 's' : ''}`);
   };
 

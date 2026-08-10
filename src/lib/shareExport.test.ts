@@ -1,10 +1,30 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { canShareFile, shareFile, canShareImage, shareImage } from './shareExport';
+import { canShareFile, shareFile, canShareImage, shareImage, isStandaloneDisplay } from './shareExport';
 
 const blob = () => new Blob(['contenu'], { type: 'text/csv' });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe('isStandaloneDisplay', () => {
+  it('renvoie false hors PWA installee', () => {
+    vi.stubGlobal('window', { matchMedia: () => ({ matches: false }) });
+    vi.stubGlobal('navigator', {});
+    expect(isStandaloneDisplay()).toBe(false);
+  });
+
+  it('renvoie true via matchMedia (display-mode: standalone)', () => {
+    vi.stubGlobal('window', { matchMedia: () => ({ matches: true }) });
+    vi.stubGlobal('navigator', {});
+    expect(isStandaloneDisplay()).toBe(true);
+  });
+
+  it('renvoie true via navigator.standalone (ancien Safari iOS)', () => {
+    vi.stubGlobal('window', { matchMedia: () => ({ matches: false }) });
+    vi.stubGlobal('navigator', { standalone: true });
+    expect(isStandaloneDisplay()).toBe(true);
+  });
 });
 
 describe('canShareFile', () => {
