@@ -203,6 +203,10 @@ export interface NotificationPreferences {
   weekly_digest: { email: boolean };
   // Jamais d'e-mail pour les kudos (cf. skip list du trigger notify_email_on_insert).
   reaction?: { in_app: boolean };
+  // Types coach (20260810140000) : clé absente = activé, les lignes existantes ne sont pas migrées.
+  new_athlete?: { in_app?: boolean; email?: boolean };
+  // Jamais d'e-mail pour le rappel VMA (même skip list que reaction).
+  vma_missing?: { in_app?: boolean };
 }
 
 export interface AppNotification {

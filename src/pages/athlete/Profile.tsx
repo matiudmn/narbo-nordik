@@ -57,6 +57,28 @@ function Accordion({ title, icon, children, defaultOpen = false, badge, action }
 
 const VALID_TABS = ['infos', 'sessions', 'account'] as const;
 
+type NotifTypeRow = {
+  key: keyof NotificationPreferences;
+  label: string;
+  hasInApp: boolean;
+  hasEmail: boolean;
+};
+
+// Chaque rôle ne liste que les types qu'il peut réellement recevoir (cf. triggers notify_*
+// et destinataires des fonctions weekly-digest / vma-missing-reminder).
+const NOTIF_TYPES_ATHLETE: NotifTypeRow[] = [
+  { key: 'new_session', label: 'Nouvelle seance', hasInApp: true, hasEmail: true },
+  { key: 'palmares', label: 'Palmares', hasInApp: true, hasEmail: false },
+  { key: 'vma_update', label: 'Mise a jour VMA', hasInApp: true, hasEmail: true },
+  { key: 'reaction', label: 'Kudos reçus', hasInApp: true, hasEmail: false },
+  { key: 'weekly_digest', label: 'Digest hebdo', hasInApp: false, hasEmail: true },
+];
+const NOTIF_TYPES_COACH: NotifTypeRow[] = [
+  { key: 'new_athlete', label: 'Nouvel athlète inscrit', hasInApp: true, hasEmail: true },
+  { key: 'vma_missing', label: 'Rappel VMA manquantes', hasInApp: true, hasEmail: false },
+  { key: 'palmares', label: 'Palmarès', hasInApp: true, hasEmail: false },
+];
+
 /**
  * NOTE: file is large because state and handlers are intricately shared
  * between tabs (photo upload spans Infos and header, etc.). Phase 1
@@ -875,13 +897,7 @@ export default function Profile() {
           <div className="border-t border-neutral-100 pt-3">
             <p className="text-sm font-medium text-neutral-900 mb-3">Preferences par type</p>
             <div className="space-y-3">
-              {([
-                { key: 'new_session', label: 'Nouvelle seance', hasInApp: true, hasEmail: true },
-                { key: 'palmares', label: 'Palmares', hasInApp: true, hasEmail: false },
-                { key: 'vma_update', label: 'Mise a jour VMA', hasInApp: true, hasEmail: true },
-                { key: 'reaction', label: 'Kudos reçus', hasInApp: true, hasEmail: false },
-                { key: 'weekly_digest', label: 'Digest hebdo', hasInApp: false, hasEmail: true },
-              ] as const).map(({ key, label, hasInApp, hasEmail }) => (
+              {(user?.role === 'coach' ? NOTIF_TYPES_COACH : NOTIF_TYPES_ATHLETE).map(({ key, label, hasInApp, hasEmail }) => (
                 <div key={key} className="flex items-center justify-between">
                   <span className="text-sm text-neutral-700">{label}</span>
                   <div className="flex items-center gap-3">
@@ -915,17 +931,18 @@ export default function Profile() {
                           onClick={async () => {
                             if (!user) return;
                             const prefs = { ...user.notification_preferences };
-                            const current = prefs[key] as { email: boolean };
-                            (prefs as Record<string, unknown>)[key] = { ...current, email: !current.email };
+                            const current = prefs[key] as { in_app?: boolean; email?: boolean } | undefined;
+                            const enabled = current?.email !== false;
+                            (prefs as Record<string, unknown>)[key] = { ...current, email: !enabled };
                             await updateNotificationPreferences(user.id, prefs as NotificationPreferences);
                             refreshUser();
                           }}
                           className={`w-9 h-5 rounded-full relative transition-colors ${
-                            (user?.notification_preferences?.[key] as { email?: boolean })?.email ? 'bg-primary' : 'bg-neutral-300'
+                            (user?.notification_preferences?.[key] as { email?: boolean })?.email !== false ? 'bg-primary' : 'bg-neutral-300'
                           }`}
                         >
                           <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform shadow ${
-                            (user?.notification_preferences?.[key] as { email?: boolean })?.email ? 'left-4.5' : 'left-0.5'
+                            (user?.notification_preferences?.[key] as { email?: boolean })?.email !== false ? 'left-4.5' : 'left-0.5'
                           }`} />
                         </button>
                       </label>
