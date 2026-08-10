@@ -77,46 +77,14 @@ désormais l'historique réel et reconstruit la base complète.
 | 35 | `20260731130000_invite_code.sql` | **changement produit** (décision Matthieu 2026-07-31) : l'inscription self-service exige désormais un code d'invitation, vérifié côté base. `club_settings.invite_code` (text NOT NULL, seedé par un code aléatoire généré dans la migration, jamais en dur) ; RPC `SECURITY DEFINER` `register_profile(invite_code, firstname, lastname, email)` qui vérifie le code (insensible casse/espaces) puis insère le profil (role athlete, is_public true, mêmes valeurs par défaut que l'ancien insert direct) ; la policy INSERT de `users` perd sa branche self-service et redevient coach-only (« Coaches can insert user profiles », reprend mot pour mot la branche coach de 20260730140000). Le flux coach `addUser` est inchangé (insert direct par un coach, toujours autorisé). Validé en PGlite (cf. PR) : bon code → profil créé role athlete ; mauvais code → 42501 FR, aucune ligne ; tentative de forcer `role` via le RPC → 42883 (paramètre inexistant) ; insert direct par un athlète → refusé (RLS) ; insert direct par un coach → passe ; rejeu du fichier seul → idempotent, code inchangé |
 | 36 | `20260810120000_session_analyses.sql` | **nouvelle fonctionnalité** (extension C7 du backlog, verdict IA par séance validée) : table `session_analyses` (id, `validation_id` FK UNIQUE vers `session_validations` ON DELETE CASCADE, `verdict` jsonb, `model` text, `input_hash` text — signature de contenu servant de garde-fou de coût en l'absence de `updated_at` sur `session_validations` —, `created_at`). RLS lecture seule pour `authenticated` : propriétaire de la validation (`EXISTS ... sv.user_id = (select auth.uid())`) + coachs (`EXISTS ... role = 'coach'`), forme `(select auth.uid())` partout (pas de régression `auth_rls_initplan`). Aucune policy INSERT/UPDATE : deny-by-default pour `authenticated`/`anon`, seule la Edge Function `analyze-validation` écrit via `service_role`. Additive, idempotente (`CREATE TABLE IF NOT EXISTS`, `DROP POLICY IF EXISTS` avant chaque `CREATE POLICY`). Validé en PGlite (cf. PR) : propriétaire lit sa propre analyse, un autre athlète ne voit rien, un coach lit tout, un INSERT client (rôle `authenticated`) est refusé |
 
-> **État réel en prod** (revérifié le 2026-07-31, via `execute_sql` en lecture
-> seule sur `cron.job`) : **toutes les entrées jusqu'à la 31 sont appliquées**.
-> Les entrées **32 et 33 sont en attente de `db push`** (rédigées mais non
-> appliquées ; le job `daily-session-digest` est encore actif en prod au
-> moment de l'écriture de cette note).
+> **État réel en prod** (revérifié le 2026-08-10) : **toutes les entrées
+> jusqu'à la 36 sont appliquées**, y compris les entrées 35 (`invite_code`) et
+> 36 (`session_analyses`). Les fonctions Edge sont déployées, dont
+> `analyze-validation` (verdict IA de séance, C7 du backlog).
 >
-> Cette note a déjà dérivé deux fois (état d'application annoncé faux après un
-> `db push`) : **toujours revérifier avec `supabase migration list --linked`**
-> avant de s'y fier ou de la modifier.
->
-> **Séquencement obligatoire pour l'entrée 31** : appliquer cette migration
-> avant de déployer le front correspondant (le front qui lit
-> `users.is_super_admin` au lieu de comparer `email` à `SUPER_ADMIN_EMAIL`).
->
-> **Séquencement recommandé pour l'entrée 32** : appliquer avant (ou en même
-> temps que) le déploiement du front correspondant (`updateUserPhoto` qui
-> uploade désormais vers le bucket `avatars` au lieu d'écrire du base64) :
-> sans le bucket, l'upload échoue silencieusement côté UI (erreur retournée
-> par `updateUserPhoto`, à surveiller au déploiement).
->
-> **Entrée 35 : NON appliquée**, rédigée et validée en PGlite uniquement (voir
-> tableau ci-dessus). **Séquencement obligatoire** : appliquer AVANT de
-> déployer le front correspondant, `AuthContext.signup` appelant désormais
-> `rpc('register_profile')` au lieu d'un insert direct : sans la migration, le
-> RPC n'existe pas et **toute inscription self-service échoue** (42883). Une
-> fois appliquée : relancer `npm run gen:types` (le type manuel `ClubSettings`
-> a `invite_code`, mais `src/types/database.types.ts` ne le sait pas encore ;
-> `toClubSettings`/`asClubSettingsPayload`/le RPC `register_profile` côté
-> `AuthContext` portent des casts locaux documentés en attendant).
->
-> **Entrée 36 : NON appliquée**, rédigée et validée en PGlite uniquement (voir
-> tableau ci-dessus). **Séquencement** : `db push` la migration puis
-> `supabase functions deploy analyze-validation` avant (ou en même temps que)
-> le déploiement du front — le front tolère déjà l'absence des deux
-> (`SessionDetail` appelle la fonction en best-effort, échec loggé sans
-> bloquer la validation ; `AnalysisCard` n'affiche rien tant qu'aucune ligne
-> `session_analyses` n'existe pour la validation). Une fois appliquée :
-> relancer `npm run gen:types` (le type `SessionAnalysisRow` et le cast local
-> dans `AnalysisCard.tsx` peuvent alors être retirés au profit de
-> `Tables<'session_analyses'>`).
+> Cette note a déjà dérivé plusieurs fois (état d'application annoncé faux
+> après un `db push`) : **toujours revérifier avec
+> `supabase migration list --linked`** avant de s'y fier ou de la modifier.
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 

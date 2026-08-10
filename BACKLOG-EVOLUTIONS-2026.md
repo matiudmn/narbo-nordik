@@ -6,6 +6,19 @@
 
 ---
 
+> ### État au 10/08/2026
+>
+> - **C6 — Upload photo / screenshot validation** : LIVRÉ, avec OCR en plus du scope initial.
+> - **C8 — Bridge WhatsApp** : LIVRÉ (architecture client, 3 surfaces dont Palmarès).
+> - **C7 — IA Claude, analyse de séance** : LIVRÉ EN VERSION MISTRAL (verdict par validation via la fonction `analyze-validation`, décision RGPD : pas d'Anthropic).
+> - **C9 — UX double persona** : LIVRÉ (Disclosure + SessionDetail/Profile/Suivi).
+> - **C1, C2, C4, C5** (refacto multi-provider, Coros, Suunto, sync auto) : ABANDONNÉS. Strava a été supprimé le 06/06 et l'OCR (cf. C6) couvre le besoin.
+> - **C3 — Garmin Connect** : ABANDONNÉ (décision Matthieu du 10/08). La candidature n'a jamais été déposée.
+>
+> Le corps du document ci-dessous n'est pas réécrit (valeur historique) ; seuls les titres de chantier portent désormais un préfixe `[LIVRÉ]`, `[LIVRÉ MISTRAL]` ou `[ABANDONNÉ]`.
+
+---
+
 ## Sommaire
 
 1. [Vision & contexte](#1-vision--contexte)
@@ -220,7 +233,7 @@ Cap mensuel suggéré : **10 €/mois** (alerte Supabase + désactivation auto s
 
 ---
 
-### C1 — Refacto multi-provider
+### C1 — [ABANDONNÉ] Refacto multi-provider
 
 #### Objectif & valeur
 Remplacer le modèle Strava-spécifique par une abstraction `device_connections` / `device_activities` réutilisable pour tous les providers (Strava, Coros, Garmin, Suunto, Polar, etc.). Diviser par 3 l'effort de chaque future intégration.
@@ -410,7 +423,7 @@ Aucun changement visible. Le composant Profil continue d'afficher Strava ; les a
 
 ---
 
-### C2 — Coros API native
+### C2 — [ABANDONNÉ] Coros API native
 
 #### Objectif & valeur
 Permettre aux athlètes utilisateurs de Coros (Apex, Pace, Vertix...) de connecter leur compte directement à Narbo Nordik, sans passer par Strava. Couvre ~25% du club selon l'estimation actuelle.
@@ -514,7 +527,7 @@ src/components/devices/                      ← nouveau dossier
 
 ---
 
-### C3 — Garmin Connect (partenariat + intégration)
+### C3 — [ABANDONNÉ] Garmin Connect (partenariat + intégration)
 
 #### Objectif & valeur
 Couvrir la part dominante des coureurs équipés Garmin (~50% du club) qui n'utilisent pas Strava. Permet d'ingérer les activités, la VO2max, le training load, les zones FC.
@@ -585,7 +598,7 @@ Identique à Coros (cf. [C2](#c2--coros-api-native)). Une carte "Garmin Connect"
 
 ---
 
-### C4 — Suunto API native
+### C4 — [ABANDONNÉ] Suunto API native
 
 #### Objectif & valeur
 Couvrir la minorité d'athlètes Suunto du club. Faible volume mais coût d'implémentation modéré grâce à la structure multi-provider de [C1](#c1--refacto-multi-provider).
@@ -624,7 +637,7 @@ Identiques à Coros, transposés Suunto.
 
 ---
 
-### C5 — Sync automatique à l'ouverture
+### C5 — [ABANDONNÉ] Sync automatique à l'ouverture
 
 #### Objectif & valeur
 Supprimer la friction "aller dans les réglages → cliquer actualiser". L'utilisateur ouvre l'app → ses séances du jour sont déjà là.
@@ -718,7 +731,7 @@ function DataProvider({ children }) {
 
 ---
 
-### C6 — Upload photo / screenshot validation
+### C6 — [LIVRÉ] Upload photo / screenshot validation
 
 #### Objectif & valeur
 Permettre aux athlètes (notamment Antoine, persona simple) de joindre une preuve visuelle à leur validation : screenshot de leur montre, photo du parcours, capture Strava si pas connecté.
@@ -859,7 +872,7 @@ Après upload :
 
 ---
 
-### C7 — IA Claude : analyse de séance
+### C7 — [LIVRÉ MISTRAL] IA Claude : analyse de séance
 
 #### Objectif & valeur
 Offrir un feedback qualitatif automatisé à chaque validation de séance, en croisant : plan coach, données de la montre, ressenti athlète, historique. Plus utile que des chiffres bruts.
@@ -1158,7 +1171,7 @@ async function checkMonthlyCap() {
 
 ---
 
-### C8 — Bridge WhatsApp : partage social
+### C8 — [LIVRÉ] Bridge WhatsApp : partage social
 
 #### Objectif & valeur
 Permettre au coach de partager une séance programmée dans le groupe WhatsApp du club, et aux athlètes de partager leur palmarès ou leur séance validée sur WhatsApp.
@@ -1334,7 +1347,7 @@ Bouton placement :
 
 ---
 
-### C9 — UX double persona : simple vs data-friendly
+### C9 — [LIVRÉ] UX double persona : simple vs data-friendly
 
 #### Objectif & valeur
 Faire en sorte qu'Antoine (simple) ne soit pas noyé et Camille (data-friendly) ne soit pas frustrée, **sans toggle de mode** (les users simples ne le trouveront jamais).

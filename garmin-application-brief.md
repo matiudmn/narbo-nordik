@@ -1,5 +1,7 @@
 # Garmin Connect Developer Program — Application Brief
 
+> **ABANDONNÉ le 10/08/2026 (décision Matthieu)** : candidature non déposée, document conservé pour archive.
+
 > **Purpose** : ready-to-paste content for the Garmin Connect Developer Program application form.
 > **Form URL** : https://www.garmin.com/en-US/forms/developercontactus/
 > **Fallback email** : connect-support@developer.garmin.com
