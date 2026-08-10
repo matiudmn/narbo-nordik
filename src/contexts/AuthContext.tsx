@@ -22,21 +22,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-type RegisterProfileArgs = { invite_code: string; firstname: string; lastname: string; email: string };
-
-// RPC register_profile (migration 20260731130000) : absente des types generes
-// tant que la migration n'est pas appliquee en prod et que `npm run gen:types`
-// n'a pas tourne (voir flagsPourMatthieu). Cast local le temps du regen ; a
-// retirer ensuite pour retrouver l'inference normale de `supabase.rpc`.
-function registerProfile(args: RegisterProfileArgs) {
-  return (
-    supabase.rpc as unknown as (
-      fn: 'register_profile',
-      args: RegisterProfileArgs
-    ) => Promise<{ error: { message: string; code?: string } | null }>
-  )('register_profile', args);
-}
-
 // Mappe l'erreur brute du RPC register_profile vers un message FR affichable.
 // - 42501 (insufficient_privilege) : levee volontairement par le RPC pour un
 //   code d'invitation invalide (cf. 20260731130000_invite_code.sql), message
@@ -160,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // il verifie le code d'invitation cote base avant de creer le profil (la
     // policy INSERT de `users` n'a plus de branche self-service depuis
     // 20260731130000_invite_code.sql).
-    const { error: rpcError } = await registerProfile({ invite_code: inviteCode, firstname, lastname, email });
+    const { error: rpcError } = await supabase.rpc('register_profile', { invite_code: inviteCode, firstname, lastname, email });
     if (rpcError) return mapRegisterProfileError(rpcError);
 
     const { data: coaches } = await supabase.from('users').select('id').eq('role', 'coach');

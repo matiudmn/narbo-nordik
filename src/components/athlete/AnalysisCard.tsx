@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/monitoring';
+import type { Tables } from '../../types/database.types';
 
 interface SessionAnalysisVerdict {
   points_forts: string[];
@@ -9,29 +10,12 @@ interface SessionAnalysisVerdict {
   recommandation: string;
 }
 
-interface SessionAnalysisRow {
-  id: string;
-  validation_id: string;
-  verdict: SessionAnalysisVerdict;
-  model: string;
-  created_at: string;
-}
+// verdict est un jsonb (Json) cote type genere : meme convention de pont
+// `unknown` que dans rows.ts pour lui donner sa forme applicative.
+type SessionAnalysisRow = Omit<Tables<'session_analyses'>, 'verdict'> & { verdict: SessionAnalysisVerdict };
 
-// session_analyses (migration 20260810120000) : absente des types generes tant
-// que la migration n'est pas appliquee en prod et que `npm run gen:types` n'a
-// pas tourne (meme raison documentee que registerProfile dans AuthContext).
-// Cast local borne a ce seul appel, a retirer au profit de
-// `Tables<'session_analyses'>` une fois les types regeneres.
 function fetchAnalysis(validationId: string) {
-  return (
-    supabase.from as unknown as (table: 'session_analyses') => {
-      select: (columns: string) => {
-        eq: (column: string, value: string) => {
-          maybeSingle: () => Promise<{ data: SessionAnalysisRow | null; error: { message: string } | null }>;
-        };
-      };
-    }
-  )('session_analyses').select('*').eq('validation_id', validationId).maybeSingle();
+  return supabase.from('session_analyses').select('*').eq('validation_id', validationId).maybeSingle();
 }
 
 interface AnalysisCardProps {
@@ -48,7 +32,7 @@ export default function AnalysisCard({ validationId, pending = false }: Analysis
     fetchAnalysis(validationId).then(({ data, error }) => {
       if (cancelled) return;
       if (error) captureError('AnalysisCard: lecture analyse', error);
-      setAnalysis(data ?? null);
+      setAnalysis(data ? { ...data, verdict: data.verdict as unknown as SessionAnalysisVerdict } : null);
     });
     return () => { cancelled = true; };
   }, [validationId, pending]);

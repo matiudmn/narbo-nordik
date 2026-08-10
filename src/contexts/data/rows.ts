@@ -116,10 +116,6 @@ export function toPreparation(r: Tables<'specific_preparations'>): SpecificPrepa
 export function toClubSettings(r: Tables<'club_settings'>): ClubSettings {
   return {
     ...r,
-    // invite_code (migration 20260731130000) absente du type genere tant que
-    // la migration n'est pas appliquee en prod et que `npm run gen:types` n'a
-    // pas tourne (voir flagsPourMatthieu) : cast local en attendant.
-    invite_code: (r as unknown as { invite_code: string }).invite_code,
     race_paces: r.race_paces as unknown as Record<string, RacePaceConfig>,
     allure_zones: r.allure_zones as unknown as Record<string, AllureZoneConfig>,
     updated_at: r.updated_at as string,
@@ -170,15 +166,14 @@ export function asClubSettingsPayload(
   updatedBy: string | undefined,
   inviteCode?: string
 ): TablesInsert<'club_settings'> {
-  const payload = {
+  const payload: TablesInsert<'club_settings'> = {
     race_paces: racePaces as unknown as Json,
     allure_zones: allureZones as unknown as Json,
     updated_at: new Date().toISOString(),
     updated_by: updatedBy,
-    // Inclus seulement si fourni (regeneration du code) : un insert/update
-    // sans invite_code ne doit pas ecraser le code existant. Meme raison de
-    // cast que toClubSettings ci-dessus (colonne absente du type genere).
+    // Inclus seulement si fourni : un insert/update sans invite_code ne doit
+    // pas ecraser le code existant.
     ...(inviteCode !== undefined ? { invite_code: inviteCode } : {}),
   };
-  return payload as TablesInsert<'club_settings'>;
+  return payload;
 }
