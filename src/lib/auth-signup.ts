@@ -10,6 +10,10 @@ import { captureError } from './monitoring';
  * l'environnement de test du projet est 'node' (cf. vitest.config.ts), sans
  * DOM pour monter le Provider. Les appels Supabase sont donc injectes, comme
  * navigator.share l'est dans shareExport.
+ *
+ * Porte aussi `mapAuthError`, partage avec `login` : les deux ecrans se
+ * repondent (« cette adresse est deja utilisee » renvoie vers la connexion), il
+ * n'y a pas de raison d'avoir deux vocabulaires d'erreur.
  */
 
 /** Sous-ensemble commun aux erreurs supabase-js (auth) et PostgREST (RPC). */
@@ -44,13 +48,32 @@ function isEmailAlreadyRegistered(error: AuthCallError): boolean {
   return /already registered/i.test(error.message);
 }
 
+/**
+ * Traduit une erreur d'authentification supabase-js en message affichable.
+ * `error.message` est de l'anglais brut ("Invalid login credentials") dans une
+ * interface entierement en francais. Seuls les cas realistes de l'ecran de
+ * connexion et du formulaire d'inscription sont traites, avec les codes
+ * verifies dans @supabase/auth-js (lib/error-codes.d.ts) ; tout le reste
+ * retombe sur un message generique plutot que d'exposer l'anglais.
+ */
+export function mapAuthError(error: AuthCallError): string {
+  if (isEmailAlreadyRegistered(error)) {
+    return "Cette adresse est déjà utilisée. Connecte-toi, ou réinitialise ton mot de passe si tu l'as oublié.";
+  }
+  if (error.code === 'invalid_credentials') return 'Email ou mot de passe incorrect.';
+  if (error.code === 'over_request_rate_limit' || error.code === 'over_email_send_rate_limit') {
+    return 'Trop de tentatives, patiente un moment avant de réessayer.';
+  }
+  return 'Une erreur est survenue, réessaie plus tard.';
+}
+
 // Mappe l'erreur brute du RPC register_profile vers un message FR affichable.
 // - 42501 (insufficient_privilege) : levee volontairement par le RPC pour un
 //   code d'invitation invalide (cf. 20260731130000_invite_code.sql), message
 //   deja propre en FR, on le garde tel quel.
-// - 23505 (unique_violation) : plus traite ici, l'appelant le lit comme un
-//   succes (voir signupWithInviteCode) et l'ancien message dedie
-//   ("Ton compte existe deja, connecte-toi.") n'a donc plus d'appelant.
+// - 23505 (unique_violation) : plus traite ici, signupWithInviteCode le lit
+//   desormais comme un succes (le profil existe deja et appartient a
+//   l'appelant), ce mappeur ne le voit donc jamais.
 // - reste : erreur Postgres brute non destinee a l'ecran, detail envoye a
 //   captureError, message generique affiche.
 function mapRegisterProfileError(error: AuthCallError): string {
@@ -64,7 +87,7 @@ export async function signupWithInviteCode(deps: SignupDeps, creds: SignupCreden
 
   const { data, error } = await deps.signUp({ email, password });
   if (error) {
-    if (!isEmailAlreadyRegistered(error)) return error.message;
+    if (!isEmailAlreadyRegistered(error)) return mapAuthError(error);
 
     // Adresse deja prise : le cas de loin le plus probable ici est une
     // inscription interrompue par un code d'invitation mal recopie (compte
@@ -72,11 +95,12 @@ export async function signupWithInviteCode(deps: SignupDeps, creds: SignupCreden
     // connexion avec les identifiants saisis : si elle passe, c'est bien le
     // proprietaire de l'adresse qui reprend son inscription, et le RPC
     // ci-dessous peut creer le profil manquant. Sinon, l'adresse est vraiment
-    // celle de quelqu'un d'autre (ou le mot de passe differe) et on le dit.
+    // celle de quelqu'un d'autre (ou le mot de passe differe) : on renvoie le
+    // message de l'erreur signUp d'origine, qui invite a se connecter ou a
+    // reinitialiser, plutot que le « identifiants invalides » de signIn, hors
+    // sujet sur un formulaire d'inscription.
     const { error: signInError } = await deps.signIn({ email, password });
-    if (signInError) {
-      return "Cette adresse est déjà utilisée. Connecte-toi, ou réinitialise ton mot de passe si tu l'as oublié.";
-    }
+    if (signInError) return mapAuthError(error);
   } else if (!data.user) {
     return 'Erreur lors de la creation du compte';
   }

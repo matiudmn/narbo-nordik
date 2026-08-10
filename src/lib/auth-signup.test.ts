@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { signupWithInviteCode } from './auth-signup';
+import { mapAuthError, signupWithInviteCode } from './auth-signup';
 
 // Code d'invitation factice : le vrai code du club est un secret partagé par
 // le club lui-même (WhatsApp), il n'a rien à faire dans le dépôt.
@@ -26,7 +26,12 @@ const CREDS = {
  * - `loadProfile` reproduit `get_own_profile` + setUser : il ne trouve rien
  *   tant que la ligne `users` n'existe pas et retombe alors sur setUser(null).
  */
-function createBackend(seed: { authAccounts?: Record<string, string>; profiles?: string[] } = {}) {
+function createBackend(
+  seed: { authAccounts?: Record<string, string>; profiles?: string[]; withoutErrorCodes?: boolean } = {},
+) {
+  // `withoutErrorCodes` : instance GoTrue qui ne renvoie que le message, sans
+  // `code` (le repli sur le message est ce qui décide de la reprise).
+  const authCode = (code: string) => (seed.withoutErrorCodes ? undefined : code);
   const authAccounts = new Map(Object.entries(seed.authAccounts ?? {}));
   const profiles = new Set(seed.profiles ?? []);
   let session: string | null = null;
@@ -45,7 +50,7 @@ function createBackend(seed: { authAccounts?: Record<string, string>; profiles?:
   const deps = {
     signUp: vi.fn(async ({ email, password }: { email: string; password: string }) => {
       if (authAccounts.has(email)) {
-        return { data: { user: null }, error: { message: 'User already registered', code: 'user_already_exists' } };
+        return { data: { user: null }, error: { message: 'User already registered', code: authCode('user_already_exists') } };
       }
       authAccounts.set(email, password);
       session = email;
@@ -54,7 +59,7 @@ function createBackend(seed: { authAccounts?: Record<string, string>; profiles?:
     }),
     signIn: vi.fn(async ({ email, password }: { email: string; password: string }) => {
       if (authAccounts.get(email) !== password) {
-        return { error: { message: 'Invalid login credentials', code: 'invalid_credentials' } };
+        return { error: { message: 'Invalid login credentials', code: authCode('invalid_credentials') } };
       }
       session = email;
       void loadProfile();
@@ -138,6 +143,37 @@ describe("bug 2 : un code d'invitation erroné brûle l'adresse e-mail", () => {
       authAccounts: { [CREDS.email]: CREDS.password },
       profiles: [CREDS.email],
     });
+    const message = await signupWithInviteCode(backend.deps, CREDS);
+    expect(message).toBeNull();
+    expect(backend.currentUser()).toBe(CREDS.email);
+  });
+});
+
+describe('bug 3 : messages Supabase bruts en anglais', () => {
+  it('traduit les identifiants invalides', () => {
+    expect(mapAuthError({ message: 'Invalid login credentials', code: 'invalid_credentials' }))
+      .toBe('Email ou mot de passe incorrect.');
+  });
+
+  it('traduit les deux limites de débit', () => {
+    expect(mapAuthError({ message: 'Request rate limit reached', code: 'over_request_rate_limit' }))
+      .toMatch(/Trop de tentatives/);
+    expect(mapAuthError({ message: 'Email rate limit exceeded', code: 'over_email_send_rate_limit' }))
+      .toMatch(/Trop de tentatives/);
+  });
+
+  it("traduit l'adresse déjà enregistrée en invitant à se connecter", () => {
+    expect(mapAuthError({ message: 'User already registered', code: 'user_already_exists' }))
+      .toMatch(/déjà utilisée/);
+  });
+
+  it('retombe sur un message français pour un code non traité', () => {
+    const message = mapAuthError({ message: 'Signups not allowed for this instance', code: 'signup_disabled' });
+    expect(message).toBe('Une erreur est survenue, réessaie plus tard.');
+  });
+
+  it("reprend l'inscription même quand l'erreur ne porte pas de code", async () => {
+    const backend = createBackend({ authAccounts: { [CREDS.email]: CREDS.password }, withoutErrorCodes: true });
     const message = await signupWithInviteCode(backend.deps, CREDS);
     expect(message).toBeNull();
     expect(backend.currentUser()).toBe(CREDS.email);

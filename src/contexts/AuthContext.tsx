@@ -3,7 +3,7 @@ import type { User } from '../types';
 import { supabase } from '../lib/supabase';
 import { clearSnapshot } from '../lib/offline-cache';
 import { captureError } from '../lib/monitoring';
-import { signupWithInviteCode } from '../lib/auth-signup';
+import { mapAuthError, signupWithInviteCode } from '../lib/auth-signup';
 import { toUser } from './data/rows';
 
 interface AuthContextType {
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string): Promise<string | null> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return error.message;
+    if (error) return mapAuthError(error);
     return null;
   }, []);
 
