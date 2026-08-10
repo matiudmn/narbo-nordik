@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3, ClipboardCheck, Bell, MessageCircle, HelpCircle, LogOut, Upload, Target, Settings, Search } from 'lucide-react';
+import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3, ClipboardCheck, Bell, MessageCircle, HelpCircle, LogOut, Upload, Download, Target, Settings, Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
 import { useGlobalSearch } from '../contexts/GlobalSearchContext';
@@ -26,6 +26,7 @@ export default function Sidebar() {
     { to: '/club', label: 'Club', icon: BarChart3 },
     { to: '/coach/sessions', label: 'Planning', icon: ClipboardList },
     { to: '/coach/import', label: 'Import Excel', icon: Upload },
+    { to: '/coach/export', label: 'Export tableur', icon: Download },
     { to: '/coach/settings?tab=preparations', label: 'Prépas spé', icon: Target },
     { to: '/directory', label: 'Athletes', icon: Users },
     { to: '/coach/settings', label: 'Réglages', icon: Settings },
