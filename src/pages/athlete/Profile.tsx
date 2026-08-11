@@ -14,6 +14,7 @@ import { getFFACategory } from '../../lib/ffa';
 import { isPrefChannelEnabled, NOTIF_TYPES_ATHLETE, NOTIF_TYPES_COACH } from '../../lib/notificationPrefs';
 import Avatar from '../../components/Avatar';
 import { supabase } from '../../lib/supabase';
+import { deleteOwnAccount } from '../../lib/account-deletion';
 import ExpandableText from '../../components/ExpandableText';
 import { ProfileTabs } from '../../components/athlete/ProfileTabs';
 import type { ProfileTab } from '../../components/athlete/ProfileTabs';
@@ -117,6 +118,7 @@ export default function Profile() {
   const [exitReason, setExitReason] = useState('');
   const [exitComment, setExitComment] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const handleChangePassword = async () => {
     if (newPassword.length < 6) {
@@ -152,21 +154,26 @@ export default function Profile() {
 
   const isSoleCoach = user?.role === 'coach' && users.filter(u => u.role === 'coach').length <= 1;
 
+  // La suppression est faite par l'Edge Function `delete-account` : la ligne
+  // `auth.users` (donc l'adresse e-mail) est hors de portée d'un JWT d'athlète,
+  // et la policy DELETE de `users` est réservée aux coachs. Le message d'erreur
+  // affiché vient du serveur, seul à connaître le sort réel du compte.
   const handleDeleteAccount = async () => {
     if (!user || deleteConfirmText !== 'SUPPRIMER' || !exitReason) return;
     setDeleteLoading(true);
-    try {
-      await supabase.from('exit_feedbacks').insert({
-        reason: exitReason,
-        comment: exitComment.trim() || null,
-      });
-      await supabase.from('users').delete().eq('id', user.id);
-      await supabase.auth.signOut();
-      localStorage.removeItem('narbo_rgpd_consent');
-      localStorage.removeItem('narbo_notif_enabled');
-      window.location.href = '/';
-    } catch {
+    setDeleteError('');
+    const message = await deleteOwnAccount(
+      {
+        invokeDeleteAccount: body => supabase.functions.invoke('delete-account', { body }),
+        signOut: () => supabase.auth.signOut(),
+        storage: localStorage,
+        redirect: () => { window.location.href = '/'; },
+      },
+      { reason: exitReason, comment: exitComment },
+    );
+    if (message) {
       setDeleteLoading(false);
+      setDeleteError(message);
     }
   };
 
@@ -993,6 +1000,7 @@ export default function Profile() {
               setDeleteConfirmText('');
               setExitReason('');
               setExitComment('');
+              setDeleteError('');
               setShowDeleteModal(true);
             }}
             className="flex items-center gap-2 w-full text-left px-3 py-2.5 text-sm text-danger-600 bg-danger-50 hover:bg-danger-100 rounded-lg transition-colors"
@@ -1094,6 +1102,12 @@ export default function Profile() {
                     />
                   </div>
                 </>
+              )}
+
+              {deleteError && (
+                <div className="bg-danger-50 border border-danger-100 rounded-lg p-3">
+                  <p className="text-sm text-danger-700">{deleteError}</p>
+                </div>
               )}
 
               <div className="flex gap-2 pt-1">
