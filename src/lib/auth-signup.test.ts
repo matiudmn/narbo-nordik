@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { mapAuthError, signupWithInviteCode } from './auth-signup';
+import type { AuthCallError } from './auth-signup';
+import { INSCRIPTION_INACHEVEE, loginWithProfileCheck, mapAuthError, signupWithInviteCode } from './auth-signup';
 
 // Code d'invitation factice : le vrai code du club est un secret partagé par
 // le club lui-même (WhatsApp), il n'a rien à faire dans le dépôt.
@@ -177,5 +178,64 @@ describe('bug 3 : messages Supabase bruts en anglais', () => {
     const message = await signupWithInviteCode(backend.deps, CREDS);
     expect(message).toBeNull();
     expect(backend.currentUser()).toBe(CREDS.email);
+  });
+});
+
+/**
+ * Boucle muette au login (relevée au passage Karen du 11/08).
+ *
+ * Un code d'invitation mal recopié laisse une ligne `auth.users` sans profil,
+ * parce que `register_profile` valide le code APRÈS que signUp a créé le
+ * compte. La reprise de `signupWithInviteCode` ne joue que sur le formulaire
+ * d'inscription : quelqu'un qui passe par celui de connexion se connectait
+ * avec succès, `loadProfile` ne trouvait rien, et l'écran de connexion se
+ * réaffichait sans le moindre message.
+ */
+describe('loginWithProfileCheck', () => {
+  const CREDS_LOGIN = { email: CREDS.email, password: CREDS.password };
+
+  function createLoginDeps(seed: { profileExists: boolean; networkDown?: boolean }) {
+    const signOut = vi.fn(async () => {});
+    const deps = {
+      // Retour annoté : sans cela le type est inféré à `{ error: null }`, et le
+      // cas d'échec de connexion ci-dessous ne compile plus.
+      signIn: vi.fn(async (): Promise<{ error: AuthCallError | null }> => ({ error: null })),
+      fetchProfile: vi.fn(async () => {
+        if (seed.networkDown) return { data: null, error: { message: 'Failed to fetch' }, status: 0 };
+        if (!seed.profileExists) return { data: null, error: { message: 'JSON object requested, multiple (or no) rows returned', code: 'PGRST116' }, status: 406 };
+        return { data: { id: CREDS.email }, error: null, status: 200 };
+      }),
+      signOut,
+    };
+    return { deps, signOut };
+  }
+
+  it('laisse entrer un compte dont le profil existe', async () => {
+    const { deps, signOut } = createLoginDeps({ profileExists: true });
+    expect(await loginWithProfileCheck(deps, CREDS_LOGIN)).toBeNull();
+    expect(signOut).not.toHaveBeenCalled();
+  });
+
+  it("explique l'inscription inachevée au lieu de laisser l'écran muet", async () => {
+    const { deps, signOut } = createLoginDeps({ profileExists: false });
+    const message = await loginWithProfileCheck(deps, CREDS_LOGIN);
+    expect(message).toBe(INSCRIPTION_INACHEVEE);
+    // Sans ce signOut, onAuthStateChange retomberait dans le même trou au
+    // prochain montage, avec une session ouverte sur un compte sans profil.
+    expect(signOut).toHaveBeenCalledOnce();
+  });
+
+  it("ne déconnecte pas sur une simple coupure réseau", async () => {
+    const { deps, signOut } = createLoginDeps({ profileExists: true, networkDown: true });
+    expect(await loginWithProfileCheck(deps, CREDS_LOGIN)).toBeNull();
+    expect(signOut).not.toHaveBeenCalled();
+  });
+
+  it('traduit un échec de connexion sans jamais lire le profil', async () => {
+    const { deps, signOut } = createLoginDeps({ profileExists: true });
+    deps.signIn = vi.fn(async () => ({ error: { message: 'Invalid login credentials', code: 'invalid_credentials' } }));
+    expect(await loginWithProfileCheck(deps, CREDS_LOGIN)).toBe('Email ou mot de passe incorrect.');
+    expect(deps.fetchProfile).not.toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
   });
 });

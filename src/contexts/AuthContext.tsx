@@ -3,7 +3,7 @@ import type { User } from '../types';
 import { supabase } from '../lib/supabase';
 import { clearSnapshot } from '../lib/offline-cache';
 import { captureError } from '../lib/monitoring';
-import { mapAuthError, signupWithInviteCode } from '../lib/auth-signup';
+import { loginWithProfileCheck, mapAuthError, signupWithInviteCode } from '../lib/auth-signup';
 import { toUser } from './data/rows';
 
 interface AuthContextType {
@@ -115,10 +115,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [loadProfile, purgeOfflineCache]);
 
-  const login = useCallback(async (email: string, password: string): Promise<string | null> => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return mapAuthError(error);
-    return null;
+  const login = useCallback((email: string, password: string): Promise<string | null> => {
+    return loginWithProfileCheck(
+      {
+        signIn: creds => supabase.auth.signInWithPassword(creds),
+        fetchProfile: async () => {
+          const { data, error, status } = await supabase.rpc('get_own_profile').single();
+          return { data, error, status };
+        },
+        signOut: async () => {
+          await supabase.auth.signOut();
+        },
+      },
+      { email, password },
+    );
   }, []);
 
   const signup = useCallback((email: string, password: string, firstname: string, lastname: string, inviteCode: string): Promise<string | null> => {
