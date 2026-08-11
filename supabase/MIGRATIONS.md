@@ -81,13 +81,19 @@ désormais l'historique réel et reconstruit la base complète.
 
 | 38 | `20260811100000_vault_service_role_key.sql` | **correctif de sécurité + activation** : la clé `service_role` était **en clair** dans `cron.job.command` (job `weekly-digest-monday`, jobid 1, depuis le 2026-03-09 ; `command like '%eyJ%'` vrai, `%current_setting%` faux). Une colonne de table ordinaire, donc présente dans les sauvegardes, les exports de schéma et le SQL Editor, pour une clé qui contourne toute RLS (`rolbypassrls`). La migration **extrait la clé depuis la commande elle-même** (regex sur le JWT) et la range dans **Supabase Vault** (`vault.create_secret`, extension 0.3.1 déjà installée) : le secret ne quitte jamais la base, rien de sensible n'est versionné, aucune commande à taper. L'URL du projet est extraite de la même chaîne (fichier indépendant de l'instance). Nouveau lecteur unique `public.get_app_secret(name, required)`, `SECURITY DEFINER` + `SET search_path = ''` + `REVOKE EXECUTE` (motif entrée 13) ; deux consommateurs y sont branchés : le job cron (réécrit, **planification `0 7 * * 1` et fonction cible `weekly-digest` inchangées**) et `notify_email_on_insert`, qui lisait `app.settings.*` via `current_setting` et **était donc totalement inerte** (GUC jamais posés) : ce fichier **ACTIVE les e-mails transactionnels** (`vma_update`, `new_athlete`, `system` ; la skip-list est reprise verbatim). **Vault plutôt que `ALTER DATABASE ... SET`** : un GUC personnalisé est de contexte `USERSET` donc lisible par n'importe quel rôle dont `anon`, il fuit dans les journaux DDL et les sauvegardes, et il n'est lu qu'à l'ouverture de session (donc recyclage du pool PostgREST nécessaire), là où Vault est relu à chaque appel. **Ordre des opérations** : le job n'est réécrit qu'après relecture et vérification du secret dans Vault, le tout dans un `DO` unique donc atomique. Rejeu : ni doublon dans Vault (index UNIQUE sur `name`), ni job retouché. `db reset` : sur base neuve le job existe en version GUC sans secret, la migration sort par `RAISE NOTICE` sans échouer. Validé en PGlite, migration jouée verbatim, 39/39 vérifications (cf. PR) : reprise du secret, absence de tout JWT dans la commande finale, appel HTTP résultant identique à l'ancien (URL, en-tête, corps), idempotence sur 3 passages, base neuve, job absent, 2 chemins d'échec avec job intact et rollback, skip-list, absence de rattrapage rétroactif, droits `anon`/`authenticated` |
 
-> **État réel en prod** (revérifié en base le 2026-08-11 via
-> `supabase_migrations.schema_migrations`) : **les entrées jusqu'à la 37 sont
-> appliquées**, y compris l'entrée 37 (`notify_coaches_new_athlete`, dont le
-> trigger `on_new_athlete` et le cron `vma-missing-reminder` sont bien vivants
-> en base). Les fonctions Edge sont déployées, dont `analyze-validation`.
-> L'entrée **38 n'est PAS appliquée** : elle attend la validation explicite de
-> Matthieu (`supabase db push`).
+> **État réel en prod** (revérifié en base le 2026-08-11 après application via
+> `supabase_migrations.schema_migrations`) : **les entrées jusqu'à la 38 sont
+> appliquées**, entrée 38 comprise (`vault_service_role_key` : `cron.job` ne
+> porte plus aucun secret en clair, Vault contient `service_role_key` et
+> `supabase_url`, `get_app_secret` est en place avec EXECUTE révoqué pour
+> `anon` et `authenticated`). Les fonctions Edge sont déployées, dont
+> `analyze-validation` et `delete-account`.
+>
+> **Reste ouvert sur l'entrée 38** : la migration nettoie `cron.job.command`
+> mais **pas** `cron.job_run_details`, qui conserve la commande telle
+> qu'exécutée à chaque run. 167 lignes d'historique portent donc encore la clé
+> en clair (relevé du 2026-08-11). La purge de cet historique et la rotation de
+> la clé restent à faire.
 >
 > Cette note a déjà dérivé plusieurs fois (état d'application annoncé faux
 > après un `db push`) : **toujours revérifier avec

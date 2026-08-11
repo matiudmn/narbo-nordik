@@ -85,7 +85,7 @@
 -- Vault, ce qui l'ACTIVE : de vrais e-mails partiront, via Resend, vers de
 -- vraies personnes. Détail de l'impact et garde-fous en tête de section 3.
 --
--- NE PAS APPLIQUER EN PROD SANS VALIDATION EXPLICITE DE MATTHIEU.
+-- APPLIQUEE EN PROD LE 2026-08-11 (db push lance par Matthieu).
 -- ============================================================================
 
 

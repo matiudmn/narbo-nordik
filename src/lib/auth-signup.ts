@@ -102,7 +102,7 @@ export async function signupWithInviteCode(deps: SignupDeps, creds: SignupCreden
     const { error: signInError } = await deps.signIn({ email, password });
     if (signInError) return mapAuthError(error);
   } else if (!data.user) {
-    return 'Erreur lors de la creation du compte';
+    return 'Erreur lors de la création du compte';
   }
 
   // Insert direct remplace par le RPC register_profile (SECURITY DEFINER) :
