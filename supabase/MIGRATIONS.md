@@ -79,16 +79,27 @@ désormais l'historique réel et reconstruit la base complète.
 
 | 37 | `20260810140000_notify_coaches_new_athlete.sql` | **nouvelle fonctionnalité** (demande du coach David, 10/08/2026, préalable à l'onboarding des nouveaux adhérents) : notification coach à l'inscription d'un athlète. Deux types ajoutés à `notifications_type_check` (`new_athlete`, `vma_missing`, même motif de remplacement de contrainte qu'en entrée 22). `notify_coaches_new_athlete()` + trigger `on_new_athlete` `AFTER INSERT ON users` : notifie tous les coachs sauf l'auteur du geste (`id IS DISTINCT FROM (select auth.uid())`, intention de `id != NEW.created_by` dans `notify_new_session`) quand `NEW.role = 'athlete'`, avec dans le corps ce qui manque au profil (VMA, numéro de licence, ou les deux ; une licence `''` compte comme absente). Couvre les DEUX chemins de création (RPC `register_profile` et `addUser` coach) puisqu'il porte sur la table. `notify_coaches_missing_vma()` + cron quotidien `vma-missing-reminder` (07:00 UTC, SQL pur sans secret) : rappel tant qu'il reste des athlètes inscrits depuis 3 à 30 jours sans VMA, au plus un par coach tous les 7 jours. **Sans état ajouté à `users`** (une colonne partirait chez tous les coachs via `get_users_for_coach`, qui fait `SELECT *`) : la déduplication se lit dans `notifications` elle-même, donc un run de cron manqué décale le rappel sans le perdre. `vma_missing` ajouté à la liste de skip de `notify_email_on_insert` (rappel in-app seulement) ; ce `CREATE OR REPLACE` **re-déclare `SET search_path = ''`**, sinon il annulerait le correctif d'advisor de l'entrée 26 (les droits, eux, survivent au remplacement). Les deux fonctions sont `SECURITY DEFINER` + `REVOKE EXECUTE` (motif entrée 13). **Remplace la notification client de la PR #62** (insert best-effort de type `system` dans `AuthContext.signup`, self-service uniquement), retirée dans le même commit pour ne pas doubler les notifications. Validé en PGlite, migration jouée verbatim, 33/33 vérifications (cf. PR) : les 2 chemins de création, le coach auteur non notifié, aucune notification pour la création d'un coach, coupe-circuit par `notification_preferences`, fenêtre 3-30 jours du rappel, anti-spam 7 jours, pluriel/troncature au-delà de 5 noms, un `authenticated` peut toujours créer un athlète sous RLS mais ne peut ni forger un `new_athlete` ni déclencher le rappel |
 
-> **État réel en prod** (revérifié le 2026-08-10) : **les entrées jusqu'à la 36
-> sont appliquées**, y compris les entrées 35 (`invite_code`) et
-> 36 (`session_analyses`). Les fonctions Edge sont déployées, dont
-> `analyze-validation` (verdict IA de séance, C7 du backlog).
-> L'entrée **37 n'est PAS appliquée** : elle attend la validation explicite de
+| 38 | `20260811100000_vault_service_role_key.sql` | **correctif de sécurité + activation** : la clé `service_role` était **en clair** dans `cron.job.command` (job `weekly-digest-monday`, jobid 1, depuis le 2026-03-09 ; `command like '%eyJ%'` vrai, `%current_setting%` faux). Une colonne de table ordinaire, donc présente dans les sauvegardes, les exports de schéma et le SQL Editor, pour une clé qui contourne toute RLS (`rolbypassrls`). La migration **extrait la clé depuis la commande elle-même** (regex sur le JWT) et la range dans **Supabase Vault** (`vault.create_secret`, extension 0.3.1 déjà installée) : le secret ne quitte jamais la base, rien de sensible n'est versionné, aucune commande à taper. L'URL du projet est extraite de la même chaîne (fichier indépendant de l'instance). Nouveau lecteur unique `public.get_app_secret(name, required)`, `SECURITY DEFINER` + `SET search_path = ''` + `REVOKE EXECUTE` (motif entrée 13) ; deux consommateurs y sont branchés : le job cron (réécrit, **planification `0 7 * * 1` et fonction cible `weekly-digest` inchangées**) et `notify_email_on_insert`, qui lisait `app.settings.*` via `current_setting` et **était donc totalement inerte** (GUC jamais posés) : ce fichier **ACTIVE les e-mails transactionnels** (`vma_update`, `new_athlete`, `system` ; la skip-list est reprise verbatim). **Vault plutôt que `ALTER DATABASE ... SET`** : un GUC personnalisé est de contexte `USERSET` donc lisible par n'importe quel rôle dont `anon`, il fuit dans les journaux DDL et les sauvegardes, et il n'est lu qu'à l'ouverture de session (donc recyclage du pool PostgREST nécessaire), là où Vault est relu à chaque appel. **Ordre des opérations** : le job n'est réécrit qu'après relecture et vérification du secret dans Vault, le tout dans un `DO` unique donc atomique. Rejeu : ni doublon dans Vault (index UNIQUE sur `name`), ni job retouché. `db reset` : sur base neuve le job existe en version GUC sans secret, la migration sort par `RAISE NOTICE` sans échouer. Validé en PGlite, migration jouée verbatim, 39/39 vérifications (cf. PR) : reprise du secret, absence de tout JWT dans la commande finale, appel HTTP résultant identique à l'ancien (URL, en-tête, corps), idempotence sur 3 passages, base neuve, job absent, 2 chemins d'échec avec job intact et rollback, skip-list, absence de rattrapage rétroactif, droits `anon`/`authenticated` |
+
+> **État réel en prod** (revérifié en base le 2026-08-11 via
+> `supabase_migrations.schema_migrations`) : **les entrées jusqu'à la 37 sont
+> appliquées**, y compris l'entrée 37 (`notify_coaches_new_athlete`, dont le
+> trigger `on_new_athlete` et le cron `vma-missing-reminder` sont bien vivants
+> en base). Les fonctions Edge sont déployées, dont `analyze-validation`.
+> L'entrée **38 n'est PAS appliquée** : elle attend la validation explicite de
 > Matthieu (`supabase db push`).
 >
 > Cette note a déjà dérivé plusieurs fois (état d'application annoncé faux
 > après un `db push`) : **toujours revérifier avec
 > `supabase migration list --linked`** avant de s'y fier ou de la modifier.
+>
+> ⚠️ **« Appliquée » ne veut pas dire « exécutée ».** Vérifié le 2026-08-11 :
+> l'entrée 15 (`20260606120000`) est marquée appliquée alors que son bloc cron
+> n'a **jamais** pris effet en prod (le job `weekly-digest-monday` vivant porte
+> le `jobid` 1, donc le job d'origine, antérieur au fichier). Motif probable :
+> une adoption par `migration repair --status applied`, comme pour le baseline.
+> **Ne jamais déduire l'état de la prod du contenu d'un fichier de migration** :
+> lire la base.
 
 ## Reconstruire la base depuis zéro (instance neuve / test)
 
@@ -279,9 +290,25 @@ via `filterSessionsForAthlete`). Advisors sécurité : aucun nouvel avertissemen
 - *`users.is_public`* : flag présent mais **appliqué nulle part** (ni UI ni DB) ;
   à brancher si une vraie confidentialité de l'annuaire est souhaitée.
 
-## Fait : infra emails / crons (régularisée sans secret)
+## Infra emails / crons : du modèle GUC à Vault
 
-Portée dans `20260606120000_notifications_email_and_crons.sql` (modèle GUC de
-`strava_cron`, pas de `service_role` en clair). Les anciens `phase3/4/6` racine
-restent comme archive. L'appli fonctionne sans (emails/purges inactifs tant que
-`app.settings.supabase_url` / `app.settings.service_role_key` ne sont pas définis).
+Portée d'abord dans `20260606120000_notifications_email_and_crons.sql` (modèle
+GUC de `strava_cron`, pas de `service_role` en clair dans le fichier). Les
+anciens `phase3/4/6` racine restent comme archive.
+
+**Ce modèle GUC est abandonné par l'entrée 38** (`20260811100000`), pour deux
+raisons constatées en base le 2026-08-11 :
+
+- il n'a jamais été branché : `app.settings.supabase_url` et
+  `app.settings.service_role_key` n'ont jamais été posés, donc le trigger e-mail
+  était **inerte** depuis juin 2026, et le bloc cron du fichier n'a jamais été
+  exécuté en prod (le job vivant restait le job d'origine, **avec la clé en
+  clair**) ;
+- un GUC personnalisé est de contexte `USERSET` : `anon` comme n'importe quel
+  rôle peut le lire via `current_setting`, et `ALTER DATABASE ... SET` expose le
+  secret dans les journaux DDL et les sauvegardes.
+
+La source de vérité du secret est désormais **Supabase Vault**, lue par
+`public.get_app_secret()`. Voir l'entrée 38 pour le détail, y compris la
+procédure de rotation de la clé (un `vault.update_secret`, sans toucher au job
+ni au trigger, et sans recyclage du pool PostgREST).
