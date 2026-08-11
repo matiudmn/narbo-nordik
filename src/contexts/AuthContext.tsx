@@ -146,7 +146,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    if (error) return error.message;
+    // Meme traitement que login/signup : l'erreur brute de Supabase est en
+    // anglais. Le cas realiste ici est la limite de debit (l'athlete qui
+    // reclique faute de voir arriver le mail), deja couverte par mapAuthError.
+    if (error) return mapAuthError(error);
     return null;
   }, []);
 
