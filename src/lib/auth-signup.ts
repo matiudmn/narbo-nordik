@@ -67,6 +67,56 @@ export function mapAuthError(error: AuthCallError): string {
   return 'Une erreur est survenue, réessaie plus tard.';
 }
 
+/**
+ * Message affiche a quelqu'un dont le compte d'authentification existe mais qui
+ * n'a pas de ligne `users`. Exporte pour que le test s'appuie sur la constante
+ * plutot que sur une copie de la phrase.
+ */
+export const INSCRIPTION_INACHEVEE =
+  "Ton inscription n'a jamais été finalisée : il manque le code du club. Reprends « Rejoindre Narbo Nordik » avec cette adresse et ce mot de passe.";
+
+export interface LoginDeps {
+  signIn: (creds: { email: string; password: string }) => Promise<{ error: AuthCallError | null }>;
+  /** get_own_profile : `status` 0 signale une coupure reseau, pas une absence. */
+  fetchProfile: () => Promise<{ data: unknown; error: AuthCallError | null; status: number }>;
+  signOut: () => Promise<void>;
+}
+
+/**
+ * Connexion, avec detection du compte d'authentification SANS profil.
+ *
+ * Ce cas existe pour de vrai : `register_profile` verifie le code d'invitation
+ * APRES que signUp a cree le compte Auth, donc un code mal recopie laisse une
+ * ligne `auth.users` orpheline. La reprise posee par signupWithInviteCode ne
+ * joue que sur le formulaire d'INSCRIPTION ; quelqu'un qui passe par celui de
+ * CONNEXION (le reflexe naturel quand on croit avoir deja un compte) se
+ * connectait avec succes, loadProfile ne trouvait rien, setUser(null), et
+ * l'ecran de connexion se reaffichait SANS le moindre message. Boucle muette.
+ *
+ * On deconnecte avant de rendre la main : laisser une session a moitie ouverte
+ * ferait retomber onAuthStateChange dans le meme trou a chaque montage.
+ */
+export async function loginWithProfileCheck(
+  deps: LoginDeps,
+  creds: { email: string; password: string },
+): Promise<string | null> {
+  const { error } = await deps.signIn(creds);
+  if (error) return mapAuthError(error);
+
+  const { data, error: profileError, status } = await deps.fetchProfile();
+
+  // Coupure reseau : meme traitement que loadProfile (status 0). On ne
+  // deconnecte pas quelqu'un dont le profil existe peut-etre tres bien.
+  if (status === 0) return null;
+
+  if (profileError || !data) {
+    await deps.signOut();
+    return INSCRIPTION_INACHEVEE;
+  }
+
+  return null;
+}
+
 // Mappe l'erreur brute du RPC register_profile vers un message FR affichable.
 // - 42501 (insufficient_privilege) : levee volontairement par le RPC pour un
 //   code d'invitation invalide (cf. 20260731130000_invite_code.sql), message

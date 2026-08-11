@@ -20,7 +20,11 @@ export default function Login() {
     setLoading(true);
     const err = await login(email, password);
     setLoading(false);
-    if (err) setError('Email ou mot de passe incorrect. Réessaie ou réinitialise ton mot de passe.');
+    // On affiche le message renvoye par login(), au lieu de la constante qui
+    // etait posee ici : elle ecrasait aussi bien « Trop de tentatives » que
+    // l'inscription jamais finalisee, et envoyait reinitialiser un mot de passe
+    // parfaitement valide.
+    if (err) setError(err);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
