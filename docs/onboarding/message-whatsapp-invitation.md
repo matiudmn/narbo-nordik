@@ -13,30 +13,29 @@ c'est cette valeur qu'il faudrait mettre à jour ici.
 
 ## Version à copier
 
-*Narbo Nordik, section running et trail : l'appli du club*
+*L'appli du club : bienvenue aux nouveaux*
 
-Salut ! Pour suivre ton entraînement, retrouver les séances de la semaine et tes allures perso, le club a une appli. C'est gratuit, et c'est réservé aux membres.
+Salut à tous. On accueille du monde en ce moment à la section running et trail, alors un message pour que personne ne passe à côté : le club a une appli.
 
-Pour créer ton compte, c'est ici :
-https://narbo-nordik.vercel.app
+On y retrouve le programme de la semaine séance par séance, ses allures d'entraînement calculées sur sa VMA, son assiduité, le palmarès du club et l'annuaire des membres. C'est gratuit et réservé aux membres.
 
-Tu appuies sur *Rejoindre Narbo Nordik*, tu remplis tes infos, et tu saisis ce code d'invitation :
+*Si tu n'as pas encore ton compte*
+
+Va sur https://narbo-nordik.vercel.app, appuie sur *Rejoindre Narbo Nordik*, remplis tes infos et saisis ce code d'invitation :
 
 *{{CODE_INVITATION}}*
 
-Le code ne contient que des chiffres et les lettres A à F : le caractère rond est donc un zéro, jamais un O. Majuscules ou minuscules, avec ou sans espaces, ça passe.
+Le code ne contient que des chiffres et les lettres A à F : le caractère rond est donc un zéro, jamais un O. Majuscules, minuscules, espaces, aucune importance.
 
-Ce que tu y trouves :
-- le programme de la semaine, séance par séance
-- tes allures d'entraînement, calculées sur ta VMA
-- ton assiduité et ton suivi mois par mois
-- le palmarès du club et l'annuaire des membres
+Le guide de démarrage est en pièce jointe. Il déroule l'inscription pas à pas et explique comment installer l'appli sur ton écran d'accueil, pour l'ouvrir d'un geste.
 
-Le guide de démarrage est en pièce jointe : il détaille l'inscription pas à pas et explique comment installer l'appli sur ton écran d'accueil.
+Une précision qui évite de s'inquiéter : ta VMA et ton groupe sont renseignés par le coach une fois que tu es inscrit. Si ton écran paraît vide au début, c'est normal.
 
-Petite précision : ta VMA et ton groupe d'entraînement sont renseignés par le coach après ton inscription. Si ton écran paraît vide les premiers jours, c'est normal, ça se remplit vite.
+*Si tu es déjà inscrit*
 
-Un souci pour t'inscrire ? Écris ici, on te débloque.
+Rien à faire. Le guide peut quand même t'apprendre deux ou trois choses : valider tes séances, remplir tes chiffres en photographiant l'écran de ta montre, ajouter tes résultats au palmarès.
+
+Et si quelqu'un bloque à l'inscription, dites-le ici, on débloque.
 
 ---
 
