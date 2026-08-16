@@ -472,10 +472,14 @@ export default function Profile() {
             </div>
             <button
               onClick={async () => {
-                await updateNotificationPreferences(user.id, {
+                const res = await updateNotificationPreferences(user.id, {
                   ...user.notification_preferences,
                   attendance_tracking: !attendanceTracking,
                 } as NotificationPreferences);
+                if (res.error) {
+                  toast.error("Impossible d'enregistrer ton choix. Réessaie.");
+                  return;
+                }
                 await refreshUser();
               }}
               className={`w-11 h-6 rounded-full relative transition-colors ${attendanceTracking ? 'bg-primary' : 'bg-neutral-300'}`}
