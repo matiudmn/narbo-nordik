@@ -29,7 +29,7 @@ export default function Settings() {
 
   return (
     <div className="py-4 space-y-4">
-      <h1 className="text-lg font-bold text-neutral-900">Parametres</h1>
+      <h1 className="text-lg font-bold text-neutral-900">Paramètres</h1>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-neutral-100 rounded-lg p-1">
@@ -58,7 +58,7 @@ export default function Settings() {
           }`}
         >
           <Users size={14} />
-          Athletes
+          Athlètes
         </button>
         <button
           onClick={() => setTab('allures')}

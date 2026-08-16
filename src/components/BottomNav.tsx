@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3, ClipboardCheck } from 'lucide-react';
+import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3, ClipboardCheck, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function BottomNav() {
@@ -35,9 +35,12 @@ export default function BottomNav() {
             <Users size={22} />
             <span>Athletes</span>
           </NavLink>
-          <NavLink to="/profile" className={linkClass}>
-            <User size={22} />
-            <span>Profil</span>
+          {/* Réglages remplace Profil côté coach : le profil reste accessible
+              par l'avatar de l'en-tête mobile, alors que les réglages (VMA,
+              groupes, prépas, allures) n'avaient aucune entrée sur mobile. */}
+          <NavLink to="/coach/settings" className={linkClass}>
+            <Settings size={22} />
+            <span>Réglages</span>
           </NavLink>
         </div>
       </nav>

@@ -23,6 +23,7 @@ const Dashboard = lazy(() => import('./pages/coach/Dashboard'));
 const SessionEditor = lazy(() => import('./pages/coach/SessionEditor'));
 const SessionHistory = lazy(() => import('./pages/coach/SessionHistory'));
 const Settings = lazy(() => import('./pages/coach/Settings'));
+const AthleteSettings = lazy(() => import('./pages/coach/AthleteSettings'));
 const Import = lazy(() => import('./pages/coach/Import'));
 const Export = lazy(() => import('./pages/coach/Export'));
 const QuickAddSession = lazy(() => import('./pages/coach/QuickAddSession'));
@@ -74,6 +75,7 @@ function AppRoutes() {
           <Route path="/coach/export" element={isCoach ? <Export /> : <Navigate to="/" />} />
           <Route path="/coach/nouvelle-seance" element={isCoach ? <QuickAddSession /> : <Navigate to="/" />} />
           <Route path="/coach/settings" element={isCoach ? <Settings /> : <Navigate to="/" />} />
+          <Route path="/coach/athlete/:id" element={isCoach ? <AthleteSettings /> : <Navigate to="/" />} />
 
           {/* Default redirect */}
           <Route path="*" element={<Navigate to="/" />} />

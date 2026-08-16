@@ -33,6 +33,11 @@ export function getAthleteStartDate(user: Pick<AttendanceUser, 'created_at'>): D
   return startOfDay(new Date(user.created_at));
 }
 
+/** L'athlète était-il déjà au club à cette date ? (le jour même compte) */
+export function hasJoinedBefore(user: Pick<AttendanceUser, 'created_at'>, date: Date | string): boolean {
+  return getAthleteStartDate(user) <= new Date(date);
+}
+
 export function computeAttendance(
   user: AttendanceUser,
   sessions: Session[],

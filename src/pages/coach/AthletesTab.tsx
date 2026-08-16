@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Trash2, Check, X, Search, Share2, Copy, Eye, UserPlus, KeyRound, RefreshCw } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Trash2, Check, X, Search, Share2, Copy, Eye, UserPlus, KeyRound, RefreshCw, ChevronRight } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDebounce } from '../../hooks/useDebounce';
@@ -8,7 +8,9 @@ import Avatar from '../../components/Avatar';
 import { Button, Card, ConfirmDialog, useToast } from '../../components/ui';
 import type { Role } from '../../types';
 import { matchTokens } from '../../lib/search';
-import { filterSessionsForAthlete, getUserPrepIds } from '../../lib/athleteSessions';
+import { getUserPrepIds } from '../../lib/athleteSessions';
+import { computeAttendance, formatAttendance } from '../../lib/attendance';
+import { getSeasonRange } from '../../lib/date-utils';
 
 // 4 octets aleatoires en hexa majuscules, meme format que le code seede par
 // la migration 20260731130000 (encode(gen_random_bytes(4), 'hex')).
@@ -19,26 +21,18 @@ function generateInviteCode(): string {
 }
 
 export default function AthletesTab() {
-  const { users, groups, validations, sessions, preparations, userPreparations, clubSettings, updateClubSettings, updateUserVma, updateUserLicense, updateUserGroup, addUser, deleteUser } = useData();
+  const { users, groups, validations, sessions, preparations, userPreparations, clubSettings, updateClubSettings, updateUserVma, updateUserGroup, addUser, deleteUser } = useData();
   const { isSuperAdmin, impersonate } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 250);
   const [showAdd, setShowAdd] = useState(false);
   const [confirmRegenerateCode, setConfirmRegenerateCode] = useState(false);
   const [regeneratingCode, setRegeneratingCode] = useState(false);
-  // L'éditeur de VMA peut être pré-ouvert par un deep-link (?edit=<id>) venant
-  // de la recherche universelle. On lit le param a l'init du state (robuste a un
-  // remount du composant pendant la transition de route) ; le param reste tant
-  // que l'éditeur n'est pas ferme.
-  const [editingVma, setEditingVma] = useState<string | null>(() => searchParams.get('edit'));
+  const [editingVma, setEditingVma] = useState<string | null>(null);
   const [vmaValue, setVmaValue] = useState('');
   const [vmaReason, setVmaReason] = useState('');
-  const [editingLicense, setEditingLicense] = useState<string | null>(null);
-  const [licenseValue, setLicenseValue] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [shareInfo, setShareInfo] = useState<{ name: string; email: string; tempPassword: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -71,48 +65,14 @@ export default function AthletesTab() {
       );
   }, [users, debouncedSearch, isSuperAdmin]);
 
-  // Deep-link "Changer la VMA" : l'ouverture de l'éditeur est geree a l'init du
-  // state (editingVma, au-dessus) pour survivre a un remount de route. Ici, une
-  // fois les donnees chargees ET la carte rendue, on pre-remplit la VMA actuelle
-  // et on scrolle vers la carte. Un seul passage (garde par ref), ce qui evite
-  // d'ecraser une saisie en cours.
-  const deepLinkHandled = useRef(false);
-  useEffect(() => {
-    const editId = searchParams.get('edit');
-    if (!editId || deepLinkHandled.current) return;
-    const target = users.find(u => u.id === editId);
-    if (!target || !cardRefs.current[editId]) return;
-    deepLinkHandled.current = true;
-    requestAnimationFrame(() => {
-      if (target.vma) setVmaValue(String(target.vma));
-      cardRefs.current[editId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-  }, [searchParams, users, athletes]);
-
-  // Ferme l'éditeur de VMA et retire le param deep-link s'il est present.
   const closeVmaEditor = () => {
     setEditingVma(null);
     setVmaValue('');
     setVmaReason('');
-    if (searchParams.get('edit')) {
-      setSearchParams(prev => {
-        const next = new URLSearchParams(prev);
-        next.delete('edit');
-        return next;
-      }, { replace: true });
-    }
   };
 
-  const getAttendanceRate = (userId: string) => {
-    const member = users.find(u => u.id === userId);
-    if (!member) return 0;
-    // Règle de priorité prépa active centralisée (cf. lib/athleteSessions, fix bug Amandine)
-    const prepIds = getUserPrepIds(userId, userPreparations);
-    const eligible = filterSessionsForAthlete(member, sessions, prepIds).map(f => f.session);
-    if (eligible.length === 0) return 0;
-    const done = validations.filter(v => v.user_id === userId && v.status === 'done' && eligible.some(s => s.id === v.session_id)).length;
-    return Math.round((done / eligible.length) * 100);
-  };
+  // Régularité sur la saison, calcul centralisé (cf. lib/attendance).
+  const seasonRange = useMemo(() => getSeasonRange(), []);
 
   const handleVmaEdit = async (userId: string) => {
     if (submittingVma) return;
@@ -126,12 +86,6 @@ export default function AthletesTab() {
       }
     }
     closeVmaEditor();
-  };
-
-  const handleLicenseEdit = (userId: string) => {
-    updateUserLicense(userId, licenseValue.trim() || null);
-    setEditingLicense(null);
-    setLicenseValue('');
   };
 
   const getShareMessage = (name: string, email: string, tempPassword: string) =>
@@ -367,6 +321,13 @@ export default function AthletesTab() {
                   <option key={g.id} value={g.id}>{g.name}</option>
                 ))}
               </select>
+              <Link
+                to={`/coach/athlete/${m.id}`}
+                aria-label={`Ouvrir la fiche de ${m.firstname} ${m.lastname}`}
+                className="p-1.5 text-neutral-400 hover:text-primary transition-colors"
+              >
+                <ChevronRight size={16} aria-hidden="true" />
+              </Link>
             </div>
           ))}
         </div>
@@ -388,30 +349,38 @@ export default function AthletesTab() {
       <div className="space-y-2">
         {athletes.map(athlete => {
           const group = groups.find(g => g.id === athlete.group_id);
-          const rate = getAttendanceRate(athlete.id);
+          const attendance = computeAttendance(
+            athlete, sessions, validations, getUserPrepIds(athlete.id, userPreparations), seasonRange
+          );
           return (
             <div
               key={athlete.id}
-              ref={el => { cardRefs.current[athlete.id] = el; }}
               className="bg-white rounded-xl border border-neutral-100 p-4"
             >
               <div className="flex items-center gap-3">
-                <Avatar user={athlete} size="md" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-neutral-900 flex items-center gap-1.5">
-                    {athlete.firstname} {athlete.lastname}
-                    {athlete.role === 'coach' && (
-                      <span className="inline-flex items-center text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">Coach</span>
-                    )}
-                  </p>
-                  <p className="text-xs text-neutral-400 truncate">{athlete.email}</p>
-                  {group && <p className="text-xs text-neutral-500">{group.name}</p>}
-                  {(() => {
-                    const prepId = userPreparations.find(up => up.user_id === athlete.id)?.preparation_id;
-                    const prep = prepId ? preparations.find(p => p.id === prepId) : null;
-                    return prep ? <p className="text-xs text-warning-600">{prep.name}</p> : null;
-                  })()}
-                </div>
+                <Link
+                  to={`/coach/athlete/${athlete.id}`}
+                  aria-label={`Ouvrir la fiche de ${athlete.firstname} ${athlete.lastname}`}
+                  className="flex items-center gap-3 flex-1 min-w-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                >
+                  <Avatar user={athlete} size="md" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-neutral-900 flex items-center gap-1.5">
+                      {athlete.firstname} {athlete.lastname}
+                      {athlete.role === 'coach' && (
+                        <span className="inline-flex items-center text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">Coach</span>
+                      )}
+                    </p>
+                    <p className="text-xs text-neutral-400 truncate">{athlete.email}</p>
+                    {group && <p className="text-xs text-neutral-500">{group.name}</p>}
+                    {(() => {
+                      const prepId = userPreparations.find(up => up.user_id === athlete.id)?.preparation_id;
+                      const prep = prepId ? preparations.find(p => p.id === prepId) : null;
+                      return prep ? <p className="text-xs text-warning-600">{prep.name}</p> : null;
+                    })()}
+                  </div>
+                  <ChevronRight size={18} className="text-neutral-300 shrink-0" aria-hidden="true" />
+                </Link>
                 <div className="flex items-center gap-1">
                   {isSuperAdmin && (
                     <button
@@ -443,6 +412,7 @@ export default function AthletesTab() {
                 </div>
               </div>
               <div className="flex items-center gap-4 mt-3 pt-3 border-t border-neutral-50">
+                {/* Édition VMA inline : raccourci de terrain pour le coach. */}
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-neutral-500">VMA</span>
                   {editingVma === athlete.id ? (
@@ -451,6 +421,7 @@ export default function AthletesTab() {
                         type="number" step="0.5" inputMode="decimal"
                         value={vmaValue}
                         onChange={e => setVmaValue(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleVmaEdit(athlete.id); }}
                         disabled={submittingVma}
                         className="w-16 px-2 py-1 border border-primary rounded-lg text-center text-sm focus:outline-none disabled:opacity-60"
                         autoFocus
@@ -467,36 +438,21 @@ export default function AthletesTab() {
                     </button>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-neutral-500">Licence</span>
-                  {editingLicense === athlete.id ? (
-                    <input
-                      type="text"
-                      value={licenseValue}
-                      onChange={e => setLicenseValue(e.target.value)}
-                      onBlur={() => handleLicenseEdit(athlete.id)}
-                      onKeyDown={e => e.key === 'Enter' && handleLicenseEdit(athlete.id)}
-                      className="w-20 px-2 py-1 border border-primary rounded-lg text-center text-sm focus:outline-none"
-                      autoFocus
-                    />
-                  ) : (
-                    <button
-                      onClick={() => { setEditingLicense(athlete.id); setLicenseValue(athlete.license_number || ''); }}
-                      className="font-bold text-primary hover:bg-primary/10 px-3 py-1 rounded-lg transition-colors text-sm min-w-[3rem]"
-                    >
-                      {athlete.license_number || '-'}
-                    </button>
-                  )}
-                </div>
                 <div className="flex-1 flex items-center gap-2">
-                  <span className="text-xs text-neutral-500">Assiduité</span>
-                  <div className="flex-1 h-1.5 bg-neutral-100 rounded-full overflow-hidden max-w-[80px]">
-                    <div
-                      className={`h-full rounded-full ${rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-danger-500'}`}
-                      style={{ width: `${rate}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium text-neutral-500">{rate}%</span>
+                  <span className="text-xs text-neutral-500">Régularité</span>
+                  {attendance.rate === null ? (
+                    <span className="text-xs font-medium text-neutral-500">-</span>
+                  ) : (
+                    <>
+                      <div className="flex-1 h-1.5 bg-neutral-100 rounded-full overflow-hidden max-w-[80px]">
+                        <div
+                          className="h-full rounded-full bg-primary/30"
+                          style={{ width: `${attendance.rate}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-neutral-500 tabular">{formatAttendance(attendance)}</span>
+                    </>
+                  )}
                 </div>
               </div>
               {editingVma === athlete.id && (

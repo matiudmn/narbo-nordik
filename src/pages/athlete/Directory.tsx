@@ -1,67 +1,27 @@
 import { useState, useMemo, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Phone, Shield, Cake, ChevronDown, Gauge, Target, Trophy, History, User as UserIcon } from 'lucide-react';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { Search, Phone, Shield, Cake, ChevronDown, Gauge, Trophy, History, User as UserIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Card, EmptyState } from '../../components/ui';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
 import { getRacePaces, calculateRacePace, getVmaLevelIndex } from '../../lib/calculations';
-import { filterSessionsForAthlete } from '../../lib/athleteSessions';
 import { matchTokens, isAthleteVisible } from '../../lib/search';
 import { useDebounce } from '../../hooks/useDebounce';
 import Avatar from '../../components/Avatar';
-import { getSeasonRange } from '../../lib/date-utils';
 import type { User } from '../../types';
 
 const MemberStats = memo(function MemberStats({ member }: { member: User }) {
   const { user: currentUser } = useAuth();
   const isCoach = currentUser?.role === 'coach';
-  const { sessions, validations, raceResults, userPreparations, clubSettings } = useData();
+  const { raceResults, clubSettings } = useData();
   const racePaces = getRacePaces(clubSettings?.race_paces);
 
   const lastVmaDate = member.vma_history.length > 0
     ? member.vma_history[member.vma_history.length - 1].date
     : null;
-
-  const userPrepIds = useMemo(() =>
-    userPreparations.filter(up => up.user_id === member.id).map(up => up.preparation_id),
-    [userPreparations, member.id]
-  );
-
-  const attendance = useMemo(() => {
-    const now = new Date();
-    const wStart = startOfWeek(now, { weekStartsOn: 1 });
-    const wEnd = endOfWeek(now, { weekStartsOn: 1 });
-    const mStart = startOfMonth(now);
-    const mEnd = endOfMonth(now);
-    const { start: sStart, end: sEnd } = getSeasonRange();
-
-    // Règle de priorité prépa active centralisée (cf. lib/athleteSessions)
-    const memberSessions = filterSessionsForAthlete(member, sessions, userPrepIds).map(f => f.session);
-
-    const doneSessionIds = new Set(
-      validations
-        .filter(v => v.user_id === member.id && v.status === 'done')
-        .map(v => v.session_id)
-    );
-
-    const calc = (start: Date, end: Date) => {
-      const periodSessions = memberSessions.filter(s =>
-        isWithinInterval(new Date(s.date), { start, end })
-      );
-      if (periodSessions.length === 0) return 0;
-      const done = periodSessions.filter(s => doneSessionIds.has(s.id)).length;
-      return Math.round((done / periodSessions.length) * 100);
-    };
-
-    return {
-      week: calc(wStart, wEnd),
-      month: calc(mStart, mEnd),
-      season: calc(sStart, sEnd),
-    };
-  }, [member, sessions, validations, userPrepIds]);
 
   const lastRaces = useMemo(() => {
     return raceResults
@@ -69,8 +29,6 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 4);
   }, [raceResults, member.id]);
-
-  const rateColor = (rate: number) => rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-danger-500';
 
   return (
     <div className="px-4 pb-4 space-y-3">
@@ -131,32 +89,6 @@ const MemberStats = memo(function MemberStats({ member }: { member: User }) {
           <p className="text-xs text-neutral-400">VMA non renseignee</p>
         </div>
       )}
-
-      {/* Assiduite */}
-      <div className="bg-white rounded-lg border border-neutral-100 p-3">
-        <h3 className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 uppercase mb-2">
-          <Target size={14} className="text-primary" />
-          Assiduite
-        </h3>
-        <div className="grid grid-cols-3 gap-3">
-          {([
-            { label: 'Semaine', value: attendance.week },
-            { label: 'Mois', value: attendance.month },
-            { label: 'Saison', value: attendance.season },
-          ] as const).map(stat => (
-            <div key={stat.label} className="text-center">
-              <p className="text-lg font-bold text-neutral-900">{stat.value}%</p>
-              <div className="w-full h-1 bg-neutral-100 rounded-full overflow-hidden mt-0.5">
-                <div
-                  className={`h-full rounded-full ${rateColor(stat.value)}`}
-                  style={{ width: `${stat.value}%` }}
-                />
-              </div>
-              <p className="text-[10px] text-neutral-400 mt-0.5">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* 4 derniers palmares */}
       {lastRaces.length > 0 && (

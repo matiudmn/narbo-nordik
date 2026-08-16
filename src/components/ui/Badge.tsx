@@ -75,7 +75,7 @@ const statusConfig: Record<
   { label: string; tone: BadgeTone; Icon: typeof Check }
 > = {
   done: { label: 'Validée', tone: 'success', Icon: Check },
-  missed: { label: 'Ratée', tone: 'danger', Icon: XIcon },
+  missed: { label: 'Non faite', tone: 'neutral', Icon: XIcon },
   pending: { label: 'À valider', tone: 'warning', Icon: Clock },
   upcoming: { label: 'À venir', tone: 'info', Icon: Calendar },
 };

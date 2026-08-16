@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Plus, Trash2, Check, X, UserMinus, Calendar, Target } from 'lucide-react';
@@ -140,9 +141,12 @@ export default function PreparationsTab() {
                       {members.map(member => (
                         <div key={member.id} className="flex items-center gap-3 px-3 py-2 bg-warning-50/50 rounded-lg">
                           <Avatar user={member} size="sm" />
-                          <span className="flex-1 text-sm font-medium text-neutral-900 truncate">
+                          <Link
+                            to={`/coach/athlete/${member.id}`}
+                            className="flex-1 text-sm font-medium text-neutral-900 truncate hover:text-primary hover:underline"
+                          >
                             {member.firstname} {member.lastname}
-                          </span>
+                          </Link>
                           <button
                             onClick={() => removeUserFromPreparation(member.id, prep.id)}
                             className="p-1.5 text-neutral-300 hover:text-danger-500 transition-colors"

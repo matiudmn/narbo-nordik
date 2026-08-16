@@ -243,9 +243,9 @@ function buildAthlete(u: User, viewer: SearchViewer, ctx: ScopedEntities): Resul
     badge: u.role === 'coach' ? 'Coach' : undefined,
     to,
   };
-  // Action rapide coach : changer la VMA, deep-link vers l'éditeur inline.
+  // Action rapide coach : ouvrir la fiche éditable (VMA, groupe, catégorie...).
   if (ctx.isStaff && (u.role === 'athlete' || viewer.isSuperAdmin)) {
-    base.action = { label: 'Changer la VMA', to: `/coach/settings?tab=athletes&edit=${u.id}` };
+    base.action = { label: 'Ouvrir la fiche', to: `/coach/athlete/${u.id}` };
   }
   return base;
 }

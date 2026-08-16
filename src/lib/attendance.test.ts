@@ -66,6 +66,12 @@ describe('computeAttendance', () => {
     expect(r).toEqual({ done: 1, total: 2, rate: 50 });
   });
 
+  it('compte la séance du jour d\'arrivée même si le compte est créé plus tard dans la journée', () => {
+    const user = { id: 'u1', group_id: 'g1', created_at: '2026-11-01T18:00:00Z' };
+    const r = computeAttendance(user, [session('s1', '2026-11-01')], [done('s1')], [], range, now);
+    expect(r).toEqual({ done: 1, total: 1, rate: 100 });
+  });
+
   it('ne compte pas les séances à venir', () => {
     const user = { id: 'u1', group_id: 'g1', created_at: '2026-08-01T00:00:00Z' };
     const sessions = [session('s1', '2026-11-10'), session('s2', '2026-11-20')];
