@@ -733,6 +733,35 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      import_sessions_bulk: {
+        Args: { p_rows: Json }
+        Returns: {
+          blocks: Json | null
+          created_at: string | null
+          created_by: string
+          date: string
+          description: string | null
+          group_id: string | null
+          id: string
+          is_personal: boolean | null
+          location: string | null
+          location_url: string | null
+          preparation_id: string | null
+          session_rpe: number | null
+          session_type: string
+          target_distance: number | null
+          terrain_options: Json | null
+          title: string
+          vma_percent_max: number | null
+          vma_percent_min: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "sessions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       increment_template_usage: {
         Args: { template_id: string }
         Returns: undefined

@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { Session, SessionValidation } from '../../types';
+import type { Json } from '../../types/database.types';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/monitoring';
 import { toSession, asSessionInsert, asSessionUpdate } from './rows';
@@ -45,6 +46,35 @@ export function useSessionActions({ setSessions, setValidations }: SessionAction
     return { error: 'Aucune donnee retournee par Supabase' };
   }, [setSessions]);
 
+  /**
+   * Import en lot (saison complète). Passe par la RPC `import_sessions_bulk`
+   * plutôt que par un INSERT direct : elle neutralise le trigger
+   * `notify_new_session` le temps de la transaction et pose UNE seule
+   * notification récapitulative par athlète, au lieu d'une par séance créée.
+   */
+  const importSessionsBulk = useCallback(async (rows: Omit<Session, 'id' | 'created_at'>[]): Promise<{ created: number } | { error: string }> => {
+    if (rows.length === 0) return { created: 0 };
+    const { data, error } = await supabase.rpc('import_sessions_bulk', {
+      p_rows: rows.map(asSessionInsert) as unknown as Json,
+    });
+    if (error) {
+      captureError('importSessionsBulk error', error);
+      // PGRST202 = fonction absente du schéma exposé : la migration n'a pas
+      // encore été appliquée. Pas de repli sur un INSERT direct, qui noierait
+      // les athlètes sous une notification par séance.
+      if (error.code === 'PGRST202') {
+        return { error: "L'import en lot n'est pas encore activé côté base : préviens Matthieu." };
+      }
+      return { error: `${error.message}${error.hint ? ' (' + error.hint + ')' : ''}${error.code ? ' [' + error.code + ']' : ''}` };
+    }
+    if (data) {
+      const normalized = data.map(toSession);
+      setSessions(prev => [...prev, ...normalized].sort((a, b) => a.date.localeCompare(b.date)));
+      return { created: data.length };
+    }
+    return { error: 'Aucune donnee retournee par Supabase' };
+  }, [setSessions]);
+
   const updateSession = useCallback(async (id: string, updates: Partial<Session>): Promise<{ error: string | null }> => {
     const { error } = await supabase.from('sessions').update(asSessionUpdate(updates)).eq('id', id);
     if (error) {
@@ -67,6 +97,6 @@ export function useSessionActions({ setSessions, setValidations }: SessionAction
   }, [setSessions, setValidations]);
 
   return useMemo(() => ({
-    addSession, addSessionsBulk, updateSession, deleteSession,
-  }), [addSession, addSessionsBulk, updateSession, deleteSession]);
+    addSession, addSessionsBulk, importSessionsBulk, updateSession, deleteSession,
+  }), [addSession, addSessionsBulk, importSessionsBulk, updateSession, deleteSession]);
 }

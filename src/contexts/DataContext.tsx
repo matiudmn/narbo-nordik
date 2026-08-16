@@ -26,6 +26,7 @@ interface DataContextType {
   loading: boolean;
   addSession: (session: Omit<Session, 'id' | 'created_at'>) => Promise<{ id: string } | { error: string }>;
   addSessionsBulk: (sessions: Omit<Session, 'id' | 'created_at'>[]) => Promise<{ created: number } | { error: string }>;
+  importSessionsBulk: (sessions: Omit<Session, 'id' | 'created_at'>[]) => Promise<{ created: number } | { error: string }>;
   updateSession: (id: string, updates: Partial<Session>) => Promise<{ error: string | null }>;
   deleteSession: (id: string) => Promise<{ error: string | null }>;
   validateSession: (sessionId: string, userId: string, status: 'done' | 'missed', feedback?: string, file?: File, objectiveReached?: ObjectiveReached, sensations?: Sensations, metrics?: SessionMetricsInput) => Promise<{ id: string } | { error: string }>;

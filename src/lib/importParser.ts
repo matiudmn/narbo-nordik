@@ -14,15 +14,31 @@
  *  3. SIMPLE (date | séance) — format minimaliste type "Pierre Dugue".
  *     Date | Séance
  *
- * Le séparateur de colonnes est la tabulation (TSV), ce que produit
- * naturellement un copier-coller depuis Excel.
+ *  4. PLAN (JSON saison) : une saison entière, chaque séance portant déjà sa
+ *     variante par groupe de niveau. C'est le format que le coach fait
+ *     produire à ChatGPT puis colle (ou dépose en fichier .json) ici.
+ *
+ * Le séparateur de colonnes des 3 premiers formats est la tabulation (TSV),
+ * ce que produit naturellement un copier-coller depuis Excel.
  *
  * Ref PRD v3 Feature 1.
  */
 
-import type { Group } from '../types';
+import type { Group, SessionType } from '../types';
 
-export type ImportFormat = 'canonical' | 'matrix' | 'simple' | 'unknown';
+export type ImportFormat = 'canonical' | 'matrix' | 'simple' | 'plan' | 'unknown';
+
+/** Valeurs acceptées par `sessions.session_type` (contrainte CHECK en base). */
+export const SESSION_TYPE_VALUES: SessionType[] = [
+  'entrainement', 'sortie_longue', 'recuperation', 'velo', 'marche', 'renfo', 'course',
+];
+
+/**
+ * Clé de groupe du format `plan` désignant tout le club (séance globale,
+ * `group_id = null`). Sert aussi de sentinelle côté UI pour ne pas réclamer
+ * une correspondance de groupe sur ces lignes.
+ */
+export const PLAN_ALL_GROUPS = 'Tous';
 
 export type MacroType =
   | 'vma'
@@ -62,11 +78,22 @@ export interface ParsedImportSession {
   macroType: MacroType;
   /** Format détecté. */
   format: ImportFormat;
+  /** Heure HH:MM si le format la porte (`plan` uniquement). Optionnel. */
+  time?: string;
+  /** Type de séance si le format le porte (`plan` uniquement). Optionnel. */
+  sessionType?: SessionType;
+  /** Lieu si le format le porte (`plan` uniquement). Optionnel. */
+  location?: string;
 }
 
 export interface ParseError {
   lineNumber: number;
   message: string;
+  /**
+   * Nom de groupe non résolu à l'origine de l'erreur. L'UI s'en sert pour
+   * proposer une correspondance manuelle et lever le blocage sans reparser.
+   */
+  unresolvedGroup?: string;
 }
 
 export interface ParseWarning {
@@ -117,6 +144,10 @@ export function classifyMacroType(typeOrSubType: string, content: string): Macro
  * Heuristique légère : on regarde les noms de colonnes.
  */
 export function detectFormat(headerLine: string): ImportFormat {
+  // PLAN : réponse JSON de ChatGPT, éventuellement enrobée d'un bloc de code.
+  const head = headerLine.trim();
+  if (head.startsWith('{') || head.startsWith('```')) return 'plan';
+
   const cols = headerLine.split('\t').map(c => c.trim().toLowerCase());
   if (cols.length === 0) return 'unknown';
 
@@ -485,6 +516,212 @@ function parseSimple(lines: string[], opts: ParseOpts): ParseResult {
   return { sessions, errors, warnings, detectedFormat: 'simple', skipped };
 }
 
+/**
+ * Format PLAN : un objet JSON décrivant une saison entière.
+ *
+ * {
+ *   "version": 1,
+ *   "saison": "2026-2027",
+ *   "heure_par_defaut": "18:30",
+ *   "seances": [
+ *     { "date": "2026-09-08", "heure": "18:30", "titre": "VMA courte",
+ *       "type": "entrainement", "lieu": "Stade",
+ *       "groupes": { "Essentiel": "...", "Renforcé": "..." } }
+ *   ]
+ * }
+ *
+ * Une ligne par (séance × groupe) : c'est le pattern produit de l'app, une
+ * séance ne visant qu'UN groupe. La clé "Tous" produit une séance globale
+ * (`groupId = null`). Un nom de groupe inconnu est une ERREUR (et non un
+ * avertissement) : sans cela la ligne partirait en séance globale, donc
+ * visible par tout le club.
+ */
+function parsePlanJson(text: string, opts: ParseOpts): ParseResult {
+  const errors: ParseError[] = [];
+  const warnings: ParseWarning[] = [];
+  const sessions: ParsedImportSession[] = [];
+  let skipped = 0;
+
+  const fail = (message: string): ParseResult => ({
+    sessions: [],
+    errors: [{ lineNumber: 1, message }],
+    warnings: [],
+    detectedFormat: 'plan',
+    skipped: 0,
+  });
+
+  // Tolère les fences markdown et tout texte d'accompagnement : on ne garde
+  // que du premier "{" au dernier "}".
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start === -1 || end <= start) {
+    return fail(
+      "Aucun objet JSON trouvé. Colle la réponse complète, accolade ouvrante comprise, ou choisis l'onglet correspondant à ton tableau."
+    );
+  }
+
+  let plan: unknown;
+  try {
+    plan = JSON.parse(text.slice(start, end + 1));
+  } catch {
+    // Le message du moteur JS ("Unexpected end of JSON input"...) ne dit rien
+    // au coach : la cause quasi systématique est une réponse tronquée.
+    return fail(
+      "La réponse semble incomplète ou abîmée (ChatGPT a peut-être coupé son message). Redemande-lui de la terminer, ou fais-lui produire un trimestre à la fois : les imports successifs repèrent les séances déjà créées."
+    );
+  }
+  if (!plan || typeof plan !== 'object' || Array.isArray(plan)) {
+    return fail('JSON invalide : un objet { "seances": [...] } est attendu.');
+  }
+
+  const root = plan as Record<string, unknown>;
+  const rawSessions = root.seances;
+  if (!Array.isArray(rawSessions) || rawSessions.length === 0) {
+    return fail('Aucune séance : la clé "seances" est absente ou vide.');
+  }
+
+  const defaultTime = normalizeTime(root.heure_par_defaut);
+  const clubGroups = opts.groups.map(g => g.name).join(', ') || 'aucun groupe créé dans le club';
+  // Un nom inconnu revient sur toutes les dates : une seule erreur par nom.
+  const reportedUnknown = new Set<string>();
+  // Même logique pour les avertissements répétitifs (type inconnu, heure
+  // illisible) : une seule ligne par valeur fautive, pas une par séance.
+  const reportedWarnings = new Set<string>();
+  const warnOnce = (key: string, lineNumber: number, message: string) => {
+    if (reportedWarnings.has(key)) return;
+    reportedWarnings.add(key);
+    warnings.push({ lineNumber, message });
+  };
+
+  rawSessions.forEach((entry, index) => {
+    const lineNumber = index + 1;
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      errors.push({ lineNumber, message: `Séance ${lineNumber} : un objet est attendu.` });
+      return;
+    }
+    const item = entry as Record<string, unknown>;
+    const dateRaw = typeof item.date === 'string' ? item.date.trim() : '';
+    // Une saison est à cheval sur deux années : une date sans année serait
+    // silencieusement rattachée à l'année par défaut, donc décalée.
+    if (/^\d{1,2}\/\d{1,2}$/.test(dateRaw)) {
+      errors.push({
+        lineNumber,
+        message: `Séance ${lineNumber} : date "${dateRaw}" sans année, utilise AAAA-MM-JJ.`,
+      });
+      return;
+    }
+    const date = dateRaw ? parseDateRaw(dateRaw, opts.defaultYear) : null;
+    if (!date) {
+      errors.push({
+        lineNumber,
+        message: `Séance ${lineNumber} : date non lisible ("${dateRaw}"). Format attendu : AAAA-MM-JJ.`,
+      });
+      return;
+    }
+    const groupes = item.groupes;
+    if (
+      !groupes ||
+      typeof groupes !== 'object' ||
+      Array.isArray(groupes) ||
+      Object.keys(groupes).length === 0
+    ) {
+      errors.push({
+        lineNumber,
+        message: `Séance ${lineNumber} (${dateRaw}) : clé "groupes" absente, vide ou mal formée.`,
+      });
+      return;
+    }
+
+    const parsedTime = normalizeTime(item.heure);
+    const time = parsedTime ?? defaultTime ?? undefined;
+    if (item.heure != null && item.heure !== '' && !parsedTime) {
+      // 18:30 est le repli appliqué à la création quand la saison ne fournit
+      // aucune heure par défaut (cf. Import.tsx).
+      warnOnce(
+        `heure:${String(item.heure)}`,
+        lineNumber,
+        `Séance ${lineNumber} : heure "${String(item.heure)}" non lisible (format attendu HH:MM), ${time ?? '18:30'} appliquée.`
+      );
+    }
+    const rawType = typeof item.type === 'string' ? item.type.trim() : '';
+    const sessionType = SESSION_TYPE_VALUES.find(t => t === rawType);
+    if (rawType && !sessionType) {
+      warnOnce(
+        `type:${rawType}`,
+        lineNumber,
+        `Séance ${lineNumber} : type "${rawType}" inconnu, "entrainement" sera utilisé.`
+      );
+    }
+    const location = typeof item.lieu === 'string' && item.lieu.trim() ? item.lieu.trim() : undefined;
+    const rawTitle = typeof item.titre === 'string' ? item.titre.trim() : '';
+
+    for (const [groupName, value] of Object.entries(groupes as Record<string, unknown>)) {
+      // `null` = clé posée mais sans séance ce jour-là. Tout autre non-texte
+      // (tableau, objet, nombre) est signalé plutôt que perdu en silence.
+      if (value !== null && typeof value !== 'string') {
+        errors.push({
+          lineNumber,
+          message: `Séance ${lineNumber} (${dateRaw}) : le contenu du groupe "${groupName}" doit être un texte sur une ligne.`,
+        });
+        continue;
+      }
+      const content = value === null ? '' : value.trim();
+      if (isIgnorableContent(content)) {
+        skipped++;
+        continue;
+      }
+      let groupId: string | null = null;
+      let targetGroupName = groupName;
+      if (normalizeGroupName(groupName) === 'tous') {
+        targetGroupName = PLAN_ALL_GROUPS;
+      } else {
+        // Un match approximatif ("Essentiel" vs "Essentiel +") n'est pas sûr :
+        // il est traité comme un nom non résolu, le coach tranche via le
+        // sélecteur de correspondance manuelle.
+        const match = resolveGroup(groupName, opts.groups);
+        groupId = match.confidence === 'exact' ? match.groupId : null;
+        if (!groupId && !reportedUnknown.has(groupName)) {
+          reportedUnknown.add(groupName);
+          errors.push({
+            lineNumber,
+            unresolvedGroup: groupName,
+            message: `Groupe "${groupName}" inconnu. Groupes du club : ${clubGroups}.`,
+          });
+        }
+      }
+
+      sessions.push({
+        lineNumber,
+        date,
+        dateRaw,
+        targetType: 'group',
+        targetGroupName,
+        groupId,
+        subType: rawTitle || content.split('|')[0].trim().slice(0, 60) || 'Séance',
+        contentText: content,
+        macroType: classifyMacroType(rawTitle, content),
+        format: 'plan',
+        time,
+        sessionType,
+        location,
+      });
+    }
+  });
+
+  return { sessions, errors, warnings, detectedFormat: 'plan', skipped };
+}
+
+/** Normalise une heure "9:5" / "18:30" / "18h30" en "HH:MM". Null si invalide. */
+function normalizeTime(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const m = raw.trim().match(/^(\d{1,2})[:hH](\d{1,2})$/);
+  if (!m) return null;
+  const hours = Number(m[1]);
+  const minutes = Number(m[2]);
+  if (hours > 23 || minutes > 59) return null;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
 /* ---------- Point d'entrée ---------- */
 
 /**
@@ -505,6 +742,12 @@ export function parseImport(
   }
 
   const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  const format = opts.forceFormat ?? detectFormat(lines[0]);
+
+  // Le JSON tient parfois sur une seule ligne : il passe donc avant le
+  // contrôle "en-tête + données" propre aux formats tabulaires.
+  if (format === 'plan') return parsePlanJson(text, opts);
+
   if (lines.length < 2) {
     return {
       sessions: [],
@@ -514,8 +757,6 @@ export function parseImport(
       skipped: 0,
     };
   }
-
-  const format = opts.forceFormat ?? detectFormat(lines[0]);
 
   switch (format) {
     case 'canonical':
