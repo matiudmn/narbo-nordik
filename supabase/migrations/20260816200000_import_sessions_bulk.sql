@@ -10,7 +10,7 @@
 -- notification récapitulative par athlète concerné.
 --
 -- Additive et idempotente (CREATE OR REPLACE uniquement, aucun changement de
--- table). NE PAS APPLIQUER EN PROD SANS VALIDATION EXPLICITE DE MATTHIEU.
+-- table). Appliquée en prod le 16/08/2026 (GO de Matthieu).
 -- ============================================================================
 
 -- ============================================================================
@@ -176,5 +176,5 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.import_sessions_bulk(jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.import_sessions_bulk(jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.import_sessions_bulk(jsonb) TO authenticated;
