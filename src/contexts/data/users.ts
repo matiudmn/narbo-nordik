@@ -171,7 +171,8 @@ export function useUserActions({ setUsers, setValidations, setRaceResults, setRa
   }, [setUsers, setValidations, setRaceResults, setRaceNordiks, setSessionNordiks]);
 
   return useMemo(() => ({
+    updateUser: patchUser,
     updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto,
     updateNotificationPreferences, addUser, deleteUser,
-  }), [updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateNotificationPreferences, addUser, deleteUser]);
+  }), [patchUser, updateUserVma, updateUserPublic, updateUserPhone, updateUserLicense, updateUserBirthDate, updateUserPhoto, updateNotificationPreferences, addUser, deleteUser]);
 }

@@ -8,8 +8,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { getSessionCode } from '../../lib/calculations';
 import { filterSessionsForAthlete } from '../../lib/athleteSessions';
+import { getAthleteStartDate } from '../../lib/attendance';
 import Avatar from '../../components/Avatar';
-import YearlyHeatmap from '../../components/YearlyHeatmap';
+import YearlyHeatmap, { toHeatmapStatus } from '../../components/YearlyHeatmap';
 import type { HeatmapSession } from '../../components/YearlyHeatmap';
 import type { SessionType } from '../../types';
 
@@ -99,21 +100,21 @@ export default function Suivi() {
     if (!user) return [];
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    const doneSessionIds = new Set(
-      validations
-        .filter(v => v.user_id === user.id && v.status === 'done')
-        .map(v => v.session_id)
+    const statusBySession = new Map(
+      validations.filter(v => v.user_id === user.id).map(v => [v.session_id, v.status])
     );
+    const startDate = getAthleteStartDate(user);
     // Règle de priorité prépa active appliquée aussi pour le heatmap
     const userSessions = filterSessionsForAthlete(user, sessions, userPrepIds).map(f => f.session);
     return userSessions
-      .filter(s => doneSessionIds.has(s.id) || new Date(s.date) <= today)
+      .filter(s => new Date(s.date) >= startDate)
+      .filter(s => statusBySession.get(s.id) === 'done' || new Date(s.date) <= today)
       .map(s => ({
         date: s.date,
         title: s.title,
         session_type: s.session_type,
         is_personal: s.is_personal,
-        done: doneSessionIds.has(s.id),
+        status: toHeatmapStatus(statusBySession.get(s.id)),
       }));
   }, [user, sessions, validations, userPrepIds]);
 

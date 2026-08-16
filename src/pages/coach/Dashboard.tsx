@@ -9,6 +9,7 @@ import { getAttachmentUrl } from '../../lib/storage';
 import { supabase } from '../../lib/supabase';
 import { getSessionCode } from '../../lib/calculations';
 import { computeRiskScores, topRiskAthletes } from '../../lib/risk';
+import { hasJoinedBefore } from '../../lib/attendance';
 import { CoachHeroCTA } from '../../components/coach/CoachHeroCTA';
 import { RiskScoreCard } from '../../components/coach/RiskScoreCard';
 import { KpiTrioCard } from '../../components/shared/KpiTrioCard';
@@ -43,23 +44,46 @@ const QUICK_ACTIONS = [
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { sessions, validations, users, groups, validationReactions, toggleValidationReaction, clubSettings, setFeaturedValidation } = useData();
+  const { sessions, validations, users, groups, userPreparations, validationReactions, toggleValidationReaction, clubSettings, setFeaturedValidation } = useData();
 
   const members = useMemo(() => users.filter(u => !u.is_super_admin && u.role !== 'coach'), [users]);
 
   const stats = useMemo(() => {
+    const now = new Date();
     const weekSessions = sessions.filter(s => !s.is_personal && isThisWeek(new Date(s.date), { weekStartsOn: 1 }));
-    const weekSessionIds = weekSessions.map(s => s.id);
-    const weekValidations = validations.filter(v => weekSessionIds.includes(v.session_id));
-    const doneCount = weekValidations.filter(v => v.status === 'done').length;
-    const totalExpected = weekSessions.length * members.length;
+
+    // Réalisation : uniquement sur les séances déjà passées, et pour chacune
+    // seuls les membres qu'elle concernait. Une séance de prépa n'a pas de
+    // group_id : elle n'attend que les inscrits à cette prépa, pas tout le club.
+    let doneCount = 0;
+    let totalExpected = 0;
+    for (const s of weekSessions) {
+      const sessionDate = new Date(s.date);
+      if (sessionDate > now) continue;
+      const prepMemberIds = s.preparation_id
+        ? new Set(userPreparations.filter(up => up.preparation_id === s.preparation_id).map(up => up.user_id))
+        : null;
+      const eligibleIds = new Set(
+        members
+          .filter(m => {
+            if (prepMemberIds) return prepMemberIds.has(m.id);
+            return !s.group_id || s.group_id === m.group_id;
+          })
+          .filter(m => hasJoinedBefore(m, s.date))
+          .map(m => m.id)
+      );
+      totalExpected += eligibleIds.size;
+      doneCount += validations.filter(
+        v => v.session_id === s.id && v.status === 'done' && eligibleIds.has(v.user_id)
+      ).length;
+    }
 
     return {
       completionRate: totalExpected > 0 ? Math.round((doneCount / totalExpected) * 100) : 0,
       sessionsThisWeek: weekSessions.length,
       memberCount: members.length,
     };
-  }, [sessions, validations, members]);
+  }, [sessions, validations, members, userPreparations]);
 
   const riskScores = useMemo(
     () => topRiskAthletes(computeRiskScores(members, sessions, validations), 5),

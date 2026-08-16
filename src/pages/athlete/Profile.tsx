@@ -179,6 +179,9 @@ export default function Profile() {
 
   if (!user) return null;
 
+  // Préférence d'affichage de la régularité (undefined = question pas encore posée sur l'accueil).
+  const attendanceTracking = user.notification_preferences?.attendance_tracking === true;
+
   const userRaces = raceResults
     .filter(r => r.user_id === user.id)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -458,6 +461,26 @@ export default function Profile() {
               className={`w-11 h-6 rounded-full relative transition-colors ${user.is_public ? 'bg-primary' : 'bg-neutral-300'}`}
             >
               <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow ${user.is_public ? 'left-5.5' : 'left-0.5'}`} />
+            </button>
+          </div>
+
+          {/* Toggle regularite */}
+          <div className="mt-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-neutral-900">Suivre ma régularité</p>
+              <p className="text-xs text-neutral-400">Affiche sur l'accueil tes séances faites sur celles proposées</p>
+            </div>
+            <button
+              onClick={async () => {
+                await updateNotificationPreferences(user.id, {
+                  ...user.notification_preferences,
+                  attendance_tracking: !attendanceTracking,
+                } as NotificationPreferences);
+                await refreshUser();
+              }}
+              className={`w-11 h-6 rounded-full relative transition-colors ${attendanceTracking ? 'bg-primary' : 'bg-neutral-300'}`}
+            >
+              <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow ${attendanceTracking ? 'left-5.5' : 'left-0.5'}`} />
             </button>
           </div>
         </div>

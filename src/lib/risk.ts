@@ -11,6 +11,11 @@
  *   0-39   → 'ok'       (aucune action)
  *   40-64  → 'attention' (à surveiller)
  *   65-100 → 'risque'    (à rappeler en priorité)
+ *
+ * Période de grâce (demande coach David, 08/2026) : un athlète arrivé depuis
+ * moins de 21 jours n'est jamais signalé, il n'a pas eu le temps de faire la
+ * saison. Au-delà, les fenêtres d'inactivité partent de son arrivée, pas de
+ * l'infini : le nouveau n'hérite pas du score maximum.
  */
 
 import { differenceInDays } from 'date-fns';
@@ -31,9 +36,11 @@ export interface RiskScore {
   reasons: string[];
 }
 
+/** Jours pendant lesquels un nouvel inscrit n'est jamais signalé. */
+export const GRACE_PERIOD_DAYS = 21;
+
 /** Normalise un nombre de jours dans [lo, hi] vers [0, 1]. */
 function normalizeDays(days: number, [lo, hi]: [number, number]): number {
-  if (days === Infinity) return 1;
   if (days <= lo) return 0;
   if (days >= hi) return 1;
   return (days - lo) / (hi - lo);
@@ -51,6 +58,7 @@ export function computeRiskScores(
   // Pour chaque athlète, calculer ses 3 facteurs
   const scores: RiskScore[] = athletes.map((athlete) => {
     const myValidations = validations.filter((v) => v.user_id === athlete.id);
+    const daysSinceJoin = Math.max(0, differenceInDays(now, new Date(athlete.created_at)));
 
     // Dernière validation "done" — quelle date de séance ?
     let lastDoneDate: Date | null = null;
@@ -60,9 +68,11 @@ export function computeRiskScores(
       if (!d) continue;
       if (!lastDoneDate || d > lastDoneDate) lastDoneDate = d;
     }
+    // Sans validation, la fenêtre part de l'arrivée (max(created_at, now - fenêtre)) :
+    // un nouvel inscrit n'est pas « inactif depuis toujours ».
     const daysSinceLastValidation = lastDoneDate
       ? differenceInDays(now, lastDoneDate)
-      : Infinity;
+      : daysSinceJoin;
 
     // Jours sans feedback texte (sensations + feedback texte combinés)
     let lastFeedbackDate: Date | null = null;
@@ -74,7 +84,7 @@ export function computeRiskScores(
     }
     const daysWithoutFeedback = lastFeedbackDate
       ? differenceInDays(now, lastFeedbackDate)
-      : Infinity;
+      : daysSinceJoin;
 
     // % sensations négatives sur les 30 derniers jours
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -83,6 +93,17 @@ export function computeRiskScores(
     );
     const negative = recent.filter((v) => v.sensations === 'mauvaises').length;
     const pctNegativeSensations30d = recent.length > 0 ? negative / recent.length : 0;
+
+    const factors = {
+      daysSinceLastValidation,
+      daysWithoutFeedback,
+      pctNegativeSensations30d,
+    };
+
+    // Période de grâce : le nouvel inscrit n'est pas signalé au coach.
+    if (daysSinceJoin < GRACE_PERIOD_DAYS) {
+      return { athlete, score: 0, band: 'ok' as RiskBand, factors, reasons: [] };
+    }
 
     // Score 0-100
     const raw =
@@ -96,7 +117,7 @@ export function computeRiskScores(
 
     // Raisons lisibles (top 3)
     const reasons: string[] = [];
-    if (daysSinceLastValidation === Infinity) {
+    if (!lastDoneDate) {
       reasons.push('Aucune séance validée');
     } else if (daysSinceLastValidation >= 21) {
       reasons.push(`Inactif depuis ${daysSinceLastValidation} jours`);
@@ -106,23 +127,13 @@ export function computeRiskScores(
     if (pctNegativeSensations30d >= 0.5 && recent.length >= 2) {
       reasons.push(`${Math.round(pctNegativeSensations30d * 100)}% sensations négatives (30j)`);
     }
-    if (daysWithoutFeedback >= 30 && daysWithoutFeedback !== Infinity) {
-      reasons.push(`Pas de feedback depuis ${daysWithoutFeedback} jours`);
-    } else if (daysWithoutFeedback === Infinity) {
+    if (!lastFeedbackDate) {
       reasons.push('Jamais de feedback');
+    } else if (daysWithoutFeedback >= 30) {
+      reasons.push(`Pas de feedback depuis ${daysWithoutFeedback} jours`);
     }
 
-    return {
-      athlete,
-      score,
-      band,
-      factors: {
-        daysSinceLastValidation,
-        daysWithoutFeedback,
-        pctNegativeSensations30d,
-      },
-      reasons: reasons.slice(0, 3),
-    };
+    return { athlete, score, band, factors, reasons: reasons.slice(0, 3) };
   });
 
   // Tri décroissant

@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { getSessionCode } from '../lib/calculations';
 import { filterSessionsForAthlete } from '../lib/athleteSessions';
+import { getAthleteStartDate } from '../lib/attendance';
 import { StatusBadge, EmptyState, SessionTypeBadge, DataDivider } from '../components/ui';
 import type { SessionStatus } from '../components/ui';
 
@@ -15,7 +16,7 @@ type Filter = 'all' | 'done' | 'missed' | 'personal';
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'Toutes' },
   { id: 'done', label: 'Validées' },
-  { id: 'missed', label: 'Ratées' },
+  { id: 'missed', label: 'Non faites' },
   { id: 'personal', label: 'Perso' },
 ];
 
@@ -42,9 +43,12 @@ export default function TrainingHistory() {
   const allSessions = useMemo(() => {
     if (!targetUser) return [];
     // Règle de priorité prépa active (fix Amandine) + séances globales toujours
-    // visibles, via la lib centralisée athleteSessions.
+    // visibles, via la lib centralisée athleteSessions. Les séances antérieures à
+    // l'arrivée de l'athlète ne le concernent pas : elles ne sont pas listées.
+    const startDate = getAthleteStartDate(targetUser);
     return filterSessionsForAthlete(targetUser, sessions, userPrepIds)
       .map((f) => f.session)
+      .filter((s) => new Date(s.date) >= startDate)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [sessions, targetUser, userPrepIds]);
 
@@ -189,7 +193,13 @@ export default function TrainingHistory() {
               <div className="space-y-2">
                 {group.sessions.map((session) => {
                   const validation = getValidation(session.id);
-                  const status = (validation?.status || 'pending') as SessionStatus;
+                  // Sans validation : « À venir » si la séance n'a pas eu lieu, rien
+                  // sinon (une séance passée non renseignée n'est pas un manquement).
+                  const status: SessionStatus | null = validation?.status
+                    ? (validation.status as SessionStatus)
+                    : new Date(session.date) > new Date()
+                      ? 'upcoming'
+                      : null;
 
                   return (
                     <Link
@@ -214,7 +224,7 @@ export default function TrainingHistory() {
                             </div>
                           </div>
                         </div>
-                        <StatusBadge status={status} withIcon className="flex-shrink-0" />
+                        {status && <StatusBadge status={status} withIcon className="flex-shrink-0" />}
                       </div>
                       {validation?.feedback && (
                         <p className="text-sm text-neutral-500 italic mt-2">« {validation.feedback} »</p>
