@@ -439,17 +439,61 @@ const coachSections: Section[] = [
           la distance ou durée (heures, minutes, secondes), et le pourcentage de VMA.
           L'application calculera automatiquement l'allure personnalisee pour chaque athlete.
         </p>
-        <p className="font-semibold text-neutral-900">Affecter a un groupe ou une préparation</p>
+        <p className="font-semibold text-neutral-900">Affecter à un groupe ou une préparation</p>
         <p>
-          Une séance peut etre affectee a un ou plusieurs groupes d'entrainement,
-          ou a une préparation spécifique. Les athletes des groupes/préparations concernés
-          verront automatiquement la séance sur leur accueil.
+          Une séance vise un seul groupe d'entraînement, ou tous les groupes du club
+          (séance sans groupe), ou une préparation spécifique. Pour une même séance
+          déclinée par niveau, crée une séance par groupe. Les athlètes concernés la
+          voient automatiquement sur leur accueil.
         </p>
         <p className="font-semibold text-neutral-900">Modifier et supprimer</p>
         <p>
           Tu peux modifier une séance existante à tout moment. La suppression d'une séance
           est egalement possible mais irremediable : les validations et retours associes
           seront aussi supprimes.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'coach-import',
+    title: 'Importer un plan ou une saison',
+    coachOnly: true,
+    content: (
+      <>
+        <p>
+          La page Import crée des dizaines de séances d'un coup, sans rien retoucher au texte
+          que tu as écrit. Quatre formats sont acceptés, un onglet par format.
+        </p>
+        <p className="font-semibold text-neutral-900">Saison complète (JSON)</p>
+        <p>
+          Le format à privilégier pour une saison entière : chaque séance y porte déjà sa
+          variante pour chaque groupe de niveau, donc un seul import suffit. Le bouton
+          « Copier le prompt ChatGPT » met dans ton presse-papier un prompt tout prêt,
+          avec les noms exacts de tes groupes. Colle-le dans ChatGPT, décris-lui ta saison,
+          puis ramène sa réponse ici.
+        </p>
+        <p className="font-semibold text-neutral-900">Depuis Excel</p>
+        <p>
+          Trois formats tabulaires restent disponibles : plan structuré (Semaine, Date, Jour,
+          Type, Contenu), matrice hebdo (une colonne par groupe) et liste simple (Date, Séance).
+          Fais Cmd-A puis Cmd-C sur ton tableau et colle-le dans la zone prévue.
+        </p>
+        <p className="font-semibold text-neutral-900">Coller ou déposer un fichier</p>
+        <p>
+          Tu peux coller le texte, cliquer sur « Charger un fichier », ou glisser directement
+          ton fichier (.json, .txt, .csv, .tsv) dans la zone de collage.
+        </p>
+        <p className="font-semibold text-neutral-900">Vérifier avant de créer</p>
+        <p>
+          L'aperçu montre ce qui sera créé, et le récapitulatif compte les semaines,
+          les séances et les lignes. Si un nom de groupe de ton fichier ne correspond à aucun
+          groupe du club, l'import reste bloqué tant que tu n'as pas indiqué la correspondance :
+          sans elle, la séance serait publiée pour tout le club. Les séances déjà présentes
+          (même date, même groupe, même contenu) sont repérées et ignorées par défaut.
+        </p>
+        <p>
+          Les athlètes reçoivent une seule notification pour tout l'import, pas une par séance.
         </p>
       </>
     ),
@@ -471,7 +515,7 @@ const coachSections: Section[] = [
         <p className="font-semibold text-neutral-900">Assigner des membres</p>
         <p>
           Clique sur un groupe pour voir et modifier sa composition. Tu peux ajouter
-          ou retirer des athletes. Un athlete peut appartenir a plusieurs groupes.
+          ou retirer des athlètes. Un athlète appartient à un seul groupe à la fois.
         </p>
         <p className="font-semibold text-neutral-900">Modifier et supprimer</p>
         <p>
