@@ -236,7 +236,7 @@ export default function AthleteDetail() {
       )}
 
       {/* Régularité : jamais exposée aux autres athlètes */}
-      {attendance && (isCoach || member.id === currentUser?.id) && (
+      {attendance && (isCoach || (member.id === currentUser?.id && currentUser?.notification_preferences?.attendance_tracking === true)) && (
         <Card>
           <h3 className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 uppercase mb-2">
             <Target size={14} className="text-primary" />

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
+import { format, subWeeks, startOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Trophy, Medal, ChevronRight, Users } from 'lucide-react';
 import NordikButton from '../components/NordikButton';
@@ -86,12 +86,11 @@ export default function ClubProfile() {
   const participationRate = useMemo(() => {
     const now = new Date();
     const fourWeeksAgo = subWeeks(startOfWeek(now, { weekStartsOn: 1 }), 4);
-    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-
+    // Jamais de séance à venir au dénominateur (même règle que lib/attendance).
     const recentSessions = sessions.filter(s => {
       if (s.is_personal) return false;
       const d = new Date(s.date);
-      return d >= fourWeeksAgo && d <= weekEnd;
+      return d >= fourWeeksAgo && d <= now;
     });
 
     if (recentSessions.length === 0) return { rate: 0, done: 0, total: 0 };

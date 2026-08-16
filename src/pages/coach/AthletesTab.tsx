@@ -71,8 +71,15 @@ export default function AthletesTab() {
     setVmaReason('');
   };
 
-  // Régularité sur la saison, calcul centralisé (cf. lib/attendance).
-  const seasonRange = useMemo(() => getSeasonRange(), []);
+  // Régularité sur la saison, calcul centralisé (cf. lib/attendance), mémoïsé
+  // par athlète : ne se recalcule pas à chaque frappe dans la recherche.
+  const attendanceById = useMemo(() => {
+    const range = getSeasonRange();
+    return new Map(users.map(u => [
+      u.id,
+      computeAttendance(u, sessions, validations, getUserPrepIds(u.id, userPreparations), range),
+    ]));
+  }, [users, sessions, validations, userPreparations]);
 
   const handleVmaEdit = async (userId: string) => {
     if (submittingVma) return;
@@ -349,9 +356,7 @@ export default function AthletesTab() {
       <div className="space-y-2">
         {athletes.map(athlete => {
           const group = groups.find(g => g.id === athlete.group_id);
-          const attendance = computeAttendance(
-            athlete, sessions, validations, getUserPrepIds(athlete.id, userPreparations), seasonRange
-          );
+          const attendance = attendanceById.get(athlete.id) ?? { done: 0, total: 0, rate: null };
           return (
             <div
               key={athlete.id}
