@@ -17,6 +17,7 @@ import { Bar, Doughnut } from 'react-chartjs-2';
 import { useData } from '../contexts/DataContext';
 import { Card, MetricTile } from '../components/ui';
 import { applyChartTheme } from '../lib/chartTheme';
+import { hasJoinedBefore } from '../lib/attendance';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 applyChartTheme();
@@ -103,6 +104,8 @@ export default function ClubProfile() {
       const eligibleAthletes = athleteIds.filter(id => {
         const user = users.find(u => u.id === id);
         if (!user) return false;
+        // Un athlète arrivé après la séance n'avait pas à y être.
+        if (!hasJoinedBefore(user, s.date)) return false;
         if (!s.group_id) return true;
         return s.group_id === user.group_id || user.role === 'coach';
       });

@@ -36,6 +36,7 @@ interface DataContextType {
   toggleNordik: (raceId: string, userId: string) => Promise<{ error: string | null }>;
   toggleSessionNordik: (sessionId: string, userId: string) => Promise<{ error: string | null }>;
   toggleValidationReaction: (validationId: string, emoji: string, authorId: string) => Promise<{ error: string | null }>;
+  updateUser: (userId: string, updates: Partial<User>) => Promise<{ error: string | null }>;
   updateUserVma: (userId: string, vma: number, reason?: string) => Promise<{ error: string | null }>;
   updateUserPublic: (userId: string, isPublic: boolean) => Promise<{ error: string | null }>;
   updateUserPhone: (userId: string, phone: string | null) => Promise<{ error: string | null }>;

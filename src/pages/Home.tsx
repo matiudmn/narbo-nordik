@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isWithinInterval, isPast, differenceInCalendarDays, differenceInCalendarWeeks } from 'date-fns';
+import { format, startOfWeek, endOfWeek, addWeeks, startOfMonth, endOfMonth, isPast, differenceInCalendarDays, differenceInCalendarWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { MapPin, ChevronLeft, ChevronRight, TrendingUp, Gauge, Info, Target, CalendarPlus, X, Copy, MessageCircle, Check, Flag, Star } from 'lucide-react';
 import { Calendar } from 'lucide-react';
@@ -12,14 +12,15 @@ import { useData } from '../contexts/DataContext';
 import { formatBlockSummary, getRacePaces, calculateRacePace, getVmaLevelIndex, VMA_LEVELS, getSessionCode, getAllureZones } from '../lib/calculations';
 import { getSeasonRange } from '../lib/date-utils';
 import { filterSessionsForAthlete } from '../lib/athleteSessions';
+import { computeAttendance, formatAttendance } from '../lib/attendance';
 import { computeWeeklyStreak } from '../lib/streak';
 import { PageSkeleton } from '../components/Skeleton';
-import { celebrate, haptic } from '../lib/motion';
-import type { ObjectiveReached, Sensations } from '../types';
+import { celebrate, haptic, motion, VARIANTS } from '../lib/motion';
+import type { NotificationPreferences, ObjectiveReached, Sensations } from '../types';
 
 export default function Home() {
-  const { user } = useAuth();
-  const { sessions, validations, users, groups, preparations, userPreparations, clubSettings, loading, validateSession, updateValidation, setFeaturedValidation } = useData();
+  const { user, refreshUser } = useAuth();
+  const { sessions, validations, users, groups, preparations, userPreparations, clubSettings, loading, validateSession, updateValidation, setFeaturedValidation, updateNotificationPreferences } = useData();
   const toast = useToast();
   const racePaces = getRacePaces(clubSettings?.race_paces);
   const allureZones = getAllureZones(clubSettings?.allure_zones);
@@ -140,40 +141,40 @@ export default function Home() {
     return prepObjectives.find(o => o.daysUntil >= 0) ?? null;
   }, [prepObjectives]);
 
-  // --- Attendance stats ---
-  const attendanceStats = useMemo(() => {
-    if (!user) return { week: 0, month: 0, season: 0 };
-
+  // --- Régularité (calcul unique : cf. lib/attendance) ---
+  const attendance = useMemo(() => {
+    if (!user) return null;
     const now = new Date();
-    const wStart = startOfWeek(now, { weekStartsOn: 1 });
-    const wEnd = endOfWeek(now, { weekStartsOn: 1 });
-    const mStart = startOfMonth(now);
-    const mEnd = endOfMonth(now);
-    const { start: sStart, end: sEnd } = getSeasonRange();
-
-    // Pour le calcul d'assiduité, on garde la règle stricte (sans toggle) :
-    // si l'athlète a une prépa active, on ne compte que les séances de la prépa.
-    const userSessions = filterSessionsForAthlete(user, sessions, userPrepIds).map(f => f.session);
-
-    const calc = (start: Date, end: Date) => {
-      const periodSessions = userSessions.filter(s =>
-        isWithinInterval(new Date(s.date), { start, end })
-      );
-      if (periodSessions.length === 0) return 0;
-      const done = periodSessions.filter(s =>
-        validations.some(v => v.session_id === s.id && v.user_id === user.id && v.status === 'done')
-      ).length;
-      return Math.round((done / periodSessions.length) * 100);
-    };
-
+    const calc = (range: { start: Date; end: Date }) =>
+      computeAttendance(user, sessions, validations, userPrepIds, range, now);
     return {
-      week: calc(wStart, wEnd),
-      month: calc(mStart, mEnd),
-      season: calc(sStart, sEnd),
+      week: calc({ start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) }),
+      month: calc({ start: startOfMonth(now), end: endOfMonth(now) }),
+      season: calc(getSeasonRange()),
     };
   }, [user, sessions, validations, userPrepIds]);
 
-  // Série d'assiduité hebdomadaire (régularité), affichée dans le bloc Assiduité.
+  // Préférence "je veux suivre ma régularité" : undefined = question pas encore posée.
+  const attendanceTracking = user?.notification_preferences?.attendance_tracking;
+  const [savingAttendancePref, setSavingAttendancePref] = useState(false);
+
+  const setAttendanceTracking = async (value: boolean) => {
+    if (!user) return;
+    setSavingAttendancePref(true);
+    const res = await updateNotificationPreferences(user.id, {
+      ...user.notification_preferences,
+      attendance_tracking: value,
+    } as NotificationPreferences);
+    setSavingAttendancePref(false);
+    if (res.error) {
+      toast.error("Impossible d'enregistrer ton choix. Réessaie.");
+      return;
+    }
+    await refreshUser();
+    if (!value) toast.success('Tu peux la réactiver depuis ton profil, section Informations.');
+  };
+
+  // Série d'assiduité hebdomadaire (régularité), affichée dans le bloc Régularité.
   const weeklyStreak = useMemo(() => {
     if (!user) return 0;
     const doneDates = validations
@@ -284,8 +285,6 @@ export default function Home() {
 
   if (!user) return null;
   if (loading && sessions.length === 0) return <PageSkeleton />;
-
-  const rateColor = (rate: number) => rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-danger-500';
 
   const prepMessage = prepRaceName && prepRaceDate && prepRaceDistance && prepFitness
     ? `Hello coach !\nJe m'inscris sur ${prepRaceName} qui aura lieu le ${format(new Date(prepRaceDate), 'd MMMM yyyy', { locale: fr })} sur ${prepRaceDistance}.\nMon état de forme est ${prepFitness.toLowerCase()}.\n${prepComments ? prepComments + '\n' : ''}Pourrais-tu me faire un plan spécifique ?\nSi cela est opportun bien sûr.\nMerci pour ton retour,\nBises,\n${user.firstname}`
@@ -424,37 +423,76 @@ export default function Home() {
           </p>
           <div className="flex items-center gap-1 mt-3 text-xs text-neutral-400">
             <Info size={12} />
-            <span>{isCoach ? 'Modifiable depuis la fiche athlete' : 'Contacte ton coach pour modifier ta VMA'}</span>
+            <span>{isCoach ? 'Ta VMA se modifie depuis ton profil, celle des athlètes depuis Réglages, onglet Athlètes' : 'Contacte ton coach pour modifier ta VMA'}</span>
           </div>
         </Card>
       )}
 
-      {/* Assiduite */}
-      <Card>
-        <h2 className="flex items-center gap-2 font-bold text-neutral-900 mb-3">
-          <Target size={18} className="text-primary" />
-          Assiduité
-          <StreakFlame weeks={weeklyStreak} size="sm" className="ml-auto" />
-        </h2>
-        <div className="grid grid-cols-3 gap-3">
-          {([
-            { label: 'Semaine', value: attendanceStats.week },
-            { label: 'Mois', value: attendanceStats.month },
-            { label: 'Saison', value: attendanceStats.season },
-          ] as const).map(stat => (
-            <div key={stat.label} className="text-center">
-              <p className="text-2xl font-bold text-neutral-900">{stat.value}%</p>
-              <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden mt-1">
-                <div
-                  className={`h-full rounded-full ${rateColor(stat.value)}`}
-                  style={{ width: `${stat.value}%` }}
-                />
-              </div>
-              <p className="text-xs text-neutral-500 mt-1">{stat.label}</p>
+      {/* Régularité : question tant que l'athlète n'a pas choisi de la suivre */}
+      {!isCoach && attendanceTracking === undefined && (
+        <Card>
+          <motion.div variants={VARIANTS.fadeIn} initial="hidden" animate="visible">
+            <h2 className="flex items-center gap-2 font-bold text-neutral-900 mb-2">
+              <Target size={18} className="text-primary" />
+              Ta régularité
+            </h2>
+            <p className="text-sm text-neutral-500">
+              Tu veux suivre le nombre de séances faites sur celles proposées ? Ça reste entre toi et le coach,
+              et tu peux changer d'avis dans ton profil, section Informations.
+            </p>
+            <div className="flex gap-2 mt-3">
+              <Button size="sm" onClick={() => setAttendanceTracking(true)} disabled={savingAttendancePref}>
+                Oui, affiche-la
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setAttendanceTracking(false)} disabled={savingAttendancePref}>
+                Non merci
+              </Button>
             </div>
-          ))}
-        </div>
-      </Card>
+          </motion.div>
+        </Card>
+      )}
+
+      {/* Régularité */}
+      {attendance && (isCoach || attendanceTracking === true) && (
+        <Card>
+          <h2 className="flex items-center gap-2 font-bold text-neutral-900 mb-3">
+            <Target size={18} className="text-primary" />
+            Régularité
+            <StreakFlame weeks={weeklyStreak} size="sm" className="ml-auto" />
+          </h2>
+          <div className="grid grid-cols-3 gap-3">
+            {([
+              { label: 'Semaine', value: attendance.week },
+              { label: 'Mois', value: attendance.month },
+              { label: 'Saison', value: attendance.season },
+            ] as const).map(stat => (
+              <div key={stat.label} className="text-center">
+                <p className="text-2xl font-bold text-neutral-900 tabular">{formatAttendance(stat.value)}</p>
+                {stat.value.rate !== null && (
+                  <>
+                    <p className="text-xs text-neutral-400 tabular">{stat.value.rate} %</p>
+                    <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden mt-1">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${stat.value.rate}%` }} />
+                    </div>
+                  </>
+                )}
+                <p className="text-xs text-neutral-500 mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-neutral-400 mt-3">Comptée depuis ton arrivée, hors séances à venir.</p>
+          {!isCoach && (
+            <button
+              type="button"
+              onClick={() => setAttendanceTracking(false)}
+              disabled={savingAttendancePref}
+              className="mt-1 text-xs text-neutral-400 hover:text-neutral-600 transition-colors disabled:opacity-60"
+            >
+              Ne plus afficher
+            </button>
+          )}
+        </Card>
+      )}
 
       </div>{/* end top grid */}
 

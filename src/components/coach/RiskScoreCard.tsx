@@ -41,9 +41,12 @@ export function RiskScoreCard({ riskScore }: RiskScoreCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${cfg.dotClass}`} aria-hidden="true" />
-            <p className="text-sm font-semibold text-neutral-900 truncate">
+            <Link
+              to={`/coach/athlete/${athlete.id}`}
+              className="text-sm font-semibold text-neutral-900 truncate hover:text-primary hover:underline"
+            >
               {athlete.firstname} {athlete.lastname}
-            </p>
+            </Link>
           </div>
           {reasons.length > 0 && (
             <ul className="mt-1 space-y-0.5">
@@ -90,8 +93,8 @@ export function RiskScoreCard({ riskScore }: RiskScoreCardProps) {
           </a>
         )}
         <Link
-          to={`/directory/${athlete.id}`}
-          aria-label={`Voir la fiche de ${athlete.firstname} ${athlete.lastname}`}
+          to={`/coach/athlete/${athlete.id}`}
+          aria-label={`Ouvrir la fiche de ${athlete.firstname} ${athlete.lastname}`}
           className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-neutral-50 hover:bg-neutral-100 text-neutral-500 transition-colors"
         >
           <ChevronRight size={16} aria-hidden="true" />

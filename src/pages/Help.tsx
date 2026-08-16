@@ -48,10 +48,12 @@ const athleteSections: Section[] = [
           calculées automatiquement. Ces allures correspondent aux différentes zones d'intensité
           utilisées lors des séances (endurance fondamentale, seuil, VMA, etc.).
         </p>
-        <p className="font-semibold text-neutral-900">Assiduité</p>
+        <p className="font-semibold text-neutral-900">Régularité</p>
         <p>
-          Un indicateur affiche ton taux de présence aux séances sur la saison en cours.
-          Il se met à jour automatiquement lorsque tu valides ta participation à une séance.
+          Si tu l'as activé, un indicateur affiche tes séances faites sur celles proposées
+          depuis ton arrivée au club (les séances à venir ne comptent pas). Il reste entre toi
+          et le coach. Tu peux l'activer ou le masquer à tout moment depuis ton profil,
+          section Informations.
         </p>
         <p className="font-semibold text-neutral-900">Séances de la semaine</p>
         <p>
@@ -98,8 +100,8 @@ const athleteSections: Section[] = [
         </p>
         <p className="font-semibold text-neutral-900">Valider sa participation</p>
         <p>
-          Après la séance, tu peux indiquer si tu étais présent·e ("Validée") ou absent·e
-          ("Ratée"). Cette validation alimente ton taux d'assiduité.
+          Après la séance, tu peux indiquer si tu l'as faite ("Validée") ou non
+          ("Non faite"). Cette validation alimente ton suivi de régularité, si tu l'as activé.
         </p>
         <p className="font-semibold text-neutral-900">Objectif atteint et sensations</p>
         <p>
@@ -266,9 +268,8 @@ const athleteSections: Section[] = [
         </p>
         <p className="font-semibold text-neutral-900">Fiches membres</p>
         <p>
-          Chaque fiche affiche le prenom, la photo, le groupe d'entrainement, la VMA,
-          ainsi que des statistiques d'assiduité. Tu peux rechercher un membre par son nom
-          grâce à la barre de recherche.
+          Chaque fiche affiche le prénom, la photo, le groupe d'entraînement, la VMA
+          et le palmarès. Tu peux rechercher un membre par son nom grâce à la barre de recherche.
         </p>
         <p className="font-semibold text-neutral-900">Groupe WhatsApp</p>
         <p>
@@ -392,21 +393,18 @@ const coachSections: Section[] = [
         <p className="font-semibold text-neutral-900">KPIs</p>
         <p>
           En haut de page, des compteurs affichent les statistiques essentielles :
-          nombre d'athletes actifs, séances creees sur la saison, taux de présence global,
-          et retours recents des athletes.
+          nombre d'athlètes actifs, séances créées sur la saison, taux de réalisation de la
+          semaine (séances déjà passées, athlètes inscrits à la date de la séance) et retours
+          récents des athlètes.
         </p>
-        <p className="font-semibold text-neutral-900">Alertes d'inactivite</p>
+        <p className="font-semibold text-neutral-900">Athlètes à rappeler</p>
         <p>
-          Le dashboard signale les athletes inactifs avec trois niveaux de severite :
-        </p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li><strong>+45 jours</strong> (rouge) : athlete a risque de decrochage</li>
-          <li><strong>+20 jours</strong> (orange) : a relancer</li>
-          <li><strong>+7 jours</strong> (jaune) : a surveiller</li>
-        </ul>
-        <p>
-          Cela tu permet de reprendre contact avec eux et de maintenir
-          la dynamique du groupe.
+          Le dashboard classe les athlètes avec un score de 0 à 100 qui combine trois signaux :
+          le temps depuis la dernière séance validée, la part de sensations négatives sur les
+          30 derniers jours et le temps sans feedback écrit. Deux niveaux apparaissent,
+          « attention » et « risque ». Un athlète arrivé depuis moins de 21 jours n'est jamais
+          signalé : il n'a pas eu le temps de faire la saison. Chaque nom ouvre sa fiche coach,
+          avec les raccourcis pour l'appeler ou lui écrire.
         </p>
         <p className="font-semibold text-neutral-900">Retours athletes</p>
         <p>
@@ -544,7 +542,20 @@ const coachSections: Section[] = [
     content: (
       <>
         <p>
-          L'onglet "Athletes" des parametres centralise la gestion de tous les membres du club.
+          L'onglet "Athlètes" des réglages centralise la gestion de tous les membres du club.
+        </p>
+        <p className="font-semibold text-neutral-900">La fiche athlète, tout au même endroit</p>
+        <p>
+          Touche la carte d'un membre pour ouvrir sa fiche complète. Tu y trouves, sur une seule
+          page, tout ce qui se règle sur un athlète : VMA et motif du test, date de naissance
+          (qui donne la catégorie FFA, master comprise), numéro de licence, prénom et nom, groupe,
+          préparations spécifiques, téléphone, profil public. Les champs texte s'enregistrent
+          avec leur bouton « Enregistrer » ; le groupe, les préparations et le profil public
+          s'enregistrent dès que tu les changes. La fiche s'ouvre aussi depuis le nom d'un
+          athlète dans les onglets Groupes et Prépas, depuis le bloc des athlètes à rappeler du
+          dashboard, depuis la recherche (action « Ouvrir la fiche ») et depuis le bouton
+          « Modifier la fiche » de l'annuaire. La suppression d'un athlète se trouve dans la
+          « Zone sensible », repliée en bas de la fiche.
         </p>
         <p className="font-semibold text-neutral-900">Ajouter un athlete</p>
         <p>
@@ -554,8 +565,8 @@ const coachSections: Section[] = [
         </p>
         <p className="font-semibold text-neutral-900">VMA et licence</p>
         <p>
-          Depuis la fiche de chaque athlete, tu peux mettre à jour sa VMA (après un test
-          par exemple) et son numéro de licence FFA. Lors de la mise à jour de la VMA, tu peux
+          Depuis la fiche de chaque athlète (ou directement dans la liste pour la VMA seule),
+          tu peux mettre à jour sa VMA (après un test par exemple) et son numéro de licence FFA. Lors de la mise à jour de la VMA, tu peux
           indiquer un motif (test piste, estimation, etc.) qui sera enregistre dans l'historique.
           La modification recalcule automatiquement toutes les allures de l'athlete.
         </p>

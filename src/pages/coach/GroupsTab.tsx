@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Check, X, UserMinus, UsersRound } from 'lucide-react';
 import { Card } from '../../components/ui';
 import { useData } from '../../contexts/DataContext';
@@ -134,7 +135,9 @@ export default function GroupsTab() {
                   <div key={member.id} className="flex items-center gap-3 px-3 py-2 bg-neutral-50 rounded-lg">
                     <Avatar user={member} size="sm" />
                     <span className="flex-1 text-sm font-medium text-neutral-900 truncate flex items-center gap-1.5">
-                      {member.firstname} {member.lastname}
+                      <Link to={`/coach/athlete/${member.id}`} className="truncate hover:text-primary hover:underline">
+                        {member.firstname} {member.lastname}
+                      </Link>
                       {member.role === 'coach' && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
                           Coach
@@ -183,9 +186,12 @@ export default function GroupsTab() {
             {unassigned.map(athlete => (
               <div key={athlete.id} className="flex items-center gap-3 px-3 py-2 bg-neutral-50 rounded-lg">
                 <Avatar user={athlete} size="sm" />
-                <span className="flex-1 text-sm font-medium text-neutral-900 truncate">
+                <Link
+                  to={`/coach/athlete/${athlete.id}`}
+                  className="flex-1 text-sm font-medium text-neutral-900 truncate hover:text-primary hover:underline"
+                >
                   {athlete.firstname} {athlete.lastname}
-                </span>
+                </Link>
                 <select
                   value=""
                   onChange={e => { if (e.target.value) updateUserGroup(athlete.id, e.target.value); }}

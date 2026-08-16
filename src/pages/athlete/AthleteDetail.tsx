@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Phone, Shield, Cake, Gauge, Target, Trophy, History } from 'lucide-react';
+import { ArrowLeft, Phone, Shield, Cake, Gauge, Target, Trophy, History, Pencil } from 'lucide-react';
 import { Card } from '../../components/ui';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,9 +10,11 @@ import { getFFACategory, formatBirthDatePublic } from '../../lib/ffa';
 import { getRacePaces, calculateRacePace, getVmaLevelIndex } from '../../lib/calculations';
 import { getSeasonRange } from '../../lib/date-utils';
 import { filterSessionsForAthlete } from '../../lib/athleteSessions';
+import { computeAttendance, formatAttendance, getAthleteStartDate } from '../../lib/attendance';
 import { isAthleteVisible } from '../../lib/search';
 import Avatar from '../../components/Avatar';
-import YearlyHeatmap from '../../components/YearlyHeatmap';
+import YearlyHeatmap, { toHeatmapStatus } from '../../components/YearlyHeatmap';
+import type { HeatmapSession } from '../../components/YearlyHeatmap';
 import ExpandableText from '../../components/ExpandableText';
 
 export default function AthleteDetail() {
@@ -52,33 +54,15 @@ export default function AthleteDetail() {
   );
 
   const attendance = useMemo(() => {
-    if (!member) return { week: 0, month: 0, season: 0 };
+    if (!member) return null;
     const now = new Date();
-    const wStart = startOfWeek(now, { weekStartsOn: 1 });
-    const wEnd = endOfWeek(now, { weekStartsOn: 1 });
-    const mStart = startOfMonth(now);
-    const mEnd = endOfMonth(now);
-    const { start: sStart, end: sEnd } = getSeasonRange();
-
-    // Règle de priorité prépa active centralisée (cf. lib/athleteSessions)
-    const memberSessions = filterSessionsForAthlete(member, sessions, userPrepIds).map(f => f.session);
-
-    const doneSessionIds = new Set(
-      validations
-        .filter(v => v.user_id === member.id && v.status === 'done')
-        .map(v => v.session_id)
-    );
-
-    const calc = (start: Date, end: Date) => {
-      const periodSessions = memberSessions.filter(s =>
-        isWithinInterval(new Date(s.date), { start, end })
-      );
-      if (periodSessions.length === 0) return 0;
-      const done = periodSessions.filter(s => doneSessionIds.has(s.id)).length;
-      return Math.round((done / periodSessions.length) * 100);
+    const calc = (range: { start: Date; end: Date }) =>
+      computeAttendance(member, sessions, validations, userPrepIds, range, now);
+    return {
+      week: calc({ start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) }),
+      month: calc({ start: startOfMonth(now), end: endOfMonth(now) }),
+      season: calc(getSeasonRange()),
     };
-
-    return { week: calc(wStart, wEnd), month: calc(mStart, mEnd), season: calc(sStart, sEnd) };
   }, [member, sessions, validations, userPrepIds]);
 
   const memberRaces = useMemo(() => {
@@ -89,15 +73,14 @@ export default function AthleteDetail() {
   }, [raceResults, member]);
 
   // Heatmap data: coach-created sessions (done + missed) for this athlete
-  const heatmapSessions = useMemo(() => {
+  const heatmapSessions = useMemo((): HeatmapSession[] => {
     if (!member) return [];
     const today = new Date();
     today.setHours(23, 59, 59, 999);
-    const doneSessionIds = new Set(
-      validations
-        .filter(v => v.user_id === member.id && v.status === 'done')
-        .map(v => v.session_id)
+    const statusBySession = new Map(
+      validations.filter(v => v.user_id === member.id).map(v => [v.session_id, v.status])
     );
+    const startDate = getAthleteStartDate(member);
     const memberPrepIds = userPreparations
       .filter(up => up.user_id === member.id)
       .map(up => up.preparation_id);
@@ -105,13 +88,14 @@ export default function AthleteDetail() {
     return filterSessionsForAthlete(member, sessions, memberPrepIds)
       .map(f => f.session)
       .filter(s => !s.is_personal)
-      .filter(s => doneSessionIds.has(s.id) || new Date(s.date) <= today)
+      .filter(s => new Date(s.date) >= startDate)
+      .filter(s => statusBySession.get(s.id) === 'done' || new Date(s.date) <= today)
       .map(s => ({
         date: s.date,
         title: s.title,
         session_type: s.session_type,
         is_personal: s.is_personal,
-        done: doneSessionIds.has(s.id),
+        status: toHeatmapStatus(statusBySession.get(s.id)),
       }));
   }, [member, sessions, validations, userPreparations]);
 
@@ -131,7 +115,6 @@ export default function AthleteDetail() {
   const lastVmaDate = member.vma_history.length > 0
     ? member.vma_history[member.vma_history.length - 1].date
     : null;
-  const rateColor = (rate: number) => rate >= 75 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-danger-500';
 
   return (
     <div className="py-4 space-y-4">
@@ -140,7 +123,16 @@ export default function AthleteDetail() {
         <button onClick={() => navigate('/directory')} className="p-2 -ml-2 rounded-lg hover:bg-neutral-100">
           <ArrowLeft size={20} className="text-neutral-600" />
         </button>
-        <h1 className="text-lg font-bold text-neutral-900">Fiche athlete</h1>
+        <h1 className="flex-1 text-lg font-bold text-neutral-900">Fiche athlète</h1>
+        {isCoach && (
+          <Link
+            to={`/coach/athlete/${member.id}`}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:bg-primary/5 px-2.5 py-1.5 rounded-lg transition-colors"
+          >
+            <Pencil size={14} aria-hidden="true" />
+            Modifier la fiche
+          </Link>
+        )}
       </div>
 
       {/* Profile card */}
@@ -243,31 +235,36 @@ export default function AthleteDetail() {
         </Card>
       )}
 
-      {/* Assiduite */}
-      <Card>
-        <h3 className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 uppercase mb-2">
-          <Target size={14} className="text-primary" />
-          Assiduité
-        </h3>
-        <div className="grid grid-cols-3 gap-3">
-          {([
-            { label: 'Semaine', value: attendance.week },
-            { label: 'Mois', value: attendance.month },
-            { label: 'Saison', value: attendance.season },
-          ] as const).map(stat => (
-            <div key={stat.label} className="text-center">
-              <p className="text-lg font-bold text-neutral-900">{stat.value}%</p>
-              <div className="w-full h-1 bg-neutral-100 rounded-full overflow-hidden mt-0.5">
-                <div
-                  className={`h-full rounded-full ${rateColor(stat.value)}`}
-                  style={{ width: `${stat.value}%` }}
-                />
+      {/* Régularité : jamais exposée aux autres athlètes */}
+      {attendance && (isCoach || member.id === currentUser?.id) && (
+        <Card>
+          <h3 className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 uppercase mb-2">
+            <Target size={14} className="text-primary" />
+            Régularité
+          </h3>
+          <div className="grid grid-cols-3 gap-3">
+            {([
+              { label: 'Semaine', value: attendance.week },
+              { label: 'Mois', value: attendance.month },
+              { label: 'Saison', value: attendance.season },
+            ] as const).map(stat => (
+              <div key={stat.label} className="text-center">
+                <p className="text-lg font-bold text-neutral-900 tabular">{formatAttendance(stat.value)}</p>
+                {stat.value.rate !== null && (
+                  <>
+                    <p className="text-[10px] text-neutral-400 tabular">{stat.value.rate} %</p>
+                    <div className="w-full h-1 bg-neutral-100 rounded-full overflow-hidden mt-0.5">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${stat.value.rate}%` }} />
+                    </div>
+                  </>
+                )}
+                <p className="text-[10px] text-neutral-400 mt-0.5">{stat.label}</p>
               </div>
-              <p className="text-[10px] text-neutral-400 mt-0.5">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </Card>
+            ))}
+          </div>
+          <p className="text-[10px] text-neutral-400 mt-2">Comptée depuis l'arrivée au club, hors séances à venir.</p>
+        </Card>
+      )}
 
       {/* Heatmap */}
       {isCoach && <YearlyHeatmap sessions={heatmapSessions} />}

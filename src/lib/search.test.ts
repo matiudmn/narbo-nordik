@@ -114,10 +114,10 @@ describe('runSearch (coach)', () => {
     const res = runSearch(index, 'seuil');
     expect(res.some(r => r.kind === 'session' && r.id === 's_grp')).toBe(true);
   });
-  it('offers a "Changer la VMA" action on athletes', () => {
+  it('offers an "Ouvrir la fiche" action on athletes', () => {
     const res = runSearch(index, 'amelie');
     const athlete = res.find(r => r.kind === 'athlete' && r.id === 'a1');
-    expect(athlete?.action?.to).toContain('tab=athletes&edit=a1');
+    expect(athlete?.action?.to).toBe('/coach/athlete/a1');
   });
 });
 

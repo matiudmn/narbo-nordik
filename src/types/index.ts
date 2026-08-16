@@ -207,6 +207,8 @@ export interface NotificationPreferences {
   new_athlete?: { in_app?: boolean; email?: boolean };
   // Jamais d'e-mail pour le rappel VMA (même skip list que reaction).
   vma_missing?: { in_app?: boolean };
+  // Préférence d'affichage, rangée ici faute de colonne de préférences générales ; undefined = pas encore demandé.
+  attendance_tracking?: boolean;
 }
 
 export interface AppNotification {

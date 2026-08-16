@@ -1,13 +1,15 @@
 import { useState, useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card } from './ui';
+import type { SessionStatus } from '../types';
 
 export interface HeatmapSession {
   date: string;
   title: string;
   session_type: string;
   is_personal: boolean;
-  done: boolean;
+  /** 'none' = séance passée sans validation : pas d'information, pas un reproche. */
+  status: 'done' | 'missed' | 'none';
 }
 
 interface YearlyHeatmapProps {
@@ -24,20 +26,20 @@ function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
-type CellType = 'empty' | 'coach' | 'personal' | 'both' | 'missed' | 'mixed';
+type CellType = 'empty' | 'coach' | 'personal' | 'both' | 'missed' | 'none';
 
 function getCellType(sessions: HeatmapSession[]): CellType {
-  const done = sessions.filter(s => s.done);
-  const missed = sessions.filter(s => !s.done);
-
-  if (done.length > 0 && missed.length > 0) return 'mixed';
-  if (missed.length > 0) return 'missed';
-
-  const hasCoach = done.some(s => !s.is_personal);
-  const hasPersonal = done.some(s => s.is_personal);
-  if (hasCoach && hasPersonal) return 'both';
-  if (hasCoach) return 'coach';
-  if (hasPersonal) return 'personal';
+  // Une séance faite prime toujours sur les autres du même jour : la journée
+  // se lit à ce qui a été fait, jamais à ce qui manque.
+  const done = sessions.filter(s => s.status === 'done');
+  if (done.length > 0) {
+    const hasCoach = done.some(s => !s.is_personal);
+    const hasPersonal = done.some(s => s.is_personal);
+    if (hasCoach && hasPersonal) return 'both';
+    return hasCoach ? 'coach' : 'personal';
+  }
+  if (sessions.some(s => s.status === 'missed')) return 'missed';
+  if (sessions.length > 0) return 'none';
   return 'empty';
 }
 
@@ -46,9 +48,19 @@ const CELL_STYLES: Record<CellType, string> = {
   coach: 'bg-accent',
   personal: 'bg-warning-500',
   both: 'bg-gradient-to-br from-accent to-warning-500',
-  missed: 'bg-danger-500',
-  mixed: 'bg-gradient-to-br from-accent to-danger-500',
+  missed: 'bg-neutral-500',
+  none: 'bg-neutral-300',
 };
+
+/**
+ * Statut de validation ramené aux trois états lisibles du calendrier.
+ * Co-localisé avec le type HeatmapSession qu'il produit, d'où la dérogation
+ * Fast Refresh (sans impact en prod).
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function toHeatmapStatus(status: SessionStatus | undefined): HeatmapSession['status'] {
+  return status === 'done' || status === 'missed' ? status : 'none';
+}
 
 export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapProps) {
   const [year, setYear] = useState(initialYear ?? new Date().getFullYear());
@@ -67,13 +79,10 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
     return map;
   }, [sessions, year]);
 
-  const counts = useMemo(() => {
-    const yearSessions = sessions.filter(s => new Date(s.date).getFullYear() === year);
-    return {
-      done: yearSessions.filter(s => s.done).length,
-      missed: yearSessions.filter(s => !s.done).length,
-    };
-  }, [sessions, year]);
+  const doneCount = useMemo(
+    () => sessions.filter(s => s.status === 'done' && new Date(s.date).getFullYear() === year).length,
+    [sessions, year]
+  );
 
   const handleCellHover = useCallback((e: React.PointerEvent, month: number, day: number) => {
     const key = `${month}-${day}`;
@@ -84,7 +93,10 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
     if (!containerRect) return;
     const text = cellSessions
       .map(s => {
-        const prefix = !s.done ? '[Non faite] ' : s.is_personal ? '[Perso] ' : '';
+        const prefix =
+          s.status === 'missed' ? '[Non faite] '
+          : s.status === 'none' ? '[Non renseignée] '
+          : s.is_personal ? '[Perso] ' : '';
         return `${prefix}${s.title} (${s.session_type})`;
       })
       .join('\n');
@@ -122,8 +134,7 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
       </div>
 
       <p className="text-xs text-neutral-400 mb-3">
-        {counts.done} faite{counts.done > 1 ? 's' : ''}
-        {counts.missed > 0 && <span className="text-danger-500"> · {counts.missed} non faite{counts.missed > 1 ? 's' : ''}</span>}
+        {doneCount} faite{doneCount > 1 ? 's' : ''}
       </p>
 
       <div className="heatmap-container relative overflow-x-auto">
@@ -198,15 +209,19 @@ export default function YearlyHeatmap({ sessions, initialYear }: YearlyHeatmapPr
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-[2px] bg-accent" />
-          <span>Club</span>
+          <span>Faite (club)</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2.5 h-2.5 rounded-[2px] bg-warning-500" />
-          <span>Perso</span>
+          <span>Faite (perso)</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-2.5 h-2.5 rounded-[2px] bg-danger-500" />
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-neutral-500" />
           <span>Non faite</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-2.5 h-2.5 rounded-[2px] bg-neutral-300" />
+          <span>Non renseignée</span>
         </div>
       </div>
     </Card>
