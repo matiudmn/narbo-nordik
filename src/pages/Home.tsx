@@ -424,7 +424,7 @@ export default function Home() {
           </p>
           <div className="flex items-center gap-1 mt-3 text-xs text-neutral-400">
             <Info size={12} />
-            <span>{isCoach ? 'Modifiable depuis la fiche athlete' : 'Contacte ton coach pour modifier ta VMA'}</span>
+            <span>{isCoach ? 'Ta VMA se modifie depuis ton profil, celle des athlètes depuis Réglages, onglet Athlètes' : 'Contacte ton coach pour modifier ta VMA'}</span>
           </div>
         </Card>
       )}
