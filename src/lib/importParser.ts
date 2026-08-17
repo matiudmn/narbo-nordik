@@ -520,7 +520,12 @@ function parseMatrix(lines: string[], opts: ParseOpts): ParseResult {
     errors.push({ lineNumber: 1, message: 'Colonne DATE introuvable dans le header' });
     return { sessions: [], errors, warnings, detectedFormat: 'matrix', skipped };
   }
-  const groupNames = header.slice(dateIdx + 1).filter(Boolean);
+  // Colonne HEURE facultative (sorties du week-end le matin) : "8:30", "8h30".
+  const timeIdx = header.findIndex(c => /^heure/i.test(c));
+  const groupCols = header
+    .map((name, idx) => ({ name, idx }))
+    .filter(({ name, idx }) => idx > dateIdx && idx !== timeIdx && name);
+  const badTimes = new Set<string>();
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split('\t');
@@ -532,9 +537,14 @@ function parseMatrix(lines: string[], opts: ParseOpts): ParseResult {
       errors.push({ lineNumber: i + 1, message: `Date non parsée : "${dateRaw}"` });
       continue;
     }
-    for (let g = 0; g < groupNames.length; g++) {
-      const groupName = groupNames[g];
-      const content = (cols[dateIdx + 1 + g] || '').trim();
+    const timeRaw = timeIdx === -1 ? '' : (cols[timeIdx] || '').trim();
+    const time = normalizeTime(timeRaw) ?? undefined;
+    if (timeRaw && !time && !badTimes.has(timeRaw)) {
+      badTimes.add(timeRaw);
+      warnings.push({ lineNumber: i + 1, message: `Heure "${timeRaw}" non lisible (format attendu HH:MM), 18:30 appliquée` });
+    }
+    for (const { name: groupName, idx } of groupCols) {
+      const content = (cols[idx] || '').trim();
       if (isIgnorableContent(content)) {
         skipped++;
         continue;
@@ -558,6 +568,7 @@ function parseMatrix(lines: string[], opts: ParseOpts): ParseResult {
         week: weekLabel,
         date,
         dateRaw,
+        time,
         day: extractDayName(dateRaw),
         targetType: 'group',
         targetGroupName: groupName,

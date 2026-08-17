@@ -474,8 +474,10 @@ const coachSections: Section[] = [
         <p className="font-semibold text-neutral-900">Depuis Excel</p>
         <p>
           Trois formats tabulaires restent disponibles : plan structuré (Semaine, Date, Jour,
-          Type, Contenu), matrice hebdo (une colonne par groupe) et liste simple (Date, Séance).
-          Fais Cmd-A puis Cmd-C sur ton tableau et colle-le dans la zone prévue.
+          Type, Contenu), matrice (une ligne par date, une colonne par groupe, toute la saison
+          d'un coup, avec une colonne HEURE facultative pour les sorties du matin) et liste
+          simple (Date, Séance). Fais Cmd-A puis Cmd-C sur ton tableau et colle-le dans la zone
+          prévue, ou dépose directement ton fichier Excel.
         </p>
         <p className="font-semibold text-neutral-900">Coller ou déposer un fichier</p>
         <p>

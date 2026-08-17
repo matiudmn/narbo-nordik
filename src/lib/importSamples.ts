@@ -20,12 +20,12 @@ export const STATIC_SAMPLES: Record<Exclude<ImportFormat, 'plan'>, string> = {
     "S2\t23/01\tJeudi\tActivation\t30–40' EF + 5 lignes droites",
   ].join('\n'),
   matrix: [
-    'semaine\tDATE\tGR ESSENTIEL\tGR INTERMEDIAIRE\tGROUPE RENFORCE',
-    "21\tlundi 25 mai 2026\tRENFO et/ou EF30'\tRENFO et/ou EF30'\tRENFO et EF45'",
-    '21\tmardi 26 mai 2026\tEchauf | PISTE 2X6X200M | r200trotté R400\tEchauf | PISTE 2X8X200M | r200trotté R400\tEchauf | PISTE 2X10X200M | r200trotté R400',
-    '21\tmercredi 27 mai 2026\tRENFO ou vélo\tRENFO ou vélo\tRENFO ou vélo',
-    '21\tjeudi 28 mai 2026\tMoujan échauff | 4× seuil progressif pyramide 5\'\tMoujan échauff | 4× seuil progressif pyramide 5\'\tMoujan échauff | 4× seuil progressif pyramide 5\'',
-    '21\tdimanche 31 mai 2026\t\t\tCaroux SL 2000D+',
+    'semaine\tDATE\tHEURE\tGR ESSENTIEL\tGR INTERMEDIAIRE\tGROUPE RENFORCE',
+    "21\tlundi 25 mai 2026\t\tRENFO et/ou EF30'\tRENFO et/ou EF30'\tRENFO et EF45'",
+    '21\tmardi 26 mai 2026\t\tEchauf | PISTE 2X6X200M | r200trotté R400\tEchauf | PISTE 2X8X200M | r200trotté R400\tEchauf | PISTE 2X10X200M | r200trotté R400',
+    '21\tmercredi 27 mai 2026\t\tRENFO ou vélo\tRENFO ou vélo\tRENFO ou vélo',
+    '21\tjeudi 28 mai 2026\t\tMoujan échauff | 4× seuil progressif pyramide 5\'\tMoujan échauff | 4× seuil progressif pyramide 5\'\tMoujan échauff | 4× seuil progressif pyramide 5\'',
+    '21\tdimanche 31 mai 2026\t8:30\t\t\tCaroux SL 2000D+',
   ].join('\n'),
   simple: [
     'Date\tSéance',
