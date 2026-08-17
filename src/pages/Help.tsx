@@ -482,6 +482,12 @@ const coachSections: Section[] = [
           Tu peux coller le texte, cliquer sur « Charger un fichier », ou glisser directement
           ton fichier (.json, .txt, .csv, .tsv) dans la zone de collage.
         </p>
+        <p>
+          Ton classeur Excel (.xlsx, .xls) et ton CSV se déposent tels quels, sans passer par
+          un copier-coller : l'app lit les onglets, reconnaît le point-virgule d'Excel France
+          et convertit le tout. Une cellule écrite sur plusieurs lignes (Alt+Entrée dans Excel)
+          devient une suite de phases séparées par « | », comme si tu les avais saisies à la main.
+        </p>
         <p className="font-semibold text-neutral-900">Vérifier avant de créer</p>
         <p>
           L'aperçu montre ce qui sera créé, et le récapitulatif compte les semaines,

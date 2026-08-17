@@ -5,6 +5,7 @@ import {
   detectFormat,
   resolveGroup,
   parseImport,
+  normalizeTabular,
 } from './importParser';
 import type { Group } from '../types';
 
@@ -113,6 +114,87 @@ describe('resolveGroup', () => {
 
   it('renvoie none pour un groupe introuvable', () => {
     expect(resolveGroup('Groupe Fantôme', GROUPS)).toEqual({ groupId: null, confidence: 'none' });
+  });
+});
+
+describe('normalizeTabular', () => {
+  it('laisse le texte intact tant qu\'un guillemet reste ouvert (saisie en cours)', () => {
+    const typing = 'semaine\tDATE\tGR ESSENTIEL\n1\t25/05/2026\t"20 EF\n8x200';
+    expect(normalizeTabular(typing)).toBe(typing);
+  });
+
+  it('convertit un CSV point-virgule (Excel France) en TSV lisible par le parser', () => {
+    const csv = [
+      'semaine;DATE;GR ESSENTIEL;GROUPE RENFORCE;intermédiare',
+      "21;25/05/2026;RENFO et EF30';RENFO et EF45';EF 40'",
+      "21;26/05/2026;PISTE 2X6X200M;PISTE 2X10X200M;PISTE 2X8X200M",
+    ].join('\n');
+    expect(normalizeTabular(csv).split('\n')[0]).toBe(
+      'semaine\tDATE\tGR ESSENTIEL\tGROUPE RENFORCE\tintermédiare'
+    );
+    const r = parseImport(csv, { defaultYear: 2026, groups: GROUPS, forceFormat: 'matrix' });
+    // 2 dates x 3 groupes
+    expect(r.sessions).toHaveLength(6);
+    expect(r.errors).toHaveLength(0);
+    expect(r.sessions[0].date).toBe('2026-05-25');
+  });
+
+  it('convertit un CSV virgule', () => {
+    const csv = ['Date,Séance', "25/05/2026,EF 45'", '26/05/2026,PISTE 8x200m'].join('\n');
+    expect(normalizeTabular(csv)).toBe(
+      ['Date\tSéance', "25/05/2026\tEF 45'", '26/05/2026\tPISTE 8x200m'].join('\n')
+    );
+    const r = parseImport(csv, { defaultYear: 2026, groups: GROUPS });
+    expect(r.detectedFormat).toBe('simple');
+    expect(r.sessions).toHaveLength(2);
+  });
+
+  it('aplatit une cellule multi-lignes entre guillemets en phases " | "', () => {
+    const csv = [
+      'Date;Séance',
+      '25/05/2026;"Echauf 20\'\nPISTE 2X6X200M ""rapide""\nr200 trotté"',
+    ].join('\n');
+    const r = parseImport(csv, { defaultYear: 2026, groups: GROUPS, forceFormat: 'simple' });
+    expect(r.errors).toHaveLength(0);
+    expect(r.sessions).toHaveLength(1);
+    expect(r.sessions[0].contentText).toBe('Echauf 20\' | PISTE 2X6X200M "rapide" | r200 trotté');
+  });
+
+  it('laisse un TSV déjà propre inchangé (idempotence)', () => {
+    // La virgule dans une cellule empêche le chemin rapide : la réémission
+    // complète est bien exercée, et doit rendre exactement le même texte.
+    const tsv = [
+      'semaine\tDATE\tGR ESSENTIEL',
+      "21\t25/05/2026\tEchauf, 20' | PISTE 2X6X200M | r200",
+    ].join('\n');
+    expect(normalizeTabular(tsv)).toBe(tsv);
+    expect(normalizeTabular(normalizeTabular(tsv))).toBe(tsv);
+  });
+
+  it('laisse le texte JSON intact', () => {
+    const json = '{"seances": [{"date": "2026-09-08", "groupes": {"Essentiel": "VMA, 8x300"}}]}';
+    expect(normalizeTabular(json)).toBe(json);
+    expect(normalizeTabular('```json\n' + json + '\n```')).toBe('```json\n' + json + '\n```');
+  });
+
+  it('garde intact un TSV collé depuis Excel avec une cellule multi-lignes', () => {
+    // Excel encadre la cellule qui contient un retour à la ligne, même en TSV.
+    const pasted = [
+      'semaine\tDATE\tGR ESSENTIEL\tGROUPE RENFORCE',
+      '21\t25/05/2026\t"Echauf\nPISTE 2X6X200M\nr200"\tSL 1h30',
+      "21\t26/05/2026\tEF 45'\tSL 2h",
+    ].join('\n');
+    expect(normalizeTabular(pasted)).toBe(
+      [
+        'semaine\tDATE\tGR ESSENTIEL\tGROUPE RENFORCE',
+        '21\t25/05/2026\tEchauf | PISTE 2X6X200M | r200\tSL 1h30',
+        "21\t26/05/2026\tEF 45'\tSL 2h",
+      ].join('\n')
+    );
+    const r = parseImport(pasted, { defaultYear: 2026, groups: GROUPS, forceFormat: 'matrix' });
+    expect(r.errors).toHaveLength(0);
+    expect(r.sessions).toHaveLength(4);
+    expect(r.sessions[0].contentText).toBe('Echauf | PISTE 2X6X200M | r200');
   });
 });
 

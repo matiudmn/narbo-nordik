@@ -8,24 +8,26 @@ import { useToast } from '../../components/ui';
 import {
   parseImport,
   detectFormat,
+  normalizeTabular,
   MACRO_META,
   PLAN_ALL_GROUPS,
   type ImportFormat,
   type ParseResult,
 } from '../../lib/importParser';
+import { excelToTsv } from '../../lib/excel';
 import { STATIC_SAMPLES, buildPlanSample, buildChatGptPrompt } from '../../lib/importSamples';
 
 const FORMAT_TABS: { key: ImportFormat; label: string; hint: string; icon: typeof FileText }[] = [
   { key: 'plan', label: 'Saison complète (JSON)', hint: 'Une version par groupe', icon: Braces },
   { key: 'canonical', label: 'Plan structuré', hint: '5 colonnes (Semaine, Date, Jour, Type, Contenu)', icon: Layers },
-  { key: 'matrix', label: 'Matrice hebdo', hint: 'Jours × groupes', icon: Grid3x3 },
+  { key: 'matrix', label: 'Matrice', hint: "Jours × groupes, toute la saison d'un coup", icon: Grid3x3 },
   { key: 'simple', label: 'Liste simple', hint: 'Date + Séance', icon: FileText },
 ];
 
 const FORMAT_LABELS: Record<ImportFormat, string> = {
   plan: 'Saison complète (JSON)',
   canonical: 'Plan structuré',
-  matrix: 'Matrice hebdo',
+  matrix: 'Matrice',
   simple: 'Liste simple',
   unknown: 'non reconnu',
 };
@@ -102,8 +104,13 @@ export default function Import() {
    * coach n'a pas à savoir quel onglet correspond au fichier de ChatGPT.
    * ChatGPT préfixe souvent sa réponse d'une phrase, d'où les 5 premières
    * lignes non vides plutôt que la seule première.
+   *
+   * Le texte est d'abord ramené en TSV (un CSV ";" d'Excel France, sinon, ne
+   * serait reconnu par aucun onglet). La normalisation est idempotente : la
+   * zone reste stable frappe après frappe.
    */
-  function applyText(text: string) {
+  function applyText(raw: string) {
+    const text = normalizeTabular(raw);
     setPaste(text);
     const heads = text.split(/\r?\n/).filter(l => l.trim().length > 0).slice(0, 5);
     if (heads.some(l => detectFormat(l) === 'plan')) {
@@ -120,11 +127,12 @@ export default function Import() {
 
   async function loadFile(file: File | undefined | null) {
     if (!file) return;
+    const isExcel = /\.xlsx?$/i.test(file.name);
     try {
-      applyText(await file.text());
+      applyText(isExcel ? await excelToTsv(await file.arrayBuffer()) : await file.text());
       toast.success(`${file.name} chargé`);
     } catch {
-      toast.error('Fichier illisible');
+      toast.error(isExcel ? 'Fichier Excel illisible' : 'Fichier illisible');
     }
   }
 
@@ -316,8 +324,8 @@ export default function Import() {
         </h1>
         <p className="text-sm text-neutral-500 mt-2 max-w-3xl">
           Une saison entière au format JSON, avec la variante de chaque groupe, ou un tableau
-          Excel collé en Cmd-V. Tu peux aussi déposer ton fichier dans la zone de collage.
-          Texte gardé tel quel, aucun découpage imposé.
+          Excel collé en Cmd-V. Tu peux aussi déposer ton fichier Excel (.xlsx) ou CSV tel
+          quel dans la zone de collage. Texte gardé tel quel, aucun découpage imposé.
         </p>
       </div>
 
@@ -461,7 +469,7 @@ export default function Import() {
               <input
                 ref={fileInput}
                 type="file"
-                accept=".json,.txt,.csv,.tsv"
+                accept=".xlsx,.xls,.csv,.tsv,.txt,.json"
                 className="hidden"
                 onChange={e => {
                   void loadFile(e.target.files?.[0]);
