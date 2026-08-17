@@ -32,6 +32,7 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const FROM_EMAIL = 'Narbo Nordik <club@2nc.fr>';
 const CLUB_EMAIL = 'narbo.nordik.club@gmail.com'; // boîte officielle du bureau
+const BOARD_CONTACT = { firstname: 'David', lastname: 'Nunez' }; // référent adhésions, adresse lue en base
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const parts = token.split('.');
@@ -166,13 +167,14 @@ serve(async (req) => {
   const memberRecord = member as MemberRecord;
   const seasonRecord = season as MembershipSeasonRecord;
 
-  // Destinataires bureau : la boîte officielle du club (CLUB_EMAIL) + les
-  // super-admins. Décision du 2026-08-17 : le dossier complet ne part plus
-  // à tous les coachs, uniquement au bureau.
+  // Destinataires bureau (décision Matiu du 2026-08-17) : la boîte officielle
+  // du club (CLUB_EMAIL) + le référent adhésions du bureau, identifié en base
+  // par son nom (BOARD_CONTACT) pour ne pas figer son adresse ici.
   const { data: boardUsers, error: boardError } = await supabase
     .from('users')
     .select('email')
-    .eq('is_super_admin', true);
+    .ilike('firstname', BOARD_CONTACT.firstname)
+    .ilike('lastname', BOARD_CONTACT.lastname);
 
   if (boardError) {
     log('error', 'board-fetch', { membershipSeasonId, message: boardError.message });
