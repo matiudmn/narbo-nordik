@@ -225,6 +225,27 @@ describe('parseImport — format matrice (semaine 21 réelle)', () => {
   });
 });
 
+describe('parseImport, matrice avec colonne HEURE', () => {
+  const matrix = [
+    'semaine\tDATE\tHEURE\tGR ESSENTIEL\tGROUPE RENFORCE',
+    '37\t08/09/2026\t\tPiste 8x200\tPiste 12x200',
+    '37\t12/09/2026\t8:30\tSortie nature 1h\t',
+    '37\t13/09/2026\t8h30\t\tSortie longue 1h45',
+    '38\t15/09/2026\t25h\tSeuil\tSeuil',
+  ].join('\n');
+
+  it('lit l\'heure, laisse 18:30 par défaut et ne prend pas HEURE pour un groupe', () => {
+    const r = parseImport(matrix, { defaultYear: 2026, groups: GROUPS, forceFormat: 'matrix' });
+    expect(r.errors).toHaveLength(0);
+    expect(r.sessions.map(s => s.targetGroupName)).not.toContain('HEURE');
+    expect(r.sessions.find(s => s.date === '2026-09-08')?.time).toBeUndefined();
+    expect(r.sessions.find(s => s.date === '2026-09-12')?.time).toBe('08:30');
+    expect(r.sessions.find(s => s.date === '2026-09-13')?.time).toBe('08:30');
+    expect(r.sessions.find(s => s.date === '2026-09-15')?.time).toBeUndefined();
+    expect(r.warnings.filter(w => w.message.includes('25h'))).toHaveLength(1);
+  });
+});
+
 describe('parseImport — format canonique', () => {
   const canonical = [
     'Semaine\tDate\tJour\tType de séance\tContenu détaillé',
