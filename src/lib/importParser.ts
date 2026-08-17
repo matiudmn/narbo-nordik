@@ -19,7 +19,8 @@
  *     produire à ChatGPT puis colle (ou dépose en fichier .json) ici.
  *
  * Le séparateur de colonnes des 3 premiers formats est la tabulation (TSV),
- * ce que produit naturellement un copier-coller depuis Excel.
+ * ce que produit naturellement un copier-coller depuis Excel. Un CSV (`;` ou
+ * `,`) ou un fichier .xlsx est ramené à ce TSV par `normalizeTabular`.
  *
  * Ref PRD v3 Feature 1.
  */
@@ -135,6 +136,111 @@ export function classifyMacroType(typeOrSubType: string, content: string): Macro
     return 'course';
   }
   return 'other';
+}
+
+/* ---------- Normalisation tabulaire (CSV / Excel → TSV) ---------- */
+
+/**
+ * Sépare une ligne sur le séparateur détecté. Tabulation si présente (le
+ * copier-coller Excel), sinon point-virgule (Excel en France) ou virgule.
+ * Null si la ligne ne porte aucun des trois.
+ */
+function detectSeparator(line: string): string | null {
+  if (line.includes('\t')) return '\t';
+  const semicolons = (line.match(/;/g) || []).length;
+  const commas = (line.match(/,/g) || []).length;
+  if (semicolons === 0 && commas === 0) return null;
+  return semicolons >= commas ? ';' : ',';
+}
+
+/** Découpe un texte délimité en respectant les guillemets RFC 4180. */
+function splitDelimited(text: string, sep: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = '';
+  let quoted = false;
+  let fieldStart = true;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"') {
+        // "" = guillemet littéral, sinon fin de la cellule entre guillemets.
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          quoted = false;
+        }
+      } else if (ch !== '\r') {
+        // Un \r\n interne devient un simple \n, traité plus bas comme phase.
+        field += ch;
+      }
+      continue;
+    }
+    // Un guillemet au milieu d'une cellule est un caractère comme un autre
+    // (Excel n'échappe que les cellules entièrement encadrées).
+    if (ch === '"' && fieldStart) {
+      quoted = true;
+      fieldStart = false;
+      continue;
+    }
+    fieldStart = false;
+    if (ch === sep) {
+      row.push(field);
+      field = '';
+      fieldStart = true;
+    } else if (ch === '\n') {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = '';
+      fieldStart = true;
+    } else if (ch !== '\r') {
+      field += ch;
+    }
+  }
+  row.push(field);
+  if (rows.length === 0 || row.length > 1 || row[0] !== '') rows.push(row);
+  return rows;
+}
+
+/**
+ * Aplatit une cellule sur une seule ligne : les retours à la ligne internes
+ * (Excel les autorise dans une cellule) deviennent le séparateur de phases
+ * " | " déjà utilisé par l'app, sans doublon ni pipe orphelin en bout.
+ */
+function flattenCell(cell: string): string {
+  return cell
+    .split('\n')
+    .map(part => part.replace(/\t/g, ' ').replace(/^\s*\|+\s*|\s*\|+\s*$/g, '').trim())
+    .filter(Boolean)
+    .join(' | ');
+}
+
+/**
+ * Convertit un tableau CSV (`;` ou `,`) ou un TSV abîmé en TSV propre :
+ * une ligne par séance, une tabulation par colonne, aucune cellule à cheval
+ * sur plusieurs lignes. Idempotent, et sans effet sur le format JSON.
+ *
+ * Appelée à chaque frappe dans la zone de collage : le chemin rapide
+ * (aucun `;`, `,` ni guillemet) rend la main immédiatement.
+ */
+export function normalizeTabular(text: string): string {
+  const head = text.trimStart();
+  if (head.startsWith('{') || head.startsWith('```')) return text;
+  if (!/[;,"]/.test(text)) return text;
+  // Guillemet non appairé (saisie en cours dans la zone de collage) : on ne
+  // normalise pas, sinon tout ce qui suit serait aplati en une seule cellule.
+  if (((text.match(/"/g) ?? []).length & 1) === 1) return text;
+
+  const firstLine = text.split('\n').find(l => l.trim().length > 0) ?? '';
+  const sep = detectSeparator(firstLine);
+  if (!sep) return text;
+
+  return splitDelimited(text, sep)
+    .map(row => row.map(flattenCell).join('\t'))
+    .join('\n');
 }
 
 /* ---------- Détection de format ---------- */
@@ -741,7 +847,11 @@ export function parseImport(
     };
   }
 
-  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  // Un CSV enregistré depuis Excel (séparateur ";" en France, cellules
+  // multi-lignes entre guillemets) devient du TSV avant toute lecture : la
+  // détection de format comme les parseurs ne connaissent que la tabulation.
+  const tabular = opts.forceFormat === 'plan' ? text : normalizeTabular(text);
+  const lines = tabular.split(/\r?\n/).filter(l => l.trim().length > 0);
   const format = opts.forceFormat ?? detectFormat(lines[0]);
 
   // Le JSON tient parfois sur une seule ligne : il passe donc avant le

@@ -42,16 +42,17 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // jspdf (~386 Ko), html2canvas (~199 Ko) et chart-vendor (~197 Ko) sont
-        // lazy-loadés (React.lazy / import dynamique) et rarement utilisés
-        // (export PDF/PNG, pages avec graphique) : les précacher au premier
+        // jspdf (~386 Ko), html2canvas (~199 Ko), chart-vendor (~197 Ko) et
+        // xlsx (~492 Ko) sont lazy-loadés (React.lazy / import dynamique) et
+        // rarement utilisés (export PDF/PNG, pages avec graphique, dépôt d'un
+        // classeur Excel sur la page Import) : les précacher au premier
         // chargement gonfle inutilement le SW pour la quasi-totalité des visites.
         // Ils restent servis normalement par le réseau au premier usage, puis mis
         // en cache via runtimeCaching ci-dessous pour rester fluides ensuite.
-        globIgnores: ['**/jspdf*.js', '**/html2canvas*.js', '**/chart-vendor*.js'],
+        globIgnores: ['**/jspdf*.js', '**/html2canvas*.js', '**/chart-vendor*.js', '**/xlsx*.js'],
         runtimeCaching: [
           {
-            urlPattern: /\/assets\/(jspdf|html2canvas|chart-vendor)[^/]*\.js$/,
+            urlPattern: /\/assets\/(jspdf|html2canvas|chart-vendor|xlsx)[^/]*\.js$/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'heavy-chunks-cache',
