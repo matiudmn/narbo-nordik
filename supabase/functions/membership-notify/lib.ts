@@ -145,6 +145,36 @@ export function tshirtModelLabel(model: string | null | undefined): string {
 
 const SITE_URL = 'https://www.narbo-nordik-club.com';
 
+// Coordonnées bancaires du club (RIB officiel Crédit Agricole, transmis par
+// Matiu le 2026-08-17). Affichées uniquement à l'adhérent qui a choisi le
+// virement, jamais dans l'e-mail bureau.
+export const CLUB_BANK = {
+  holder: 'ASSOC. NARBO NORDIK CLUB',
+  iban: 'FR76 1350 6100 0085 2084 5744 175',
+  bic: 'AGRIFRPP835',
+} as const;
+
+// Libellé de virement attendu, pour que le bureau rapproche facilement.
+export function transferReference(member: MemberRecord, season: MembershipSeasonRecord): string {
+  return `ADHESION ${season.season} ${member.lastname} ${member.firstname}`.toUpperCase();
+}
+
+export function buildBankTransferBlock(member: MemberRecord, season: MembershipSeasonRecord): string {
+  const cell = 'padding:6px 10px;font-size:14px;color:#111827;';
+  return `
+    <div style="margin:0 0 16px;padding:14px 16px;background:#f5f1ea;border-radius:12px;">
+      <p style="margin:0 0 8px;color:#111827;font-size:14px;font-weight:600;">Coordonnées bancaires pour ton virement</p>
+      <table style="border-collapse:collapse;">
+        <tr><td style="${cell}color:#6b7280;">Titulaire</td><td style="${cell}">${escapeHtml(CLUB_BANK.holder)}</td></tr>
+        <tr><td style="${cell}color:#6b7280;">IBAN</td><td style="${cell}font-family:monospace;">${escapeHtml(CLUB_BANK.iban)}</td></tr>
+        <tr><td style="${cell}color:#6b7280;">BIC</td><td style="${cell}font-family:monospace;">${escapeHtml(CLUB_BANK.bic)}</td></tr>
+        <tr><td style="${cell}color:#6b7280;">Montant</td><td style="${cell}"><strong>${formatEuros(season.amount_due_cents)}</strong></td></tr>
+        <tr><td style="${cell}color:#6b7280;">Libellé</td><td style="${cell}font-family:monospace;">${escapeHtml(transferReference(member, season))}</td></tr>
+      </table>
+      <p style="margin:8px 0 0;color:#6b7280;font-size:13px;line-height:1.5;">Indique bien ce libellé pour que le bureau retrouve ton virement.</p>
+    </div>`;
+}
+
 export function memberEmailSubject(): string {
   return "Ta demande d'adhésion au Narbo Nordik Club est bien reçue";
 }
@@ -198,7 +228,7 @@ export function buildMemberEmailHtml(member: MemberRecord, season: MembershipSea
   rows.push(tableRow('Saison', escapeHtml(season.season)));
 
   if (season.tshirt_model && season.tshirt_size) {
-    rows.push(tableRow('Tee-shirt', `${escapeHtml(tshirtModelLabel(season.tshirt_model))} — taille ${escapeHtml(season.tshirt_size)}`));
+    rows.push(tableRow('Tee-shirt', `${escapeHtml(tshirtModelLabel(season.tshirt_model))}, taille ${escapeHtml(season.tshirt_size)}`));
   }
 
   rows.push(tableRow('Montant dû', `<strong>${formatEuros(season.amount_due_cents)}</strong>`));
@@ -213,7 +243,8 @@ export function buildMemberEmailHtml(member: MemberRecord, season: MembershipSea
     <h2 style="margin:0 0 12px;color:#111827;font-size:18px;">Ta demande d'adhésion est bien reçue</h2>
     <p style="margin:0 0 16px;color:#4b5563;font-size:14px;line-height:1.6;">Voici le récapitulatif de ton dossier :</p>
     <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">${rows.join('')}</table>
-    <p style="margin:0 0 12px;color:#4b5563;font-size:14px;line-height:1.6;">Le bureau valide ton dossier et te communique les modalités de règlement (RIB pour un virement, ou remise du chèque à l'entraînement).</p>
+    ${season.payment_method === 'virement' ? buildBankTransferBlock(member, season) : ''}
+    <p style="margin:0 0 12px;color:#4b5563;font-size:14px;line-height:1.6;">${season.payment_method === 'virement' ? 'Le bureau valide ton dossier dès réception de ton virement.' : 'Le bureau valide ton dossier et te communique les modalités de règlement (remise du chèque ou des espèces à l\'entraînement).'}</p>
     <p style="margin:0 0 16px;color:#4b5563;font-size:14px;line-height:1.6;">Ton adhésion sera définitive une fois le règlement reçu.</p>
     <p style="margin:0 0 16px;color:#374151;font-size:14px;">L'équipe du Narbo Nordik Club</p>
     <a href="${SITE_URL}" style="display:inline-block;padding:10px 24px;background:#6CCBE6;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">narbo-nordik-club.com</a>`;
