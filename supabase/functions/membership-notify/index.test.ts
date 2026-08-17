@@ -10,6 +10,7 @@ import {
   boardEmailSubject,
   buildBoardEmailHtml,
   buildMemberEmailHtml,
+  CLUB_BANK,
   escapeHtml,
   formatDateFr,
   formatDateTimeFr,
@@ -23,6 +24,7 @@ import {
   sexLabel,
   sourceLabel,
   stripNewlines,
+  transferReference,
 } from './lib.ts';
 
 // ---- formatEuros -----------------------------------------------------------
@@ -204,4 +206,37 @@ Deno.test('boardEmailSubject: compose prenom + NOM en majuscules + section, sans
   const member = { ...baseMember, firstname: 'Jean\n', lastname: 'dupont\r\n' };
   const subject = boardEmailSubject(member, baseSeason);
   assertEquals(subject, "Nouvelle demande d'adhésion : Jean DUPONT (Running / Trail)");
+});
+
+// ---- Bloc RIB (virement uniquement) ------------------------------------------
+
+Deno.test('buildMemberEmailHtml: virement => bloc RIB avec IBAN, BIC, montant et libelle', () => {
+  const html = buildMemberEmailHtml(baseMember, { ...baseSeason, payment_method: 'virement' });
+  assertStringIncludes(html, CLUB_BANK.iban);
+  assertStringIncludes(html, CLUB_BANK.bic);
+  assertStringIncludes(html, CLUB_BANK.holder);
+  assertStringIncludes(html, formatEuros(baseSeason.amount_due_cents));
+  assertStringIncludes(html, escapeHtml(transferReference(baseMember, baseSeason)));
+  assertStringIncludes(html, 'valide ton dossier dès réception de ton virement');
+});
+
+Deno.test('buildMemberEmailHtml: cheque ou especes => aucun RIB', () => {
+  for (const method of ['cheque', 'especes', null] as const) {
+    const html = buildMemberEmailHtml(baseMember, { ...baseSeason, payment_method: method });
+    assert(!html.includes(CLUB_BANK.iban), `IBAN ne doit pas apparaitre pour ${method}`);
+    assert(!html.includes(CLUB_BANK.bic));
+    assertStringIncludes(html, 'remise du chèque ou des espèces');
+  }
+});
+
+Deno.test('buildBoardEmailHtml: jamais de RIB dans le mail bureau', () => {
+  const html = buildBoardEmailHtml(baseMember, { ...baseSeason, payment_method: 'virement' });
+  assert(!html.includes(CLUB_BANK.iban));
+});
+
+Deno.test('transferReference: majuscules, saison, nom et prenom, contenu echappe dans le HTML', () => {
+  const ref = transferReference({ ...baseMember, firstname: 'Léa', lastname: 'Dupont' }, baseSeason);
+  assertEquals(ref, `ADHESION ${baseSeason.season} DUPONT LÉA`);
+  const html = buildMemberEmailHtml(baseMember, { ...baseSeason, payment_method: 'virement' });
+  assert(!html.includes('<script>'), 'le libelle avec prenom piege doit etre echappe');
 });
