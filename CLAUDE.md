@@ -36,8 +36,10 @@ public/            → Assets statiques
 supabase/          → Configuration Supabase
 supabase/migrations/          → Migrations CLI (SOURCE DE VÉRITÉ, voir supabase/MIGRATIONS.md)
 supabase/functions/           → Edge Functions
-supabase-schema.sql           → Schéma d'origine (DÉPRÉCIÉ, consolidé dans le baseline)
-supabase-migration-*.sql      → Anciennes migrations racine (DÉPRÉCIÉES)
+supabase/legacy/               → SQL pré-CLI (DÉPRÉCIÉ, consolidé dans le baseline)
+docs/              → PRD, backlog, guides utilisateurs, onboarding
+legal/             → Politique de confidentialité (importée par l'app)
+scripts/           → Scripts ponctuels
 dist/              → Build de production
 ```
 
@@ -46,13 +48,15 @@ dist/              → Build de production
   `supabase db reset` reconstruit toute la base depuis zéro. Voir **`supabase/MIGRATIONS.md`**.
 - Le baseline `supabase/migrations/20260307000000_baseline.sql` capture l'état pré-CLI
   (consolide l'ancien `supabase-schema.sql` + phase2/4/5 + session-nordiks + restrict-notifications).
-- Les fichiers SQL **à la racine** (`supabase-schema.sql`, `supabase-migration-phase*.sql`,
+- Les fichiers SQL dans **`supabase/legacy/`** (`supabase-schema.sql`, `supabase-migration-phase*.sql`,
   `-session-nordiks`, `-restrict-notifications`) sont **historiques/dépréciés** : ne plus s'y fier.
 - Toute nouvelle modif de schéma : ajouter un fichier dans `supabase/migrations/` (jamais à la racine).
 
 ## Documents
-- `Guide-Athlete-NarboNordik.docx` — Guide utilisateur athlète
-- `Guide-Coach-NarboNordik.docx` — Guide utilisateur coach
+- `docs/Guide-Athlete-NarboNordik.docx` : guide utilisateur athlète
+- `docs/Guide-Coach-NarboNordik.docx` : guide utilisateur coach
+- `docs/BACKLOG-EVOLUTIONS-2026.md` : backlog d'évolutions 2026
+- `docs/garmin-application-brief.md` : brief de candidature Garmin
 
 ## Conventions
 - Composants React en PascalCase

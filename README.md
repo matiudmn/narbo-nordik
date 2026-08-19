@@ -1,73 +1,59 @@
-# React + TypeScript + Vite
+# Narbo Nordik, application du club
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+PWA de suivi des athlètes et des coachs de la section running/trail du Narbo Nordik Club (Narbonne), projet bénévole, dépôt public.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Vite 7, React 19 (react-router-dom v7), TypeScript strict
+- Tailwind CSS 4
+- Supabase : authentification, base de données, fonctions Edge (Deno)
+- PWA : vite-plugin-pwa + Workbox
+- Déploiement : Vercel
 
-## React Compiler
+## Démarrer
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Version Node requise : voir `.nvmrc` (22).
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm ci
+cp .env.example .env
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Renseigner dans `.env` les variables définies dans `.env.example` : `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev     # serveur de développement
+npm run build   # build de production
+npm run lint    # ESLint
+npx vitest run  # tests unitaires
+deno test --no-check supabase/functions/  # tests des fonctions Edge (comme en CI)
 ```
+
+## Structure du dépôt
+
+- `src/` : code source React
+- `public/` : assets statiques
+- `supabase/migrations/` : migrations CLI, source de vérité de la base de données (voir [`supabase/MIGRATIONS.md`](./supabase/MIGRATIONS.md))
+- `supabase/functions/` : fonctions Edge (`ai-coach-summary`, `ai-ocr`, `ai-search-filters`, `analyze-validation`, `daily-session-digest`, `delete-account`, `membership-notify`, `send-notification-email`, `weekly-digest`)
+- `supabase/legacy/` : SQL historiques, dépréciés (pré-CLI)
+- `docs/` : guides utilisateurs, PRD, backlog, onboarding
+- `legal/` : politique de confidentialité
+- `scripts/` : scripts ponctuels
+
+## Base de données
+
+- Source de vérité unique : [`supabase/MIGRATIONS.md`](./supabase/MIGRATIONS.md)
+- `supabase db reset` reconstruit toute la base depuis zéro
+- Toute modification de schéma est une nouvelle migration dans `supabase/migrations/`
+
+## Déploiement
+
+- **Vercel** : application SPA, rewrites et en-têtes de sécurité définis dans `vercel.json`.
+- **Supabase** : base de données et fonctions Edge.
+- **CI (GitHub Actions)** : lint, `tsc`, vitest, tests Deno et build, sur chaque push vers `main` et chaque pull request.
+
+## Documentation
+
+- [`CLAUDE.md`](./CLAUDE.md) : conventions du projet
+- [`docs/`](./docs/) : guides, PRD, backlog
+- [`legal/privacy-policy.md`](./legal/privacy-policy.md) : politique de confidentialité
