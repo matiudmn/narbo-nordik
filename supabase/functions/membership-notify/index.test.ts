@@ -56,11 +56,13 @@ Deno.test('sectionLabel: mappe les deux sections connues', () => {
   assertEquals(sectionLabel('running_trail'), 'Running / Trail');
 });
 
-Deno.test('licenseLabel: mappe sante/competition, null sinon', () => {
+Deno.test('licenseLabel: mappe sante/competition/running, null sinon', () => {
   assertEquals(licenseLabel('sante'), 'Santé');
   assertEquals(licenseLabel('competition'), 'Compétition');
+  assertEquals(licenseLabel('running'), 'Athlé Running');
   assertEquals(licenseLabel(null), null);
   assertEquals(licenseLabel(undefined), null);
+  assertEquals(licenseLabel('autre'), null);
 });
 
 Deno.test('paymentMethodLabel: mappe les 4 modes, defaut sinon', () => {
@@ -200,6 +202,27 @@ Deno.test('buildBoardEmailHtml: notes vides -> aucune ligne Notes', () => {
 Deno.test('buildBoardEmailHtml: licence non applicable quand license_type est null', () => {
   const html = buildBoardEmailHtml(baseMember, baseSeason);
   assertStringIncludes(html, 'Non applicable');
+});
+
+// Depuis la saison 2026/2027, la section running/trail a aussi un choix de
+// licence (Athlé Running 165 € / Compétition 180 €) : la ligne Licence n'est
+// plus réservée à la marche nordique.
+Deno.test('buildMemberEmailHtml: licence Athlé Running affichée pour la section running/trail', () => {
+  const html = buildMemberEmailHtml(baseMember, { ...baseSeason, license_type: 'running' });
+  assertStringIncludes(html, 'Licence');
+  assertStringIncludes(html, 'Athlé Running');
+});
+
+Deno.test('buildMemberEmailHtml: aucune ligne Licence quand license_type est null', () => {
+  const html = buildMemberEmailHtml(baseMember, baseSeason);
+  assert(!html.includes('>Licence<'));
+});
+
+Deno.test('buildBoardEmailHtml: licence running libellee, valeur inconnue rendue brute', () => {
+  assertStringIncludes(buildBoardEmailHtml(baseMember, { ...baseSeason, license_type: 'running' }), 'Athlé Running');
+  const html = buildBoardEmailHtml(baseMember, { ...baseSeason, license_type: 'inconnue' });
+  assertStringIncludes(html, 'inconnue');
+  assert(!html.includes('Non applicable'));
 });
 
 Deno.test('boardEmailSubject: compose prenom + NOM en majuscules + section, sans saut de ligne', () => {

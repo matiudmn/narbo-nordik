@@ -92,6 +92,7 @@ export function sectionLabel(section: string): string {
 export function licenseLabel(licenseType: string | null | undefined): string | null {
   if (licenseType === 'sante') return 'Santé';
   if (licenseType === 'competition') return 'Compétition';
+  if (licenseType === 'running') return 'Athlé Running';
   return null;
 }
 
@@ -222,7 +223,9 @@ export function buildMemberEmailHtml(member: MemberRecord, season: MembershipSea
   const rows: string[] = [];
   rows.push(tableRow('Section', escapeHtml(sectionLabel(season.section))));
 
-  const license = season.section === 'marche_nordique' ? licenseLabel(season.license_type) : null;
+  // Depuis la saison 2026/2027, les deux sections ont un choix de licence
+  // (MN : Santé / Compétition ; Running/Trail : Athlé Running / Compétition).
+  const license = licenseLabel(season.license_type);
   if (license) rows.push(tableRow('Licence', escapeHtml(license)));
 
   rows.push(tableRow('Saison', escapeHtml(season.season)));
@@ -268,7 +271,7 @@ export function buildBoardEmailHtml(member: MemberRecord, season: MembershipSeas
     tableRow('Adresse', address),
     tableRow('Section principale', escapeHtml(sectionLabel(member.section))),
     tableRow('Section souscrite (saison)', escapeHtml(sectionLabel(season.section))),
-    tableRow('Licence', season.license_type ? escapeHtml(licenseLabel(season.license_type) ?? '') : 'Non applicable'),
+    tableRow('Licence', season.license_type ? escapeHtml(licenseLabel(season.license_type) ?? season.license_type) : 'Non applicable'),
     tableRow('Activités', season.activities.length > 0 ? escapeHtml(season.activities.map(activityLabel).join(', ')) : 'Aucune'),
     tableRow('Tee-shirt', season.tshirt_model && season.tshirt_size
       ? `${escapeHtml(tshirtModelLabel(season.tshirt_model))} — taille ${escapeHtml(season.tshirt_size)}`
