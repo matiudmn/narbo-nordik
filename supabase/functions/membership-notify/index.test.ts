@@ -205,11 +205,10 @@ Deno.test('buildBoardEmailHtml: licence non applicable quand license_type est nu
 });
 
 // Depuis la saison 2026/2027, la section running/trail a aussi un choix de
-// licence (Athlé Running 165 € / Compétition 180 €) : la ligne Licence n'est
-// plus réservée à la marche nordique.
-Deno.test('buildMemberEmailHtml: licence Athlé Running affichée pour la section running/trail', () => {
+// licence : la ligne Licence n'est plus réservée à la marche nordique.
+Deno.test('buildMemberEmailHtml: licence running affichee pour la section running/trail', () => {
   const html = buildMemberEmailHtml(baseMember, { ...baseSeason, license_type: 'running' });
-  assertStringIncludes(html, 'Licence');
+  assertStringIncludes(html, '>Licence<');
   assertStringIncludes(html, 'Athlé Running');
 });
 
@@ -218,8 +217,12 @@ Deno.test('buildMemberEmailHtml: aucune ligne Licence quand license_type est nul
   assert(!html.includes('>Licence<'));
 });
 
-Deno.test('buildBoardEmailHtml: licence running libellee, valeur inconnue rendue brute', () => {
-  assertStringIncludes(buildBoardEmailHtml(baseMember, { ...baseSeason, license_type: 'running' }), 'Athlé Running');
+Deno.test('buildBoardEmailHtml: licence running libellee', () => {
+  const html = buildBoardEmailHtml(baseMember, { ...baseSeason, license_type: 'running' });
+  assertStringIncludes(html, 'Athlé Running');
+});
+
+Deno.test('buildBoardEmailHtml: licence inconnue rendue brute, jamais Non applicable', () => {
   const html = buildBoardEmailHtml(baseMember, { ...baseSeason, license_type: 'inconnue' });
   assertStringIncludes(html, 'inconnue');
   assert(!html.includes('Non applicable'));
