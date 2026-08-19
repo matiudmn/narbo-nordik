@@ -11,6 +11,8 @@ import {
   buildBoardEmailHtml,
   buildMemberEmailHtml,
   CLUB_BANK,
+  CLUB_EMAIL,
+  parseBoardEmails,
   escapeHtml,
   formatDateFr,
   formatDateTimeFr,
@@ -262,4 +264,19 @@ Deno.test('transferReference: majuscules, saison, nom et prenom, contenu echappe
   assertEquals(ref, `ADHESION ${baseSeason.season} DUPONT LÉA`);
   const html = buildMemberEmailHtml(baseMember, { ...baseSeason, payment_method: 'virement' });
   assert(!html.includes('<script>'), 'le libelle avec prenom piege doit etre echappe');
+});
+
+// ---- Destinataires bureau (secret, jamais par nom) --------------------------
+
+Deno.test('parseBoardEmails: liste separee par virgules, trim, minuscules, dedoublonnee', () => {
+  assertEquals(
+    parseBoardEmails(' Club@Example.org , david@example.org,club@example.org '),
+    ['club@example.org', 'david@example.org'],
+  );
+});
+
+Deno.test('parseBoardEmails: secret absent ou vide => repli sur la boite du club', () => {
+  assertEquals(parseBoardEmails(undefined), [CLUB_EMAIL]);
+  assertEquals(parseBoardEmails(''), [CLUB_EMAIL]);
+  assertEquals(parseBoardEmails('pas-un-email'), [CLUB_EMAIL]);
 });
