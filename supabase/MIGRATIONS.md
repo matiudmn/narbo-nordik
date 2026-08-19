@@ -9,7 +9,7 @@ La **source de vérité unique** des migrations est le dossier
 Un `supabase db reset` reconstruit toute la base depuis zéro, de façon
 déterministe.
 
-Les anciens fichiers SQL **à la racine** (`supabase-schema.sql`,
+Les anciens fichiers SQL, désormais dans **`supabase/legacy/`** (`supabase-schema.sql`,
 `supabase-migration-phase2…6.sql`, `supabase-migration-session-nordiks.sql`,
 `supabase-migration-restrict-notifications.sql`) sont **historiques / dépréciés**.
 Ils décrivent l'état d'origine appliqué à la main, mais **ne sont plus la
