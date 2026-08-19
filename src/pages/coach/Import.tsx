@@ -105,13 +105,15 @@ export default function Import() {
    * ChatGPT préfixe souvent sa réponse d'une phrase, d'où les 5 premières
    * lignes non vides plutôt que la seule première.
    *
-   * Le texte est d'abord ramené en TSV (un CSV ";" d'Excel France, sinon, ne
-   * serait reconnu par aucun onglet). La normalisation est idempotente : la
-   * zone reste stable frappe après frappe.
+   * Le texte est ramené en TSV (un CSV ";" d'Excel France, sinon, ne serait
+   * reconnu par aucun onglet) à l'arrivée d'un bloc complet : collage, fichier
+   * ou glisser-déposer. À la frappe, la zone n'est jamais réécrite (le curseur
+   * sautait à la fin) : la normalisation ne sert alors qu'à la détection
+   * d'onglet, et `parseImport` la refait de son côté à la lecture.
    */
-  function applyText(raw: string) {
+  function applyText(raw: string, opts?: { normalize?: boolean }) {
     const text = normalizeTabular(raw);
-    setPaste(text);
+    setPaste(opts?.normalize ? text : raw);
     const heads = text.split(/\r?\n/).filter(l => l.trim().length > 0).slice(0, 5);
     if (heads.some(l => detectFormat(l) === 'plan')) {
       setFormat('plan');
@@ -129,7 +131,9 @@ export default function Import() {
     if (!file) return;
     const isExcel = /\.xlsx?$/i.test(file.name);
     try {
-      applyText(isExcel ? await excelToTsv(await file.arrayBuffer()) : await file.text());
+      applyText(isExcel ? await excelToTsv(await file.arrayBuffer()) : await file.text(), {
+        normalize: true,
+      });
       toast.success(`${file.name} chargé`);
     } catch {
       toast.error(isExcel ? 'Fichier Excel illisible' : 'Fichier illisible');
@@ -495,6 +499,10 @@ export default function Import() {
           <textarea
             value={paste}
             onChange={e => applyText(e.target.value)}
+            onPaste={e => {
+              e.preventDefault();
+              applyText(e.clipboardData.getData('text'), { normalize: true });
+            }}
             rows={20}
             spellCheck={false}
             placeholder="Colle la réponse de ChatGPT ou ton tableau Excel ici (Cmd-V), ou dépose ton fichier…"

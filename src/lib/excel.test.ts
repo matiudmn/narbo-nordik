@@ -78,4 +78,56 @@ describe('excelToTsv', () => {
       '2026-06-01',
     ]);
   });
+
+  it('ignore un onglet de notes placé avant la feuille de saison', async () => {
+    const buf = buildWorkbook([
+      {
+        name: 'Notes',
+        rows: [['Légende'], ['EF = endurance fondamentale'], ['SL = sortie longue']],
+      },
+      { name: 'Saison', rows: [HEADER, ['21', new Date(2026, 4, 25), "EF 45'", 'SL 1h30']] },
+    ]);
+
+    const tsv = await excelToTsv(buf);
+    expect(tsv.split('\n')[0]).toBe(HEADER.join('\t'));
+
+    const r = parseImport(normalizeTabular(tsv), { defaultYear: 2026, groups: GROUPS });
+    expect(r.errors).toHaveLength(0);
+    expect(r.sessions).toHaveLength(2);
+    expect(r.sessions[0].date).toBe('2026-05-25');
+  });
+
+  it("retire l'en-tête d'un 2e onglet même s'il diffère (colonne HEURE, colonne vide)", async () => {
+    const buf = buildWorkbook([
+      { name: 'Trimestre 1', rows: [HEADER, ['21', new Date(2026, 4, 25), "EF 45'", 'SL 1h30']] },
+      {
+        name: 'Trimestre 2',
+        rows: [
+          ['semaine', 'DATE', 'HEURE', 'GR ESSENTIEL', 'GROUPE RENFORCE', ''],
+          ['22', new Date(2026, 5, 1), '8:30', "EF 50'", 'SL 2h', ''],
+        ],
+      },
+    ]);
+
+    const tsv = await excelToTsv(buf);
+    expect(tsv).not.toContain('HEURE');
+
+    const r = parseImport(normalizeTabular(tsv), {
+      defaultYear: 2026,
+      groups: GROUPS,
+      forceFormat: 'matrix',
+    });
+    expect(r.errors.filter(e => e.message.includes('"DATE"'))).toHaveLength(0);
+    expect(r.sessions.map(s => s.date)).toContain('2026-06-01');
+  });
+
+  it('rend le contenu brut quand aucun onglet n\'est reconnu', async () => {
+    const buf = buildWorkbook([
+      { name: 'Notes', rows: [['Légende'], ['EF = endurance fondamentale']] },
+    ]);
+
+    const tsv = await excelToTsv(buf);
+    expect(tsv.trim()).not.toBe('');
+    expect(tsv).toContain('EF = endurance fondamentale');
+  });
 });

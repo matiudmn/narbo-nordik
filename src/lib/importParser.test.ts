@@ -118,9 +118,51 @@ describe('resolveGroup', () => {
 });
 
 describe('normalizeTabular', () => {
-  it('laisse le texte intact tant qu\'un guillemet reste ouvert (saisie en cours)', () => {
+  it('traite comme littéral un guillemet ouvert jamais refermé (saisie en cours)', () => {
     const typing = 'semaine\tDATE\tGR ESSENTIEL\n1\t25/05/2026\t"20 EF\n8x200';
     expect(normalizeTabular(typing)).toBe(typing);
+    // Même chose sur un CSV ";" : la normalisation a lieu, mais les lignes
+    // suivantes ne sont pas aspirées dans la cellule restée ouverte.
+    const csv = 'Date;Séance\n25/05/2026;"Echauf 20\n26/05/2026;EF 45';
+    expect(normalizeTabular(csv)).toBe('Date\tSéance\n25/05/2026\t"Echauf 20\n26/05/2026\tEF 45');
+  });
+
+  it('garde littéral un guillemet de mesure dans une cellule CSV ";"', () => {
+    const csv = ['Date;Séance', '25/05/2026;Corde 5" de saut', "26/05/2026;EF 45'"].join('\n');
+    expect(normalizeTabular(csv)).toBe(
+      ['Date\tSéance', '25/05/2026\tCorde 5" de saut', "26/05/2026\tEF 45'"].join('\n')
+    );
+    const r = parseImport(csv, { defaultYear: 2026, groups: GROUPS });
+    expect(r.errors).toHaveLength(0);
+    expect(r.sessions[0].contentText).toBe('Corde 5" de saut');
+  });
+
+  it('choisit le séparateur sur un échantillon, pas sur la seule première ligne', () => {
+    // L'en-tête porte plus de virgules que de points-virgules : décider sur
+    // cette seule ligne faisait découper le fichier sur la virgule.
+    const csv = [
+      'Date;Séance, phases, allures',
+      "25/05/2026;Echauf 20', 8x200, retour au calme",
+      "26/05/2026;EF 45', souple",
+    ].join('\n');
+    expect(normalizeTabular(csv)).toBe(
+      [
+        'Date\tSéance, phases, allures',
+        "25/05/2026\tEchauf 20', 8x200, retour au calme",
+        "26/05/2026\tEF 45', souple",
+      ].join('\n')
+    );
+    const r = parseImport(csv, { defaultYear: 2026, groups: GROUPS });
+    expect(r.detectedFormat).toBe('simple');
+    expect(r.sessions).toHaveLength(2);
+    expect(r.sessions[0].contentText).toBe("Echauf 20', 8x200, retour au calme");
+  });
+
+  it('laisse intact un JSON précédé d\'une phrase', () => {
+    const text =
+      'Voici ta saison, dis-moi si tu veux des ajustements :\n' +
+      '{"seances": [{"date": "2026-09-08", "groupes": {"Essentiel": "VMA, 8x300"}}]}';
+    expect(normalizeTabular(text)).toBe(text);
   });
 
   it('convertit un CSV point-virgule (Excel France) en TSV lisible par le parser', () => {
