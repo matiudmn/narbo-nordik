@@ -145,6 +145,19 @@ export function tshirtModelLabel(model: string | null | undefined): string {
 }
 
 const SITE_URL = 'https://www.narbo-nordik-club.com';
+export const CLUB_EMAIL = 'narbo.nordik.club@gmail.com'; // boîte officielle du bureau, repli si le secret est absent
+
+// Destinataires bureau du dossier d'adhésion : secret MEMBERSHIP_BOARD_EMAILS
+// (adresses séparées par des virgules), jamais résolus par nom en base : un
+// athlète peut renommer son propre profil et se serait fait passer pour le
+// référent (faille relevée en revue le 2026-08-19).
+export function parseBoardEmails(raw: string | undefined): string[] {
+  const parsed = (raw ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter((e) => e.includes('@'));
+  return Array.from(new Set(parsed.length > 0 ? parsed : [CLUB_EMAIL]));
+}
 
 // Coordonnées bancaires du club (RIB officiel Crédit Agricole, transmis par
 // Matiu le 2026-08-17). Affichées uniquement à l'adhérent qui a choisi le

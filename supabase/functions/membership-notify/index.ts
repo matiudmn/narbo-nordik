@@ -23,6 +23,7 @@ import {
   buildMemberEmailHtml,
   boardEmailSubject,
   memberEmailSubject,
+  parseBoardEmails,
   type MemberRecord,
   type MembershipSeasonRecord,
 } from './lib.ts';
@@ -31,9 +32,6 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const FROM_EMAIL = 'Narbo Nordik <club@2nc.fr>';
-const CLUB_EMAIL = 'narbo.nordik.club@gmail.com'; // boîte officielle du bureau
-const BOARD_CONTACT = { firstname: 'David', lastname: 'Nunez' }; // référent adhésions, adresse lue en base
-
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
@@ -167,25 +165,7 @@ serve(async (req) => {
   const memberRecord = member as MemberRecord;
   const seasonRecord = season as MembershipSeasonRecord;
 
-  // Destinataires bureau (décision Matiu du 2026-08-17) : la boîte officielle
-  // du club (CLUB_EMAIL) + le référent adhésions du bureau, identifié en base
-  // par son nom (BOARD_CONTACT) pour ne pas figer son adresse ici.
-  const { data: boardUsers, error: boardError } = await supabase
-    .from('users')
-    .select('email')
-    .ilike('firstname', BOARD_CONTACT.firstname)
-    .ilike('lastname', BOARD_CONTACT.lastname);
-
-  if (boardError) {
-    log('error', 'board-fetch', { membershipSeasonId, message: boardError.message });
-  }
-
-  const boardEmails = Array.from(new Set([
-    CLUB_EMAIL,
-    ...(boardUsers ?? [])
-      .map((u) => (typeof u.email === 'string' ? u.email.trim() : ''))
-      .filter((email) => email.length > 0),
-  ]));
+  const boardEmails = parseBoardEmails(Deno.env.get('MEMBERSHIP_BOARD_EMAILS'));
 
   let memberSent = false;
   if (memberRecord.email) {
