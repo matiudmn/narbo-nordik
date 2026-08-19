@@ -141,16 +141,49 @@ export function classifyMacroType(typeOrSubType: string, content: string): Macro
 /* ---------- Normalisation tabulaire (CSV / Excel → TSV) ---------- */
 
 /**
- * Sépare une ligne sur le séparateur détecté. Tabulation si présente (le
- * copier-coller Excel), sinon point-virgule (Excel en France) ou virgule.
- * Null si la ligne ne porte aucun des trois.
+ * Détecte le séparateur de colonnes sur un échantillon (les 10 premières
+ * lignes non vides) plutôt que sur la seule première ligne : un libellé
+ * d'en-tête contenant des virgules ("Date;Séance, phases, allures") faisait
+ * choisir la virgule sur un fichier pourtant en point-virgule.
+ *
+ * On retient le premier candidat (`\t`, puis `;`, puis `,`) qui découpe la
+ * majorité des lignes en plus d'une cellule. Null si aucun ne convient : le
+ * texte est alors laissé tel quel.
  */
-function detectSeparator(line: string): string | null {
-  if (line.includes('\t')) return '\t';
-  const semicolons = (line.match(/;/g) || []).length;
-  const commas = (line.match(/,/g) || []).length;
-  if (semicolons === 0 && commas === 0) return null;
-  return semicolons >= commas ? ';' : ',';
+function detectSeparator(text: string): string | null {
+  const sample = text
+    .split(/\r?\n/)
+    .filter(l => l.trim().length > 0)
+    .slice(0, 10)
+    .join('\n');
+  if (!sample) return null;
+
+  for (const sep of ['\t', ';', ',']) {
+    const rows = splitDelimited(sample, sep);
+    const multi = rows.filter(r => r.length > 1).length;
+    if (multi * 2 > rows.length) return sep;
+  }
+  return null;
+}
+
+/**
+ * Un guillemet ouvre-t-il vraiment une cellule encadrée ? Oui seulement si un
+ * guillemet fermant (les `""` internes ne comptent pas) apparaît plus loin,
+ * suivi du séparateur, d'une fin de ligne ou de la fin du texte. Sinon c'est
+ * un guillemet littéral (une mesure : `Corde 5" de saut`) ou une saisie en
+ * cours, et tout aplatir derrière lui serait destructeur.
+ */
+function opensQuotedField(text: string, start: number, sep: string): boolean {
+  for (let i = start; i < text.length; i++) {
+    if (text[i] !== '"') continue;
+    if (text[i + 1] === '"') {
+      i++;
+      continue;
+    }
+    const next = text[i + 1];
+    if (next === undefined || next === sep || next === '\n' || next === '\r') return true;
+  }
+  return false;
 }
 
 /** Découpe un texte délimité en respectant les guillemets RFC 4180. */
@@ -179,8 +212,9 @@ function splitDelimited(text: string, sep: string): string[][] {
       continue;
     }
     // Un guillemet au milieu d'une cellule est un caractère comme un autre
-    // (Excel n'échappe que les cellules entièrement encadrées).
-    if (ch === '"' && fieldStart) {
+    // (Excel n'échappe que les cellules entièrement encadrées), et même en
+    // début de cellule il reste littéral s'il n'est jamais refermé.
+    if (ch === '"' && fieldStart && opensQuotedField(text, i + 1, sep)) {
       quoted = true;
       fieldStart = false;
       continue;
@@ -227,15 +261,13 @@ function flattenCell(cell: string): string {
  * (aucun `;`, `,` ni guillemet) rend la main immédiatement.
  */
 export function normalizeTabular(text: string): string {
-  const head = text.trimStart();
-  if (head.startsWith('{') || head.startsWith('```')) return text;
+  // ChatGPT préfixe souvent son JSON d'une phrase : on regarde les 5 premières
+  // lignes non vides, comme la détection d'onglet de la page Import.
+  const heads = text.split(/\r?\n/).filter(l => l.trim().length > 0).slice(0, 5);
+  if (heads.some(l => l.trimStart().startsWith('{') || l.trimStart().startsWith('```'))) return text;
   if (!/[;,"]/.test(text)) return text;
-  // Guillemet non appairé (saisie en cours dans la zone de collage) : on ne
-  // normalise pas, sinon tout ce qui suit serait aplati en une seule cellule.
-  if (((text.match(/"/g) ?? []).length & 1) === 1) return text;
 
-  const firstLine = text.split('\n').find(l => l.trim().length > 0) ?? '';
-  const sep = detectSeparator(firstLine);
+  const sep = detectSeparator(text);
   if (!sep) return text;
 
   return splitDelimited(text, sep)
