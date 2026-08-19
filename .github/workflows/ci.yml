@@ -24,4 +24,11 @@ jobs:
       - run: npm run lint
       - run: npx tsc --noEmit
       - run: npx vitest run
+
+      # Tests Deno des fonctions Edge : hors du périmètre vitest (include limité
+      # à src/**), ils ne tournaient jusqu'ici qu'à la main.
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno test --no-check supabase/functions/
       - run: npm run build
