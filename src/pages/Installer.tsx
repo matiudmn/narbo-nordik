@@ -142,8 +142,8 @@ export default function Installer() {
             <Paragraph>À faire depuis Safari. Depuis Chrome ou Firefox, l'option n'existe pas.</Paragraph>
             <Steps
               items={[
-                "Appuie sur le bouton Partager, le carré avec la flèche vers le haut, en bas de l'écran.",
-                "Fais défiler le menu et choisis Sur l'écran d'accueil.",
+                "Appuie sur les trois petits points en bas à droite de l'écran, puis sur Partager. Sur les iPhone plus anciens, le bouton Partager est directement dans la barre du bas : c'est le carré avec une flèche vers le haut.",
+                "Fais défiler le menu si besoin, et choisis Sur l'écran d'accueil.",
                 'Appuie sur Ajouter, en haut à droite.',
               ]}
             />
