@@ -1,21 +1,13 @@
 import { Link } from 'react-router-dom';
-import { Plus, Copy, Upload } from 'lucide-react';
-
-interface CoachHeroCTAProps {
-  /** Si défini, "Dupliquer la semaine passée" est cliquable et appelle ce handler */
-  onDuplicateLastWeek?: () => void;
-  /** Compte de séances de la semaine passée (pour afficher / désactiver) */
-  lastWeekSessionCount?: number;
-}
+import { Plus, Upload } from 'lucide-react';
 
 /**
  * Hero CTA principal du Dashboard coach.
  * Action primaire dominante : créer une nouvelle séance.
- * Action secondaire conditionnelle : dupliquer la semaine passée.
+ * La duplication de la semaine passée vit dans le Planning
+ * (« Nouvelle séance » > onglet « Semaine S-1 »), pas ici.
  */
-export function CoachHeroCTA({ onDuplicateLastWeek, lastWeekSessionCount }: CoachHeroCTAProps) {
-  const canDuplicate = Boolean(onDuplicateLastWeek && (lastWeekSessionCount ?? 0) > 0);
-
+export function CoachHeroCTA() {
   return (
     <div className="space-y-2">
       <Link
@@ -49,29 +41,6 @@ export function CoachHeroCTA({ onDuplicateLastWeek, lastWeekSessionCount }: Coac
         </div>
         <span className="text-neutral-300 group-hover:text-neutral-500 transition-colors" aria-hidden="true">→</span>
       </Link>
-
-      <button
-        type="button"
-        onClick={canDuplicate ? onDuplicateLastWeek : undefined}
-        disabled={!canDuplicate}
-        aria-label={
-          canDuplicate
-            ? `Dupliquer les ${lastWeekSessionCount} séances de la semaine passée`
-            : 'Aucune séance à dupliquer'
-        }
-        title={
-          canDuplicate
-            ? `Dupliquer les ${lastWeekSessionCount} séances de la semaine passée`
-            : 'Aucune séance la semaine passée'
-        }
-        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-neutral-200 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <Copy size={14} aria-hidden="true" />
-        Dupliquer la semaine passée
-        {canDuplicate && (
-          <span className="text-xs text-neutral-400">({lastWeekSessionCount})</span>
-        )}
-      </button>
     </div>
   );
 }
