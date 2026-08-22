@@ -28,6 +28,27 @@ export default defineConfig({
         // aujourd'hui : aucune installation en place n'est affectée.
         id: '/',
         lang: 'fr',
+        // Chrome n'affiche sa boîte d'installation enrichie, façon fiche
+        // d'application, que si le manifeste porte à la fois `description` et
+        // `screenshots`. Sans elles, le membre voit l'invite minimale : c'est
+        // précisément le signal de confiance qui manque à quelqu'un de 65 ans
+        // devant une installation inhabituelle.
+        screenshots: [
+          {
+            src: 'screenshot-accueil.png',
+            sizes: '720x1565',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'Ta VMA, tes allures et ton assiduité',
+          },
+          {
+            src: 'screenshot-suivi.png',
+            sizes: '720x1565',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'Ton suivi de saison, séance par séance',
+          },
+        ],
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -56,7 +77,17 @@ export default defineConfig({
         // chargement gonfle inutilement le SW pour la quasi-totalité des visites.
         // Ils restent servis normalement par le réseau au premier usage, puis mis
         // en cache via runtimeCaching ci-dessous pour rester fluides ensuite.
-        globIgnores: ['**/jspdf*.js', '**/html2canvas*.js', '**/chart-vendor*.js', '**/xlsx*.js'],
+        // Les captures du manifeste (~530 Ko à elles deux) ne sont lues que par
+        // la boîte d'installation du navigateur, jamais par l'app elle-même.
+        // Les précacher gonflerait le service worker de près de 30 % pour
+        // chaque visiteur, sans qu'aucun n'en tire quoi que ce soit.
+        globIgnores: [
+          '**/jspdf*.js',
+          '**/html2canvas*.js',
+          '**/chart-vendor*.js',
+          '**/xlsx*.js',
+          '**/screenshot-*.png',
+        ],
         runtimeCaching: [
           {
             urlPattern: /\/assets\/(jspdf|html2canvas|chart-vendor|xlsx)[^/]*\.js$/,
