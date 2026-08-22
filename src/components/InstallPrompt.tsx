@@ -44,7 +44,7 @@ export default function InstallPrompt() {
   if (dismissed || isStandaloneDisplay() || !isMobileDevice()) return null;
 
   // Samsung Browser émet bien `beforeinstallprompt`, mais son installation est
-  // rejetée par Play Protect (« Appli dangereuse bloquée »). Lui proposer le
+  // rejetée par Play Protect avec un avertissement de sécurité. Lui proposer le
   // bouton Installer, c'est l'envoyer droit dans l'avertissement : on renvoie
   // vers l'aide, comme pour Safari iOS et tout navigateur sans événement.
   const canInstallDirectly = !!deferredPrompt && !isSamsungBrowser();

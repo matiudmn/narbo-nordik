@@ -190,8 +190,9 @@ export default function Installer() {
             title="Mon téléphone affiche un message de sécurité"
           >
             <Paragraph>
-              Si tu vois Appli dangereuse bloquée, ferme le message et recommence depuis Chrome. N'appuie pas sur
-              Installer quand même : ce n'est pas nécessaire ici, et ce n'est pas un réflexe à prendre.
+              Si ton téléphone affiche un message qui parle de sécurité ou d'application bloquée, ferme-le et
+              recommence depuis Chrome. N'appuie pas sur Installer quand même : ce n'est pas nécessaire ici, et ce
+              n'est pas un réflexe à prendre.
             </Paragraph>
             <Paragraph>
               Si ça bloque encore, envoie une photo de l'écran dans le groupe du club, on regarde ensemble.

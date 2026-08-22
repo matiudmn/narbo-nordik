@@ -3,7 +3,7 @@
  *
  * Samsung Browser émet bien `beforeinstallprompt`, mais fabrique lui-même le
  * paquet d'installation avec un niveau d'API périmé : Play Protect le rejette
- * avec « Appli dangereuse bloquée ». Défaut Samsung connu depuis avril 2026,
+ * avec un avertissement de sécurité. Défaut Samsung connu depuis avril 2026,
  * non corrigé, qui touche toutes les applications de ce type. L'application ne
  * peut pas le corriger, seulement éviter d'y envoyer les membres.
  */
