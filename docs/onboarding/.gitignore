@@ -2,5 +2,7 @@
 # Ce dépôt est public, ce code suffit à créer un compte athlète. On ne versionne
 # que les gabarits ({{CODE_INVITATION}}) et build.sh.
 guide-demarrage-athlete.pdf
+guide-installation-app.pdf
 message-whatsapp-invitation.txt
 .guide.tmp.html
+.guide-installation.tmp.html
