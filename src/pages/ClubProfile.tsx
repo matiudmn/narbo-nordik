@@ -106,7 +106,9 @@ export default function ClubProfile() {
         // Un athlète arrivé après la séance n'avait pas à y être.
         if (!hasJoinedBefore(user, s.date)) return false;
         if (!s.group_id) return true;
-        return s.group_id === user.group_id || user.role === 'coach';
+        // Un coach n'est attendu que sur les séances de son propre groupe :
+        // le compter partout gonflerait le dénominateur à chaque coach promu.
+        return s.group_id === user.group_id;
       });
       totalExpected += eligibleAthletes.length;
       totalDone += validations.filter(
