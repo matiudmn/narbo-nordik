@@ -490,31 +490,35 @@
   .plat__body > p:last-child { margin-bottom: 0; }
 
   /* ---------- Captures d'écran ---------- */
+  /* Captures empilées, pas en colonnes : trois téléphones côte à côte dans
+     une colonne A4 donnent 138 px de large chacun, et plus rien n'est
+     lisible. Les images sont désormais recadrées sur la seule zone utile,
+     posées l'une sous l'autre à une largeur qui garde le texte déchiffrable. */
   .shots {
     display: flex;
-    gap: 6mm;
+    flex-direction: column;
+    gap: 4mm;
     margin: 5mm 0 0;
     align-items: flex-start;
-    justify-content: center;
   }
   .shot {
-    flex: 1;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 4mm;
+    width: 100%;
   }
   .shot img {
     display: block;
-    height: 300px;
-    width: auto;
-    max-width: 100%;
-    margin: 0 auto;
+    width: 105mm;
+    height: auto;
     border: 1px solid var(--grey-200);
-    border-radius: 2mm;
+    border-radius: 1.5mm;
   }
   .shot figcaption {
-    font-size: 8.4pt;
-    line-height: 1.35;
+    flex: 1;
+    font-size: 9.2pt;
+    line-height: 1.4;
     color: var(--grey-600);
-    margin-top: 2.2mm;
   }
 
   /* ---------- Schémas Android ---------- */
@@ -562,8 +566,9 @@
       <li><span>1</span> Avant de commencer</li>
       <li><span>2</span> Ouvrir l'appli au bon endroit</li>
       <li><span>3</span> Créer ton compte</li>
-      <li><span>4</span> La mettre sur ton écran d'accueil</li>
-      <li><span>5</span> Si quelque chose bloque</li>
+      <li><span>4</span> La mettre sur ton écran d'accueil, sur iPhone</li>
+      <li><span>5</span> La mettre sur ton écran d'accueil, sur Android</li>
+      <li><span>6</span> Si quelque chose bloque</li>
     </ol>
   </div>
 </section>
@@ -746,7 +751,7 @@
   <div class="step-head">
     <div class="step-head__num">4</div>
     <div class="step-head__txt">
-      <h1>La mettre sur ton écran d'accueil</h1>
+      <h1>La mettre sur ton écran d'accueil, sur iPhone</h1>
     </div>
   </div>
 
@@ -803,9 +808,9 @@
 <!-- =================== ÉTAPE 4, ANDROID =================== -->
 <section class="page">
   <div class="step-head">
-    <div class="step-head__num">4</div>
+    <div class="step-head__num">5</div>
     <div class="step-head__txt">
-      <h1>La mettre sur ton écran d'accueil</h1>
+      <h1>La mettre sur ton écran d'accueil, sur Android</h1>
     </div>
   </div>
 
@@ -922,7 +927,7 @@
 <!-- =================== ÉTAPE 5 =================== -->
 <section class="page">
   <div class="step-head">
-    <div class="step-head__num">5</div>
+    <div class="step-head__num">6</div>
     <div class="step-head__txt">
       <h1>Si quelque chose bloque</h1>
     </div>
