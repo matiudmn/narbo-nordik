@@ -20,6 +20,13 @@ export default defineConfig({
         orientation: 'portrait',
         scope: '/',
         start_url: '/',
+        // Identité de l'app, figée explicitement. Sans ce champ, Chrome la
+        // dérive de start_url : l'app serait alors liée à l'origine courante,
+        // et un futur passage sur un domaine du club casserait toutes les
+        // installations existantes (nouvelle app, membres déconnectés).
+        // La valeur '/' reproduit à l'identique l'identité déjà dérivée
+        // aujourd'hui : aucune installation en place n'est affectée.
+        id: '/',
         lang: 'fr',
         icons: [
           {
