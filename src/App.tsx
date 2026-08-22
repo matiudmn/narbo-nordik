@@ -34,6 +34,7 @@ const TrainingHistory = lazy(() => import('./pages/TrainingHistory'));
 const Help = lazy(() => import('./pages/Help'));
 const Suivi = lazy(() => import('./pages/athlete/Suivi'));
 const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'));
+const Installer = lazy(() => import('./pages/Installer'));
 
 function AppRoutes() {
   const { user } = useAuth();
@@ -117,6 +118,14 @@ export default function App() {
             element={
               <Suspense fallback={<div className="min-h-screen bg-bg-base" />}>
                 <PrivacyPolicy />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/installer"
+            element={
+              <Suspense fallback={<div className="min-h-screen bg-bg-base" />}>
+                <Installer />
               </Suspense>
             }
           />
