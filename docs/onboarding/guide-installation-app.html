@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Narbo Nordik, installer l'appli du club</title>
+<style>
+  @page {
+    size: A4;
+    margin: 16mm 15mm 14mm 15mm;
+  }
+  @page :first {
+    margin: 0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #000000;
+    --accent: #6CCBE6;
+    --accent-text: #14748F;
+    --accent-wash: #EAF7FB;
+    --grey-900: #171717;
+    --grey-600: #525252;
+    --grey-400: #A3A3A3;
+    --grey-200: #E5E5E5;
+    --grey-50: #FAFAFA;
+  }
+
+  html {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10.2pt;
+    line-height: 1.5;
+    color: var(--grey-900);
+    hyphens: none;
+  }
+
+  p { margin-bottom: 7pt; }
+  strong { font-weight: 650; color: var(--ink); }
+
+  /* ---------- Couverture ---------- */
+  .cover {
+    height: 297mm;
+    background: var(--ink);
+    color: #fff;
+    padding: 30mm 22mm 20mm 22mm;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+    position: relative;
+  }
+  .cover__logo {
+    width: 30mm;
+    height: 30mm;
+    border-radius: 50%;
+    margin-bottom: 16mm;
+  }
+  .cover__eyebrow {
+    font-size: 9.5pt;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 8mm;
+  }
+  .cover__title {
+    font-size: 40pt;
+    line-height: 1.04;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-bottom: 7mm;
+  }
+  .cover__title em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .cover__lead {
+    font-size: 15pt;
+    line-height: 1.35;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 5mm;
+  }
+  .cover__sub {
+    font-size: 13pt;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.66);
+    max-width: 118mm;
+    font-weight: 300;
+  }
+  .cover__rule {
+    width: 26mm;
+    height: 3px;
+    background: var(--accent);
+    margin: 11mm 0;
+  }
+  .cover__toc {
+    margin-top: auto;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding-top: 7mm;
+  }
+  .cover__toc h2 {
+    font-size: 8.5pt;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+    margin-bottom: 5mm;
+  }
+  .cover__toc ol {
+    list-style: none;
+    columns: 2;
+    column-gap: 12mm;
+  }
+  .cover__toc li {
+    font-size: 10.5pt;
+    color: rgba(255,255,255,0.85);
+    padding: 2.2mm 0;
+    display: flex;
+    gap: 4mm;
+  }
+  .cover__toc li span {
+    color: var(--accent);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Structure des pages ---------- */
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  .step-head {
+    display: flex;
+    align-items: baseline;
+    gap: 5mm;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 3.5mm;
+    margin-bottom: 6mm;
+  }
+  .step-head__num {
+    font-size: 27pt;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .step-head__txt h1 {
+    font-size: 17pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+  .step-head__txt p {
+    font-size: 9.6pt;
+    color: var(--grey-600);
+    margin: 1.5mm 0 0;
+  }
+
+  h2.sec {
+    font-size: 11.5pt;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 7mm 0 3mm;
+    padding-left: 3mm;
+    border-left: 3px solid var(--accent);
+  }
+  h2.sec:first-of-type { margin-top: 0; }
+
+  h3.sub {
+    font-size: 10pt;
+    font-weight: 650;
+    margin: 5mm 0 2mm;
+  }
+
+  /* ---------- Listes numérotées ---------- */
+  ol.steps {
+    list-style: none;
+    counter-reset: s;
+    margin: 3mm 0 0;
+  }
+  ol.steps > li {
+    counter-increment: s;
+    position: relative;
+    padding-left: 9mm;
+    padding-bottom: 4.5mm;
+    margin-bottom: 0.5mm;
+  }
+  ol.steps > li::before {
+    content: counter(s);
+    position: absolute;
+    left: 0;
+    top: -0.3mm;
+    width: 6mm;
+    height: 6mm;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    font-size: 8.5pt;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  ol.steps > li::after {
+    content: "";
+    position: absolute;
+    left: 3mm;
+    top: 6.6mm;
+    bottom: 1mm;
+    width: 1px;
+    background: var(--grey-200);
+  }
+  ol.steps > li:last-child { padding-bottom: 0; }
+  ol.steps > li:last-child::after { display: none; }
+  ol.steps > li p:last-child { margin-bottom: 0; }
+
+  ul.bullets {
+    list-style: none;
+    margin: 2mm 0 6mm;
+  }
+  ul.bullets li {
+    position: relative;
+    padding-left: 5mm;
+    margin-bottom: 2.2mm;
+  }
+  ul.bullets li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 1.9mm;
+    width: 2mm;
+    height: 2mm;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  ul.bullets li:last-child { margin-bottom: 0; }
+
+  /* ---------- Blocs ---------- */
+  .code-box {
+    background: var(--ink);
+    color: #fff;
+    border-radius: 4mm;
+    padding: 6mm 7mm;
+    margin: 4mm 0 5mm;
+    text-align: center;
+  }
+  .code-box__label {
+    font-size: 8.5pt;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 3mm;
+  }
+  .code-box__code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 27pt;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    line-height: 1;
+    margin-bottom: 3mm;
+  }
+  .code-box__hint {
+    font-size: 9pt;
+    color: rgba(255,255,255,0.6);
+    line-height: 1.45;
+    max-width: 105mm;
+    margin: 0 auto;
+  }
+
+  .note {
+    background: var(--accent-wash);
+    border-radius: 3mm;
+    padding: 4.5mm 5mm;
+    margin: 4mm 0 5mm;
+    font-size: 9.6pt;
+    line-height: 1.48;
+  }
+  .note__t {
+    font-weight: 700;
+    color: var(--accent-text);
+    display: block;
+    margin-bottom: 1.5mm;
+    font-size: 9pt;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .note p:last-child { margin-bottom: 0; }
+
+  .warn {
+    border: 1.5px solid var(--ink);
+    border-radius: 3mm;
+    padding: 4.5mm 5mm;
+    margin: 4mm 0 5mm;
+    font-size: 9.6pt;
+    line-height: 1.48;
+  }
+  .warn__t {
+    font-weight: 700;
+    display: block;
+    margin-bottom: 1.5mm;
+    font-size: 9pt;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .warn p:last-child { margin-bottom: 0; }
+
+  .btn {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--ink);
+    font-weight: 650;
+    font-size: 9.4pt;
+    padding: 1.2mm 3.5mm;
+    border-radius: 2mm;
+    white-space: nowrap;
+  }
+  .ui {
+    display: inline-block;
+    background: var(--grey-50);
+    border: 1px solid var(--grey-200);
+    border-radius: 1.5mm;
+    padding: 0.4mm 1.8mm;
+    font-size: 9.4pt;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* ---------- Barre de navigation illustrée ---------- */
+  .nav {
+    display: flex;
+    border: 1px solid var(--grey-200);
+    border-radius: 3mm;
+    overflow: hidden;
+    margin: 4mm 0 5mm;
+  }
+  .nav__item {
+    flex: 1;
+    text-align: center;
+    padding: 4mm 1mm 3.5mm;
+    border-right: 1px solid var(--grey-200);
+  }
+  .nav__item:last-child { border-right: none; }
+  .nav__item svg {
+    width: 5.5mm;
+    height: 5.5mm;
+    stroke: var(--grey-400);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .nav__item--on svg { stroke: var(--ink); }
+  .nav__item span {
+    display: block;
+    font-size: 7.6pt;
+    font-weight: 650;
+    color: var(--grey-400);
+    margin-top: 1.5mm;
+  }
+  .nav__item--on span { color: var(--ink); }
+
+  .nav-legend { margin: 0 0 5mm; }
+  .nav-legend dt {
+    font-weight: 700;
+    font-size: 9.8pt;
+    margin-top: 6mm;
+    padding-left: 3mm;
+    border-left: 3px solid var(--grey-200);
+  }
+  .nav-legend dt:first-child { margin-top: 0; }
+  .nav-legend dd {
+    font-size: 9.6pt;
+    color: var(--grey-600);
+    line-height: 1.48;
+    margin-top: 1.2mm;
+    padding-left: 3mm;
+  }
+
+  /* ---------- Deux colonnes ---------- */
+  .cols {
+    display: flex;
+    gap: 7mm;
+    margin: 4mm 0 2mm;
+  }
+  .cols > div { flex: 1; }
+  .cols h3 {
+    font-size: 10pt;
+    font-weight: 700;
+    padding-bottom: 2mm;
+    margin-bottom: 3mm;
+    border-bottom: 1.5px solid var(--ink);
+  }
+
+  /* ---------- Tableau FAQ ---------- */
+  .faq { margin-top: 2mm; }
+  .faq__q {
+    font-weight: 700;
+    font-size: 10pt;
+    margin-top: 5mm;
+    margin-bottom: 1.2mm;
+  }
+  .faq__q:first-child { margin-top: 0; }
+  .faq__a {
+    font-size: 9.7pt;
+    color: var(--grey-600);
+    line-height: 1.47;
+  }
+
+  .end {
+    margin-top: 8mm;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 4mm;
+    padding: 7mm 8mm;
+  }
+  .end h2 {
+    font-size: 14pt;
+    font-weight: 700;
+    margin-bottom: 3mm;
+    letter-spacing: -0.02em;
+  }
+  .end h2 span { color: var(--accent); }
+  .end p {
+    color: rgba(255,255,255,0.72);
+    font-size: 10pt;
+    margin-bottom: 0;
+    max-width: 130mm;
+  }
+  .end p .end__url {
+    color: var(--accent);
+    font-weight: 650;
+    white-space: nowrap;
+  }
+
+  /* ---------- Blocs par téléphone ---------- */
+  .plats {
+    display: flex;
+    gap: 6mm;
+    margin: 5mm 0 2mm;
+    align-items: stretch;
+  }
+  .plats > .plat { flex: 1; margin: 0; }
+
+  .plat {
+    border: 1.2px solid var(--grey-200);
+    border-radius: 3mm;
+    overflow: hidden;
+    margin: 5mm 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .plat__head {
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+    padding: 3mm 5mm;
+    font-size: 10pt;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .plat__head svg {
+    width: 4.6mm;
+    height: 4.6mm;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+  }
+  .plat--ios .plat__head {
+    background: var(--ink);
+    color: #fff;
+  }
+  .plat--ios .plat__head svg { stroke: var(--accent); }
+  .plat--android .plat__head {
+    background: var(--accent);
+    color: var(--ink);
+  }
+  .plat--android .plat__head svg { stroke: var(--ink); }
+  .plat__body {
+    padding: 4.5mm 5mm 5mm;
+    font-size: 9.9pt;
+  }
+  .plat__body > p:last-child { margin-bottom: 0; }
+
+  /* ---------- Captures d'écran ---------- */
+  /* Captures empilées, pas en colonnes : trois téléphones côte à côte dans
+     une colonne A4 donnent 138 px de large chacun, et plus rien n'est
+     lisible. Les images sont désormais recadrées sur la seule zone utile,
+     posées l'une sous l'autre à une largeur qui garde le texte déchiffrable. */
+  .shots {
+    display: flex;
+    flex-direction: column;
+    gap: 4mm;
+    margin: 5mm 0 0;
+    align-items: flex-start;
+  }
+  .shot {
+    display: flex;
+    align-items: center;
+    gap: 4mm;
+    width: 100%;
+  }
+  .shot img {
+    display: block;
+    width: 105mm;
+    height: auto;
+    border: 1px solid var(--grey-200);
+    border-radius: 1.5mm;
+  }
+  .shot figcaption {
+    flex: 1;
+    font-size: 9.2pt;
+    line-height: 1.4;
+    color: var(--grey-600);
+  }
+
+  /* ---------- Schémas Android ---------- */
+  .schemas {
+    display: flex;
+    gap: 5mm;
+    margin: 5mm 0 0;
+    align-items: flex-start;
+  }
+  .schema {
+    flex: 1;
+    text-align: center;
+  }
+  .schema svg {
+    width: 100%;
+    max-width: 150px;
+    height: auto;
+  }
+  .schema figcaption {
+    font-size: 8.4pt;
+    font-weight: 650;
+    color: var(--grey-600);
+    margin-top: 2mm;
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== COUVERTURE =================== -->
+<section class="cover">
+  <img class="cover__logo" src="../../public/logo-club.png" alt="">
+  <div class="cover__eyebrow">Section running et trail</div>
+  <h1 class="cover__title">Installer<br>l'appli <em>du club</em></h1>
+  <div class="cover__rule"></div>
+  <p class="cover__lead">Sur iPhone et sur Android, pas à pas</p>
+  <p class="cover__sub">
+    Ce guide t'accompagne du lien reçu dans WhatsApp jusqu'à l'icône sur ton écran
+    d'accueil, en passant par la création de ton compte. Compte dix minutes, téléphone
+    en main. Rien n'est payant, rien n'est obligatoire.
+  </p>
+
+  <div class="cover__toc">
+    <h2>Au programme</h2>
+    <ol>
+      <li><span>1</span> Avant de commencer</li>
+      <li><span>2</span> Ouvrir l'appli au bon endroit</li>
+      <li><span>3</span> Créer ton compte</li>
+      <li><span>4</span> La mettre sur ton écran d'accueil, sur iPhone</li>
+      <li><span>5</span> La mettre sur ton écran d'accueil, sur Android</li>
+      <li><span>6</span> Si quelque chose bloque</li>
+    </ol>
+  </div>
+</section>
+
+<!-- =================== ÉTAPE 1 =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">1</div>
+    <div class="step-head__txt">
+      <h1>Avant de commencer</h1>
+    </div>
+  </div>
+
+  <p>
+    L'appli du club n'est ni sur le Play Store, ni sur l'App Store. C'est un site web que
+    l'on ajoute à son écran d'accueil, et c'est voulu : rien à télécharger, rien à mettre
+    à jour, et l'accès reste réservé aux membres du club.
+  </p>
+
+  <p>
+    Deux choses en découlent. La première est une bonne nouvelle : tu peux te servir de
+    l'appli tout de suite, dans ton navigateur, sans rien installer du tout. La seconde
+    est à savoir : au moment de l'installation, ton téléphone peut afficher un message qui
+    parle de sécurité. Ce n'est pas un virus, et la section 5 explique quoi faire.
+  </p>
+
+  <div class="note">
+    <span class="note__t">Ce qu'il te faut</span>
+    <p>
+      ton téléphone, le lien envoyé dans le groupe WhatsApp, une adresse e-mail dont tu te
+      souviens, et le code d'invitation du club, qui figure à la section 3.
+    </p>
+  </div>
+</section>
+
+<!-- =================== ÉTAPE 2 =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">2</div>
+    <div class="step-head__txt">
+      <h1>Ouvrir l'appli au bon endroit</h1>
+    </div>
+  </div>
+
+  <p>
+    C'est l'étape que tout le monde saute, et c'est celle qui fait échouer les autres.
+    Le navigateur que tu utilises change tout.
+  </p>
+
+  <div class="plats">
+    <div class="plat plat--ios">
+      <div class="plat__head">
+        <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><line x1="10.5" y1="18.5" x2="13.5" y2="18.5"/></svg>
+        Si tu as un iPhone ou un iPad
+      </div>
+      <div class="plat__body">
+        <p>
+          Utilise <strong>Safari</strong>, la boussole bleue et blanche. Depuis Chrome ou
+          Firefox, l'installation n'est tout simplement pas proposée.
+        </p>
+      </div>
+    </div>
+
+    <div class="plat plat--android">
+      <div class="plat__head">
+        <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2.5"/><line x1="9.5" y1="18.5" x2="14.5" y2="18.5"/></svg>
+        Si tu as un téléphone Android
+      </div>
+      <div class="plat__body">
+        <p>
+          Utilise <strong>Chrome</strong>, le rond de couleur avec du rouge, du jaune et du
+          vert. Certains téléphones, les Samsung en particulier, ouvrent les liens avec leur
+          propre navigateur. C'est ce qui provoque le message de sécurité dont on parle plus
+          loin.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <ol class="steps">
+    <li>
+      <p>
+        Dans le groupe WhatsApp, appuie sur le lien du club et garde le doigt appuyé une
+        seconde.
+      </p>
+    </li>
+    <li>
+      <p>Dans le menu qui s'ouvre, choisis <span class="ui">Copier le lien</span>.</p>
+    </li>
+    <li>
+      <p>
+        Reviens à ton écran d'accueil et ouvre <strong>Safari</strong> sur iPhone, ou
+        <strong>Chrome</strong> sur Android.
+      </p>
+    </li>
+    <li>
+      <p>
+        Appuie sur la barre d'adresse tout en haut, garde le doigt appuyé, choisis
+        <span class="ui">Coller</span>, puis appuie sur la touche entrée de ton clavier.
+      </p>
+    </li>
+  </ol>
+
+  <div class="note">
+    <p>La page du club s'affiche. Tu es au bon endroit.</p>
+  </div>
+</section>
+
+<!-- =================== ÉTAPE 3 =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">3</div>
+    <div class="step-head__txt">
+      <h1>Créer ton compte</h1>
+    </div>
+  </div>
+
+  <p>
+    L'appli est réservée aux membres du Narbo Nordik. La création de compte demande donc
+    un <strong>code d'invitation</strong>, partagé par le club.
+  </p>
+
+  <div class="code-box">
+    <div class="code-box__label">Code d'invitation du club</div>
+    <div class="code-box__code">{{CODE_INVITATION}}</div>
+    <div class="code-box__hint">
+      Il ne contient que des chiffres et les lettres A à F. Le caractère rond est donc
+      toujours un zéro, jamais la lettre O. Majuscules, minuscules, espaces : aucune
+      importance.
+    </div>
+  </div>
+
+  <ol class="steps">
+    <li>
+      <p>
+        En bas de l'écran de connexion, appuie sur
+        <span class="ui">Rejoindre Narbo Nordik</span>.
+      </p>
+    </li>
+    <li>
+      <p>
+        Renseigne ton <strong>prénom</strong>, ton <strong>nom</strong>, ton
+        <strong>e-mail</strong>, et choisis un <strong>mot de passe</strong> d'au moins six
+        caractères. Prends-en un dont tu te souviendras, ou note-le quelque part.
+      </p>
+    </li>
+    <li>
+      <p>
+        Dans le dernier champ, saisis le code d'invitation ci-dessus. Relis-le avant de
+        valider.
+      </p>
+    </li>
+    <li>
+      <p>
+        Appuie sur <span class="btn">S'inscrire</span>. Tu entres directement dans l'appli,
+        ton compte est créé.
+      </p>
+    </li>
+  </ol>
+
+  <div class="note">
+    <span class="note__t">Aucun e-mail à attendre</span>
+    <p>
+      Il n'y a pas de message de confirmation à valider, pas de lien à cliquer. Une fois
+      inscrit, tu es dedans. Si tu attends un e-mail, tu attendras longtemps.
+    </p>
+  </div>
+
+  <div class="note">
+    <span class="note__t">Si l'écran te paraît vide</span>
+    <p>
+      C'est normal et ça ne durera pas. Ta VMA et ton groupe d'entraînement sont renseignés
+      par le coach, pas par toi. Préviens-le que tu viens de t'inscrire.
+    </p>
+  </div>
+</section>
+
+<!-- =================== ÉTAPE 4, IPHONE =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">4</div>
+    <div class="step-head__txt">
+      <h1>La mettre sur ton écran d'accueil, sur iPhone</h1>
+    </div>
+  </div>
+
+  <p>
+    L'appli prend alors sa propre icône, s'ouvre en plein écran sans barre d'adresse, et tu
+    n'as plus à retaper l'adresse. C'est du confort, pas une obligation : tout fonctionne
+    déjà dans le navigateur.
+  </p>
+
+  <div class="plat plat--ios">
+    <div class="plat__head">
+      <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><line x1="10.5" y1="18.5" x2="13.5" y2="18.5"/></svg>
+      Sur iPhone et iPad, depuis Safari
+    </div>
+    <div class="plat__body">
+      <ol class="steps">
+        <li>
+          <p>
+            Appuie sur les trois petits points en bas à droite de l'écran, puis sur
+            <span class="ui">Partager</span>. Sur les iPhone plus anciens, le bouton
+            <strong>Partager</strong> se trouve directement dans la barre du bas : c'est le
+            carré avec une flèche vers le haut.
+          </p>
+        </li>
+        <li>
+          <p>
+            Fais défiler le menu si besoin, et choisis
+            <span class="ui">Sur l'écran d'accueil</span>.
+          </p>
+        </li>
+        <li>
+          <p>Appuie sur <span class="ui">Ajouter</span>, en haut à droite.</p>
+        </li>
+      </ol>
+
+      <div class="shots">
+        <figure class="shot" data-shot="ios-1">
+          <img src="assets/ios-1-menu-trois-points.png" alt="Le menu à trois points de Safari, ouvert, avec Partager en première ligne">
+          <figcaption>Le menu à trois points, en bas à droite</figcaption>
+        </figure>
+        <figure class="shot" data-shot="ios-2">
+          <img src="assets/ios-2-feuille-partage.png" alt="La feuille de partage de Safari, avec la ligne Sur l'écran d'accueil">
+          <figcaption>Fais défiler jusqu'à Sur l'écran d'accueil</figcaption>
+        </figure>
+        <figure class="shot" data-shot="ios-3">
+          <img src="assets/ios-3-ajouter.png" alt="L'écran Sur l'écran d'accueil, avec le bouton Ajouter en haut à droite">
+          <figcaption>Appuie sur Ajouter, en haut à droite</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== ÉTAPE 4, ANDROID =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">5</div>
+    <div class="step-head__txt">
+      <h1>La mettre sur ton écran d'accueil, sur Android</h1>
+    </div>
+  </div>
+
+  <div class="plat plat--android">
+    <div class="plat__head">
+      <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2.5"/><line x1="9.5" y1="18.5" x2="14.5" y2="18.5"/></svg>
+      Sur Android, depuis Chrome
+    </div>
+    <div class="plat__body">
+      <ol class="steps">
+        <li>
+          <p>
+            Sers-toi de l'appli une trentaine de secondes avant d'essayer. Chrome ne propose
+            l'installation qu'une fois que tu t'en es servi un peu.
+          </p>
+        </li>
+        <li>
+          <p>Appuie sur les trois petits points en haut à droite de l'écran.</p>
+        </li>
+        <li>
+          <p>
+            Choisis <span class="ui">Installer et créer un raccourci</span>, puis
+            <span class="ui">Installer</span>. Selon l'âge de ton téléphone, l'entrée peut
+            s'appeler <strong>Installer l'application</strong>, ou
+            <strong>Ajouter à l'écran d'accueil</strong>.
+          </p>
+        </li>
+        <li>
+          <p>Confirme. L'icône du club apparaît sur ton écran.</p>
+        </li>
+      </ol>
+
+      <div class="schemas">
+        <!-- Schéma A : les trois points -->
+        <figure class="schema">
+          <svg viewBox="0 0 118 186" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schéma : les trois points en haut à droite de l'écran">
+            <rect x="3" y="3" width="112" height="180" rx="10" fill="#FFFFFF" stroke="#171717" stroke-width="1.4"/>
+            <rect x="11" y="13" width="72" height="13" rx="6.5" fill="none" stroke="#A3A3A3" stroke-width="1.2"/>
+            <line x1="11" y1="34" x2="107" y2="34" stroke="#E5E5E5" stroke-width="1.2"/>
+            <g fill="#171717">
+              <circle cx="99" cy="14.5" r="1.7"/>
+              <circle cx="99" cy="19.5" r="1.7"/>
+              <circle cx="99" cy="24.5" r="1.7"/>
+            </g>
+            <circle cx="99" cy="19.5" r="10" fill="none" stroke="#6CCBE6" stroke-width="2"/>
+            <line x1="80" y1="38" x2="91" y2="27" stroke="#6CCBE6" stroke-width="1.4"/>
+            <circle cx="76" cy="43" r="7.5" fill="#6CCBE6"/>
+            <text x="76" y="46.6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#171717">2</text>
+            <g fill="#E5E5E5">
+              <rect x="11" y="60" width="96" height="7" rx="3.5"/>
+              <rect x="11" y="73" width="78" height="7" rx="3.5"/>
+              <rect x="11" y="86" width="88" height="7" rx="3.5"/>
+              <rect x="11" y="105" width="96" height="7" rx="3.5"/>
+              <rect x="11" y="118" width="70" height="7" rx="3.5"/>
+              <rect x="11" y="131" width="84" height="7" rx="3.5"/>
+            </g>
+          </svg>
+          <figcaption>Étape 2</figcaption>
+        </figure>
+
+        <!-- Schéma B : le menu déroulant -->
+        <figure class="schema">
+          <svg viewBox="0 0 118 186" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schéma : le menu ouvert, avec la ligne Installer et créer un raccourci surlignée">
+            <rect x="3" y="3" width="112" height="180" rx="10" fill="#FFFFFF" stroke="#171717" stroke-width="1.4"/>
+            <rect x="11" y="13" width="72" height="13" rx="6.5" fill="none" stroke="#A3A3A3" stroke-width="1.2"/>
+            <g fill="#171717">
+              <circle cx="99" cy="14.5" r="1.7"/>
+              <circle cx="99" cy="19.5" r="1.7"/>
+              <circle cx="99" cy="24.5" r="1.7"/>
+            </g>
+            <rect x="34" y="32" width="76" height="118" rx="5" fill="#FFFFFF" stroke="#171717" stroke-width="1.2"/>
+            <g fill="#E5E5E5">
+              <rect x="41" y="41" width="52" height="6" rx="3"/>
+              <rect x="41" y="54" width="44" height="6" rx="3"/>
+              <rect x="41" y="67" width="50" height="6" rx="3"/>
+            </g>
+            <rect x="38" y="78" width="68" height="32" rx="4" fill="#EAF7FB" stroke="#6CCBE6" stroke-width="1.8"/>
+            <text x="72" y="88" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7.5" font-weight="700" fill="#171717">Installer et</text>
+            <text x="72" y="97" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7.5" font-weight="700" fill="#171717">créer un</text>
+            <text x="72" y="106" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7.5" font-weight="700" fill="#171717">raccourci</text>
+            <g fill="#E5E5E5">
+              <rect x="41" y="118" width="48" height="6" rx="3"/>
+              <rect x="41" y="131" width="54" height="6" rx="3"/>
+            </g>
+          </svg>
+          <figcaption>Étape 3</figcaption>
+        </figure>
+
+        <!-- Schéma C : la fenêtre de confirmation -->
+        <figure class="schema">
+          <svg viewBox="0 0 118 186" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schéma : la fenêtre proposant Installer ou Créer un raccourci">
+            <rect x="3" y="3" width="112" height="180" rx="10" fill="#FFFFFF" stroke="#171717" stroke-width="1.4"/>
+            <rect x="11" y="13" width="72" height="13" rx="6.5" fill="none" stroke="#A3A3A3" stroke-width="1.2"/>
+            <g fill="#E5E5E5">
+              <rect x="11" y="40" width="96" height="7" rx="3.5"/>
+              <rect x="11" y="53" width="70" height="7" rx="3.5"/>
+              <rect x="11" y="140" width="96" height="7" rx="3.5"/>
+              <rect x="11" y="153" width="78" height="7" rx="3.5"/>
+            </g>
+            <rect x="14" y="70" width="90" height="58" rx="5" fill="#FFFFFF" stroke="#171717" stroke-width="1.2"/>
+            <rect x="21" y="80" width="52" height="6" rx="3" fill="#E5E5E5"/>
+            <rect x="21.5" y="93" width="75" height="14" rx="3.5" fill="#EAF7FB" stroke="#6CCBE6" stroke-width="1.8"/>
+            <text x="59" y="102.4" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7.5" font-weight="700" fill="#171717">Installer</text>
+            <rect x="21.5" y="110" width="75" height="14" rx="3.5" fill="#EAF7FB" stroke="#6CCBE6" stroke-width="1.8"/>
+            <text x="59" y="119.4" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="7" font-weight="700" fill="#171717">Créer un raccourci</text>
+          </svg>
+          <figcaption>Étapes 3 et 4</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== ÉTAPE 5 =================== -->
+<section class="page">
+  <div class="step-head">
+    <div class="step-head__num">6</div>
+    <div class="step-head__txt">
+      <h1>Si quelque chose bloque</h1>
+    </div>
+  </div>
+
+  <div class="faq">
+    <p class="faq__q">Mon téléphone affiche un message qui parle de sécurité.</p>
+    <p class="faq__a">
+      Ce n'est pas un virus, et ce n'est pas l'appli du club. Certains téléphones, les
+      Samsung en particulier, fabriquent mal le raccourci et Android s'en méfie. Ferme le
+      message, puis recommence depuis Chrome en suivant la section 2. N'appuie pas sur
+      Installer quand même : ce n'est pas nécessaire ici, et ce n'est pas un réflexe à
+      prendre.
+    </p>
+
+    <p class="faq__q">Je ne trouve pas Installer dans le menu.</p>
+    <p class="faq__a">
+      Deux raisons possibles. Soit tu n'as pas encore assez utilisé l'appli, laisse-lui
+      trente secondes. Soit ton téléphone ne le propose pas. Dans ce cas, au même endroit
+      dans les trois petits points, choisis <strong>Créer un raccourci</strong> puis
+      <strong>Ajouter</strong>. Tu obtiens la même icône sur ton écran d'accueil, ça
+      fonctionne sur tous les téléphones, et aucun message n'apparaît.
+    </p>
+
+    <p class="faq__q">Je ne veux rien installer du tout.</p>
+    <p class="faq__a">
+      Aucun souci, et c'est même le plus simple. Mets la page en favori avec l'étoile de
+      ton navigateur. Tu retrouveras le club dans tes favoris, et tout fonctionne
+      exactement pareil.
+    </p>
+
+    <p class="faq__q">L'appli me redemande mes identifiants.</p>
+    <p class="faq__a">
+      Ce sont l'e-mail et le mot de passe choisis à l'inscription. Pas le code
+      d'invitation : il ne sert qu'une fois, au moment de créer ton compte.
+    </p>
+
+    <p class="faq__q">Rien de tout ça ne marche.</p>
+    <p class="faq__a">
+      Fais une photo de l'écran qui bloque et envoie-la dans le groupe du club, en
+      précisant la marque de ton téléphone. On regarde ensemble, c'est souvent réglé en
+      deux minutes.
+    </p>
+  </div>
+
+  <div class="end">
+    <p>
+      Une page d'aide à l'installation est aussi consultable à tout moment sur
+      <span class="end__url">narbo-nordik.vercel.app/installer</span>
+    </p>
+  </div>
+</section>
+
+</body>
+</html>

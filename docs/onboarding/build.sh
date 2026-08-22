@@ -35,6 +35,12 @@ sed "s/{{CODE_INVITATION}}/$CODE_INVITATION/g" guide-demarrage-athlete.html > .g
   --print-to-pdf=guide-demarrage-athlete.pdf .guide.tmp.html 2>/dev/null
 rm -f .guide.tmp.html
 
+sed "s/{{CODE_INVITATION}}/$CODE_INVITATION/g" guide-installation-app.html > .guide-installation.tmp.html
+"$CHROME" --headless --disable-gpu --no-pdf-header-footer --allow-file-access-from-files \
+  --print-to-pdf=guide-installation-app.pdf .guide-installation.tmp.html 2>/dev/null
+rm -f .guide-installation.tmp.html
+
 echo "Généré :"
 echo "  guide-demarrage-athlete.pdf"
+echo "  guide-installation-app.pdf"
 echo "  message-whatsapp-invitation.txt"
