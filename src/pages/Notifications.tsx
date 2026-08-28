@@ -1,10 +1,10 @@
-import { useEffect, useRef, useCallback, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bell, CalendarPlus, Trophy, TrendingUp, Mail, Info, Heart, CheckCheck, UserPlus, Gauge } from 'lucide-react';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
-import { EmptyState } from '../components/ui';
+import { Disclosure, EmptyState } from '../components/ui';
 import type { AppNotification } from '../types';
 
 // Type de retour explicite : un `case` manquant devient une erreur de compilation
@@ -43,49 +43,67 @@ function groupByDay(notifications: AppNotification[]) {
   return groups;
 }
 
+function NotificationList({
+  notifications,
+  onOpen,
+}: {
+  notifications: AppNotification[];
+  onOpen: (notif: AppNotification) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {groupByDay(notifications).map(group => (
+        <div key={group.date}>
+          <p className="text-xs font-bold text-neutral-400 uppercase mb-2">
+            {formatGroupDate(group.items[0].created_at)}
+          </p>
+          <div className="space-y-2">
+            {group.items.map(notif => (
+              <div
+                key={notif.id}
+                onClick={() => onOpen(notif)}
+                className="flex items-start gap-3 bg-white rounded-xl border border-neutral-100 p-3.5 transition-colors cursor-pointer hover:bg-neutral-50"
+              >
+                <div className="mt-0.5 relative">
+                  {getNotifIcon(notif.type)}
+                  {!notif.read && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm ${notif.read ? 'text-neutral-600' : 'text-neutral-900 font-semibold'}`}>
+                    {notif.title}
+                  </p>
+                  {notif.body && (
+                    <p className="text-xs text-neutral-400 mt-0.5 truncate">{notif.body}</p>
+                  )}
+                </div>
+                <span className="text-xs text-neutral-300 whitespace-nowrap mt-0.5">
+                  {format(new Date(notif.created_at), 'HH:mm')}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Notifications() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useInAppNotifications();
   const navigate = useNavigate();
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  const handleIntersect = useCallback((entries: IntersectionObserverEntry[]) => {
-    for (const entry of entries) {
-      const id = entry.target.getAttribute('data-notif-id');
-      if (!id) continue;
-      if (entry.isIntersecting) {
-        if (!timersRef.current.has(id)) {
-          timersRef.current.set(id, setTimeout(() => {
-            markAsRead(id);
-            timersRef.current.delete(id);
-          }, 1000));
-        }
-      } else {
-        const timer = timersRef.current.get(id);
-        if (timer) {
-          clearTimeout(timer);
-          timersRef.current.delete(id);
-        }
-      }
-    }
-  }, [markAsRead]);
+  // La page est une liste de choses a traiter (demande du coach David) : une
+  // notification traitee sort de la liste principale et rejoint le bloc
+  // "Deja lues", qui garde l'historique consultable sans encombrer.
+  const unread = notifications.filter(n => !n.read);
+  const alreadyRead = notifications.filter(n => n.read);
 
-  useEffect(() => {
-    observerRef.current = new IntersectionObserver(handleIntersect, { threshold: 0.5 });
-    const timers = timersRef.current;
-    return () => {
-      observerRef.current?.disconnect();
-      timers.forEach(t => clearTimeout(t));
-      timers.clear();
-    };
-  }, [handleIntersect]);
-
-  const setItemRef = useCallback((el: HTMLDivElement | null, notif: AppNotification) => {
-    if (!el || notif.read) return;
-    observerRef.current?.observe(el);
-  }, []);
-
-  const grouped = groupByDay(notifications);
+  const openNotification = (notif: AppNotification) => {
+    if (!notif.read) markAsRead(notif.id);
+    if (notif.link) navigate(notif.link);
+  };
 
   return (
     <div className="py-4 space-y-4">
@@ -110,53 +128,24 @@ export default function Notifications() {
         )}
       </div>
 
-      {notifications.length === 0 ? (
+      {unread.length === 0 ? (
         <EmptyState
           icon={<Bell size={28} />}
           title="Tout est calme"
-          description="Tu seras notifié·e dès qu'une séance arrive ou qu'un athlète interagit avec toi."
+          description={
+            alreadyRead.length > 0
+              ? 'Tu as traité toutes tes notifications.'
+              : 'Tu seras notifié·e dès qu\'une séance arrive ou qu\'un athlète interagit avec toi.'
+          }
         />
       ) : (
-        <div className="space-y-4">
-          {grouped.map(group => (
-            <div key={group.date}>
-              <p className="text-xs font-bold text-neutral-400 uppercase mb-2">
-                {formatGroupDate(group.items[0].created_at)}
-              </p>
-              <div className="space-y-2">
-                {group.items.map(notif => (
-                  <div
-                    key={notif.id}
-                    ref={el => setItemRef(el, notif)}
-                    data-notif-id={notif.id}
-                    onClick={() => notif.link && navigate(notif.link)}
-                    className={`flex items-start gap-3 bg-white rounded-xl border border-neutral-100 p-3.5 transition-colors ${
-                      notif.link ? 'cursor-pointer hover:bg-neutral-50' : ''
-                    }`}
-                  >
-                    <div className="mt-0.5 relative">
-                      {getNotifIcon(notif.type)}
-                      {!notif.read && (
-                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm ${notif.read ? 'text-neutral-600' : 'text-neutral-900 font-semibold'}`}>
-                        {notif.title}
-                      </p>
-                      {notif.body && (
-                        <p className="text-xs text-neutral-400 mt-0.5 truncate">{notif.body}</p>
-                      )}
-                    </div>
-                    <span className="text-xs text-neutral-300 whitespace-nowrap mt-0.5">
-                      {format(new Date(notif.created_at), 'HH:mm')}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        <NotificationList notifications={unread} onOpen={openNotification} />
+      )}
+
+      {alreadyRead.length > 0 && (
+        <Disclosure title={`Déjà lues (${alreadyRead.length})`} headingLevel={2}>
+          <NotificationList notifications={alreadyRead} onOpen={openNotification} />
+        </Disclosure>
       )}
     </div>
   );
