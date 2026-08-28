@@ -184,7 +184,7 @@ Deno.test('buildBoardEmailHtml: echappe le nom et ne contient jamais le contenu 
   assert(!html.includes('<img src=x onerror=alert(1)>'));
   assert(!html.includes('&lt;img src=x onerror=alert(1)&gt;'));
   assertStringIncludes(html, '&#39;Brien');
-  assertStringIncludes(html, 'À faire : valider le dossier et confirmer le règlement.');
+  assertStringIncludes(html, 'À faire : confirmer le règlement (total ou partiel), puis valider le dossier.');
 });
 
 Deno.test('buildBoardEmailHtml: notes non vides -> ligne de renvoi sans le texte des notes', () => {

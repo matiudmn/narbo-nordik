@@ -307,7 +307,7 @@ export function buildBoardEmailHtml(member: MemberRecord, season: MembershipSeas
 
   const body = `
     <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">${rows.join('')}</table>
-    <p style="margin:0;color:#111827;font-size:14px;font-weight:600;">À faire : valider le dossier et confirmer le règlement.</p>`;
+    <p style="margin:0;color:#111827;font-size:14px;font-weight:600;">À faire : confirmer le règlement (total ou partiel), puis valider le dossier.</p>`;
 
   return htmlShell("Nouvelle demande d'adhésion", 560, body);
 }
