@@ -47,6 +47,7 @@ export default function Notifications() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useInAppNotifications();
   const navigate = useNavigate();
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const pendingRef = useRef<Set<Element>>(new Set());
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const handleIntersect = useCallback((entries: IntersectionObserverEntry[]) => {
@@ -58,6 +59,7 @@ export default function Notifications() {
           timersRef.current.set(id, setTimeout(() => {
             markAsRead(id);
             timersRef.current.delete(id);
+            observerRef.current?.unobserve(entry.target);
           }, 1000));
         }
       } else {
@@ -71,10 +73,20 @@ export default function Notifications() {
   }, [markAsRead]);
 
   useEffect(() => {
-    observerRef.current = new IntersectionObserver(handleIntersect, { threshold: 0.5 });
+    const observer = new IntersectionObserver(handleIntersect, { threshold: 0.5 });
+    observerRef.current = observer;
+    // React attache les refs AVANT de lancer les effets. Les cartes déjà
+    // rendues au premier commit (cas courant : le provider a chargé les
+    // notifications avant l'ouverture de la page) n'ont donc trouvé aucun
+    // observateur et se sont mises en attente ici. Sans ce rattrapage, elles
+    // ne sont jamais observées, donc jamais marquées comme lues : le coach
+    // consulte ses notifications et elles restent en gras avec leur pastille.
+    pendingRef.current.forEach(el => observer.observe(el));
+    pendingRef.current.clear();
     const timers = timersRef.current;
     return () => {
-      observerRef.current?.disconnect();
+      observer.disconnect();
+      observerRef.current = null;
       timers.forEach(t => clearTimeout(t));
       timers.clear();
     };
@@ -82,7 +94,8 @@ export default function Notifications() {
 
   const setItemRef = useCallback((el: HTMLDivElement | null, notif: AppNotification) => {
     if (!el || notif.read) return;
-    observerRef.current?.observe(el);
+    if (observerRef.current) observerRef.current.observe(el);
+    else pendingRef.current.add(el);
   }, []);
 
   const grouped = groupByDay(notifications);
@@ -129,7 +142,12 @@ export default function Notifications() {
                     key={notif.id}
                     ref={el => setItemRef(el, notif)}
                     data-notif-id={notif.id}
-                    onClick={() => notif.link && navigate(notif.link)}
+                    onClick={() => {
+                      // Ouvrir une notification vaut lecture : sans cela, celle
+                      // sur laquelle on part traiter l'athlète revient non lue.
+                      if (!notif.read) markAsRead(notif.id);
+                      if (notif.link) navigate(notif.link);
+                    }}
                     className={`flex items-start gap-3 bg-white rounded-xl border border-neutral-100 p-3.5 transition-colors ${
                       notif.link ? 'cursor-pointer hover:bg-neutral-50' : ''
                     }`}
