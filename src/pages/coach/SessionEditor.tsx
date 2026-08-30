@@ -38,9 +38,17 @@ function makeBlock(type: BlockType, allure: AllureZone, durationSec: number, rep
   return { id: genBlockId(), type, allure, duration_seconds: durationSec, distance_meters: distanceMeters, repetitions: reps, rest_seconds: restSec, rest_distance_meters: restDistanceMeters };
 }
 
+function chipClass(
+  active: boolean,
+  activeClasses = 'bg-primary text-white border-primary',
+  inactiveClasses = 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50',
+): string {
+  return `px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${active ? activeClasses : inactiveClasses}`;
+}
+
 export default function SessionEditor() {
   const { user } = useAuth();
-  const { sessions, groups, users, preparations, addSession, updateSession, deleteSession, clubSettings } = useData();
+  const { sessions, groups, users, preparations, addSessionsBulk, updateSession, deleteSession, clubSettings } = useData();
   const allureZones = getAllureZones(clubSettings?.allure_zones);
   const [weekOffset, setWeekOffset] = useState(0);
   const [showForm, setShowForm] = useState(false);
@@ -56,7 +64,11 @@ export default function SessionEditor() {
   // Form state
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
-  const [groupId, setGroupId] = useState<string>('');
+  // Groupes ciblés. Vide = séance globale (« Tous », group_id null). En
+  // création, plusieurs groupes = une séance créée par groupe (même pattern
+  // que QuickAddSession). En édition, la séance existante ne porte qu'un
+  // group_id : la sélection reste mono.
+  const [groupIds, setGroupIds] = useState<string[]>([]);
   const [preparationId, setPreparationId] = useState<string>('');
   const [sessionType, setSessionType] = useState<SessionType>('entrainement');
   const [terrainOptions, setTerrainOptions] = useState<TerrainOption[]>([]);
@@ -70,8 +82,8 @@ export default function SessionEditor() {
   // Autosave : ne s'applique qu'aux créations (pas aux éditions, pour ne pas
   // écraser une session existante par accident en cas de refresh).
   const draftSnapshot = useMemo(
-    () => ({ title, date, groupId, preparationId, sessionType, terrainOptions, location, description, sessionRpe, blocks }),
-    [title, date, groupId, preparationId, sessionType, terrainOptions, location, description, sessionRpe, blocks]
+    () => ({ title, date, groupIds, preparationId, sessionType, terrainOptions, location, description, sessionRpe, blocks }),
+    [title, date, groupIds, preparationId, sessionType, terrainOptions, location, description, sessionRpe, blocks]
   );
   const autosaveKey = editingSessionId ?? 'new';
   const { pendingDraft, dismissPendingDraft, clearDraft, savedAt } = useSessionAutosave(
@@ -95,11 +107,11 @@ export default function SessionEditor() {
 
   // Audiences reellement presentes cette semaine (pour ne proposer que des choix pertinents).
   const weekAudiences = useMemo(() => {
-    const groupIds = new Set(weekSessions.filter(s => s.group_id).map(s => s.group_id as string));
+    const weekGroupIds = new Set(weekSessions.filter(s => s.group_id).map(s => s.group_id as string));
     const prepIds = new Set(weekSessions.filter(s => s.preparation_id).map(s => s.preparation_id as string));
     return [
       { value: 'all', label: 'Toutes' },
-      ...groups.filter(g => groupIds.has(g.id)).map(g => ({ value: `group:${g.id}`, label: g.name })),
+      ...groups.filter(g => weekGroupIds.has(g.id)).map(g => ({ value: `group:${g.id}`, label: g.name })),
       ...preparations.filter(p => prepIds.has(p.id)).map(p => ({ value: `prep:${p.id}`, label: p.name })),
     ];
   }, [weekSessions, groups, preparations]);
@@ -117,7 +129,7 @@ export default function SessionEditor() {
   const previewUser = previewUserId ? allMembers.find(u => u.id === previewUserId) : null;
 
   const resetForm = () => {
-    setTitle(''); setDate(''); setGroupId(''); setLocation('');
+    setTitle(''); setDate(''); setGroupIds([]); setLocation('');
     setSessionType('entrainement'); setTerrainOptions([]);
     setDescription(''); setSessionRpe(''); setBlocks([]); setPreviewUserId(null);
     setEditingSessionId(null);
@@ -154,7 +166,7 @@ export default function SessionEditor() {
     setSessionRpe('');
     setBlocks(draft.blocks);
     setDate('');
-    setGroupId('');
+    setGroupIds([]);
     setPreparationId('');
     setPreviewUserId(null);
     setEditingSessionId(null);
@@ -202,6 +214,11 @@ export default function SessionEditor() {
 
   const [submitting, setSubmitting] = useState(false);
 
+  // Cibles de la publication : les groupes cochés, ou [null] pour une séance
+  // globale (« Tous ») comme pour une séance de prépa.
+  const targetGroupIds: (string | null)[] =
+    preparationId || groupIds.length === 0 ? [null] : groupIds;
+
   const handleSubmit = async () => {
     if (!title || !date || !user || submitting) return;
     setSubmitting(true);
@@ -211,19 +228,19 @@ export default function SessionEditor() {
           date: new Date(date).toISOString(),
           session_type: sessionType,
           terrain_options: terrainOptions,
-          group_id: preparationId ? null : (groupId || null),
+          group_id: preparationId ? null : (groupIds[0] || null),
           preparation_id: preparationId || null,
           location: location || null,
           description: description || null,
           session_rpe: sessionRpe ? parseInt(sessionRpe) : null,
           blocks,
         })
-      : await addSession({
+      : await addSessionsBulk(targetGroupIds.map(gid => ({
           title,
           date: new Date(date).toISOString(),
           session_type: sessionType,
           terrain_options: terrainOptions,
-          group_id: preparationId ? null : (groupId || null),
+          group_id: gid,
           preparation_id: preparationId || null,
           location: location || null,
           location_url: null,
@@ -235,11 +252,14 @@ export default function SessionEditor() {
           created_by: user.id,
           is_personal: false,
           blocks,
-        });
+        })));
     setSubmitting(false);
     if ('error' in res && res.error) {
       toast.error(`Échec de l'enregistrement : ${res.error}`);
       return;
+    }
+    if ('created' in res && res.created > 1) {
+      toast.success(`${res.created} séances créées, une par groupe.`);
     }
     clearDraft();
     resetForm();
@@ -251,7 +271,7 @@ export default function SessionEditor() {
     const d = new Date(s.date);
     const pad = (n: number) => String(n).padStart(2, '0');
     setDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
-    setGroupId(s.group_id || '');
+    setGroupIds(s.group_id ? [s.group_id] : []);
     setPreparationId(s.preparation_id || '');
     setSessionType(s.session_type);
     setTerrainOptions(s.terrain_options || []);
@@ -352,7 +372,10 @@ export default function SessionEditor() {
               onClick={() => {
                 if (pendingDraft.title) setTitle(pendingDraft.title);
                 if (pendingDraft.date) setDate(pendingDraft.date);
-                if (pendingDraft.groupId) setGroupId(pendingDraft.groupId);
+                // Brouillon d'avant le multi-groupes : champ singulier groupId.
+                const legacyGroupId = (pendingDraft as { groupId?: string }).groupId;
+                if (pendingDraft.groupIds?.length) setGroupIds(pendingDraft.groupIds);
+                else if (legacyGroupId) setGroupIds([legacyGroupId]);
                 if (pendingDraft.preparationId) setPreparationId(pendingDraft.preparationId);
                 if (pendingDraft.sessionType) setSessionType(pendingDraft.sessionType);
                 if (pendingDraft.terrainOptions) setTerrainOptions(pendingDraft.terrainOptions);
@@ -396,35 +419,67 @@ export default function SessionEditor() {
             className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
 
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="datetime-local" value={date} onChange={e => setDate(e.target.value)}
-              className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-            <select
-              value={preparationId ? `prep:${preparationId}` : groupId}
-              onChange={e => {
-                const v = e.target.value;
-                if (v.startsWith('prep:')) {
-                  setPreparationId(v.replace('prep:', ''));
-                  setGroupId('');
-                } else {
-                  setGroupId(v);
-                  setPreparationId('');
-                }
-              }}
-              className="px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              <option value="">Tous les groupes</option>
-              {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-              {preparations.length > 0 && <option disabled>───── Prép. spécifiques ─────</option>}
-              {preparations.map(p => <option key={p.id} value={`prep:${p.id}`}>{p.name}</option>)}
-            </select>
-          </div>
-          <div className="flex justify-end -mt-1">
-            <Link to="/coach/settings?tab=preparations" className="text-xs text-primary hover:underline flex items-center gap-1">
-              <Plus size={12} /> Créer une prépa spécifique
-            </Link>
+          <input
+            type="datetime-local" value={date} onChange={e => setDate(e.target.value)}
+            className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+
+          {/* Cible : « Tous » (exclusif), groupes (multi en création, mono en
+              édition), prépas (exclusives). Même pattern que QuickAddSession :
+              en création, un groupe coché = une séance créée pour ce groupe. */}
+          <div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => { setGroupIds([]); setPreparationId(''); }}
+                className={chipClass(!preparationId && groupIds.length === 0)}
+              >
+                Tous les groupes
+              </button>
+              {groups.map(g => {
+                const active = groupIds.includes(g.id);
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => {
+                      setPreparationId('');
+                      // En édition, la séance ne porte qu'un group_id : mono.
+                      if (editingSessionId) setGroupIds(active ? [] : [g.id]);
+                      else setGroupIds(prev => active ? prev.filter(id => id !== g.id) : [...prev, g.id]);
+                    }}
+                    className={chipClass(active)}
+                  >
+                    {g.name}
+                  </button>
+                );
+              })}
+              {preparations.map(p => {
+                const active = preparationId === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => { setGroupIds([]); setPreparationId(active ? '' : p.id); }}
+                    className={chipClass(active, 'bg-warning-500 text-white border-warning-500', 'bg-white text-warning-600 border-warning-100 hover:bg-warning-50')}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between mt-1.5 gap-2">
+              <p className="text-xs text-neutral-400">
+                {editingSessionId
+                  ? 'En modification, une séance ne vise qu\'un groupe. Passe par Dupliquer pour un autre groupe.'
+                  : groupIds.length > 1
+                    ? `${groupIds.length} groupes cochés : une séance sera créée pour chacun.`
+                    : 'Coche plusieurs groupes pour publier la même séance à chacun.'}
+              </p>
+              <Link to="/coach/settings?tab=preparations" className="text-xs text-primary hover:underline flex items-center gap-1 whitespace-nowrap">
+                <Plus size={12} /> Créer une prépa spécifique
+              </Link>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -580,7 +635,11 @@ export default function SessionEditor() {
               loading={submitting}
               onClick={handleSubmit}
             >
-              {editingSessionId ? 'Enregistrer les modifications' : 'Publier la séance au club'}
+              {editingSessionId
+                ? 'Enregistrer les modifications'
+                : targetGroupIds.length > 1
+                  ? `Publier ${targetGroupIds.length} séances (une par groupe)`
+                  : 'Publier la séance au club'}
             </Button>
             {!editingSessionId && blocks.length > 0 && (
               <button
