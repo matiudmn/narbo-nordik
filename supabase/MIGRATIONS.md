@@ -95,9 +95,9 @@ désormais l'historique réel et reconstruit la base complète.
 
 > **État des fonctions Edge au 2026-08-31** (`supabase functions list` puis
 > `functions download --use-api`, source comparée octet pour octet) : **neuf
-> fonctions dans le dépôt, huit en prod, et les huit alignées** au moment du
-> contrôle. Le correctif reply-to du même jour (bloc suivant) a rouvert un
-> écart sur trois d'entre elles.
+> fonctions dans le dépôt, huit en prod, et les huit alignées**. Le correctif
+> reply-to du même jour (bloc suivant) a rouvert un écart sur trois d'entre
+> elles, refermé le jour même par un redéploiement.
 >
 > - Les huit fonctions en ligne ont été **redéployées le 2026-08-31**, source
 >   identique au dépôt, toutes recompilées avec `supabase-js` 2.112.4 :
@@ -138,11 +138,19 @@ désormais l'historique réel et reconstruit la base complète.
 > sans rebond visible côté club. Adresse **provisoire** : la boîte Gmail du
 > club, à remplacer par `contact@narbo-nordik-club.com` dès sa création (le
 > domaine est chez Hostinger, sans MX ni commande mail au 2026-08-31).
-> **Redéploiement manuel requis** pour que le correctif existe en prod
-> (`supabase functions deploy <nom>`), aucune CI ne le fait :
-> `membership-notify` (v7), `send-notification-email` (v7) et `weekly-digest`
-> (v8) restent sur l'ancien bundle tant qu'il n'est pas fait ;
-> `daily-session-digest` n'est pas déployée et reste dormante.
+> **Déployé en prod le 2026-08-31** (PR #136 mergée, puis `supabase functions
+> deploy` à la main, aucune CI ne le fait) : `membership-notify` **v8**,
+> `send-notification-email` **v8**, `weekly-digest` **v9**. Contrôles faits
+> **avant** (prod téléchargée dans un dossier jetable : seul écart, le
+> correctif lui-même, `lib.ts` de `membership-notify` identique) et **après**
+> (re-téléchargement, source identique au dépôt octet pour octet sur les
+> quatre fichiers, `reply_to` bien présent, et appel anon des trois fonctions
+> qui répond `403 {"error":"Forbidden"}`, preuve que les bundles démarrent).
+> `daily-session-digest` porte le correctif au dépôt mais reste **non
+> déployée** et dormante. **Non vérifié** : aucun e-mail réel n'a été
+> déclenché, l'en-tête `Reply-To` reçu côté boîte du club n'est donc pas
+> constaté (le seul test de bout en bout envoie deux e-mails réels au
+> bureau).
 
 > **État réel en prod** (revérifié en base le 2026-08-11 puis le 2026-08-19 via
 > `supabase_migrations.schema_migrations`) : **les entrées jusqu'à la 42 sont
