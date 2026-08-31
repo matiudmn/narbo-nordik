@@ -27,8 +27,13 @@ jobs:
 
       # Tests Deno des fonctions Edge : hors du périmètre vitest (include limité
       # à src/**), ils ne tournaient jusqu'ici qu'à la main.
+      # --frozen ne bloque rien en l'état (mesuré le 2026-08-30) : sans deno.json,
+      # il n'a aucun graphe de dépendances déclaré à figer, et les imports HTTPS
+      # des fonctions lui échappent. Gardé parce qu'il deviendra utile si un
+      # deno.json arrive. La vraie protection est le deno.lock lui-même : une
+      # empreinte qui ne correspond plus fait échouer le run, drapeau ou pas.
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-      - run: deno test --no-check supabase/functions/
+      - run: deno test --no-check --frozen supabase/functions/
       - run: npm run build
