@@ -95,32 +95,36 @@ désormais l'historique réel et reconstruit la base complète.
 
 > **État des fonctions Edge au 2026-08-31** (`supabase functions list` puis
 > `functions download --use-api`, source comparée octet pour octet) : **neuf
-> fonctions dans le dépôt, huit en prod**.
+> fonctions dans le dépôt, huit en prod, et les huit alignées**.
 >
-> - `membership-notify` : **v7**, alignée sur le dépôt, recompilée avec
->   `supabase-js` 2.112.4.
-> - **Sept fonctions déployées mais pas encore redéployées** depuis le bump du
->   pin : `ai-coach-summary`, `ai-ocr`, `ai-search-filters`,
->   `analyze-validation`, `delete-account`, `send-notification-email`,
->   `weekly-digest`. Chacune tourne sur la résolution de `@2` figée à son
->   dernier déploiement. **Quatre ont en plus du retard de source**, le dépôt
->   étant en avance (jamais l'inverse, donc un `functions deploy` rattrape sans
->   rien écraser) : `send-notification-email` (le libellé
->   `new_athlete: 'Nouvel athlète'` manque en prod, ces notifications sortent
->   donc sans libellé) et `ai-coach-summary` / `ai-ocr` / `ai-search-filters`
->   (logs structurés JSON, la prod est restée aux `console.error` bruts).
-> - `daily-session-digest` : **jamais déployée** (404 sur `functions download`)
->   et **aucun cron ne l'appelle** (`cron.job` ne contient que
->   `cleanup-expired-preparations`, `vma-missing-reminder` et
->   `weekly-digest-monday`), alors que son en-tête annonce « Appelant :
->   uniquement le cron pg_cron 'daily-session-digest' ». **Laissée dormante,
->   décision du 2026-08-31** : la déployer ne l'activerait pas, et la ferait
->   passer pour vivante dans `functions list`. L'activer suppose de créer le
->   cron, c'est une décision produit (e-mails quotidiens aux athlètes), pas une
->   remise à niveau technique.
+> - Les huit fonctions en ligne ont été **redéployées le 2026-08-31**, source
+>   identique au dépôt, toutes recompilées avec `supabase-js` 2.112.4 :
+>   `membership-notify` v7, `send-notification-email` v7, `weekly-digest` v8,
+>   `ai-coach-summary` v6, `ai-ocr` v5, `ai-search-filters` v5,
+>   `analyze-validation` v3, `delete-account` v4.
+> - Ce redéploiement a **rattrapé quatre retards de source** que le contrôle de
+>   parité avait révélés, le dépôt étant en avance et jamais l'inverse :
+>   `send-notification-email` n'avait pas en prod le libellé
+>   `new_athlete: 'Nouvel athlète'`, ces notifications sortaient donc sans
+>   libellé depuis le 2026-08-10 ; `ai-coach-summary`, `ai-ocr` et
+>   `ai-search-filters` étaient restées aux `console.error` bruts au lieu des
+>   logs structurés JSON.
+> - `daily-session-digest` : **jamais déployée** (404 sur `functions download`,
+>   revérifié après le redéploiement des autres) et **aucun cron ne l'appelle**
+>   (`cron.job` ne contient que `cleanup-expired-preparations`,
+>   `vma-missing-reminder` et `weekly-digest-monday`), alors que son en-tête
+>   annonce « Appelant : uniquement le cron pg_cron 'daily-session-digest' ».
+>   **Laissée dormante, décision du 2026-08-31** : la déployer ne l'activerait
+>   pas, et la ferait passer pour vivante dans `functions list`. L'activer
+>   suppose de créer le cron, c'est une décision produit (e-mails quotidiens aux
+>   athlètes), pas une remise à niveau technique.
+> - Piège de comparaison : le bundle déployé ne contient que ce qui est
+>   atteignable depuis `index.ts`. `index.test.ts` reste au dépôt, donc un
+>   `diff -r` de dossier signale un écart qui n'en est pas un sur
+>   `membership-notify` : comparer `index.ts` et `lib.ts` fichier par fichier.
 >
 > **Comparer la source avant tout déploiement** : c'est ce contrôle, et lui
-> seul, qui a fait apparaître ces cinq écarts.
+> seul, qui a fait apparaître ces écarts.
 
 > **État réel en prod** (revérifié en base le 2026-08-11 puis le 2026-08-19 via
 > `supabase_migrations.schema_migrations`) : **les entrées jusqu'à la 42 sont
