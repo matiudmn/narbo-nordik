@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, X } from 'lucide-react';
 import { Button, Card } from './ui';
+import { useAuth } from '../contexts/AuthContext';
 import { isStandaloneDisplay } from '../lib/shareExport';
 import { isMobileDevice, isSamsungBrowser } from '../lib/platform';
 
@@ -10,38 +11,56 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+const DISMISSED_KEY = 'pwa_install_dismissed';
+
 export default function InstallPrompt() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(() => !!sessionStorage.getItem('pwa_install_dismissed'));
+  const [installed, setInstalled] = useState(false);
+  const [dismissed, setDismissed] = useState(() => !!localStorage.getItem(DISMISSED_KEY));
 
   useEffect(() => {
-    if (dismissed) return;
-
-    const handler = (e: Event) => {
+    const onBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
+    // `appinstalled` est le seul signal fiable d'une installation réussie : la
+    // fenêtre courante reste un onglet de navigateur, donc `display-mode:
+    // standalone` n'y bascule jamais et le bandeau resterait affiché.
+    const onInstalled = () => setInstalled(true);
 
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, [dismissed]);
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, []);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    // Un événement `beforeinstallprompt` ne se consomme qu'une fois : on lâche
+    // la référence avant l'appel, sinon un second appui rejette en
+    // InvalidStateError et il ne se passe rien à l'écran.
+    const promptEvent = deferredPrompt;
+    setDeferredPrompt(null);
+    await promptEvent.prompt();
+    const { outcome } = await promptEvent.userChoice;
     if (outcome === 'accepted') {
-      setDeferredPrompt(null);
+      setInstalled(true);
     }
   };
 
   const handleDismiss = () => {
     setDismissed(true);
-    sessionStorage.setItem('pwa_install_dismissed', '1');
+    localStorage.setItem(DISMISSED_KEY, '1');
   };
 
-  if (dismissed || isStandaloneDisplay() || !isMobileDevice()) return null;
+  // Pas de bandeau tant que le membre n'est pas connecté : sur l'écran de
+  // connexion il concurrencerait le bouton Rejoindre Narbo Nordik, alors que
+  // l'inscription passe avant tout le reste.
+  if (!user || dismissed || installed || isStandaloneDisplay() || !isMobileDevice()) return null;
 
   // Samsung Browser émet bien `beforeinstallprompt`, mais son installation est
   // rejetée par Play Protect avec un avertissement de sécurité. Lui proposer le
