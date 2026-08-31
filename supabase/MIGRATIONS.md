@@ -95,7 +95,9 @@ désormais l'historique réel et reconstruit la base complète.
 
 > **État des fonctions Edge au 2026-08-31** (`supabase functions list` puis
 > `functions download --use-api`, source comparée octet pour octet) : **neuf
-> fonctions dans le dépôt, huit en prod, et les huit alignées**.
+> fonctions dans le dépôt, huit en prod, et les huit alignées** au moment du
+> contrôle. Le correctif reply-to du même jour (bloc suivant) a rouvert un
+> écart sur trois d'entre elles.
 >
 > - Les huit fonctions en ligne ont été **redéployées le 2026-08-31**, source
 >   identique au dépôt, toutes recompilées avec `supabase-js` 2.112.4 :
@@ -125,6 +127,22 @@ désormais l'historique réel et reconstruit la base complète.
 >
 > **Comparer la source avant tout déploiement** : c'est ce contrôle, et lui
 > seul, qui a fait apparaître ces écarts.
+
+> **Correctif reply-to du 2026-08-31, dépôt en avance sur la prod** : les quatre
+> fonctions qui envoient des e-mails (`membership-notify`,
+> `send-notification-email`, `weekly-digest`, `daily-session-digest`) posent
+> désormais `reply_to: narbo.nordik.club@gmail.com` dans l'appel Resend.
+> `club@2nc.fr` n'est qu'une **identité d'envoi** : le DNS du domaine ne porte
+> que le DKIM Resend et le sous-domaine `send` (SPF + MX de bounce), **aucun MX
+> sur la racine**, donc toute réponse d'un adhérent à ces e-mails se perdait,
+> sans rebond visible côté club. Adresse **provisoire** : la boîte Gmail du
+> club, à remplacer par `contact@narbo-nordik-club.com` dès sa création (le
+> domaine est chez Hostinger, sans MX ni commande mail au 2026-08-31).
+> **Redéploiement manuel requis** pour que le correctif existe en prod
+> (`supabase functions deploy <nom>`), aucune CI ne le fait :
+> `membership-notify` (v7), `send-notification-email` (v7) et `weekly-digest`
+> (v8) restent sur l'ancien bundle tant qu'il n'est pas fait ;
+> `daily-session-digest` n'est pas déployée et reste dormante.
 
 > **État réel en prod** (revérifié en base le 2026-08-11 puis le 2026-08-19 via
 > `supabase_migrations.schema_migrations`) : **les entrées jusqu'à la 42 sont
