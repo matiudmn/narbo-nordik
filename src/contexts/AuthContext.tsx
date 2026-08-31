@@ -10,6 +10,10 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isSuperAdmin: boolean;
+  // Membre du conseil d'administration (espace bureau /bureau). Le super-admin
+  // y accède aussi : c'est le compte d'outillage, même critère que les
+  // policies members/membership_seasons.
+  isBoard: boolean;
   isImpersonating: boolean;
   impersonatedUser: User | null;
   effectiveUser: User | null;
@@ -29,6 +33,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [impersonatedUser, setImpersonatedUser] = useState<User | null>(null);
 
   const isSuperAdmin = useMemo(() => user?.is_super_admin === true, [user?.is_super_admin]);
+  const isBoard = useMemo(
+    () => user?.is_board === true || user?.is_super_admin === true,
+    [user?.is_board, user?.is_super_admin]
+  );
   const isImpersonating = isSuperAdmin && impersonatedUser !== null;
   const effectiveUser = impersonatedUser ?? user;
 
@@ -186,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, isSuperAdmin, isImpersonating, impersonatedUser, effectiveUser, impersonate, login, signup, logout, resetPassword, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, isSuperAdmin, isBoard, isImpersonating, impersonatedUser, effectiveUser, impersonate, login, signup, logout, resetPassword, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

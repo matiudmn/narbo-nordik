@@ -57,6 +57,10 @@ export interface User {
   // Optionnel : la colonne n'existe qu'apres la migration 20260731081000 ;
   // le front doit tolerer son absence (undefined => pas super-admin).
   is_super_admin?: boolean;
+  // Membre du conseil d'administration (espace bureau /bureau). Optionnel :
+  // la colonne n'existe qu'apres la migration 20260831180000, meme tolerance
+  // que is_super_admin (undefined => pas membre du CA).
+  is_board?: boolean;
   notification_preferences?: NotificationPreferences;
   created_at: string;
 }
@@ -256,4 +260,68 @@ export interface ClubSettings {
   invite_code: string;
   updated_at: string;
   updated_by: string | null;
+}
+
+// --- Adhésions (espace bureau) ------------------------------------------------
+// Miroir des tables members / membership_seasons (migrations 20260817120000 et
+// 20260831180000). Un adhérent (Member) existe indépendamment d'un compte app
+// (user_id nullable) : marche nordique, dossier papier, adhésion sans compte.
+
+export type MemberSection = 'marche_nordique' | 'running_trail';
+export type MemberSource = 'web_form' | 'paper' | 'app' | 'import';
+export type LicenseType = 'sante' | 'competition' | 'running';
+export type MembershipType = 'nouveau' | 'renouvellement' | 'renouvellement_ffa_direct';
+export type PaymentStatus = 'pending' | 'paid' | 'partial' | 'cancelled';
+export type PaymentMethod = 'virement' | 'cheque' | 'especes' | 'en_ligne';
+export type MembershipStatus = 'submitted' | 'validated' | 'rejected';
+export type TshirtModel = 'homme' | 'femme';
+
+export interface Member {
+  id: string;
+  user_id: string | null;
+  firstname: string;
+  lastname: string;
+  birth_date: string;
+  sex: 'M' | 'F';
+  nationality: string | null;
+  address_street: string | null;
+  address_postal_code: string | null;
+  address_city: string | null;
+  email: string;
+  phone: string | null;
+  section: MemberSection;
+  family_group: string | null;
+  notes: string | null;
+  source: MemberSource;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MembershipSeason {
+  id: string;
+  member_id: string;
+  season: string;
+  section: MemberSection;
+  license_type: LicenseType | null;
+  activities: string[];
+  tshirt_model: TshirtModel | null;
+  tshirt_size: string | null;
+  tshirt_included: boolean;
+  membership_type: MembershipType;
+  amount_due_cents: number;
+  family_discount_cents: number;
+  // Encaissé cumulé constaté par le bureau (peut dépasser le dû : trop-perçu réel).
+  amount_paid_cents: number;
+  payment_status: PaymentStatus;
+  payment_method: PaymentMethod | null;
+  paid_at: string | null;
+  stripe_payment_intent_id: string | null;
+  rules_accepted_at: string;
+  gdpr_consent_at: string;
+  ce_certificate_requested: boolean;
+  status: MembershipStatus;
+  validated_by: string | null;
+  validated_at: string | null;
+  created_at: string;
+  updated_at: string;
 }

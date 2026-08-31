@@ -14,6 +14,8 @@ import type {
   RaceResult, RaceType, RaceNordik, SessionNordik, ValidationReaction,
   SpecificPreparation, ClubSettings, RacePaceConfig, AllureZoneConfig,
   AppNotification, NotificationType,
+  Member, MemberSection, MemberSource, MembershipSeason, LicenseType,
+  MembershipType, PaymentStatus, PaymentMethod, MembershipStatus, TshirtModel,
 } from '../../types';
 import type { Tables, TablesInsert, TablesUpdate, Json } from '../../types/database.types';
 
@@ -119,6 +121,28 @@ export function toClubSettings(r: Tables<'club_settings'>): ClubSettings {
     race_paces: r.race_paces as unknown as Record<string, RacePaceConfig>,
     allure_zones: r.allure_zones as unknown as Record<string, AllureZoneConfig>,
     updated_at: r.updated_at as string,
+  };
+}
+
+export function toMember(r: Tables<'members'>): Member {
+  return {
+    ...r,
+    sex: r.sex as Member['sex'],
+    section: r.section as MemberSection,
+    source: r.source as MemberSource,
+  };
+}
+
+export function toMembershipSeason(r: Tables<'membership_seasons'>): MembershipSeason {
+  return {
+    ...r,
+    section: r.section as MemberSection,
+    license_type: r.license_type as LicenseType | null,
+    membership_type: r.membership_type as MembershipType,
+    payment_status: r.payment_status as PaymentStatus,
+    payment_method: r.payment_method as PaymentMethod | null,
+    status: r.status as MembershipStatus,
+    tshirt_model: r.tshirt_model as TshirtModel | null,
   };
 }
 
