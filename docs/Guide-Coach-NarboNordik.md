@@ -2,7 +2,7 @@
 
 **Narbo Nordik Club, application running et trail**
 
-À jour du 22 août 2026 (remplace le guide de mars 2026).
+À jour du 31 août 2026 (remplace le guide de mars 2026).
 
 Ce guide s'adresse aux coachs de la section, en particulier si tu viens de recevoir l'accès coach : ton compte n'a pas changé, mais l'application, elle, ne se présente plus pareil. Voici le tour du propriétaire.
 
@@ -61,7 +61,7 @@ Dans l'éditeur :
 - construis le programme par blocs : **+ Échauffement**, **+ Travail**, **+ Retour**, **+ Récup** ; chaque bloc porte l'allure (zone de VMA), la durée, les répétitions et le repos ;
 - le sélecteur **Preview** affiche les durées et allures calculées pour un athlète donné, selon sa VMA : l'app fait la conversion pour chacun, tu n'as rien à calculer ;
 - ajoute des consignes et, si tu veux, un RPE cible (1 à 10) ;
-- publie avec **Publier la séance au club**. Les athlètes concernés sont notifiés.
+- publie avec **Publier la séance au club**. Les athlètes concernés sont notifiés. Si tu coches plusieurs groupes, l'app crée une séance par groupe et le bouton devient **Publier N séances (une par groupe)**.
 
 Une séance réussie peut rejoindre la bibliothèque : lien **Enregistrer aussi comme template**, elle devient réutilisable par tous les coachs.
 
@@ -104,7 +104,11 @@ Un fichier Excel exemple du format Matrice existe : demande-le à David ou Matth
 
 ### Le suivi mensuel
 
-La page **Suivi** (accessible par la recherche ou depuis l'accueil) propose deux vues : **Suivi athletes** (les validations de tout le club, mois par mois) et **Mon suivi** (les tiennes).
+La page **Suivi** propose deux vues : **Suivi athletes** (les validations de tout le club, mois par mois) et **Mon suivi** (les tiennes). Attention à ne pas confondre : dans la barre du bas, l'onglet « Suivi » ouvre le tableau de bord ; cette page-ci se retrouve par la recherche, en tapant « Mon suivi ».
+
+### Les notifications
+
+La cloche en haut de l'écran signale les nouvelles inscriptions et les rappels de VMA manquante. La page ne garde que ce qu'il te reste à traiter : ouvrir une notification la marque comme lue et l'envoie dans le bloc replié **Déjà lues** en bas de page. Le bouton **Tout marquer comme lu** vide la liste d'un coup.
 
 ### Historique et export
 

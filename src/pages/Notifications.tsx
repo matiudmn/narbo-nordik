@@ -5,6 +5,7 @@ import { fr } from 'date-fns/locale';
 import { Bell, CalendarPlus, Trophy, TrendingUp, Mail, Info, Heart, CheckCheck, UserPlus, Gauge } from 'lucide-react';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
 import { Disclosure, EmptyState } from '../components/ui';
+import { PageSkeleton } from '../components/Skeleton';
 import type { AppNotification } from '../types';
 
 // Type de retour explicite : un `case` manquant devient une erreur de compilation
@@ -43,6 +44,50 @@ function groupByDay(notifications: AppNotification[]) {
   return groups;
 }
 
+function NotificationCard({
+  notif,
+  onOpen,
+}: {
+  notif: AppNotification;
+  onOpen: (notif: AppNotification) => void;
+}) {
+  // Une notification deja lue et sans lien n'ouvre rien : elle reste un bloc de
+  // texte, sans affordance de clic ni cible au clavier. Les autres sont de vrais
+  // boutons, donc atteignables au clavier et annoncees comme actionnables.
+  const actionable = !notif.read || Boolean(notif.link);
+  const base = 'w-full text-left flex items-start gap-3 bg-white rounded-xl border border-neutral-100 p-3.5 transition-colors';
+
+  const content = (
+    <>
+      <span className="mt-0.5 relative shrink-0">
+        {getNotifIcon(notif.type)}
+        {!notif.read && (
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white" />
+        )}
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className={`block text-sm ${notif.read ? 'text-neutral-600' : 'text-neutral-900 font-semibold'}`}>
+          {notif.title}
+        </span>
+        {notif.body && (
+          <span className="block text-xs text-neutral-400 mt-0.5 truncate">{notif.body}</span>
+        )}
+      </span>
+      <span className="text-xs text-neutral-300 whitespace-nowrap mt-0.5">
+        {format(new Date(notif.created_at), 'HH:mm')}
+      </span>
+    </>
+  );
+
+  if (!actionable) return <div className={base}>{content}</div>;
+
+  return (
+    <button type="button" onClick={() => onOpen(notif)} className={`${base} cursor-pointer hover:bg-neutral-50`}>
+      {content}
+    </button>
+  );
+}
+
 function NotificationList({
   notifications,
   onOpen,
@@ -59,29 +104,7 @@ function NotificationList({
           </p>
           <div className="space-y-2">
             {group.items.map(notif => (
-              <div
-                key={notif.id}
-                onClick={() => onOpen(notif)}
-                className="flex items-start gap-3 bg-white rounded-xl border border-neutral-100 p-3.5 transition-colors cursor-pointer hover:bg-neutral-50"
-              >
-                <div className="mt-0.5 relative">
-                  {getNotifIcon(notif.type)}
-                  {!notif.read && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm ${notif.read ? 'text-neutral-600' : 'text-neutral-900 font-semibold'}`}>
-                    {notif.title}
-                  </p>
-                  {notif.body && (
-                    <p className="text-xs text-neutral-400 mt-0.5 truncate">{notif.body}</p>
-                  )}
-                </div>
-                <span className="text-xs text-neutral-300 whitespace-nowrap mt-0.5">
-                  {format(new Date(notif.created_at), 'HH:mm')}
-                </span>
-              </div>
+              <NotificationCard key={notif.id} notif={notif} onOpen={onOpen} />
             ))}
           </div>
         </div>
@@ -91,7 +114,7 @@ function NotificationList({
 }
 
 export default function Notifications() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useInAppNotifications();
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useInAppNotifications();
   const navigate = useNavigate();
 
   // La page est une liste de choses a traiter (demande du coach David) : une
@@ -104,6 +127,10 @@ export default function Notifications() {
     if (!notif.read) markAsRead(notif.id);
     if (notif.link) navigate(notif.link);
   };
+
+  // Sans cette garde, le premier rendu annonce "Tout est calme" avant meme
+  // d'avoir recu les notifications.
+  if (loading && notifications.length === 0) return <PageSkeleton />;
 
   return (
     <div className="py-4 space-y-4">
