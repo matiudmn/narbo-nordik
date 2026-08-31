@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -93,6 +93,161 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      members: {
+        Row: {
+          address_city: string | null
+          address_postal_code: string | null
+          address_street: string | null
+          birth_date: string
+          created_at: string
+          email: string
+          family_group: string | null
+          firstname: string
+          id: string
+          lastname: string
+          nationality: string | null
+          notes: string | null
+          phone: string | null
+          section: string
+          sex: string
+          source: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address_city?: string | null
+          address_postal_code?: string | null
+          address_street?: string | null
+          birth_date: string
+          created_at?: string
+          email: string
+          family_group?: string | null
+          firstname: string
+          id?: string
+          lastname: string
+          nationality?: string | null
+          notes?: string | null
+          phone?: string | null
+          section: string
+          sex: string
+          source?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address_city?: string | null
+          address_postal_code?: string | null
+          address_street?: string | null
+          birth_date?: string
+          created_at?: string
+          email?: string
+          family_group?: string | null
+          firstname?: string
+          id?: string
+          lastname?: string
+          nationality?: string | null
+          notes?: string | null
+          phone?: string | null
+          section?: string
+          sex?: string
+          source?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      membership_seasons: {
+        Row: {
+          activities: string[]
+          amount_due_cents: number
+          amount_paid_cents: number
+          ce_certificate_requested: boolean
+          created_at: string
+          family_discount_cents: number
+          gdpr_consent_at: string
+          id: string
+          license_type: string | null
+          member_id: string
+          membership_type: string
+          paid_at: string | null
+          payment_method: string | null
+          payment_status: string
+          rules_accepted_at: string
+          season: string
+          section: string
+          status: string
+          stripe_payment_intent_id: string | null
+          tshirt_included: boolean
+          tshirt_model: string | null
+          tshirt_size: string | null
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+        }
+        Insert: {
+          activities?: string[]
+          amount_due_cents: number
+          amount_paid_cents?: number
+          ce_certificate_requested?: boolean
+          created_at?: string
+          family_discount_cents?: number
+          gdpr_consent_at: string
+          id?: string
+          license_type?: string | null
+          member_id: string
+          membership_type: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          rules_accepted_at: string
+          season: string
+          section: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          tshirt_included?: boolean
+          tshirt_model?: string | null
+          tshirt_size?: string | null
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Update: {
+          activities?: string[]
+          amount_due_cents?: number
+          amount_paid_cents?: number
+          ce_certificate_requested?: boolean
+          created_at?: string
+          family_discount_cents?: number
+          gdpr_consent_at?: string
+          id?: string
+          license_type?: string | null
+          member_id?: string
+          membership_type?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          rules_accepted_at?: string
+          season?: string
+          section?: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          tshirt_included?: boolean
+          tshirt_model?: string | null
+          tshirt_size?: string | null
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_seasons_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -578,6 +733,7 @@ export type Database = {
           firstname: string
           group_id: string | null
           id: string
+          is_board: boolean
           is_public: boolean | null
           is_super_admin: boolean
           lastname: string
@@ -596,6 +752,7 @@ export type Database = {
           firstname: string
           group_id?: string | null
           id: string
+          is_board?: boolean
           is_public?: boolean | null
           is_super_admin?: boolean
           lastname: string
@@ -614,6 +771,7 @@ export type Database = {
           firstname?: string
           group_id?: string | null
           id?: string
+          is_board?: boolean
           is_public?: boolean | null
           is_super_admin?: boolean
           lastname?: string
@@ -679,6 +837,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_app_secret: {
+        Args: { p_name: string; p_required?: boolean }
+        Returns: string
+      }
       get_own_profile: {
         Args: never
         Returns: {
@@ -688,6 +850,7 @@ export type Database = {
           firstname: string
           group_id: string | null
           id: string
+          is_board: boolean
           is_public: boolean | null
           is_super_admin: boolean
           lastname: string
@@ -715,6 +878,7 @@ export type Database = {
           firstname: string
           group_id: string | null
           id: string
+          is_board: boolean
           is_public: boolean | null
           is_super_admin: boolean
           lastname: string
@@ -766,6 +930,8 @@ export type Database = {
         Args: { template_id: string }
         Returns: undefined
       }
+      link_member_to_user: { Args: never; Returns: string }
+      notify_coaches_missing_vma: { Args: never; Returns: undefined }
       register_profile: {
         Args: {
           email: string

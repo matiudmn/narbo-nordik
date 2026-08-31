@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3, ClipboardCheck, Bell, MessageCircle, HelpCircle, LogOut, Upload, Download, Target, Settings, Search, History } from 'lucide-react';
+import { House, Users, User, LayoutDashboard, ClipboardList, BarChart3, ClipboardCheck, Bell, MessageCircle, HelpCircle, LogOut, Upload, Download, Target, Settings, Search, History, Landmark } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useInAppNotifications } from '../contexts/InAppNotificationContext';
 import { useGlobalSearch } from '../contexts/GlobalSearchContext';
@@ -10,7 +10,7 @@ const SHORTCUT_HINT = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/
   ? '⌘K' : 'Ctrl K';
 
 export default function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user, logout, isBoard } = useAuth();
   const { unreadCount } = useInAppNotifications();
   const { open: openSearch } = useGlobalSearch();
   const isCoach = user?.role === 'coach';
@@ -82,6 +82,12 @@ export default function Sidebar() {
 
       {/* Utility links */}
       <div className="px-3 py-3 border-t border-neutral-100 space-y-1">
+        {isBoard && (
+          <NavLink to="/bureau" className={linkClass}>
+            <Landmark size={18} />
+            <span>Bureau</span>
+          </NavLink>
+        )}
         <NavLink to="/notifications" className={linkClass}>
           <div className="relative">
             <Bell size={18} />

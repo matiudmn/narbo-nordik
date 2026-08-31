@@ -35,9 +35,11 @@ const Help = lazy(() => import('./pages/Help'));
 const Suivi = lazy(() => import('./pages/athlete/Suivi'));
 const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'));
 const Installer = lazy(() => import('./pages/Installer'));
+const Bureau = lazy(() => import('./pages/bureau/Bureau'));
+const BureauDossier = lazy(() => import('./pages/bureau/BureauDossier'));
 
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user, isBoard } = useAuth();
 
   // Reset password must be accessible without full auth (recovery token only)
   if (window.location.pathname === '/reset-password') {
@@ -77,6 +79,10 @@ function AppRoutes() {
           <Route path="/coach/nouvelle-seance" element={isCoach ? <QuickAddSession /> : <Navigate to="/" />} />
           <Route path="/coach/settings" element={isCoach ? <Settings /> : <Navigate to="/" />} />
           <Route path="/coach/athlete/:id" element={isCoach ? <AthleteSettings /> : <Navigate to="/" />} />
+
+          {/* Bureau (conseil d'administration) */}
+          <Route path="/bureau" element={isBoard ? <Bureau /> : <Navigate to="/" />} />
+          <Route path="/bureau/dossier/:id" element={isBoard ? <BureauDossier /> : <Navigate to="/" />} />
 
           {/* Default redirect */}
           <Route path="*" element={<Navigate to="/" />} />
