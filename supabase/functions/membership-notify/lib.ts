@@ -260,7 +260,13 @@ export function buildMemberEmailHtml(member: MemberRecord, season: MembershipSea
     <p style="margin:0 0 16px;color:#4b5563;font-size:14px;line-height:1.6;">Voici le récapitulatif de ton dossier :</p>
     <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">${rows.join('')}</table>
     ${season.payment_method === 'virement' ? buildBankTransferBlock(member, season) : ''}
-    <p style="margin:0 0 12px;color:#4b5563;font-size:14px;line-height:1.6;">${season.payment_method === 'virement' ? 'Le bureau valide ton dossier dès réception de ton virement.' : 'Le bureau valide ton dossier et te communique les modalités de règlement (remise du chèque ou des espèces à l\'entraînement).'}</p>
+    <p style="margin:0 0 12px;color:#4b5563;font-size:14px;line-height:1.6;">${
+      season.payment_method === 'virement'
+        ? 'Le bureau valide ton dossier dès réception de ton virement.'
+        : season.payment_method === 'en_ligne'
+          ? 'Le bureau valide ton dossier dès confirmation de ton paiement en ligne.'
+          : 'Le bureau valide ton dossier et te communique les modalités de règlement (remise du chèque ou des espèces à l\'entraînement).'
+    }</p>
     <p style="margin:0 0 16px;color:#4b5563;font-size:14px;line-height:1.6;">Ton adhésion sera définitive une fois le règlement reçu.</p>
     <p style="margin:0 0 16px;color:#374151;font-size:14px;">L'équipe du Narbo Nordik Club</p>
     <a href="${SITE_URL}" style="display:inline-block;padding:10px 24px;background:#6CCBE6;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">narbo-nordik-club.com</a>`;
