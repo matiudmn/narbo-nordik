@@ -17,7 +17,7 @@ import { Bar, Doughnut } from 'react-chartjs-2';
 import { useData } from '../contexts/DataContext';
 import { Card, MetricTile } from '../components/ui';
 import { applyChartTheme } from '../lib/chartTheme';
-import { hasJoinedBefore } from '../lib/attendance';
+import { computeClubParticipation } from '../lib/attendance';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 applyChartTheme();
@@ -49,7 +49,7 @@ function formatDuration(duration: string): string {
 }
 
 export default function ClubProfile() {
-  const { users, groups, sessions, validations, raceResults } = useData();
+  const { users, groups, sessions, validations, raceResults, userPreparations } = useData();
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   const allAthletes = useMemo(() =>
@@ -86,42 +86,15 @@ export default function ClubProfile() {
   const participationRate = useMemo(() => {
     const now = new Date();
     const fourWeeksAgo = subWeeks(startOfWeek(now, { weekStartsOn: 1 }), 4);
-    // Jamais de séance à venir au dénominateur (même règle que lib/attendance).
-    const recentSessions = sessions.filter(s => {
-      if (s.is_personal) return false;
-      const d = new Date(s.date);
-      return d >= fourWeeksAgo && d <= now;
-    });
-
-    if (recentSessions.length === 0) return { rate: 0, done: 0, total: 0 };
-
-    const athleteIds = athletes.map(a => a.id);
-    let totalExpected = 0;
-    let totalDone = 0;
-
-    recentSessions.forEach(s => {
-      const eligibleAthletes = athleteIds.filter(id => {
-        const user = users.find(u => u.id === id);
-        if (!user) return false;
-        // Un athlète arrivé après la séance n'avait pas à y être.
-        if (!hasJoinedBefore(user, s.date)) return false;
-        if (!s.group_id) return true;
-        // Un coach n'est attendu que sur les séances de son propre groupe :
-        // le compter partout gonflerait le dénominateur à chaque coach promu.
-        return s.group_id === user.group_id;
-      });
-      totalExpected += eligibleAthletes.length;
-      totalDone += validations.filter(
-        v => v.session_id === s.id && v.status === 'done' && eligibleAthletes.includes(v.user_id)
-      ).length;
-    });
-
-    return {
-      rate: totalExpected > 0 ? Math.round((totalDone / totalExpected) * 100) : 0,
-      done: totalDone,
-      total: totalExpected,
-    };
-  }, [sessions, validations, athletes, users]);
+    return computeClubParticipation(
+      athletes,
+      sessions,
+      validations,
+      userPreparations,
+      { start: fourWeeksAgo, end: now },
+      now
+    );
+  }, [sessions, validations, athletes, userPreparations]);
 
   const groupDistribution = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -266,7 +239,7 @@ export default function ClubProfile() {
       {/* KPIs harmonisés avec Dashboard coach */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricTile valueDisplay={stats.count} unit="coureurs" label="Effectif" tone="primary" icon={<Users size={20} aria-hidden="true" />} />
-        <MetricTile valueDisplay={participationRate.rate} unit="%" label="Participation 4 sem." tone="success" />
+        <MetricTile valueDisplay={participationRate.rate ?? '-'} unit="%" label="Participation 4 sem." tone="success" />
         <MetricTile valueDisplay={stats.avg} unit="km/h" label="VMA moyenne" tone="danger" />
         <MetricTile valueDisplay={stats.max} unit="km/h" label="Plafond VMA" tone="info" />
       </div>
