@@ -257,6 +257,13 @@ Deno.test('buildMemberEmailHtml: cheque ou especes => aucun RIB', () => {
   }
 });
 
+Deno.test('buildMemberEmailHtml: en_ligne => message paiement en ligne, aucun RIB, jamais cheque/especes', () => {
+  const html = buildMemberEmailHtml(baseMember, { ...baseSeason, payment_method: 'en_ligne' });
+  assert(!html.includes(CLUB_BANK.iban));
+  assertStringIncludes(html, 'dès confirmation de ton paiement en ligne');
+  assert(!html.includes('remise du chèque ou des espèces'));
+});
+
 Deno.test('buildBoardEmailHtml: jamais de RIB dans le mail bureau', () => {
   const html = buildBoardEmailHtml(baseMember, { ...baseSeason, payment_method: 'virement' });
   assert(!html.includes(CLUB_BANK.iban));
