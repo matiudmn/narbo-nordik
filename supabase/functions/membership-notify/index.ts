@@ -32,6 +32,11 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const FROM_EMAIL = 'Narbo Nordik <club@2nc.fr>';
+// club@2nc.fr n'est qu'une identité d'envoi Resend et son domaine n'a pas de
+// MX : sans reply_to, toute réponse d'un adhérent se perd. Provisoire, jusqu'à
+// la création de contact@narbo-nordik-club.com.
+const REPLY_TO_EMAIL = 'narbo.nordik.club@gmail.com';
+
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const parts = token.split('.');
   if (parts.length !== 3) return null;
@@ -80,6 +85,7 @@ async function sendResendEmail(payload: {
       },
       body: JSON.stringify({
         from: FROM_EMAIL,
+        reply_to: REPLY_TO_EMAIL,
         to: payload.to,
         subject: payload.subject,
         html: payload.html,
