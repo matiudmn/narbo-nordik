@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeAttendance, formatAttendance } from './attendance';
-import type { Session, SessionValidation } from '../types';
+import { computeAttendance, computeClubParticipation, formatAttendance } from './attendance';
+import type { Session, SessionValidation, UserPreparation } from '../types';
 
 const d = (s: string) => new Date(s + 'T12:00:00');
 
@@ -111,5 +111,57 @@ describe('computeAttendance', () => {
     const r = computeAttendance(user, sessions, [done('prep1')], ['prepA'], range, now);
     expect(r).toEqual({ done: 1, total: 1, rate: 100 });
     expect(formatAttendance(r)).toBe('1/1');
+  });
+});
+
+describe('computeClubParticipation', () => {
+  const membre = (id: string, group_id: string | null) => ({
+    id,
+    group_id,
+    created_at: '2026-09-01T00:00:00Z',
+  });
+  const inscrit = (user_id: string, preparation_id: string): UserPreparation => ({
+    id: `${user_id}-${preparation_id}`,
+    user_id,
+    preparation_id,
+  });
+
+  it('ne compte une séance de prépa que pour ses inscrits, pas pour tout le club', () => {
+    // Régression du 31/08/2026 : une séance de prépa a group_id null, et la page
+    // Club comptait alors TOUS les membres au dénominateur.
+    const membres = [membre('u1', 'g1'), membre('u2', 'g1'), membre('u3', 'g2')];
+    const sessions = [session('prep1', '2026-11-10', { group_id: null, preparation_id: 'prepA' })];
+    const r = computeClubParticipation(membres, sessions, [done('prep1', 'u1')], [inscrit('u1', 'prepA')], range, now);
+    expect(r).toEqual({ done: 1, total: 1, rate: 100 });
+  });
+
+  it('compte une séance globale pour tous les membres', () => {
+    const membres = [membre('u1', 'g1'), membre('u2', 'g2')];
+    const sessions = [session('s1', '2026-11-10', { group_id: null })];
+    const r = computeClubParticipation(membres, sessions, [done('s1', 'u1')], [], range, now);
+    expect(r).toEqual({ done: 1, total: 2, rate: 50 });
+  });
+
+  it('ne compte une séance de groupe que pour les membres de ce groupe', () => {
+    const membres = [membre('u1', 'g1'), membre('u2', 'g2')];
+    const sessions = [session('s1', '2026-11-10', { group_id: 'g1' })];
+    const r = computeClubParticipation(membres, sessions, [done('s1', 'u1')], [], range, now);
+    expect(r).toEqual({ done: 1, total: 1, rate: 100 });
+  });
+
+  it('un membre en prépa ne compte pas sur le programme général du club', () => {
+    const membres = [membre('u1', 'g1'), membre('u2', 'g1')];
+    const sessions = [
+      session('s1', '2026-11-10', { group_id: 'g1' }),
+      session('prep1', '2026-11-11', { group_id: null, preparation_id: 'prepA' }),
+    ];
+    const r = computeClubParticipation(membres, sessions, [], [inscrit('u1', 'prepA')], range, now);
+    // u1 n'est attendu que sur sa prépa, u2 seulement sur la séance de groupe.
+    expect(r).toEqual({ done: 0, total: 2, rate: 0 });
+  });
+
+  it('rate null quand il n\'y a rien à compter', () => {
+    const r = computeClubParticipation([membre('u1', 'g1')], [], [], [], range, now);
+    expect(r).toEqual({ done: 0, total: 0, rate: null });
   });
 });

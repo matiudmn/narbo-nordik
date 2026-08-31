@@ -1,6 +1,6 @@
 import { endOfDay, isWithinInterval, startOfDay } from 'date-fns';
-import type { Session, SessionValidation } from '../types';
-import { filterSessionsForAthlete } from './athleteSessions';
+import type { Session, SessionValidation, UserPreparation } from '../types';
+import { filterSessionsForAthlete, getUserPrepIds } from './athleteSessions';
 
 /**
  * Régularité (ex-« assiduité ») : calcul UNIQUE pour toute l'app.
@@ -62,6 +62,43 @@ export function computeAttendance(
   );
   const done = eligible.filter(s => doneIds.has(s.id)).length;
   return { done, total: eligible.length, rate: Math.round((done / eligible.length) * 100) };
+}
+
+/**
+ * Participation collective : somme des régularités individuelles sur la même
+ * période. Passe par computeAttendance athlète par athlète, donc hérite de
+ * TOUTES ses règles (prépa exclusive, séance d'un autre groupe qui ne compte
+ * pas, séances perso exclues, arrivée de l'athlète, pas de séance à venir).
+ *
+ * Ne jamais réimplémenter l'éligibilité ici : c'est cette duplication qui avait
+ * fait diverger la page Club, où un coach était compté attendu sur toutes les
+ * séances de tous les groupes (corrigé le 22/08/2026), puis où chaque séance de
+ * préparation spécifique comptait le club entier au dénominateur alors que
+ * seuls ses inscrits la voient.
+ */
+export function computeClubParticipation(
+  athletes: AttendanceUser[],
+  sessions: Session[],
+  validations: SessionValidation[],
+  userPreparations: UserPreparation[],
+  range: { start: Date; end: Date },
+  now: Date = new Date()
+): AttendanceResult {
+  let done = 0;
+  let total = 0;
+  for (const athlete of athletes) {
+    const r = computeAttendance(
+      athlete,
+      sessions,
+      validations,
+      getUserPrepIds(athlete.id, userPreparations),
+      range,
+      now
+    );
+    done += r.done;
+    total += r.total;
+  }
+  return { done, total, rate: total > 0 ? Math.round((done / total) * 100) : null };
 }
 
 /** « 12/15 » pour l'affichage compact ; « - » sans séance. */
