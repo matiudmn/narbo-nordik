@@ -22,7 +22,7 @@ Ces écrans sont réservés aux quatre membres du conseil d'administration, Davi
 
 # Y accéder
 
-1. Ouvre l'app comme d'habitude : https://narbo-nordik.vercel.app (ou l'icône installée sur ton téléphone).
+1. Ouvre l'app comme d'habitude, avec l'icône installée sur ton téléphone, ou à l'adresse `narbo-nordik.vercel.app`.
 2. Connecte-toi avec ton compte habituel, e-mail et mot de passe. Pas de compte séparé.
 3. Sur téléphone : touche **Bureau** dans la barre du bas. Sur ordinateur : **Bureau** dans le menu de gauche.
 
