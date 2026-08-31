@@ -27,13 +27,14 @@ jobs:
 
       # Tests Deno des fonctions Edge : hors du périmètre vitest (include limité
       # à src/**), ils ne tournaient jusqu'ici qu'à la main.
-      # --frozen ne bloque rien en l'état (mesuré le 2026-08-30) : sans deno.json,
-      # il n'a aucun graphe de dépendances déclaré à figer, et les imports HTTPS
-      # des fonctions lui échappent. Gardé parce qu'il deviendra utile si un
-      # deno.json arrive. La vraie protection est le deno.lock lui-même : une
-      # empreinte qui ne correspond plus fait échouer le run, drapeau ou pas.
+      # deno check couvre les neuf index.ts, que le graphe de test ne charge pas.
+      # C'est lui qui rend vivante l'entrée esm.sh du deno.lock, et donc --frozen
+      # (mesuré le 2026-08-31, cache froid, lock privé de son pin : sans le
+      # drapeau Deno résout supabase-js@2 en 2.112.4 et réécrit le lock en
+      # silence ; avec, il échoue sur « lockfile is out of date »).
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      - run: deno check --frozen supabase/functions/
       - run: deno test --no-check --frozen supabase/functions/
       - run: npm run build
