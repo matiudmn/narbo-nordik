@@ -13,7 +13,7 @@ import { hasJoinedBefore } from '../../lib/attendance';
 import { CoachHeroCTA } from '../../components/coach/CoachHeroCTA';
 import { RiskScoreCard } from '../../components/coach/RiskScoreCard';
 import { KpiTrioCard } from '../../components/shared/KpiTrioCard';
-import { Badge } from '../../components/ui';
+import { Badge, StatusBadge } from '../../components/ui';
 import type { BadgeTone } from '../../components/ui';
 import type { ObjectiveReached, Sensations } from '../../types';
 
@@ -277,8 +277,9 @@ export default function Dashboard() {
                       <span className="text-neutral-400 ml-1">{getSessionCode(item.session, sessions)}</span>
                     )}
                   </p>
-                  {(item.objective_reached || item.sensations) && (
+                  {(item.status === 'missed' || item.objective_reached || item.sensations) && (
                     <div className="flex flex-wrap gap-1 mb-1">
+                      {item.status === 'missed' && <StatusBadge status="missed" withIcon />}
                       {item.objective_reached && (
                         <Badge tone={OBJECTIVE_META[item.objective_reached].tone}>
                           {OBJECTIVE_META[item.objective_reached].label}
