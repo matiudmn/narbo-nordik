@@ -190,7 +190,8 @@ export default function Home() {
     const fid = clubSettings?.featured_validation_id;
     if (!fid) return null;
     const v = validations.find(x => x.id === fid);
-    if (!v) return null;
+    // Garde : jamais une séance déclarée non faite en avant au club
+    if (!v || v.status !== 'done') return null;
     return {
       v,
       athlete: users.find(u => u.id === v.user_id) ?? null,

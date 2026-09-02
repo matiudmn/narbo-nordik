@@ -326,7 +326,7 @@ export default function Dashboard() {
                           </button>
                         );
                       })}
-                      {(() => {
+                      {item.status === 'done' && (() => {
                         const isFeatured = clubSettings?.featured_validation_id === item.id;
                         return (
                           <button
