@@ -74,9 +74,12 @@ export function computeRiskScores(
       ? differenceInDays(now, lastDoneDate)
       : daysSinceJoin;
 
-    // Jours sans feedback texte (sensations + feedback texte combinés)
+    // Jours sans feedback texte (sensations + feedback texte combinés).
+    // Séances « done » uniquement : le motif d'une séance déclarée non faite
+    // ne doit pas faire passer l'athlète pour engagé.
     let lastFeedbackDate: Date | null = null;
     for (const v of myValidations) {
+      if (v.status !== 'done') continue;
       const hasFeedback = Boolean(v.feedback) || Boolean(v.sensations);
       if (!hasFeedback) continue;
       const created = new Date(v.created_at);
@@ -89,7 +92,7 @@ export function computeRiskScores(
     // % sensations négatives sur les 30 derniers jours
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const recent = myValidations.filter(
-      (v) => v.sensations && new Date(v.created_at) >= thirtyDaysAgo
+      (v) => v.status === 'done' && v.sensations && new Date(v.created_at) >= thirtyDaysAgo
     );
     const negative = recent.filter((v) => v.sensations === 'mauvaises').length;
     const pctNegativeSensations30d = recent.length > 0 ? negative / recent.length : 0;

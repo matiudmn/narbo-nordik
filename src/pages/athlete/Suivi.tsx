@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Disclosure } from '../../components/ui';
+import { Card, Disclosure, StatusBadge } from '../../components/ui';
 import { format, startOfMonth, endOfMonth, addMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Check, Target, Smile, Dumbbell, Mountain, Battery, Bike, Footprints, Users, Trophy } from 'lucide-react';
@@ -68,7 +68,8 @@ export default function Suivi() {
     return validations
       .filter(v => {
         if (v.user_id === user.id) return false;
-        if (v.status !== 'done') return false;
+        // Le coach voit aussi les séances déclarées non faites (visu complète)
+        if (v.status !== 'done' && v.status !== 'missed') return false;
         const s = sessions.find(s => s.id === v.session_id);
         if (!s) return false;
         if (s.is_personal) return false;
@@ -86,14 +87,15 @@ export default function Suivi() {
 
   const stats = useMemo(() => {
     const source = isCoach && view === 'athletes' ? athleteSessions : completedSessions;
-    const total = source.length;
+    const missed = source.filter(c => c.validation.status === 'missed').length;
+    const total = source.length - missed;
     const objOui = source.filter(c => c.validation.objective_reached === 'oui').length;
     const objPartiel = source.filter(c => c.validation.objective_reached === 'partiel').length;
     const objNon = source.filter(c => c.validation.objective_reached === 'non').length;
     const sensExc = source.filter(c => c.validation.sensations === 'excellentes').length;
     const sensBon = source.filter(c => c.validation.sensations === 'bonnes').length;
     const sensMauv = source.filter(c => c.validation.sensations === 'mauvaises').length;
-    return { total, objOui, objPartiel, objNon, sensExc, sensBon, sensMauv };
+    return { total, missed, objOui, objPartiel, objNon, sensExc, sensBon, sensMauv };
   }, [completedSessions, athleteSessions, isCoach, view]);
 
   const heatmapSessions = useMemo((): HeatmapSession[] => {
@@ -176,13 +178,18 @@ export default function Suivi() {
       </div>
 
       {/* Stats summary */}
-      {stats.total > 0 && (
+      {(stats.total > 0 || stats.missed > 0) && (
         <Card className="mb-4">
           <div className="flex items-center gap-2 mb-3">
             <Check size={16} className="text-success-600" />
             <span className="font-semibold text-neutral-900">
               {stats.total} seance{stats.total > 1 ? 's' : ''} validee{stats.total > 1 ? 's' : ''}
             </span>
+            {stats.missed > 0 && (
+              <span className="text-sm text-neutral-500">
+                · {stats.missed} non faite{stats.missed > 1 ? 's' : ''}
+              </span>
+            )}
           </div>
 
           {(stats.objOui > 0 || stats.objPartiel > 0 || stats.objNon > 0) && (
@@ -259,7 +266,11 @@ export default function Suivi() {
                         </p>
                       </div>
                     </div>
-                    <Check size={16} className="text-success-600 flex-shrink-0 mt-0.5" />
+                    {validation.status === 'missed' ? (
+                      <span className="flex-shrink-0"><StatusBadge status="missed" withIcon /></span>
+                    ) : (
+                      <Check size={16} className="text-success-600 flex-shrink-0 mt-0.5" />
+                    )}
                   </div>
 
                   {(validation.objective_reached || validation.sensations) && (
