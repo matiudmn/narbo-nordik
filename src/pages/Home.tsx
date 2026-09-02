@@ -764,6 +764,8 @@ export default function Home() {
                   } ${
                     sessionPast && !validation ? 'border-l-4 border-l-warning' : ''
                   } ${validation?.status === 'done' ? 'border-l-4 border-l-success' : ''} ${
+                    validation?.status === 'missed' ? 'border-l-4 border-l-neutral-300' : ''
+                  } ${
                     !sessionPast && !validation ? 'opacity-90' : ''
                   } ${
                     isSecondary ? 'opacity-60 saturate-50 border-dashed' : ''
