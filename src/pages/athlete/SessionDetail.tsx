@@ -7,7 +7,7 @@ import { useData } from '../../contexts/DataContext';
 import { calculatePaces, ALLURE_ZONES, BLOCK_TYPES, calculateBlockPace, calculateBlockTotalSeconds, calculateSessionTotalSeconds, formatSeconds, formatBlockSummary, getSessionCode, getAllureZones, pacePerKm, isEffortZone, blockEffortLabel } from '../../lib/calculations';
 import { useState, useRef } from 'react';
 import { getAttachmentUrl } from '../../lib/storage';
-import { useToast, Button, Disclosure } from '../../components/ui';
+import { useToast, Button, Disclosure, StatusBadge } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/monitoring';
 import { motion, DUR, EASE } from '../../lib/motion';
@@ -30,6 +30,8 @@ export default function SessionDetail() {
   const group = session?.group_id ? groups.find(g => g.id === session.group_id) : null;
 
   const [showValidation, setShowValidation] = useState(false);
+  const [showMissed, setShowMissed] = useState(false);
+  const [missedReason, setMissedReason] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [objectiveReached, setObjectiveReached] = useState<ObjectiveReached | null>(null);
@@ -157,6 +159,19 @@ export default function SessionDetail() {
     resetMetrics();
     removeFile();
     requestAnalysis(res.id);
+  };
+
+  const handleMissed = async () => {
+    if (!user || isSubmitting) return;
+    setIsSubmitting(true);
+    const res = await validateSession(session.id, user.id, 'missed', missedReason.trim() || undefined);
+    setIsSubmitting(false);
+    if ('error' in res) {
+      toast.error("Échec de l'enregistrement. Réessaie.");
+      return;
+    }
+    setShowMissed(false);
+    setMissedReason('');
   };
 
   const handleEditSave = async () => {
@@ -603,18 +618,73 @@ export default function SessionDetail() {
                 </button>
               </div>
             </div>
+          ) : validation?.status === 'missed' && !showValidation ? (
+            <div className="bg-neutral-50 rounded-xl p-4 text-center">
+              <StatusBadge status="missed" withIcon />
+              {validation.feedback && (
+                <p className="text-sm text-neutral-500 mt-2 italic">"{validation.feedback}"</p>
+              )}
+              <p className="text-xs text-neutral-400 mt-2">C'est noté, rendez-vous à la prochaine séance.</p>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowValidation(true)}
+                  className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 rounded-lg border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-accent hover:text-accent-dark transition-colors"
+                >
+                  <Check size={14} aria-hidden="true" />
+                  Finalement je l'ai faite
+                </button>
+              </div>
+            </div>
           ) : (
             <>
-              {!showValidation && !isEditing ? (
-                <Button
-                  variant="accent"
-                  size="lg"
-                  fullWidth
-                  onClick={() => setShowValidation(true)}
-                  className="text-lg py-3.5 h-auto"
-                >
-                  J'ai fait ma séance
-                </Button>
+              {!showValidation && !isEditing && !showMissed ? (
+                <div className="space-y-1">
+                  <Button
+                    variant="accent"
+                    size="lg"
+                    fullWidth
+                    onClick={() => setShowValidation(true)}
+                    className="text-lg py-3.5 h-auto"
+                  >
+                    J'ai fait ma séance
+                  </Button>
+                  {!isUpcoming && (
+                    <button
+                      type="button"
+                      onClick={() => setShowMissed(true)}
+                      className="w-full min-h-[44px] py-2 text-sm text-neutral-400 hover:text-neutral-600 transition-colors"
+                    >
+                      Je n'ai pas pu la faire
+                    </button>
+                  )}
+                </div>
+              ) : showMissed ? (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-neutral-600">Ça arrive. Note-le pour garder ta semaine à jour.</p>
+                  <textarea
+                    value={missedReason}
+                    onChange={e => setMissedReason(e.target.value)}
+                    placeholder="Une raison ? (optionnel, visible par ton coach)"
+                    className="w-full border border-neutral-200 rounded-xl p-3 text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setShowMissed(false); setMissedReason(''); }}
+                      disabled={isSubmitting}
+                      className="flex-1 py-2.5 rounded-xl border border-neutral-200 text-neutral-600 font-medium disabled:opacity-60"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={handleMissed}
+                      disabled={isSubmitting}
+                      className="flex-1 bg-neutral-700 hover:bg-neutral-800 text-white font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-60"
+                    >
+                      {isSubmitting ? 'Enregistrement…' : 'Séance non faite'}
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {isEditing && (
@@ -671,17 +741,21 @@ export default function SessionDetail() {
                       Mes chiffres (optionnel)
                     </label>
                     <div>
-                      <input ref={ocrInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleOcrFile} />
+                      {/* Pas d'attribut capture : iOS/Android proposent le choix
+                          photothèque / appareil photo / fichiers, indispensable
+                          pour importer une capture d'écran déjà sur le téléphone. */}
+                      <input ref={ocrInputRef} type="file" accept="image/*" className="hidden" onChange={handleOcrFile} />
                       <button
                         type="button"
                         onClick={() => ocrInputRef.current?.click()}
                         disabled={ocrLoading}
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-dark hover:text-accent-text disabled:opacity-60 transition-colors"
+                        className="w-full min-h-[44px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border border-accent/40 bg-accent/10 text-sm font-semibold text-accent-dark hover:bg-accent/15 disabled:opacity-60 transition-colors"
                       >
-                        <Sparkles size={13} aria-hidden="true" />
-                        {ocrLoading ? 'Lecture de la capture…' : 'Importer une capture (remplir par IA)'}
+                        <Sparkles size={16} aria-hidden="true" />
+                        {ocrLoading ? 'Lecture de la capture…' : 'Remplir depuis une capture (IA)'}
                       </button>
-                      {ocrError && <p className="text-[11px] text-danger-600 mt-1">{ocrError}</p>}
+                      <p className="text-[11px] text-neutral-400 mt-1 text-center">Capture d'écran de ta montre ou de Strava, les champs se remplissent tout seuls</p>
+                      {ocrError && <p className="text-[11px] text-danger-600 mt-1 text-center">{ocrError}</p>}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <label className="block">
@@ -731,10 +805,10 @@ export default function SessionDetail() {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2 text-sm text-neutral-500 hover:text-accent-text transition-colors"
+                        className="w-full min-h-[44px] flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border border-dashed border-neutral-300 text-sm font-medium text-neutral-500 hover:border-accent hover:text-accent-dark transition-colors"
                       >
-                        <Paperclip size={16} />
-                        {isEditing && validation?.attachment_path ? 'Remplacer la piece jointe' : 'Ajouter un fichier (photo, PDF)'}
+                        <Paperclip size={16} aria-hidden="true" />
+                        {isEditing && validation?.attachment_path ? 'Remplacer la pièce jointe' : 'Joindre une photo ou un PDF'}
                       </button>
                     ) : (
                       <div className="flex items-center gap-3 bg-neutral-50 rounded-lg p-2">

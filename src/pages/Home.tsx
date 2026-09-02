@@ -338,6 +338,22 @@ export default function Home() {
     }, 1800);
   };
 
+  // Déclaration 1-tap « séance non faite » : donne la visu complète de la
+  // semaine (athlète et coach). Réversible depuis la page séance
+  // (« Finalement je l'ai faite »).
+  const handleQuickMissed = async (sessionId: string) => {
+    if (!user) return;
+    setQuickValidatingId(sessionId);
+    haptic('light');
+    const result = await validateSession(sessionId, user.id, 'missed');
+    setQuickValidatingId(null);
+    if ('error' in result) {
+      toast.error("Impossible d'enregistrer. Réessaie.");
+      return;
+    }
+    toast.info("C'est noté, rendez-vous à la prochaine.");
+  };
+
   const handleSaveSurvey = async () => {
     if (!surveySheet) return;
     setSavingSurvey(true);
@@ -808,20 +824,35 @@ export default function Home() {
 
                     {/* Quick-validate 1-tap : visible quand séance passée et non validée */}
                     {sessionPast && !validation && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleQuickValidate(session.id, session.title);
-                        }}
-                        disabled={quickValidatingId === session.id}
-                        aria-label={`J'ai fait la séance ${session.title}`}
-                        className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-light transition-colors disabled:opacity-60"
-                      >
-                        <Check size={16} aria-hidden="true" />
-                        {quickValidatingId === session.id ? 'Validation…' : "J'ai fait ma séance"}
-                      </button>
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleQuickValidate(session.id, session.title);
+                          }}
+                          disabled={quickValidatingId === session.id}
+                          aria-label={`J'ai fait la séance ${session.title}`}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-light transition-colors disabled:opacity-60"
+                        >
+                          <Check size={16} aria-hidden="true" />
+                          {quickValidatingId === session.id ? 'Validation…' : "J'ai fait ma séance"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleQuickMissed(session.id);
+                          }}
+                          disabled={quickValidatingId === session.id}
+                          aria-label={`Je n'ai pas fait la séance ${session.title}`}
+                          className="flex-shrink-0 px-3 py-2.5 rounded-lg border border-neutral-200 bg-white text-sm font-medium text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-60"
+                        >
+                          Pas faite
+                        </button>
+                      </div>
                     )}
                   </div>
                 </Link>
