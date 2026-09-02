@@ -198,6 +198,11 @@ export default function SessionDetail() {
 
   const startEditing = () => {
     if (validation) {
+      // Ferme un panneau « non faite » resté ouvert (la validation a pu
+      // changer sous le composant via une resync), sinon il masquerait le
+      // formulaire d'édition et un enregistrement écraserait la validation.
+      setShowMissed(false);
+      setMissedReason('');
       setFeedback(validation.feedback || '');
       setObjectiveReached(validation.objective_reached || null);
       setSensations(validation.sensations || null);
@@ -628,7 +633,7 @@ export default function SessionDetail() {
               <div className="mt-3">
                 <button
                   type="button"
-                  onClick={() => setShowValidation(true)}
+                  onClick={() => { setShowMissed(false); setShowValidation(true); }}
                   className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 rounded-lg border border-neutral-200 text-sm font-medium text-neutral-700 hover:border-accent hover:text-accent-dark transition-colors"
                 >
                   <Check size={14} aria-hidden="true" />
