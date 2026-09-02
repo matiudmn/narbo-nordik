@@ -19,18 +19,22 @@ export default function Header() {
   return (
     <>
       {isImpersonating && effectiveUser && (
-        <div className="fixed top-0 left-0 right-0 lg:left-60 bg-warning-500 text-warning-700 z-[60] h-8 flex items-center justify-center text-xs font-bold gap-2">
-          <span>Vue en tant que {effectiveUser.firstname} {effectiveUser.lastname}</span>
-          <button
-            onClick={handleStopImpersonating}
-            className="flex items-center gap-0.5 bg-warning-600 text-white px-2 py-0.5 rounded-full text-[10px] hover:bg-warning-700 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            <X size={10} />
-            Quitter
-          </button>
+        <div className="fixed top-0 left-0 right-0 lg:left-60 bg-warning-500 text-warning-700 z-[60] pt-[env(safe-area-inset-top)]">
+          <div className="h-8 flex items-center justify-center text-xs font-bold gap-2">
+            <span>Vue en tant que {effectiveUser.firstname} {effectiveUser.lastname}</span>
+            <button
+              onClick={handleStopImpersonating}
+              className="flex items-center gap-0.5 bg-warning-600 text-white px-2 py-0.5 rounded-full text-[10px] hover:bg-warning-700 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <X size={10} />
+              Quitter
+            </button>
+          </div>
         </div>
       )}
-      <header className={`fixed left-0 right-0 bg-primary text-white z-50 lg:hidden pt-[env(safe-area-inset-top)] ${isImpersonating ? 'top-8' : 'top-0'}`}>
+      {/* En impersonation, le bandeau ci-dessus occupe déjà la safe-area : le
+          header se place dessous sans réappliquer le padding. */}
+      <header className={`fixed left-0 right-0 bg-primary text-white z-50 lg:hidden ${isImpersonating ? 'top-[calc(2rem+env(safe-area-inset-top))]' : 'top-0 pt-[env(safe-area-inset-top)]'}`}>
         <div className="flex items-center justify-between h-14 px-4 max-w-5xl mx-auto">
           <div className="flex items-center gap-2 lg:hidden">
             <button onClick={() => navigate('/')} className="flex-shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">

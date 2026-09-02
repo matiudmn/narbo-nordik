@@ -18,7 +18,9 @@ export default function Layout() {
         <OfflineIndicator />
         <div className="lg:ml-60">
           <Header />
-          <main className={`${isImpersonating ? 'pt-[5.5rem]' : 'pt-14'} lg:pt-4 ${isImpersonating ? 'lg:pt-12' : ''} pb-20 lg:pb-8 px-4 lg:px-8 max-w-6xl mx-auto safe-bottom`}>
+          {/* Compense la hauteur réelle des barres fixes : header/bandeau + safe-area
+              en haut, bottom nav + safe-area en bas (PWA iOS, viewport-fit=cover). */}
+          <main className={`${isImpersonating ? 'pt-[calc(5.5rem+env(safe-area-inset-top))]' : 'pt-[calc(3.5rem+env(safe-area-inset-top))]'} lg:pt-4 ${isImpersonating ? 'lg:pt-12' : ''} pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8 px-4 lg:px-8 max-w-6xl mx-auto`}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
