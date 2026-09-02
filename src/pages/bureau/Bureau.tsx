@@ -89,7 +89,9 @@ export default function Bureau() {
         if (sectionFilter !== 'all' && season.section !== sectionFilter) return false;
         if (statusFilter !== 'all' && season.status !== statusFilter) return false;
         if (paymentFilter !== 'all' && season.payment_status !== paymentFilter) return false;
-        if (familyOnly && season.family_discount_cents <= 0) return false;
+        // Hors refusés, comme le compteur affiché sur la pastille
+        // (summary.familyDiscountCount) : la liste et son libellé concordent.
+        if (familyOnly && (season.family_discount_cents <= 0 || season.status === 'rejected')) return false;
         return matchesDossier(dossier, query);
       }),
     [dossiers, sectionFilter, statusFilter, paymentFilter, familyOnly, query]

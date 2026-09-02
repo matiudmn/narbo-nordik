@@ -72,9 +72,9 @@ const data: SearchData = {
   preparations: [], groups: [G1], userPreparations: [],
 };
 
-const coachViewer: SearchViewer = { id: 'coach', role: 'coach', group_id: null, isSuperAdmin: false };
-const amelieViewer: SearchViewer = { id: 'a1', role: 'athlete', group_id: 'g1', isSuperAdmin: false };
-const damienViewer: SearchViewer = { id: 'a3', role: 'athlete', group_id: 'g1', isSuperAdmin: false };
+const coachViewer: SearchViewer = { id: 'coach', role: 'coach', group_id: null, isSuperAdmin: false, isBoard: false };
+const amelieViewer: SearchViewer = { id: 'a1', role: 'athlete', group_id: 'g1', isSuperAdmin: false, isBoard: false };
+const damienViewer: SearchViewer = { id: 'a3', role: 'athlete', group_id: 'g1', isSuperAdmin: false, isBoard: false };
 
 describe('normalize', () => {
   it('lowercases and strips accents', () => {
@@ -155,7 +155,7 @@ describe('is_public gating (annuaire et recherche)', () => {
     expect(isAthleteVisible(damien, damienViewer)).toBe(true);
   });
   it('isAthleteVisible: un profil is_public=true reste visible pour les autres athletes', () => {
-    const herveViewer: SearchViewer = { id: 'a2', role: 'athlete', group_id: 'g1', isSuperAdmin: false };
+    const herveViewer: SearchViewer = { id: 'a2', role: 'athlete', group_id: 'g1', isSuperAdmin: false, isBoard: false };
     expect(isAthleteVisible(amelie, herveViewer)).toBe(true);
   });
 

@@ -26,7 +26,7 @@ export interface AiState {
 const IDLE_AI: AiState = { status: 'idle', results: [], description: '', error: null };
 
 export function useUniversalSearch() {
-  const { effectiveUser, isSuperAdmin } = useAuth();
+  const { effectiveUser, isSuperAdmin, isBoard } = useAuth();
   const { users, sessions, validations, raceResults, preparations, groups, userPreparations } = useData();
 
   // effectiveUser vient du contexte d'auth : son identité ne change qu'aux
@@ -34,9 +34,9 @@ export function useUniversalSearch() {
   // dépendre de l'objet directement.
   const viewer = useMemo<SearchViewer | null>(
     () => effectiveUser
-      ? { id: effectiveUser.id, role: effectiveUser.role, group_id: effectiveUser.group_id, isSuperAdmin }
+      ? { id: effectiveUser.id, role: effectiveUser.role, group_id: effectiveUser.group_id, isSuperAdmin, isBoard }
       : null,
-    [effectiveUser, isSuperAdmin],
+    [effectiveUser, isSuperAdmin, isBoard],
   );
 
   const data = useMemo<SearchData>(

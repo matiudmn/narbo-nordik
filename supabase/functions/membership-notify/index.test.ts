@@ -257,10 +257,14 @@ Deno.test('buildMemberEmailHtml: cheque ou especes => aucun RIB', () => {
   }
 });
 
-Deno.test('buildMemberEmailHtml: en_ligne => message paiement en ligne, aucun RIB, jamais cheque/especes', () => {
+Deno.test('buildMemberEmailHtml: en_ligne => message paiement en ligne + RIB de repli, jamais cheque/especes', () => {
+  // RIB de repli depuis la revue du 02/09/2026 : un adhérent qui ferme
+  // l'onglet Stripe sans payer garde une coordonnée bancaire dans son e-mail,
+  // sinon il n'a plus aucun moyen de régler (doublon de saison refusé).
   const html = buildMemberEmailHtml(baseMember, { ...baseSeason, payment_method: 'en_ligne' });
-  assert(!html.includes(CLUB_BANK.iban));
+  assertStringIncludes(html, CLUB_BANK.iban);
   assertStringIncludes(html, 'dès confirmation de ton paiement en ligne');
+  assertStringIncludes(html, 'régler par virement');
   assert(!html.includes('remise du chèque ou des espèces'));
 });
 
