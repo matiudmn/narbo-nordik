@@ -110,6 +110,10 @@ export interface SearchViewer {
   role: Role;
   group_id: string | null;
   isSuperAdmin: boolean;
+  // Membre du conseil d'administration (users.is_board) : droit orthogonal au
+  // rôle, deux des quatre membres du CA sont athlètes. Ouvre la commande
+  // « Espace bureau » de la palette.
+  isBoard: boolean;
 }
 
 /**
@@ -346,7 +350,12 @@ function buildGroup(g: Group, ctx: ScopedEntities): ResultBase {
 
 interface CommandDef { id: string; title: string; to: string; kw: string; }
 
-function getCommands(isStaff: boolean): CommandDef[] {
+function getCommands(isStaff: boolean, isBoard: boolean): CommandDef[] {
+  // L'espace bureau suit is_board, pas le rôle : un athlète membre du CA doit
+  // le trouver dans la palette, un coach hors CA non (revue du 02/09/2026).
+  const bureau: CommandDef[] = isBoard
+    ? [{ id: 'cmd-bureau', title: 'Espace bureau', to: '/bureau', kw: 'bureau adhesions dossiers reglements cotisations conseil administration' }]
+    : [];
   const shared: CommandDef[] = [
     { id: 'cmd-palmares', title: 'Palmarès', to: '/palmares', kw: 'palmares courses resultats records' },
     { id: 'cmd-directory', title: 'Annuaire des athlètes', to: '/directory', kw: 'athletes annuaire membres' },
@@ -356,6 +365,7 @@ function getCommands(isStaff: boolean): CommandDef[] {
   ];
   if (isStaff) {
     return [
+      ...bureau,
       { id: 'cmd-new-session', title: 'Nouvelle séance', to: '/coach/nouvelle-seance', kw: 'creer ajouter seance entrainement nouvelle' },
       { id: 'cmd-planning', title: 'Planning', to: '/coach/sessions', kw: 'planning calendrier semaine seances editer' },
       { id: 'cmd-import', title: 'Import Excel', to: '/coach/import', kw: 'import excel coller seances lot' },
@@ -367,6 +377,7 @@ function getCommands(isStaff: boolean): CommandDef[] {
     ];
   }
   return [
+    ...bureau,
     { id: 'cmd-suivi', title: 'Mon suivi', to: '/suivi', kw: 'suivi calendrier seances mes' },
     ...shared,
   ];
@@ -386,7 +397,7 @@ export function buildSearchIndex(viewer: SearchViewer, data: SearchData): IndexI
   for (const r of ctx.races) items.push({ base: buildRace(r, ctx), haystack: raceHaystack(r, ctx) });
   for (const p of ctx.preparations) items.push({ base: buildPreparation(p), haystack: normalize(`${p.name} ${p.description ?? ''} preparation prepa`) });
   for (const g of ctx.groups) items.push({ base: buildGroup(g, ctx), haystack: normalize(`${g.name} groupe`) });
-  for (const c of getCommands(ctx.isStaff)) items.push({ base: { kind: 'command', id: c.id, title: c.title, to: c.to }, haystack: normalize(`${c.title} ${c.kw}`) });
+  for (const c of getCommands(ctx.isStaff, viewer.isBoard)) items.push({ base: { kind: 'command', id: c.id, title: c.title, to: c.to }, haystack: normalize(`${c.title} ${c.kw}`) });
 
   return items;
 }

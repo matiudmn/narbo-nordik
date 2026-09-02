@@ -17,6 +17,7 @@ import type {
   MembershipStatus,
   TshirtModel,
 } from '../types';
+import { normalize } from './search';
 
 // Sous-ensemble des tonalités de Badge/MetricTile (littéraux identiques) :
 // permet aux pages de passer ces valeurs aux primitives UI sans que ce module
@@ -160,12 +161,9 @@ export function seasonsOf(seasons: Pick<MembershipSeason, 'season'>[]): string[]
   return [...new Set(seasons.map(s => s.season))].sort().reverse();
 }
 
-export function normalizeText(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-}
+// Une seule d\u00e9finition de \u00ab sans accents, minuscules \u00bb pour toute l'app : la
+// recherche du bureau se comporte comme la recherche globale (revue 02/09).
+export const normalizeText = normalize;
 
 /** Recherche insensible aux accents sur nom, prénom, e-mail et rattachement famille. */
 export function matchesDossier(dossier: Dossier, query: string): boolean {
@@ -202,6 +200,19 @@ export function derivePaymentStatus(paidCents: number, dueCents: number): Paymen
   if (dueCents <= 0) return 'paid';
   if (paidCents <= 0) return 'pending';
   return paidCents >= dueCents ? 'paid' : 'partial';
+}
+
+/**
+ * Un règlement pointé se remet à zéro seulement s'il y a quelque chose à
+ * effacer et que le dossier n'est pas validé : le verrou en base (trigger
+ * enforce_validation_payment) refuse un retour en « en attente » sur un
+ * dossier validé, il faut d'abord le repasser en « déposé ». Règle partagée
+ * entre le bouton « Remettre à zéro » et la garde de pointage de l'écran.
+ */
+export function canClearPayment(
+  season: Pick<MembershipSeason, 'amount_paid_cents' | 'status'>
+): boolean {
+  return season.amount_paid_cents > 0 && season.status !== 'validated';
 }
 
 /** Reste dû, plancher à 0 (le trop-perçu se lit à part). */

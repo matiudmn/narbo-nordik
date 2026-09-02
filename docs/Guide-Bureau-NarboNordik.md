@@ -61,7 +61,7 @@ En touchant un dossier, tu arrives sur sa fiche complète.
 
 **La carte Règlement.** Trois cases résument la situation : **Dû**, **Encaissé**, et **Reste** (qui devient **Trop-perçu** si l'adhérent a versé plus que le dû). Pour pointer un règlement :
 
-1. **Montant encaissé (€)** : le total reçu à ce jour pour ce dossier, pas seulement le dernier versement. Attention, le champ arrive prérempli avec le montant dû : corrige-le si l'adhérent n'a versé qu'une partie.
+1. **Montant encaissé (€)** : le total reçu à ce jour pour ce dossier, pas seulement le dernier versement. Le champ est vide tant que rien n'est pointé, et affiche le total déjà enregistré sinon.
 2. **Date** : la date du règlement.
 3. **Mode de règlement** : Virement, Chèque ou Espèces.
 4. La ligne « Statut résultant » t'annonce ce que ça donnera (réglé, partiel...), puis **Enregistrer le règlement**.
@@ -114,7 +114,9 @@ Le paiement par carte arrive sur le formulaire du site. Ce qui change pour vous 
 
 Un dossier payé en ligne arrive **déjà réglé** : règlement « Réglé », mode « En ligne », montant encaissé rempli automatiquement au moment où la carte est débitée. Il ne vous reste qu'à vérifier le dossier et le valider.
 
-Si quelqu'un choisit le paiement en ligne sans aller au bout, son dossier arrive quand même, règlement « En attente » : traite-le comme un dossier classique (relance, virement, chèque ou espèces).
+Si quelqu'un choisit le paiement en ligne sans aller au bout, son dossier arrive quand même, règlement « En attente » : traite-le comme un dossier classique (relance, virement, chèque ou espèces). Son e-mail de confirmation contient le RIB du club en secours.
+
+L'écran ne prévient pas encore tout seul quand un paiement arrive : recharge la liste des Adhésions (ou rouvre l'écran) pour voir les dossiers passés en « Réglé ».
 
 Le virement, le chèque et les espèces continuent de se pointer à la main, comme décrit plus haut.
 

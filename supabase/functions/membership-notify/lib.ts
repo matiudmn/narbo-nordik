@@ -259,12 +259,12 @@ export function buildMemberEmailHtml(member: MemberRecord, season: MembershipSea
     <h2 style="margin:0 0 12px;color:#111827;font-size:18px;">Ta demande d'adhésion est bien reçue</h2>
     <p style="margin:0 0 16px;color:#4b5563;font-size:14px;line-height:1.6;">Voici le récapitulatif de ton dossier :</p>
     <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">${rows.join('')}</table>
-    ${season.payment_method === 'virement' ? buildBankTransferBlock(member, season) : ''}
+    ${season.payment_method === 'virement' || season.payment_method === 'en_ligne' ? buildBankTransferBlock(member, season) : ''}
     <p style="margin:0 0 12px;color:#4b5563;font-size:14px;line-height:1.6;">${
       season.payment_method === 'virement'
         ? 'Le bureau valide ton dossier dès réception de ton virement.'
         : season.payment_method === 'en_ligne'
-          ? 'Le bureau valide ton dossier dès confirmation de ton paiement en ligne.'
+          ? 'Le bureau valide ton dossier dès confirmation de ton paiement en ligne. Si tu n\'as pas finalisé ton paiement par carte, tu peux aussi régler par virement avec les coordonnées ci-dessus.'
           : 'Le bureau valide ton dossier et te communique les modalités de règlement (remise du chèque ou des espèces à l\'entraînement).'
     }</p>
     <p style="margin:0 0 16px;color:#4b5563;font-size:14px;line-height:1.6;">Ton adhésion sera définitive une fois le règlement reçu.</p>

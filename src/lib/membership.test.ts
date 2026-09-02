@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { Member, MembershipSeason } from '../types';
 import {
   buildSummary,
+  canClearPayment,
   canValidate,
   centsToInput,
   derivePaymentStatus,
@@ -141,6 +142,13 @@ describe('règles de règlement', () => {
 
   it('un dossier à 0 € dû est réglé dès le pointage, sinon il serait invalidable', () => {
     expect(derivePaymentStatus(0, 0)).toBe('paid');
+  });
+
+  it('canClearPayment : encaissé présent et dossier non validé, sinon verrouillé', () => {
+    expect(canClearPayment({ amount_paid_cents: 16500, status: 'submitted' })).toBe(true);
+    expect(canClearPayment({ amount_paid_cents: 16500, status: 'rejected' })).toBe(true);
+    expect(canClearPayment({ amount_paid_cents: 16500, status: 'validated' })).toBe(false);
+    expect(canClearPayment({ amount_paid_cents: 0, status: 'submitted' })).toBe(false);
   });
 
   it('remainingCents et overpaidCents sont planchers à 0', () => {

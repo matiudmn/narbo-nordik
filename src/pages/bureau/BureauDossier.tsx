@@ -19,6 +19,7 @@ import {
 } from '../../components/ui';
 import { PageSkeleton } from '../../components/Skeleton';
 import {
+  canClearPayment,
   canValidate,
   centsToInput,
   derivePaymentStatus,
@@ -130,15 +131,20 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
   const [season, setSeason] = useState(initialSeason);
   const [member, setMember] = useState(initialMember);
 
-  // Pointage du règlement
+  // Pointage du règlement. Le montant reste VIDE tant que rien n'est encaissé :
+  // prérempli avec le montant dû, un Entrée réflexe dans le formulaire
+  // enregistrait un règlement complet fantôme (revue du 02/09).
   const [amountInput, setAmountInput] = useState(() =>
-    centsToInput(initialSeason.amount_paid_cents > 0 ? initialSeason.amount_paid_cents : initialSeason.amount_due_cents)
+    initialSeason.amount_paid_cents > 0 ? centsToInput(initialSeason.amount_paid_cents) : ''
   );
-  const [method, setMethod] = useState<PaymentMethod>(() =>
-    initialSeason.payment_method && MANUAL_PAYMENT_METHODS.includes(initialSeason.payment_method)
-      ? initialSeason.payment_method
-      : 'virement'
-  );
+  // 'en_ligne' n'est pas pointable à la main mais reste sélectionné quand le
+  // dossier a été réglé par Stripe : un pointage complémentaire ne doit pas
+  // réécrire silencieusement le mode réel en « Virement » (revue du 02/09).
+  const [method, setMethod] = useState<PaymentMethod>(() => {
+    const stored = initialSeason.payment_method;
+    if (stored === 'en_ligne' || (stored && MANUAL_PAYMENT_METHODS.includes(stored))) return stored;
+    return 'virement';
+  });
   const [paidDate, setPaidDate] = useState(() =>
     format(initialSeason.paid_at ? new Date(initialSeason.paid_at) : new Date(), 'yyyy-MM-dd')
   );
@@ -173,7 +179,7 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
   const [confirmLoading, setConfirmLoading] = useState(false);
 
   const saveSeason = useCallback(
-    async (patch: TablesUpdate<'membership_seasons'>, success: string): Promise<boolean> => {
+    async (patch: TablesUpdate<'membership_seasons'>, success: string): Promise<MembershipSeason | null> => {
       const { data, error } = await supabase
         .from('membership_seasons')
         .update(patch)
@@ -181,13 +187,16 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
         .select()
         .single();
       if (error) {
-        // Le verrou de validation en base (23514) porte un message rédigé pour l'écran.
-        toast.error(error.message.includes('règlement') ? error.message : 'Enregistrement impossible, réessaie.');
-        return false;
+        // Le verrou de validation en base porte un message rédigé pour
+        // l'écran : repéré par son code SQLSTATE (23514), plus par une
+        // sous-chaîne française fragile (revue du 02/09).
+        toast.error(error.code === '23514' ? error.message : 'Enregistrement impossible, réessaie.');
+        return null;
       }
-      setSeason(toMembershipSeason(data));
+      const fresh = toMembershipSeason(data);
+      setSeason(fresh);
       toast.success(success);
-      return true;
+      return fresh;
     },
     [season.id, toast]
   );
@@ -197,6 +206,12 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
       const nextStatus = derivePaymentStatus(cents, season.amount_due_cents);
       if (season.status === 'validated' && nextStatus === 'pending') {
         toast.error('Dossier validé : repasse-le en « déposé » avant d’annuler son règlement.');
+        return;
+      }
+      // Champ date vidé à la main : new Date('T12:00:00') lèverait et
+      // laisserait le bouton en chargement pour toujours (revue du 02/09).
+      if (nextStatus !== 'pending' && !paidDate) {
+        toast.error('Choisis une date de règlement.');
         return;
       }
       setSavingPayment(true);
@@ -263,13 +278,24 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
       tshirt_model: tshirtModel || null,
       tshirt_size: tshirtModel ? tshirtSize : null,
     };
+    setSavingAdhesion(true);
     // Un règlement déjà pointé se relit contre le nouveau montant dû (un dû
     // corrigé à la hausse repasse « réglé » en « partiel », et inversement).
-    if (season.payment_status === 'paid' || season.payment_status === 'partial') {
-      patch.payment_status = derivePaymentStatus(season.amount_paid_cents, due);
+    // Le recalcul se fait sur la ligne FRAÎCHE renvoyée par l'écriture, pas
+    // sur l'état local : un autre membre du CA a pu pointer entre-temps
+    // (revue du 02/09). Jamais sur un dossier validé : le verrou en base
+    // refuserait tout retour en « en attente ».
+    const fresh = await saveSeason(patch, 'Dossier mis à jour.');
+    if (fresh && (fresh.payment_status === 'paid' || fresh.payment_status === 'partial')) {
+      const expected = derivePaymentStatus(fresh.amount_paid_cents, fresh.amount_due_cents);
+      if (expected !== fresh.payment_status) {
+        if (fresh.status === 'validated' && expected === 'pending') {
+          toast.info('Dossier validé : le statut du règlement est conservé. Repasse-le en « déposé » pour le recalculer.');
+        } else {
+          await saveSeason({ payment_status: expected }, 'Statut du règlement recalé sur le nouveau montant.');
+        }
+      }
     }
-    setSavingAdhesion(true);
-    await saveSeason(patch, 'Dossier mis à jour.');
     setSavingAdhesion(false);
   }
 
@@ -429,6 +455,9 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
                 value={method}
                 onChange={e => setMethod(e.target.value as PaymentMethod)}
               >
+                {season.payment_method === 'en_ligne' && (
+                  <option value="en_ligne">{PAYMENT_METHOD_LABELS.en_ligne}</option>
+                )}
                 {MANUAL_PAYMENT_METHODS.map(m => (
                   <option key={m} value={m}>{PAYMENT_METHOD_LABELS[m]}</option>
                 ))}
@@ -455,7 +484,7 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
               >
                 Tout est réglé
               </Button>
-              {season.amount_paid_cents > 0 && season.status !== 'validated' && (
+              {canClearPayment(season) && (
                 <Button
                   type="button"
                   size="sm"
