@@ -184,6 +184,7 @@ export type Database = {
           updated_at: string
           validated_at: string | null
           validated_by: string | null
+          welcome_email_sent_at: string | null
         }
         Insert: {
           activities?: string[]
@@ -211,6 +212,7 @@ export type Database = {
           updated_at?: string
           validated_at?: string | null
           validated_by?: string | null
+          welcome_email_sent_at?: string | null
         }
         Update: {
           activities?: string[]
@@ -238,6 +240,7 @@ export type Database = {
           updated_at?: string
           validated_at?: string | null
           validated_by?: string | null
+          welcome_email_sent_at?: string | null
         }
         Relationships: [
           {

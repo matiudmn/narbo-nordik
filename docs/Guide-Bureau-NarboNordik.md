@@ -77,6 +77,8 @@ Le rapprochement avec le relevé du Crédit Agricole reste votre geste : l'écra
 
 Sur un dossier déjà validé ou refusé, un seul bouton : **Repasser en « déposé »**, qui annule la décision et remet le dossier à traiter. Chaque décision demande une confirmation avant d'agir.
 
+**Ce que déclenche une validation en running / trail.** L'adhérent reçoit automatiquement un e-mail l'invitant à créer son compte sur l'appli du club, avec le lien et le code d'invitation. Tu n'as rien à envoyer toi-même. L'e-mail ne part qu'une fois par dossier, et pas du tout si la personne a déjà un compte à cette adresse. Les dossiers marche nordique ne déclenchent rien pour l'instant, l'appli ne couvrant pas encore cette section.
+
 La carte affiche aussi les dates d'acceptation du règlement intérieur et du consentement RGPD, et signale si l'adhérent a demandé une attestation pour son comité d'entreprise.
 
 **La carte Adhésion.** C'est ici que tu corriges le dossier lui-même :
