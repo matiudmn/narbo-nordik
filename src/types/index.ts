@@ -322,6 +322,9 @@ export interface MembershipSeason {
   status: MembershipStatus;
   validated_by: string | null;
   validated_at: string | null;
+  // Invitation à créer un compte sur l'app, envoyée à la validation d'un
+  // dossier running/trail. NULL = jamais envoyée (migration 20260904070000).
+  welcome_email_sent_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -70,6 +70,7 @@ function makeSeason(memberId: string, overrides: Partial<MembershipSeason> = {})
     status: 'submitted',
     validated_by: null,
     validated_at: null,
+    welcome_email_sent_at: null,
     created_at: '2026-08-20T10:00:00Z',
     updated_at: '2026-08-20T10:00:00Z',
     ...overrides,
