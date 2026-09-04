@@ -268,6 +268,21 @@ Deno.test('buildMemberEmailHtml: en_ligne => message paiement en ligne + RIB de 
   assert(!html.includes('remise du chèque ou des espèces'));
 });
 
+Deno.test('buildBoardEmailHtml: en_ligne => dit explicitement que rien n est encaisse', () => {
+  // L'e-mail part au dépôt de la demande, avant tout passage en caisse :
+  // « Mode déclaré : En ligne » se lisait comme « il a payé » (constat de
+  // Matiu le 04/09/2026 après un test réel resté impayé).
+  const html = buildBoardEmailHtml(baseMember, { ...baseSeason, payment_method: 'en_ligne' });
+  assertStringIncludes(html, 'paiement non confirmé à cet instant');
+  assertStringIncludes(html, "rien n'est encaissé à ce stade");
+  assertStringIncludes(html, 'Paiement en ligne à finaliser');
+});
+
+Deno.test('buildBoardEmailHtml: virement => aucun avertissement paiement en ligne', () => {
+  const html = buildBoardEmailHtml(baseMember, { ...baseSeason, payment_method: 'virement' });
+  assert(!html.includes("rien n'est encaissé à ce stade"));
+});
+
 Deno.test('buildBoardEmailHtml: jamais de RIB dans le mail bureau', () => {
   const html = buildBoardEmailHtml(baseMember, { ...baseSeason, payment_method: 'virement' });
   assert(!html.includes(CLUB_BANK.iban));

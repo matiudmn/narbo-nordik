@@ -300,7 +300,12 @@ export function buildBoardEmailHtml(member: MemberRecord, season: MembershipSeas
     tableRow('Rattachement famille', member.family_group ? escapeHtml(member.family_group) : 'Aucun'),
     tableRow('Montant dû', `<strong>${formatEuros(season.amount_due_cents)}</strong>`),
     tableRow('Réduction famille appliquée', formatEuros(season.family_discount_cents)),
-    tableRow('Mode de règlement déclaré', escapeHtml(paymentMethodLabel(season.payment_method))),
+    tableRow(
+      'Mode de règlement déclaré',
+      season.payment_method === 'en_ligne'
+        ? 'En ligne : <strong>paiement non confirmé à cet instant</strong>'
+        : escapeHtml(paymentMethodLabel(season.payment_method)),
+    ),
     tableRow('Attestation CE demandée', season.ce_certificate_requested ? 'Oui' : 'Non'),
     tableRow('Règlement intérieur accepté le', escapeHtml(formatDateTimeFr(season.rules_accepted_at))),
     tableRow('Consentement RGPD le', escapeHtml(formatDateTimeFr(season.gdpr_consent_at))),
@@ -311,8 +316,21 @@ export function buildBoardEmailHtml(member: MemberRecord, season: MembershipSeas
     rows.push(tableRow('Notes', "Consultables dans l'espace bureau"));
   }
 
+  // Piège du paiement en ligne : cet e-mail part À LA CRÉATION du dossier,
+  // donc AVANT tout passage en caisse. « Mode déclaré : En ligne » ne dit
+  // rien de ce qui a été encaissé, et se lisait comme « il a payé ». Le
+  // bureau doit savoir que seul l'espace bureau fait foi.
+  const onlineWarning = season.payment_method === 'en_ligne'
+    ? `
+    <div style="margin:0 0 16px;padding:14px 16px;background:#fef2f2;border-radius:12px;">
+      <p style="margin:0 0 6px;color:#b91c1c;font-size:14px;font-weight:600;">Paiement en ligne : rien n'est encaissé à ce stade</p>
+      <p style="margin:0;color:#4b5563;font-size:13px;line-height:1.5;">Cet e-mail part au dépôt de la demande, avant le passage en caisse. Si l'adhérent va au bout, son dossier passe tout seul en « Réglé » dans l'espace bureau. Sinon il y apparaît en « Paiement en ligne à finaliser » : c'est l'espace bureau qui fait foi, jamais ce message.</p>
+    </div>`
+    : '';
+
   const body = `
     <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">${rows.join('')}</table>
+    ${onlineWarning}
     <p style="margin:0;color:#111827;font-size:14px;font-weight:600;">À faire : confirmer le règlement (total ou partiel), puis valider le dossier.</p>`;
 
   return htmlShell("Nouvelle demande d'adhésion", 560, body);

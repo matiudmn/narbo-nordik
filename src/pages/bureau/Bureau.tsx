@@ -15,8 +15,9 @@ import {
   LICENSE_LABELS,
   matchesDossier,
   MEMBERSHIP_TYPE_LABELS,
+  onlinePaymentState,
+  paymentBadge,
   PAYMENT_STATUS_LABELS,
-  PAYMENT_STATUS_TONES,
   SECTION_LABELS,
   seasonsOf,
   TSHIRT_MODEL_LABELS,
@@ -47,6 +48,7 @@ export default function Bureau() {
   const [statusFilter, setStatusFilter] = useState<'all' | MembershipStatus>('all');
   const [paymentFilter, setPaymentFilter] = useState<'all' | PaymentStatus>('all');
   const [familyOnly, setFamilyOnly] = useState(false);
+  const [onlineAwaitingOnly, setOnlineAwaitingOnly] = useState(false);
   const [query, setQuery] = useState('');
 
   const load = useCallback(async () => {
@@ -92,9 +94,17 @@ export default function Bureau() {
         // Hors refusés, comme le compteur affiché sur la pastille
         // (summary.familyDiscountCount) : la liste et son libellé concordent.
         if (familyOnly && (season.family_discount_cents <= 0 || season.status === 'rejected')) return false;
+        if (
+          onlineAwaitingOnly &&
+          (season.status === 'rejected' ||
+            season.payment_status !== 'pending' ||
+            onlinePaymentState(season) !== 'awaiting')
+        ) {
+          return false;
+        }
         return matchesDossier(dossier, query);
       }),
-    [dossiers, sectionFilter, statusFilter, paymentFilter, familyOnly, query]
+    [dossiers, sectionFilter, statusFilter, paymentFilter, familyOnly, onlineAwaitingOnly, query]
   );
 
   if (!isBoard) {
@@ -180,6 +190,20 @@ export default function Bureau() {
             )}
           </div>
 
+          {summary.onlineAwaiting > 0 && (
+            <Card className="border-danger-100 bg-danger-50">
+              <p className="text-sm text-danger-700">
+                <strong>
+                  {summary.onlineAwaiting} dossier{summary.onlineAwaiting > 1 ? 's ont' : ' a'} choisi le
+                  paiement en ligne sans aller au bout.
+                </strong>{' '}
+                Le club n&apos;a rien encaissé pour {summary.onlineAwaiting > 1 ? 'ces adhérents' : 'cet adhérent'} :
+                relance{summary.onlineAwaiting > 1 ? '-les' : '-le'} ou encaisse autrement. Filtre « Paiement en
+                ligne à finaliser » pour les retrouver.
+              </p>
+            </Card>
+          )}
+
           <Card className="space-y-3">
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" aria-hidden="true" />
@@ -208,6 +232,13 @@ export default function Bureau() {
               ))}
               <button type="button" className={chipClass(familyOnly)} onClick={() => setFamilyOnly(v => !v)}>
                 Réduction famille ({summary.familyDiscountCount})
+              </button>
+              <button
+                type="button"
+                className={chipClass(onlineAwaitingOnly)}
+                onClick={() => setOnlineAwaitingOnly(v => !v)}
+              >
+                Paiement en ligne à finaliser ({summary.onlineAwaiting})
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -272,9 +303,7 @@ export default function Bureau() {
                           {formatEuros(season.amount_due_cents)}
                         </p>
                         <div className="flex gap-1 justify-end mt-1">
-                          <Badge tone={PAYMENT_STATUS_TONES[season.payment_status]}>
-                            {PAYMENT_STATUS_LABELS[season.payment_status]}
-                          </Badge>
+                          <Badge tone={paymentBadge(season).tone}>{paymentBadge(season).label}</Badge>
                           <Badge tone={DOSSIER_STATUS_TONES[season.status]}>
                             {DOSSIER_STATUS_LABELS[season.status]}
                           </Badge>

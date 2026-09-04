@@ -30,10 +30,11 @@ import {
   LICENSE_LABELS,
   MANUAL_PAYMENT_METHODS,
   MEMBERSHIP_TYPE_LABELS,
+  onlinePaymentState,
   overpaidCents,
+  paymentBadge,
   PAYMENT_METHOD_LABELS,
   PAYMENT_STATUS_LABELS,
-  PAYMENT_STATUS_TONES,
   remainingCents,
   SECTION_LABELS,
   SECTION_LICENSE_TYPES,
@@ -350,6 +351,7 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
   const previewCents = inputToCents(amountInput);
   const previewStatus = previewCents === null ? null : derivePaymentStatus(previewCents, season.amount_due_cents);
   const overpaid = overpaidCents(season);
+  const onlineState = onlinePaymentState(season);
 
   return (
     <div className="py-4 space-y-4">
@@ -372,9 +374,7 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
           <Badge tone="neutral">{SECTION_LABELS[season.section]}</Badge>
           {season.license_type && <Badge tone="neutral">{LICENSE_LABELS[season.license_type]}</Badge>}
           <Badge tone={DOSSIER_STATUS_TONES[season.status]}>{DOSSIER_STATUS_LABELS[season.status]}</Badge>
-          <Badge tone={PAYMENT_STATUS_TONES[season.payment_status]}>
-            Règlement : {PAYMENT_STATUS_LABELS[season.payment_status].toLowerCase()}
-          </Badge>
+          <Badge tone={paymentBadge(season).tone}>{paymentBadge(season).label}</Badge>
           {member.user_id ? (
             <Badge tone="success" icon={<UserRound size={12} aria-hidden="true" />}>Compte app rattaché</Badge>
           ) : (
@@ -404,6 +404,21 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
             title="Règlement"
             subtitle="Le rapprochement bancaire reste ton geste : ici, tu pointes ce qui est arrivé."
           />
+          {onlineState === 'awaiting' && (
+            <p className="text-sm text-danger-700 bg-danger-50 rounded-lg p-3 mb-3">
+              <strong>Paiement en ligne annoncé, jamais abouti.</strong> L&apos;adhérent a choisi de payer
+              par carte au moment de sa demande, mais Stripe n&apos;a confirmé aucun paiement : le club n&apos;a
+              rien encaissé. Relance-le, ou pointe ci-dessous s&apos;il règle autrement (le mode de règlement
+              sera corrigé en même temps).
+            </p>
+          )}
+          {onlineState === 'confirmed' && (
+            <p className="text-sm text-success-700 bg-success-50 rounded-lg p-3 mb-3">
+              <strong>Paiement confirmé par Stripe.</strong> Le montant a été enregistré automatiquement,
+              tu n&apos;as rien à pointer. Référence pour le rapprochement bancaire :{' '}
+              <span className="tabular break-all">{season.stripe_payment_intent_id}</span>
+            </p>
+          )}
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="bg-neutral-50 rounded-lg p-2">
               <p className="text-xs text-neutral-500">Dû</p>
@@ -551,7 +566,6 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
               {formatDay(season.gdpr_consent_at)}
             </p>
             {season.ce_certificate_requested && <p>Attestation de cotisation demandée (comité d'entreprise).</p>}
-            {season.stripe_payment_intent_id && <p>Paiement en ligne enregistré (Stripe).</p>}
           </div>
         </Card>
       </div>
