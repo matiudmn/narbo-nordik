@@ -74,8 +74,53 @@ export const PAYMENT_STATUS_TONES: Record<PaymentStatus, Tone> = {
   cancelled: 'neutral',
 };
 
+// --- Paiement en ligne : dit-on « réglé » ou « annoncé mais rien reçu » ? ----
+
+export type OnlinePaymentState = 'none' | 'awaiting' | 'confirmed';
+
+/**
+ * État du paiement en ligne d'un dossier, déduit des seules données du club,
+ * sans jamais interroger Stripe.
+ *
+ * Le rapprochement tient parce que le webhook Stripe est la SEULE chose qui
+ * écrive un règlement en ligne : tant qu'il n'a pas posé
+ * `stripe_payment_intent_id`, le club n'a rien encaissé. L'absence de preuve
+ * vaut donc absence de paiement, et c'est ce que le bureau doit voir.
+ *
+ * - `confirmed` : Stripe a confirmé un paiement pour ce dossier.
+ * - `awaiting`  : l'adhérent a choisi le paiement en ligne et n'est pas allé
+ *                 au bout (page fermée, carte refusée, hésitation). Piège
+ *                 principal du tunnel : le dossier existe, l'e-mail de
+ *                 demande est parti, mais aucun euro n'est arrivé.
+ * - `none`      : règlement classique (virement, chèque, espèces).
+ */
+export function onlinePaymentState(
+  season: Pick<MembershipSeason, 'payment_method' | 'stripe_payment_intent_id'>
+): OnlinePaymentState {
+  if (season.stripe_payment_intent_id) return 'confirmed';
+  return season.payment_method === 'en_ligne' ? 'awaiting' : 'none';
+}
+
+/**
+ * Étiquette de règlement à afficher pour un dossier. Un paiement en ligne
+ * jamais abouti ne doit pas se confondre avec « en attente d'un virement » :
+ * dans un cas le club attend un geste connu, dans l'autre l'adhérent croit
+ * peut-être avoir payé.
+ */
+export function paymentBadge(
+  season: Pick<MembershipSeason, 'payment_status' | 'payment_method' | 'stripe_payment_intent_id'>
+): { label: string; tone: Tone } {
+  if (season.payment_status === 'pending' && onlinePaymentState(season) === 'awaiting') {
+    return { label: 'Paiement en ligne à finaliser', tone: 'danger' };
+  }
+  return {
+    label: PAYMENT_STATUS_LABELS[season.payment_status],
+    tone: PAYMENT_STATUS_TONES[season.payment_status],
+  };
+}
+
 // Modes proposés au pointage manuel du bureau. 'en_ligne' existe en base mais
-// est réservé au futur encaissement Stripe : il ne se pointe pas à la main.
+// n'est pas pointable à la main : il n'est écrit que par le webhook Stripe.
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   virement: 'Virement',
   cheque: 'Chèque',
@@ -242,6 +287,8 @@ export interface BureauSummary {
   submitted: number;
   validated: number;
   rejected: number;
+  /** Dossiers qui ont annoncé un paiement en ligne sans jamais l'aboutir. */
+  onlineAwaiting: number;
   /** Montants hors dossiers refusés : un doublon refusé ne gonfle pas l'attendu. */
   dueCents: number;
   paidCents: number;
@@ -255,6 +302,7 @@ export function buildSummary(dossiers: Dossier[]): BureauSummary {
     submitted: 0,
     validated: 0,
     rejected: 0,
+    onlineAwaiting: 0,
     dueCents: 0,
     paidCents: 0,
     familyDiscountCount: 0,
@@ -269,6 +317,9 @@ export function buildSummary(dossiers: Dossier[]): BureauSummary {
     summary.dueCents += season.amount_due_cents;
     summary.paidCents += season.amount_paid_cents;
     if (season.family_discount_cents > 0) summary.familyDiscountCount += 1;
+    if (season.payment_status === 'pending' && onlinePaymentState(season) === 'awaiting') {
+      summary.onlineAwaiting += 1;
+    }
     const section = summary.bySection[season.section];
     section.count += 1;
     section.dueCents += season.amount_due_cents;

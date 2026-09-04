@@ -9,7 +9,9 @@ import {
   inputToCents,
   joinDossiers,
   matchesDossier,
+  onlinePaymentState,
   overpaidCents,
+  paymentBadge,
   remainingCents,
   seasonsOf,
   tshirtOrders,
@@ -159,6 +161,47 @@ describe('règles de règlement', () => {
   });
 });
 
+describe('paiement en ligne : annoncé vs réellement encaissé', () => {
+  it('confirmed dès que Stripe a posé une référence de paiement', () => {
+    expect(
+      onlinePaymentState({ payment_method: 'en_ligne', stripe_payment_intent_id: 'pi_123' })
+    ).toBe('confirmed');
+  });
+
+  it('awaiting quand le paiement en ligne est annoncé sans référence Stripe', () => {
+    expect(
+      onlinePaymentState({ payment_method: 'en_ligne', stripe_payment_intent_id: null })
+    ).toBe('awaiting');
+  });
+
+  it('none pour un règlement classique', () => {
+    for (const method of ['virement', 'cheque', 'especes', null] as const) {
+      expect(onlinePaymentState({ payment_method: method, stripe_payment_intent_id: null })).toBe('none');
+    }
+  });
+
+  it('un dossier repointé à la main par le bureau sort de l état « en ligne »', () => {
+    expect(
+      onlinePaymentState({ payment_method: 'cheque', stripe_payment_intent_id: null })
+    ).toBe('none');
+  });
+
+  it('paymentBadge distingue un paiement en ligne jamais abouti d une attente de virement', () => {
+    expect(
+      paymentBadge({ payment_status: 'pending', payment_method: 'en_ligne', stripe_payment_intent_id: null })
+    ).toEqual({ label: 'Paiement en ligne à finaliser', tone: 'danger' });
+    expect(
+      paymentBadge({ payment_status: 'pending', payment_method: 'virement', stripe_payment_intent_id: null })
+    ).toEqual({ label: 'En attente', tone: 'warning' });
+  });
+
+  it('paymentBadge rend son libellé normal dès que le règlement est arrivé', () => {
+    expect(
+      paymentBadge({ payment_status: 'paid', payment_method: 'en_ligne', stripe_payment_intent_id: 'pi_1' })
+    ).toEqual({ label: 'Réglé', tone: 'success' });
+  });
+});
+
 describe('montants saisis', () => {
   it('inputToCents accepte virgule, point, espaces et symbole euro', () => {
     expect(inputToCents('165')).toBe(16500);
@@ -207,8 +250,29 @@ describe('buildSummary', () => {
     expect(summary.dueCents).toBe(31500);
     expect(summary.paidCents).toBe(16500);
     expect(summary.familyDiscountCount).toBe(1);
+    expect(summary.onlineAwaiting).toBe(0);
     expect(summary.bySection.marche_nordique).toEqual({ count: 1, dueCents: 15000, paidCents: 0 });
     expect(summary.bySection.running_trail).toEqual({ count: 1, dueCents: 16500, paidCents: 16500 });
+  });
+
+  it('compte les paiements en ligne jamais aboutis, hors dossiers refusés', () => {
+    const m1 = makeMember();
+    const m2 = makeMember();
+    const m3 = makeMember();
+    const dossiers = joinDossiers(
+      [m1, m2, m3],
+      [
+        makeSeason(m1.id, { payment_method: 'en_ligne' }),
+        makeSeason(m2.id, { payment_method: 'en_ligne', status: 'rejected' }),
+        makeSeason(m3.id, {
+          payment_method: 'en_ligne',
+          payment_status: 'paid',
+          amount_paid_cents: 16500,
+          stripe_payment_intent_id: 'pi_ok',
+        }),
+      ]
+    );
+    expect(buildSummary(dossiers).onlineAwaiting).toBe(1);
   });
 });
 

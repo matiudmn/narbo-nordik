@@ -45,7 +45,7 @@ Juste dessous, le détail par section : Marche nordique et Running / Trail, avec
 **La recherche et les filtres.**
 
 - La barre « Rechercher un adhérent, un e-mail, une famille... » : tape un nom, un prénom, un e-mail ou un nom de foyer. Les accents ne comptent pas, « peña » et « pena » donnent le même résultat.
-- Les pastilles : **Toutes sections**, **Marche nordique**, **Running / Trail**, et **Réduction famille**, qui n'affiche que les dossiers portant la réduction (leur nombre est indiqué sur la pastille).
+- Les pastilles : **Toutes sections**, **Marche nordique**, **Running / Trail**, **Réduction famille** (dossiers portant la réduction) et **Paiement en ligne à finaliser** (ceux qui ont annoncé un paiement par carte sans aller au bout). Le nombre de dossiers concernés est indiqué sur chaque pastille.
 - Les deux menus : **Dossier** (Déposé, Validé, Refusé) et **Règlement** (En attente, Partiel, Réglé, Annulé).
 
 **La liste des dossiers.** Une ligne par adhérent : nom, section, licence, type d'adhésion, montant dû et deux étiquettes, une pour le règlement et une pour le statut du dossier. Touche la ligne pour ouvrir le dossier.
@@ -110,11 +110,22 @@ Termine par **Enregistrer le dossier**.
 
 # Le paiement en ligne
 
-Le paiement par carte arrive sur le formulaire du site. Ce qui change pour vous : rien à pointer.
+Le paiement en ligne est ouvert sur le formulaire du site. L'adhérent choisit son moyen de paiement au moment de payer (carte bancaire, portefeuille du téléphone, et les autres moyens que le club active). Ce qui change pour vous : rien à pointer quand ça aboutit.
 
-Un dossier payé en ligne arrive **déjà réglé** : règlement « Réglé », mode « En ligne », montant encaissé rempli automatiquement au moment où la carte est débitée. Il ne vous reste qu'à vérifier le dossier et le valider.
+**Un dossier réellement payé arrive déjà réglé** : règlement « Réglé », mode « En ligne », montant et date remplis automatiquement au moment où l'adhérent est débité. Sa fiche affiche un bandeau vert « Paiement confirmé par Stripe » avec la référence à retrouver sur le compte du club. Il ne vous reste qu'à vérifier le dossier et le valider.
 
-Si quelqu'un choisit le paiement en ligne sans aller au bout, son dossier arrive quand même, règlement « En attente » : traite-le comme un dossier classique (relance, virement, chèque ou espèces). Son e-mail de confirmation contient le RIB du club en secours.
+**Le piège à connaître, et comment l'écran vous protège.** Quelqu'un peut remplir le formulaire, choisir le paiement en ligne, puis ne pas aller au bout : page fermée, carte refusée, hésitation. Sa demande est bien enregistrée et l'e-mail de demande part quand même, alors qu'aucun euro n'est arrivé.
+
+Ces dossiers-là sont signalés partout, en rouge :
+
+- dans la liste, l'étiquette n'est pas « En attente » mais **« Paiement en ligne à finaliser »** ;
+- un bandeau en haut de l'écran Adhésions annonce combien il y en a ;
+- la pastille **Paiement en ligne à finaliser** les isole en un clic ;
+- sur la fiche, un bandeau rouge dit noir sur blanc que le club n'a rien encaissé.
+
+Dans ce cas, traite le dossier comme un impayé classique : relance l'adhérent, ou pointe son règlement s'il paie autrement (virement, chèque, espèces). Le mode de règlement se corrige tout seul au pointage. Son e-mail de confirmation contient le RIB du club en secours.
+
+**Retiens ceci** : l'e-mail que tu reçois à chaque nouvelle demande part au dépôt du dossier, donc avant tout paiement. Il ne dit jamais que quelqu'un a payé. Seul l'espace bureau fait foi.
 
 L'écran ne prévient pas encore tout seul quand un paiement arrive : recharge la liste des Adhésions (ou rouvre l'écran) pour voir les dossiers passés en « Réglé ».
 
