@@ -56,11 +56,12 @@ function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
-// `_` et `%` sont des jokers LIKE, et `_` est courant dans une adresse e-mail :
+// `_`, `%` et `*` sont des jokers : PostgREST traduit `*` en `%`, et `_` est
+// courant dans une adresse e-mail. Même échappement que côté site :
 // sans échappement, la recherche de compte existant matcherait l'adresse d'un
 // autre membre.
 function escapeLike(value: string): string {
-  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+  return value.replace(/[\\%_*]/g, (char) => `\\${char}`);
 }
 
 serve(async (req) => {

@@ -45,7 +45,7 @@ Juste dessous, le détail par section : Marche nordique et Running / Trail, avec
 **La recherche et les filtres.**
 
 - La barre « Rechercher un adhérent, un e-mail, une famille... » : tape un nom, un prénom, un e-mail ou un nom de foyer. Les accents ne comptent pas, « peña » et « pena » donnent le même résultat.
-- Les pastilles : **Toutes sections**, **Marche nordique**, **Running / Trail**, **Réduction famille** (dossiers portant la réduction) et **Paiement en ligne à finaliser** (ceux qui ont annoncé un paiement par carte sans aller au bout). Le nombre de dossiers concernés est indiqué sur chaque pastille.
+- Les pastilles : **Toutes sections**, **Marche nordique**, **Running / Trail**, **Réduction famille** (dossiers portant la réduction) et **Paiement en ligne à finaliser** (ceux qui ont annoncé un paiement par carte sans aller au bout). Ces deux dernières affichent le nombre de dossiers concernés.
 - Les deux menus : **Dossier** (Déposé, Validé, Refusé) et **Règlement** (En attente, Partiel, Réglé, Annulé).
 
 **La liste des dossiers.** Une ligne par adhérent : nom, section, licence, type d'adhésion, montant dû et deux étiquettes, une pour le règlement et une pour le statut du dossier. Touche la ligne pour ouvrir le dossier.
@@ -140,7 +140,7 @@ Le virement, le chèque et les espèces continuent de se pointer à la main, com
 
 **« Le bouton Valider est grisé. »** Aucun règlement n'est pointé sur ce dossier. Pointe d'abord un règlement, même partiel : c'est la règle du club, l'écran ne fait que l'appliquer.
 
-**« Je ne trouve pas un dossier. »** Vérifie les filtres : remets « Toutes sections », les deux menus sur « Tous », et désactive la pastille « Réduction famille » si elle est allumée. La recherche ignore les accents et les majuscules.
+**« Je ne trouve pas un dossier. »** Vérifie les filtres : remets « Toutes sections », les deux menus sur « Tous », et éteins les pastilles « Réduction famille » et « Paiement en ligne à finaliser » si elles sont allumées. La recherche ignore les accents et les majuscules.
 
 **« La fiche affiche Trop-perçu. »** L'adhérent a versé plus que le montant dû, par exemple un supplément de licence envoyé avant que le dossier soit corrigé. Corrige le montant dû si le supplément est justifié ; sinon, c'est une question à trancher entre vous.
 
