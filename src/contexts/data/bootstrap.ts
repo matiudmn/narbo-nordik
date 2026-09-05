@@ -166,11 +166,15 @@ export function useDataBootstrap(authUser: User | null, setters: DataBootstrapSe
     // Les collections a l'echelle du club entier (sessions, validations,
     // resultats) passent par fetchAllPages : PostgREST plafonne chaque reponse
     // a 1000 lignes et session_validations a franchi ce seuil le 02/09/2026
-    // (validations recentes silencieusement absentes au boot). L'ORDER BY id
-    // en dernier critere est requis pour une pagination stable.
+    // (validations recentes silencieusement absentes au boot). Cle de
+    // pagination : created_at (monotone, une insertion concurrente tombe en
+    // fin de tri au lieu d'etre avalee dans une fenetre deja lue) + id en
+    // tie-breaker. Exception : sessions pagine sur sa cle metier date (ordre
+    // attendu par les consommateurs) ; une seance creee pendant le boot d'un
+    // autre client peut y etre manquee jusqu'au bootstrap suivant, assume.
     const blocking = Promise.all([
       fetchAllPages((from, to) => supabase.from('sessions').select('*').order('date').order('id').range(from, to)),
-      fetchAllPages((from, to) => supabase.from('session_validations').select('*').order('id').range(from, to)),
+      fetchAllPages((from, to) => supabase.from('session_validations').select('*').order('created_at').order('id').range(from, to)),
       supabase.from('groups').select('*'),
       usersQuery,
       supabase.from('specific_preparations').select('*').order('event_date'),
@@ -180,8 +184,8 @@ export function useDataBootstrap(authUser: User | null, setters: DataBootstrapSe
     // Groupe non bloquant : absent de Home, continue de renseigner son state
     // en arriere-plan sans retarder la levee de `loading`.
     const nonBlocking = Promise.all([
-      fetchAllPages((from, to) => supabase.from('race_results').select('*').order('id').range(from, to)),
-      fetchAllPages((from, to) => supabase.from('race_nordiks').select('*').order('id').range(from, to)),
+      fetchAllPages((from, to) => supabase.from('race_results').select('*').order('created_at').order('id').range(from, to)),
+      fetchAllPages((from, to) => supabase.from('race_nordiks').select('*').order('created_at').order('id').range(from, to)),
       supabase.from('session_nordiks').select('*'),
       supabase.from('validation_reactions').select('*'),
     ]);

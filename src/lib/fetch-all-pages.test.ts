@@ -29,15 +29,42 @@ describe('fetchAllPages', () => {
     expect(result.data?.at(-1)?.id).toBe(`row-${PAGE_SIZE + 37}`);
   });
 
-  it('s\'arrête sur une page pleine suivie d\'une page vide (total multiple exact du plafond)', async () => {
-    const fetchPage = vi.fn(async (from: number) => ({
-      data: from === 0 ? makeRows(0, PAGE_SIZE) : [],
-      error: null,
-      status: 200,
-    }));
+  it('traite le 416 après une page pleine comme une fin normale (total multiple exact du plafond)', async () => {
+    // Comportement réel de PostgREST : un offset égal au total (et non nul)
+    // rend 416 Range Not Satisfiable, jamais 200 avec un tableau vide.
+    const fetchPage = vi.fn(async (from: number) =>
+      from === 0
+        ? { data: makeRows(0, PAGE_SIZE), error: null, status: 200 }
+        : { data: null, error: { message: 'Requested range not satisfiable' }, status: 416 },
+    );
     const result = await fetchAllPages(fetchPage);
     expect(fetchPage).toHaveBeenCalledTimes(2);
     expect(result.data).toHaveLength(PAGE_SIZE);
+    expect(result.error).toBeNull();
+    expect(result.status).toBe(200);
+  });
+
+  it('propage un 416 reçu dès la première page (hors spec PostgREST, jamais pour l\'offset 0)', async () => {
+    const fetchPage = vi.fn(async () => ({
+      data: null,
+      error: { message: 'Requested range not satisfiable' },
+      status: 416,
+    }));
+    const result = await fetchAllPages(fetchPage);
+    expect(result.data).toBeNull();
+    expect(result.status).toBe(416);
+  });
+
+  it('propage une erreur HTTP non réseau (500) en jetant les pages déjà reçues', async () => {
+    const fetchPage = vi.fn(async (from: number) =>
+      from === 0
+        ? { data: makeRows(0, PAGE_SIZE), error: null, status: 200 }
+        : { data: null, error: { message: 'internal error' }, status: 500 },
+    );
+    const result = await fetchAllPages(fetchPage);
+    expect(result.data).toBeNull();
+    expect(result.error?.message).toBe('internal error');
+    expect(result.status).toBe(500);
   });
 
   it('propage l\'enveloppe d\'erreur de la page fautive (status 0 réseau compris)', async () => {

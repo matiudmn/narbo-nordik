@@ -6,10 +6,18 @@
  * fenêtre et revenaient « À valider » à chaque réouverture de l'app.
  *
  * Ce helper enchaîne les pages via `.range()` jusqu'à épuisement. Le fetch de
- * chaque page DOIT porter un ORDER BY stable (id en dernier critère) : sans
- * lui, PostgREST ne garantit aucun ordre et deux pages peuvent se chevaucher
- * ou se trouer. Une écriture concurrente entre deux pages peut malgré tout
- * dupliquer une ligne de bord, d'où la déduplication par id.
+ * chaque page DOIT porter un ORDER BY stable (une clé monotone comme
+ * created_at de préférence, id en dernier critère toujours) : sans lui,
+ * PostgREST ne garantit aucun ordre et deux pages peuvent se chevaucher ou se
+ * trouer ; avec une clé monotone, une insertion concurrente entre deux pages
+ * tombe en fin de tri (au pire dupliquée, d'où la déduplication par id) au
+ * lieu d'être avalée dans une fenêtre déjà lue.
+ *
+ * Fin de pagination : une page qui rend moins de PAGE_SIZE lignes, OU un 416.
+ * Quand le total est un multiple exact de PAGE_SIZE, la dernière page est
+ * pleine et la requête suivante demande un offset égal au total : PostgREST
+ * répond 416 Range Not Satisfiable (jamais pour l'offset 0), pas 200 avec un
+ * tableau vide. Ce 416 après au moins une page est donc une fin normale.
  */
 
 interface PageResult<Row> {
@@ -27,6 +35,9 @@ export async function fetchAllPages<Row extends { id: string }>(
   const seen = new Set<string>();
   for (let from = 0; ; from += PAGE_SIZE) {
     const page = await fetchPage(from, from + PAGE_SIZE - 1);
+    if (page.status === 416 && from > 0) {
+      return { data: rows, error: null, status: 200 };
+    }
     if (page.error || !page.data) {
       return { data: null, error: page.error, status: page.status };
     }
