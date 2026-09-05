@@ -6,6 +6,7 @@ import type {
 } from '../../types';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/monitoring';
+import { fetchAllPages } from '../../lib/fetch-all-pages';
 import { saveSnapshot, loadSnapshot, type OfflineState } from '../../lib/offline-cache';
 import {
   toSession, toValidation, toRaceResult, toRaceNordik, toSessionNordik,
@@ -162,9 +163,18 @@ export function useDataBootstrap(authUser: User | null, setters: DataBootstrapSe
     // Groupe bloquant : requis par Home ("/"), attendu avant de lever
     // `loading`. club_settings y est inclus (cf. cartographie en tete de
     // module) ; la tolerance PGRST116 (aucune ligne) est preservee.
+    // Les collections a l'echelle du club entier (sessions, validations,
+    // resultats) passent par fetchAllPages : PostgREST plafonne chaque reponse
+    // a 1000 lignes et session_validations a franchi ce seuil le 02/09/2026
+    // (validations recentes silencieusement absentes au boot). Cle de
+    // pagination : created_at (monotone, une insertion concurrente tombe en
+    // fin de tri au lieu d'etre avalee dans une fenetre deja lue) + id en
+    // tie-breaker. Exception : sessions pagine sur sa cle metier date (ordre
+    // attendu par les consommateurs) ; une seance creee pendant le boot d'un
+    // autre client peut y etre manquee jusqu'au bootstrap suivant, assume.
     const blocking = Promise.all([
-      supabase.from('sessions').select('*').order('date'),
-      supabase.from('session_validations').select('*'),
+      fetchAllPages((from, to) => supabase.from('sessions').select('*').order('date').order('id').range(from, to)),
+      fetchAllPages((from, to) => supabase.from('session_validations').select('*').order('created_at').order('id').range(from, to)),
       supabase.from('groups').select('*'),
       usersQuery,
       supabase.from('specific_preparations').select('*').order('event_date'),
@@ -174,8 +184,8 @@ export function useDataBootstrap(authUser: User | null, setters: DataBootstrapSe
     // Groupe non bloquant : absent de Home, continue de renseigner son state
     // en arriere-plan sans retarder la levee de `loading`.
     const nonBlocking = Promise.all([
-      supabase.from('race_results').select('*'),
-      supabase.from('race_nordiks').select('*'),
+      fetchAllPages((from, to) => supabase.from('race_results').select('*').order('created_at').order('id').range(from, to)),
+      fetchAllPages((from, to) => supabase.from('race_nordiks').select('*').order('created_at').order('id').range(from, to)),
       supabase.from('session_nordiks').select('*'),
       supabase.from('validation_reactions').select('*'),
     ]);

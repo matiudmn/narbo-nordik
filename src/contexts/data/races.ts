@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { RaceResult, Session, SessionValidation, RaceNordik } from '../../types';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/monitoring';
+import { fetchAllPages } from '../../lib/fetch-all-pages';
 import { toRaceResult, toSession, toValidation } from './rows';
 
 interface RaceActionsSetters {
@@ -90,7 +91,8 @@ export function useRaceActions({ setRaceResults, setSessions, setValidations, se
     const { error } = await supabase.from('race_results').update(updates).eq('id', id);
     if (error) {
       captureError('updateRaceResult error', error);
-      const { data } = await supabase.from('race_results').select('*');
+      const { data } = await fetchAllPages((from, to) =>
+        supabase.from('race_results').select('*').order('created_at').order('id').range(from, to));
       if (data) setRaceResults(data.map(toRaceResult));
       return { error: error.message };
     }
