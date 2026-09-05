@@ -143,8 +143,14 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
   // réécrire silencieusement le mode réel en « Virement » (revue du 02/09).
   const [method, setMethod] = useState<PaymentMethod>(() => {
     const stored = initialSeason.payment_method;
-    if (stored === 'en_ligne' || (stored && MANUAL_PAYMENT_METHODS.includes(stored))) return stored;
-    return 'virement';
+    // 'en_ligne' n'est conservé que si Stripe a CONFIRMÉ un encaissement. Sur
+    // un dossier qui a seulement annoncé un paiement en ligne sans aller au
+    // bout, le pointage doit corriger le mode, comme le promet le bandeau
+    // rouge (« le mode de règlement sera corrigé en même temps »).
+    if (stored === 'en_ligne') {
+      return onlinePaymentState(initialSeason) === 'confirmed' ? 'en_ligne' : 'virement';
+    }
+    return stored && MANUAL_PAYMENT_METHODS.includes(stored) ? stored : 'virement';
   });
   const [paidDate, setPaidDate] = useState(() =>
     format(initialSeason.paid_at ? new Date(initialSeason.paid_at) : new Date(), 'yyyy-MM-dd')
@@ -470,7 +476,7 @@ function DossierEditor({ initialSeason, initialMember }: { initialSeason: Member
                 value={method}
                 onChange={e => setMethod(e.target.value as PaymentMethod)}
               >
-                {season.payment_method === 'en_ligne' && (
+                {onlineState === 'confirmed' && (
                   <option value="en_ligne">{PAYMENT_METHOD_LABELS.en_ligne}</option>
                 )}
                 {MANUAL_PAYMENT_METHODS.map(m => (

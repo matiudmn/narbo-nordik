@@ -95,9 +95,14 @@ export type OnlinePaymentState = 'none' | 'awaiting' | 'confirmed';
  * - `none`      : règlement classique (virement, chèque, espèces).
  */
 export function onlinePaymentState(
-  season: Pick<MembershipSeason, 'payment_method' | 'stripe_payment_intent_id'>
+  season: Pick<MembershipSeason, 'payment_method' | 'stripe_payment_intent_id' | 'amount_paid_cents'>
 ): OnlinePaymentState {
-  if (season.stripe_payment_intent_id) return 'confirmed';
+  // La référence Stripe seule ne suffit pas : elle SURVIT à un remboursement
+  // comme à une remise à zéro par le bureau (le pointage ne l'efface pas, elle
+  // reste la trace de la transaction d'origine). Sans le montant, un dossier
+  // remboursé afficherait « paiement confirmé, tu n'as rien à pointer » au
+  // dessus de « Encaissé : 0,00 € » (revue de clôture du 05/09/2026).
+  if (season.stripe_payment_intent_id && season.amount_paid_cents > 0) return 'confirmed';
   return season.payment_method === 'en_ligne' ? 'awaiting' : 'none';
 }
 
@@ -108,7 +113,10 @@ export function onlinePaymentState(
  * peut-être avoir payé.
  */
 export function paymentBadge(
-  season: Pick<MembershipSeason, 'payment_status' | 'payment_method' | 'stripe_payment_intent_id'>
+  season: Pick<
+    MembershipSeason,
+    'payment_status' | 'payment_method' | 'stripe_payment_intent_id' | 'amount_paid_cents'
+  >
 ): { label: string; tone: Tone } {
   if (season.payment_status === 'pending' && onlinePaymentState(season) === 'awaiting') {
     return { label: 'Paiement en ligne à finaliser', tone: 'danger' };

@@ -165,40 +165,60 @@ describe('règles de règlement', () => {
 describe('paiement en ligne : annoncé vs réellement encaissé', () => {
   it('confirmed dès que Stripe a posé une référence de paiement', () => {
     expect(
-      onlinePaymentState({ payment_method: 'en_ligne', stripe_payment_intent_id: 'pi_123' })
+      onlinePaymentState({ payment_method: 'en_ligne', stripe_payment_intent_id: 'pi_123', amount_paid_cents: 16500 })
     ).toBe('confirmed');
   });
 
   it('awaiting quand le paiement en ligne est annoncé sans référence Stripe', () => {
     expect(
-      onlinePaymentState({ payment_method: 'en_ligne', stripe_payment_intent_id: null })
+      onlinePaymentState({ payment_method: 'en_ligne', stripe_payment_intent_id: null, amount_paid_cents: 0 })
     ).toBe('awaiting');
   });
 
   it('none pour un règlement classique', () => {
     for (const method of ['virement', 'cheque', 'especes', null] as const) {
-      expect(onlinePaymentState({ payment_method: method, stripe_payment_intent_id: null })).toBe('none');
+      expect(onlinePaymentState({ payment_method: method, stripe_payment_intent_id: null, amount_paid_cents: 0 })).toBe('none');
     }
   });
 
   it('un dossier repointé à la main par le bureau sort de l état « en ligne »', () => {
     expect(
-      onlinePaymentState({ payment_method: 'cheque', stripe_payment_intent_id: null })
+      onlinePaymentState({ payment_method: 'cheque', stripe_payment_intent_id: null, amount_paid_cents: 16500 })
     ).toBe('none');
   });
 
   it('paymentBadge distingue un paiement en ligne jamais abouti d une attente de virement', () => {
     expect(
-      paymentBadge({ payment_status: 'pending', payment_method: 'en_ligne', stripe_payment_intent_id: null })
+      paymentBadge({ payment_status: 'pending', payment_method: 'en_ligne', stripe_payment_intent_id: null, amount_paid_cents: 0 })
     ).toEqual({ label: 'Paiement en ligne à finaliser', tone: 'danger' });
     expect(
-      paymentBadge({ payment_status: 'pending', payment_method: 'virement', stripe_payment_intent_id: null })
+      paymentBadge({ payment_status: 'pending', payment_method: 'virement', stripe_payment_intent_id: null, amount_paid_cents: 0 })
     ).toEqual({ label: 'En attente', tone: 'warning' });
+  });
+
+  it('une référence Stripe SANS encaissement ne vaut pas confirmation (remboursement, remise à zéro)', () => {
+    // Le pointage n'efface pas stripe_payment_intent_id : elle survit à un
+    // remboursement comme à un « Remettre à zéro ». Sans le montant, l'écran
+    // afficherait « paiement confirmé » au dessus de « Encaissé : 0,00 € ».
+    expect(
+      onlinePaymentState({ payment_method: 'en_ligne', stripe_payment_intent_id: 'pi_rembourse', amount_paid_cents: 0 })
+    ).toBe('awaiting');
+  });
+
+  it('un dossier remboursé repasse en rouge au lieu de rester vert', () => {
+    expect(
+      paymentBadge({
+        payment_status: 'pending',
+        payment_method: 'en_ligne',
+        stripe_payment_intent_id: 'pi_rembourse',
+        amount_paid_cents: 0,
+      })
+    ).toEqual({ label: 'Paiement en ligne à finaliser', tone: 'danger' });
   });
 
   it('paymentBadge rend son libellé normal dès que le règlement est arrivé', () => {
     expect(
-      paymentBadge({ payment_status: 'paid', payment_method: 'en_ligne', stripe_payment_intent_id: 'pi_1' })
+      paymentBadge({ payment_status: 'paid', payment_method: 'en_ligne', stripe_payment_intent_id: 'pi_1', amount_paid_cents: 16500 })
     ).toEqual({ label: 'Réglé', tone: 'success' });
   });
 });
